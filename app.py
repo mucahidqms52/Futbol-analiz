@@ -10,13 +10,9 @@ st.markdown("""
 
 st.divider()
 
-# Ham metin alanı (Sayfa yenilendiğinde uçmaması için session_state kullanıyoruz)
-if "ham_veri" not in st.session_state:
-    st.session_state.ham_veri = ""
-
+# Metin kutusu (Tertemiz ve donmasız)
 ham_veri = st.text_area(
     "📋 Maç Bilgilerini Buraya Yapıştırın:", 
-    value=st.session_state.ham_veri, 
     height=180, 
     placeholder="1 Ev takım ... \n2 Dep takım ... \n..."
 )
@@ -31,15 +27,7 @@ def sayi_bul(metin, anahtar, varsayilan):
             return varsayilan
     return varsayilan
 
-col_btn1, col_btn2 = st.columns(2)
-calistir = col_btn1.button("🚀 Gelişmiş Analizi Çalıştır", type="primary", use_container_width=True)
-temizle = col_btn2.button("🧹 Kutuyu Temizle", use_container_width=True)
-
-if temizle:
-    st.session_state.ham_veri = ""
-    st.rerun()
-
-if calistir:
+if st.button("🚀 Gelişmiş Analizi Çalıştır", type="primary", use_container_width=True):
     if not ham_veri.strip():
         st.warning("⚠️ Lütfen analizi yapılacak verileri yapıştırın!")
     else:
