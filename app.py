@@ -2,7 +2,90 @@ import streamlit as st
 import math
 import copy
 
-st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="wide")
+st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
+
+# ==========================================
+# KOMPAKT CSS (telefon ekranına sığdırma)
+# ==========================================
+st.markdown("""
+<style>
+    .block-container {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        padding-left: 0.7rem !important;
+        padding-right: 0.7rem !important;
+        max-width: 100% !important;
+    }
+    h1 { font-size: 1.2rem !important; margin: 0.2rem 0 !important; text-align: center; }
+    h2 { font-size: 0.95rem !important; margin: 0.2rem 0 !important; }
+    h3 { font-size: 0.85rem !important; margin: 0.15rem 0 !important; }
+    p { font-size: 0.85rem !important; margin: 0.2rem 0 !important; }
+    hr { margin: 0.3rem 0 !important; }
+
+    /* Number input küçültme */
+    div[data-testid="stNumberInput"] label p {
+        font-size: 0.75rem !important;
+        margin: 0 !important;
+    }
+    div[data-testid="stNumberInput"] input {
+        font-size: 0.85rem !important;
+        padding: 0.15rem 0.3rem !important;
+        height: 1.8rem !important;
+    }
+    div[data-testid="stNumberInput"] button {
+        height: 1.8rem !important;
+        padding: 0 !important;
+        width: 1.5rem !important;
+    }
+    div[data-testid="stNumberInput"] > div {
+        margin-bottom: 0.2rem !important;
+    }
+
+    /* Metrik küçültme */
+    div[data-testid="stMetric"] {
+        padding: 0.2rem !important;
+    }
+    div[data-testid="stMetricValue"] {
+        font-size: 1rem !important;
+    }
+    div[data-testid="stMetricLabel"] {
+        font-size: 0.7rem !important;
+    }
+    div[data-testid="stMetricDelta"] {
+        font-size: 0.65rem !important;
+    }
+
+    /* Buton */
+    .stButton button {
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.85rem !important;
+        height: 2rem !important;
+    }
+
+    /* Alert kutuları */
+    div[data-testid="stAlert"] {
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Tabs */
+    button[data-baseweb="tab"] {
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Expander */
+    details summary {
+        font-size: 0.8rem !important;
+        padding: 0.2rem 0.4rem !important;
+    }
+
+    /* Kolon boşluk azaltma */
+    div[data-testid="column"] {
+        padding: 0 0.1rem !important;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # ==========================================
 # SABİTLER
@@ -25,12 +108,12 @@ MAX_GOL = 8
 # ==========================================
 # SESSION STATE
 # ==========================================
+if "sayfa" not in st.session_state:
+    st.session_state.sayfa = "giris"
 if "form_verileri" not in st.session_state:
     st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
 if "form_version" not in st.session_state:
     st.session_state.form_version = 0
-if "hesaplandi" not in st.session_state:
-    st.session_state.hesaplandi = False
 
 
 # ==========================================
@@ -114,68 +197,71 @@ def matristen_olasilik(matris, max_gol: int = MAX_GOL) -> dict:
 
 
 def guven_seviyesi(g: float) -> str:
-    if g >= 0.7: return "🟢 Yüksek"
-    if g >= 0.4: return "🟡 Orta"
-    return "🔴 Düşük"
+    if g >= 0.7: return "🟢"
+    if g >= 0.4: return "🟡"
+    return "🔴"
 
 
 def takim_form_yorumu(deger: float) -> str:
-    if deger > 2.0: return "🟢 Güçlü form"
-    if deger < 1.0: return "🔴 Zayıf form"
-    return "🟡 Ortalama form"
+    if deger > 2.0: return "🟢 Güçlü"
+    if deger < 1.0: return "🔴 Zayıf"
+    return "🟡 Orta"
 
 
 # ==========================================
-# BAŞLIK
+# SAYFA 1: İSTATİSTİK GİRİŞİ (TELEFONA SIĞAR)
 # ==========================================
-st.markdown("""
-    <h1 style='text-align: center; color: #1f77b4; margin-bottom: 0;'>⚽ Futbol Analiz Pro</h1>
-    <p style='text-align: center; color: gray; margin-top: 0;'>Poisson tabanlı olasılık modeli ile maç analizi</p>
-""", unsafe_allow_html=True)
-st.divider()
-
-# ==========================================
-# ANA LAYOUT: SOL FORM | SAĞ ANALİZ
-# ==========================================
-col_form, col_analiz = st.columns([1, 1.4], gap="large")
-
-# ---------- SOL: FORM ----------
-with col_form:
-    st.subheader("📋 İstatistik Girişi")
+if st.session_state.sayfa == "giris":
+    st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
 
     v = st.session_state.form_verileri
     fv = st.session_state.form_version
 
     with st.form(f"analiz_formu_{fv}"):
-        ppg_ev = st.number_input("1. PPG (Ev)", value=float(v["ppg_ev"]), step=0.1, min_value=0.0, key=f"ppg_ev_{fv}")
-        mpg_dep = st.number_input("2. MPG (Dep)", value=float(v["mpg_dep"]), step=0.1, min_value=0.0, key=f"mpg_dep_{fv}")
+        # Başlık satırı
+        hc1, hc2 = st.columns(2)
+        hc1.markdown("**🏠 EV**")
+        hc2.markdown("**✈️ DEP**")
 
-        siralama_ev = st.number_input("3. Sıralama (Ev)", value=int(v["siralama_ev"]), step=1, min_value=1, key=f"siralama_ev_{fv}")
-        siralama_dep = st.number_input("4. Sıralama (Dep)", value=int(v["siralama_dep"]), step=1, min_value=1, key=f"siralama_dep_{fv}")
+        # 1-2: PPG / MPG
+        c1, c2 = st.columns(2)
+        ppg_ev = c1.number_input("PPG", value=float(v["ppg_ev"]), step=0.1, min_value=0.0, key=f"ppg_ev_{fv}")
+        mpg_dep = c2.number_input("MPG", value=float(v["mpg_dep"]), step=0.1, min_value=0.0, key=f"mpg_dep_{fv}")
 
-        reaksiyon_ev = st.number_input("5. Reaksiyon Gücü % (Ev)", value=float(v["reaksiyon_ev"]), step=1.0, min_value=0.0, max_value=100.0, key=f"reaksiyon_ev_{fv}")
-        reaksiyon_dep = st.number_input("6. Reaksiyon Gücü % (Dep)", value=float(v["reaksiyon_dep"]), step=1.0, min_value=0.0, max_value=100.0, key=f"reaksiyon_dep_{fv}")
+        # 3-4: Sıralama
+        c1, c2 = st.columns(2)
+        siralama_ev = c1.number_input("Sıra", value=int(v["siralama_ev"]), step=1, min_value=1, key=f"siralama_ev_{fv}")
+        siralama_dep = c2.number_input("Sıra", value=int(v["siralama_dep"]), step=1, min_value=1, key=f"siralama_dep_{fv}")
 
-        xg_ev = st.number_input("7. xG (Ev)", value=float(v["xg_ev"]), step=0.01, min_value=0.0, key=f"xg_ev_{fv}")
-        xg_dep = st.number_input("8. xG (Dep)", value=float(v["xg_dep"]), step=0.01, min_value=0.0, key=f"xg_dep_{fv}")
+        # 5-6: Reaksiyon
+        c1, c2 = st.columns(2)
+        reaksiyon_ev = c1.number_input("Reak. %", value=float(v["reaksiyon_ev"]), step=1.0, min_value=0.0, max_value=100.0, key=f"reaksiyon_ev_{fv}")
+        reaksiyon_dep = c2.number_input("Reak. %", value=float(v["reaksiyon_dep"]), step=1.0, min_value=0.0, max_value=100.0, key=f"reaksiyon_dep_{fv}")
 
-        atilan_ev = st.number_input("9. Atılan Gol (Ev)", value=float(v["atilan_ev"]), step=0.1, min_value=0.0, key=f"atilan_ev_{fv}")
-        atilan_dep = st.number_input("10. Atılan Gol (Dep)", value=float(v["atilan_dep"]), step=0.1, min_value=0.0, key=f"atilan_dep_{fv}")
+        # 7-8: xG
+        c1, c2 = st.columns(2)
+        xg_ev = c1.number_input("xG", value=float(v["xg_ev"]), step=0.01, min_value=0.0, key=f"xg_ev_{fv}")
+        xg_dep = c2.number_input("xG", value=float(v["xg_dep"]), step=0.01, min_value=0.0, key=f"xg_dep_{fv}")
 
-        yenen_ev = st.number_input("11. Yenen Gol (Ev)", value=float(v["yenen_ev"]), step=0.1, min_value=0.0, key=f"yenen_ev_{fv}")
-        yenen_dep = st.number_input("12. Yenen Gol (Dep)", value=float(v["yenen_dep"]), step=0.1, min_value=0.0, key=f"yenen_dep_{fv}")
+        # 9-10: Atılan
+        c1, c2 = st.columns(2)
+        atilan_ev = c1.number_input("Atılan", value=float(v["atilan_ev"]), step=0.1, min_value=0.0, key=f"atilan_ev_{fv}")
+        atilan_dep = c2.number_input("Atılan", value=float(v["atilan_dep"]), step=0.1, min_value=0.0, key=f"atilan_dep_{fv}")
 
-        ss_ev = st.number_input("13. Standart Sapma (Ev)", value=float(v["ss_ev"]), step=0.1, min_value=0.0, key=f"ss_ev_{fv}")
-        ss_dep = st.number_input("14. Standart Sapma (Dep)", value=float(v["ss_dep"]), step=0.1, min_value=0.0, key=f"ss_dep_{fv}")
+        # 11-12: Yenen
+        c1, c2 = st.columns(2)
+        yenen_ev = c1.number_input("Yenen", value=float(v["yenen_ev"]), step=0.1, min_value=0.0, key=f"yenen_ev_{fv}")
+        yenen_dep = c2.number_input("Yenen", value=float(v["yenen_dep"]), step=0.1, min_value=0.0, key=f"yenen_dep_{fv}")
 
-        kg_oran = st.number_input(
-            "15. KG Oranı / Karşılıklı Gol Sıklığı (%)",
-            value=float(v["kg_oran"]), step=1.0,
-            min_value=0.0, max_value=100.0,
-            key=f"kg_oran_{fv}"
-        )
+        # 13-14: Standart Sapma
+        c1, c2 = st.columns(2)
+        ss_ev = c1.number_input("Std.Sap.", value=float(v["ss_ev"]), step=0.1, min_value=0.0, key=f"ss_ev_{fv}")
+        ss_dep = c2.number_input("Std.Sap.", value=float(v["ss_dep"]), step=0.1, min_value=0.0, key=f"ss_dep_{fv}")
 
-        calistir = st.form_submit_button("🚀 Analiz Et", use_container_width=True, type="primary")
+        # 15: KG (tam genişlik)
+        kg_oran = st.number_input("KG Oranı (%)", value=float(v["kg_oran"]), step=1.0, min_value=0.0, max_value=100.0, key=f"kg_oran_{fv}")
+
+        calistir = st.form_submit_button("🚀 ANALİZ ET", use_container_width=True, type="primary")
 
         if calistir:
             st.session_state.form_verileri = {
@@ -188,189 +274,142 @@ with col_form:
                 "ss_ev": ss_ev, "ss_dep": ss_dep,
                 "kg_oran": kg_oran,
             }
-            st.session_state.hesaplandi = True
-            st.rerun()
-
-    # Yeni Analiz Butonu (form dışında)
-    if st.session_state.hesaplandi:
-        if st.button("🔄 Yeni Analiz (Formu Sıfırla)", use_container_width=True):
-            st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
             st.session_state.form_version += 1
-            st.session_state.hesaplandi = False
+            st.session_state.sayfa = "sonuc"
             st.rerun()
 
 
-# ---------- SAĞ: ANALİZ ----------
-with col_analiz:
-    if not st.session_state.hesaplandi:
-        st.subheader("🎯 Analiz Paneli")
-        st.info("👈 **Sol taraftaki formu doldurup '🚀 Analiz Et' butonuna basın.**")
-        st.markdown("""
-        #### 📊 Bu panelde göreceğiniz analizler:
+# ==========================================
+# SAYFA 2: ANALİZ SONUCU (TELEFONA SIĞAR - TAB YAPISI)
+# ==========================================
+elif st.session_state.sayfa == "sonuc":
+    v = st.session_state.form_verileri
 
-        | Bölüm | İçerik |
-        |---|---|
-        | 🔬 **Model Özeti** | Beklenen goller, güven skoru |
-        | 📊 **1X2** | Ev / Beraberlik / Deplasman olasılıkları |
-        | 🛡️ **Çifte Şans** | 1X, X2, 12 oranları |
-        | ⚽ **Gol Analizi** | Üst/Alt 0.5-3.5, KG Var/Yok |
-        | 🎲 **Skor Tahmini** | En olası 6 skor |
-        | ⚔️ **Takım Gücü** | Hücum / savunma karşılaştırması |
-        | 📝 **Detaylı Yorum** | Taktiksel bakış + strateji önerileri |
-        """)
-    else:
-        v = st.session_state.form_verileri
+    lam_ev, lam_dep, guven = hesapla_lambda(v)
+    matris = poisson_matris(lam_ev, lam_dep, MAX_GOL)
+    olas = matristen_olasilik(matris, MAX_GOL)
 
-        lam_ev, lam_dep, guven = hesapla_lambda(v)
-        matris = poisson_matris(lam_ev, lam_dep, MAX_GOL)
-        olas = matristen_olasilik(matris, MAX_GOL)
+    toplam = olas["toplam"] or 1
+    p1 = olas["1"] / toplam * 100
+    px = olas["X"] / toplam * 100
+    p2 = olas["2"] / toplam * 100
 
-        toplam = olas["toplam"] or 1
-        p1 = olas["1"] / toplam * 100
-        px = olas["X"] / toplam * 100
-        p2 = olas["2"] / toplam * 100
+    cifte_1x = p1 + px
+    cifte_x2 = p2 + px
+    cifte_12 = p1 + p2
 
-        cifte_1x = p1 + px
-        cifte_x2 = p2 + px
-        cifte_12 = p1 + p2
+    tahmini_gol = lam_ev + lam_dep
 
-        tahmini_gol = lam_ev + lam_dep
+    ust_05 = olas["ust_05"] / toplam * 100
+    ust_15 = olas["ust_15"] / toplam * 100
+    ust_25 = olas["ust_25"] / toplam * 100
+    ust_35 = olas["ust_35"] / toplam * 100
 
-        # ---- 0. MODEL ÖZETİ ----
-        st.subheader("🔬 Model Özeti")
-        m1, m2, m3 = st.columns(3)
-        m1.metric("Ev Beklenen Gol", f"{lam_ev:.2f}")
-        m2.metric("Dep Beklenen Gol", f"{lam_dep:.2f}")
-        m3.metric("Model Güveni", guven_seviyesi(guven))
+    kg_var_model = olas["kg_var"] / toplam * 100
+    kg_ort = (kg_var_model + v["kg_oran"]) / 2
 
-        st.info(f"📌 **Toplam Beklenen Gol:** {tahmini_gol:.2f} | Güven skoru: {guven:.2f}")
+    en_olasi = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
+    en_guvenli = max([("1X", cifte_1x), ("X2", cifte_x2), ("12", cifte_12)], key=lambda x: x[1])
 
-        if guven < 0.4:
-            st.warning("⚠️ Standart sapmalar yüksek → tahminler düşük güvenilirlikte.")
+    st.markdown("<h1>🎯 Analiz Raporu</h1>", unsafe_allow_html=True)
 
-        st.divider()
+    # ---- MODEL ÖZETİ (üstte hep görünür) ----
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Ev λ", f"{lam_ev:.2f}")
+    m2.metric("Dep λ", f"{lam_dep:.2f}")
+    m3.metric("Güven", guven_seviyesi(guven))
 
-        # ---- 1. 1X2 ----
-        st.subheader("📊 1 - X - 2")
+    # ---- TAB YAPISI ----
+    tab1, tab2, tab3 = st.tabs(["📊 Sonuç", "⚽ Gol", "📝 Yorum"])
+
+    # ---------- TAB 1: 1X2 + ÇİFTE ŞANS ----------
+    with tab1:
+        st.markdown("**1 - X - 2**")
         c1, c2, c3 = st.columns(3)
         c1.metric("🏠 1", f"%{p1:.1f}")
         c2.metric("🤝 X", f"%{px:.1f}")
         c3.metric("✈️ 2", f"%{p2:.1f}")
 
-        st.progress(min(int(p1), 100), text=f"Ev: %{p1:.1f}")
-        st.progress(min(int(px), 100), text=f"Beraberlik: %{px:.1f}")
-        st.progress(min(int(p2), 100), text=f"Deplasman: %{p2:.1f}")
+        st.success(f"🎯 En Olası: **{en_olasi[0]}** (%{en_olasi[1]:.1f})")
 
-        en_olasi = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
-        st.success(f"🎯 **En Olası:** {en_olasi[0]} (%{en_olasi[1]:.1f})")
-
-        st.divider()
-
-        # ---- 2. ÇİFTE ŞANS ----
-        st.subheader("🛡️ Çifte Şans")
+        st.markdown("**Çifte Şans**")
         cc1, cc2, cc3 = st.columns(3)
         cc1.metric("1X", f"%{cifte_1x:.1f}")
         cc2.metric("X2", f"%{cifte_x2:.1f}")
         cc3.metric("12", f"%{cifte_12:.1f}")
 
-        en_guvenli = max([("1X", cifte_1x), ("X2", cifte_x2), ("12", cifte_12)], key=lambda x: x[1])
-        st.success(f"✅ **En Güvenli:** {en_guvenli[0]} (%{en_guvenli[1]:.1f})")
+        st.success(f"✅ En Güvenli: **{en_guvenli[0]}** (%{en_guvenli[1]:.1f})")
 
-        st.divider()
-
-        # ---- 3. GOL ANALİZİ ----
-        st.subheader("⚽ Gol Analizi")
-
-        ust_05 = olas["ust_05"] / toplam * 100
-        ust_15 = olas["ust_15"] / toplam * 100
-        ust_25 = olas["ust_25"] / toplam * 100
-        ust_35 = olas["ust_35"] / toplam * 100
+    # ---------- TAB 2: GOL + SKORLAR ----------
+    with tab2:
+        st.markdown(f"**Beklenen Toplam Gol: {tahmini_gol:.2f}**")
 
         gc1, gc2, gc3, gc4 = st.columns(4)
-        gc1.metric("Üst 0.5", f"%{ust_05:.0f}")
-        gc2.metric("Üst 1.5", f"%{ust_15:.0f}")
-        gc3.metric("Üst 2.5", f"%{ust_25:.0f}")
-        gc4.metric("Üst 3.5", f"%{ust_35:.0f}")
+        gc1.metric("Ü 0.5", f"%{ust_05:.0f}")
+        gc2.metric("Ü 1.5", f"%{ust_15:.0f}")
+        gc3.metric("Ü 2.5", f"%{ust_25:.0f}")
+        gc4.metric("Ü 3.5", f"%{ust_35:.0f}")
 
-        kg_var_model = olas["kg_var"] / toplam * 100
-        kg_ort = (kg_var_model + v["kg_oran"]) / 2
+        st.markdown("**KG (Karşılıklı Gol)**")
+        kc1, kc2 = st.columns(2)
+        kc1.metric("KG Var", f"%{kg_ort:.0f}")
+        kc2.metric("KG Yok", f"%{100-kg_ort:.0f}")
 
-        kc1, kc2, kc3 = st.columns(3)
-        kc1.metric("Model KG Var", f"%{kg_var_model:.1f}")
-        kc2.metric("Kullanıcı KG", f"%{v['kg_oran']:.0f}", delta=f"{v['kg_oran']-kg_var_model:+.1f}")
-        kc3.metric("Ortalama KG", f"%{kg_ort:.0f}")
-
-        if tahmini_gol > 3.0:
-            st.error(f"🔥 **Yüksek Skor:** {tahmini_gol:.2f} gol → 2.5 Üst ve KG Var güçlü.")
-        elif tahmini_gol > 2.4:
-            st.warning(f"⚡ **Orta-Yüksek:** {tahmini_gol:.2f} gol → 1.5 Üst güvenli, 2.5 sınırda.")
-        elif tahmini_gol > 1.6:
-            st.info(f"⚖️ **Dengeli:** {tahmini_gol:.2f} gol → 2.5 Alt hafif önde.")
+        if tahmini_gol > 2.6:
+            st.error(f"🔥 {tahmini_gol:.2f} gol → 2.5 Üst & KG Var")
         else:
-            st.success(f"🛡️ **Düşük Skor:** {tahmini_gol:.2f} gol → 2.5 Alt ve KG Yok güçlü.")
+            st.info(f"🛡️ {tahmini_gol:.2f} gol → 2.5 Alt")
 
-        st.divider()
-
-        # ---- 4. EN OLASI SKORLAR ----
-        st.subheader("🎲 En Olası Skorlar (İlk 6)")
+        # En olası skorlar (kompakt)
+        st.markdown("**En Olası Skorlar**")
         en_iyi = sorted(olas["skorlar"].items(), key=lambda x: x[1], reverse=True)[:6]
-
         sk_cols = st.columns(6)
         for idx, (skor, olasilik) in enumerate(en_iyi):
-            with sk_cols[idx]:
-                st.metric(skor, f"%{olasilik/toplam*100:.1f}")
+            sk_cols[idx].metric(skor, f"%{olasilik/toplam*100:.0f}")
 
-        st.divider()
-
-        # ---- 5. TAKIM GÜÇ ----
-        st.subheader("⚔️ Takım Güç Karşılaştırması")
-        g1, g2 = st.columns(2)
-        with g1:
-            st.markdown("**🏠 Ev Sahibi**")
-            st.metric("Hücum", f"{v['xg_ev']*0.6 + v['atilan_ev']*0.4:.2f}")
-            st.metric("Zaafiyet", f"{v['yenen_ev']:.2f}")
-            st.metric("Avantaj", "×1.12")
-        with g2:
-            st.markdown("**✈️ Deplasman**")
-            st.metric("Hücum", f"{v['xg_dep']*0.6 + v['atilan_dep']*0.4:.2f}")
-            st.metric("Zaafiyet", f"{v['yenen_dep']:.2f}")
-            st.metric("Dezavantaj", "×0.94")
-
-        st.divider()
-
-        # ---- 6. YORUM ----
-        st.subheader("📝 Detaylı Yorum")
-
+    # ---------- TAB 3: YORUM ----------
+    with tab3:
         fark = p1 - p2
         if fark > 25:       senaryo = "Ev sahibi açık ara favori."
         elif fark > 10:     senaryo = "Ev sahibi hafif favori."
         elif fark < -25:    senaryo = "Deplasman net favori."
         elif fark < -10:    senaryo = "Deplasman hafif favori."
-        else:               senaryo = "Dengeli maç, beraberlik riski yüksek."
+        else:               senaryo = "Dengeli, beraberlik riski yüksek."
 
-        with st.expander("🏠 Ev Sahibi Analizi", expanded=True):
+        st.markdown(f"**{senaryo}**")
+        st.markdown(f"""
+        - 🥇 En Olası: **{en_olasi[0]}** (%{en_olasi[1]:.0f})
+        - 🛡️ En Güvenli: **{en_guvenli[0]}** (%{en_guvenli[1]:.0f})
+        - ⚽ Gol: **{'2.5 Üst' if tahmini_gol > 2.6 else '2.5 Alt'}**
+        - 🤝 KG: **{'KG Var' if kg_ort > 55 else 'KG Yok' if kg_ort < 45 else 'Belirsiz'}**
+        """)
+
+        with st.expander("🏠 Ev Detay"):
             st.markdown(f"""
-            - **PPG:** {v['ppg_ev']:.2f} → {takim_form_yorumu(v['ppg_ev'])}
-            - **Sıralama:** {v['siralama_ev']}
-            - **xG:** {v['xg_ev']} | **Atılan:** {v['atilan_ev']} | **Yenen:** {v['yenen_ev']}
-            - **Reaksiyon:** %{v['reaksiyon_ev']:.0f}
-            - **SS:** {v['ss_ev']:.2f}
+            - PPG: {v['ppg_ev']:.2f} ({takim_form_yorumu(v['ppg_ev'])})
+            - Sıra: {v['siralama_ev']} | xG: {v['xg_ev']}
+            - Atılan: {v['atilan_ev']} | Yenen: {v['yenen_ev']}
+            - Reak: %{v['reaksiyon_ev']:.0f} | SS: {v['ss_ev']:.1f}
             """)
 
-        with st.expander("✈️ Deplasman Analizi", expanded=True):
+        with st.expander("✈️ Dep Detay"):
             st.markdown(f"""
-            - **MPG:** {v['mpg_dep']:.2f} → {takim_form_yorumu(v['mpg_dep'])}
-            - **Sıralama:** {v['siralama_dep']}
-            - **xG:** {v['xg_dep']} | **Atılan:** {v['atilan_dep']} | **Yenen:** {v['yenen_dep']}
-            - **Reaksiyon:** %{v['reaksiyon_dep']:.0f}
-            - **SS:** {v['ss_dep']:.2f}
+            - MPG: {v['mpg_dep']:.2f} ({takim_form_yorumu(v['mpg_dep'])})
+            - Sıra: {v['siralama_dep']} | xG: {v['xg_dep']}
+            - Atılan: {v['atilan_dep']} | Yenen: {v['yenen_dep']}
+            - Reak: %{v['reaksiyon_dep']:.0f} | SS: {v['ss_dep']:.1f}
             """)
 
-        with st.expander("🎯 Strateji Önerileri", expanded=True):
-            st.markdown(f"**Ana Senaryo:** {senaryo}")
+        with st.expander("⚔️ Takım Güçleri"):
             st.markdown(f"""
-            - 🥇 **En Olası:** {en_olasi[0]} (%{en_olasi[1]:.1f})
-            - 🛡️ **En Güvenli:** Çifte Şans {en_guvenli[0]} (%{en_guvenli[1]:.1f})
-            - ⚽ **Gol:** {'2.5 Üst' if tahmini_gol > 2.6 else '2.5 Alt'} (bekl: {tahmini_gol:.2f})
-            - 🤝 **KG:** {'KG Var' if kg_ort > 55 else 'KG Yok' if kg_ort < 45 else 'Belirsiz'} (%{kg_ort:.0f})
+            - Ev Hücum: {v['xg_ev']*0.6 + v['atilan_ev']*0.4:.2f} | Zaaf: {v['yenen_ev']:.2f}
+            - Dep Hücum: {v['xg_dep']*0.6 + v['atilan_dep']*0.4:.2f} | Zaaf: {v['yenen_dep']:.2f}
             """)
+
+    # ---- GERİ DÖN BUTONU ----
+    st.divider()
+    if st.button("🔄 Yeni Analiz", use_container_width=True, type="primary"):
+        st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
+        st.session_state.form_version += 1
+        st.session_state.sayfa = "giris"
+        st.rerun()
