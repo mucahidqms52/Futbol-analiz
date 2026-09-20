@@ -48,47 +48,30 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# VARSAYILAN VERİ (20+ ALAN)
+# VARSAYILAN VERİ
 # ==========================================
 VARSAYILAN_VERI = {
-    # Form
     "ppg_ev": 0.0, "mpg_dep": 0.0,
-    # Sıralama
     "siralama_ev": 1, "siralama_dep": 1,
-    # Reaksiyon
     "reaksiyon_ev": 50.0, "reaksiyon_dep": 50.0,
-    # xG
     "xg_ev": 0.0, "xg_dep": 0.0,
-    # Atılan
     "atilan_ev": 0.0, "atilan_dep": 0.0,
-    # Yenen
     "yenen_ev": 0.0, "yenen_dep": 0.0,
-    # Standart Sapma
     "ss_ev": 1.0, "ss_dep": 1.0,
-    # KG
     "kg_oran": 50.0,
-    # 🆕 Galibiyet/Beraberlik/Mağlubiyet
     "galibiyet_ev": 30.0, "beraberlik_ev": 30.0,
     "galibiyet_dep": 30.0, "beraberlik_dep": 30.0,
-    # 🆕 Yenilmezlik
     "yenilmezlik_ev": 30.0, "yenilmezlik_dep": 30.0,
-    # 🆕 Hücum Hakimiyeti
     "hucum_hakimiyeti_ev": 50.0, "hucum_hakimiyeti_dep": 50.0,
-    # 🆕 Agresiflik (Şut/Maç)
     "agresiflik_ev": 8.0, "agresiflik_dep": 8.0,
-    # 🆕 İsabet (%)
     "isabet_ev": 40.0, "isabet_dep": 40.0,
-    # 🆕 Hava Topu (Ortalar)
     "hava_topu_ev": 10.0, "hava_topu_dep": 10.0,
-    # 🆕 İlk Golü Atar / Yer
     "ilk_gol_atar_ev": 40.0, "ilk_gol_atar_dep": 40.0,
     "ilk_gol_yer_ev": 40.0, "ilk_gol_yer_dep": 40.0,
-    # 🆕 Üst Sıklıkları
     "ust05_ev": 80.0, "ust05_dep": 80.0,
     "ust15_ev": 50.0, "ust15_dep": 50.0,
     "ust25_ev": 30.0, "ust25_dep": 30.0,
     "ust35_ev": 20.0, "ust35_dep": 20.0,
-    # 🆕 KG Sıklığı (Takım bazlı)
     "kg_siklik_ev": 50.0, "kg_siklik_dep": 50.0,
 }
 
@@ -108,7 +91,7 @@ if "form_version" not in st.session_state:
 
 
 # ==========================================
-# METİNDEN VERİ ÇIKARMA (GENİŞLETİLMİŞ)
+# METİNDEN VERİ ÇIKARMA
 # ==========================================
 def metinden_veri_cikar(metin: str) -> dict:
     veri = {}
@@ -123,17 +106,13 @@ def metinden_veri_cikar(metin: str) -> dict:
     if m: veri["mpg_dep"] = float(m.group(1))
 
     # ---- Galibiyet/Beraberlik/Mağlubiyet (Ev) ----
-    # PPG bloğundan sonra 3 satırda yüzdeler var
     idx_ppg = metin.find("PPG")
     if idx_ppg != -1:
-        blok = metin[idx_ppg:idx_ppg+400]
-        # Sırayla Galibiyet, Beraberlik, Mağlubiyet
+        blok = metin[idx_ppg:idx_ppg+500]
         m_g = re.search(r'([\d.]+)%\s*Galibiyet', blok)
         m_b = re.search(r'([\d.]+)%\s*Beraberlik', blok)
-        m_m = re.search(r'([\d.]+)%\s*Mağlubiyet', blok)
         if m_g: veri["galibiyet_ev"] = float(m_g.group(1))
         if m_b: veri["beraberlik_ev"] = float(m_b.group(1))
-        # Yenilmezlik / Invencibilidade
         m_y = re.search(r'(?:Invencibilidade|Yenilmezlik)[:\s]+([\d.]+)%', blok)
         if m_y: veri["yenilmezlik_ev"] = float(m_y.group(1))
 
@@ -142,25 +121,43 @@ def metinden_veri_cikar(metin: str) -> dict:
     if idx_mbp == -1:
         idx_mbp = metin.find("MPG")
     if idx_mbp != -1:
-        blok = metin[idx_mbp:idx_mbp+400]
+        blok = metin[idx_mbp:idx_mbp+500]
         m_g = re.search(r'([\d.]+)%\s*Galibiyet', blok)
         m_b = re.search(r'([\d.]+)%\s*Beraberlik', blok)
-        m_m = re.search(r'([\d.]+)%\s*Mağlubiyet', blok)
         if m_g: veri["galibiyet_dep"] = float(m_g.group(1))
         if m_b: veri["beraberlik_dep"] = float(m_b.group(1))
         m_y = re.search(r'(?:Invencibilidade|Yenilmezlik)[:\s]+([\d.]+)%', blok)
         if m_y: veri["yenilmezlik_dep"] = float(m_y.group(1))
 
-    # ---- Sıralama ----
-    idx = metin.find("Tablo Pozisyonu")
-    if idx == -1:
-        idx = metin.find("Pozisyon")
-    if idx != -1:
-        blok = metin[idx:idx+600]
-        sayilar = re.findall(r'\n(\d{1,2})\n', blok)
-        if len(sayilar) >= 2:
-            veri["siralama_ev"] = int(sayilar[0])
-            veri["siralama_dep"] = int(sayilar[1])
+    # ---- SIRALAMA ----
+    # 1. Deneme: "Sıra: X" formatı (yeni format)
+    m = re.search(r'Sıra[:\s]+(\d{1,2})', metin)
+    if m:
+        veri["siralama_ev"] = int(m.group(1))
+        # İkinci "Sıra:" varsa dep için
+        m2 = re.search(r'Sıra[:\s]+(\d{1,2})', metin[m.end():])
+        if m2:
+            veri["siralama_dep"] = int(m2.group(1))
+
+    # 2. Deneme: "Tablo Pozisyonu" + VS formatı (eski format)
+    if "siralama_ev" not in veri or "siralama_dep" not in veri:
+        idx = metin.find("Tablo Pozisyonu")
+        if idx == -1:
+            idx = metin.find("Tablo")
+        if idx != -1:
+            blok = metin[idx:idx+800]
+            vs_idx = blok.find("VS")
+            if vs_idx == -1:
+                vs_idx = blok.find("vs")
+            if vs_idx != -1:
+                onceki = blok[:vs_idx]
+                sonraki = blok[vs_idx:]
+                ev_sayilar = re.findall(r'\n\s*(\d{1,2})\s*\n', onceki)
+                dep_sayilar = re.findall(r'\n\s*(\d{1,2})\s*\n', sonraki)
+                if ev_sayilar:
+                    veri["siralama_ev"] = int(ev_sayilar[-1])
+                if dep_sayilar:
+                    veri["siralama_dep"] = int(dep_sayilar[0])
 
     # ---- Hücum Hakimiyeti ----
     idx = metin.find("Hücum Hakimiyeti")
@@ -171,7 +168,7 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["hucum_hakimiyeti_ev"] = float(sayilar[0])
             veri["hucum_hakimiyeti_dep"] = float(sayilar[1])
 
-    # ---- Agresiflik (Şut/Maç) ----
+    # ---- Agresiflik ----
     idx = metin.find("Agresiflik")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -179,8 +176,21 @@ def metinden_veri_cikar(metin: str) -> dict:
         if m:
             veri["agresiflik_ev"] = float(m.group(1))
             veri["agresiflik_dep"] = float(m.group(2))
+        else:
+            # Yeni format: "Agresiflik: 13.5 şut/maç"
+            m = re.search(r'Agresiflik[:\s]+([\d.]+)', blok)
+            if m:
+                veri["agresiflik_ev"] = float(m.group(1))
 
-    # ---- İsabet (Doğruluk) ----
+    # İkinci Agresiflik (Dep)
+    idx2 = metin.find("Agresiflik", idx + 1) if idx != -1 else -1
+    if idx2 != -1 and "agresiflik_dep" not in veri:
+        blok2 = metin[idx2:idx2+200]
+        m = re.search(r'Agresiflik[:\s]+([\d.]+)', blok2)
+        if m:
+            veri["agresiflik_dep"] = float(m.group(1))
+
+    # ---- İsabet ----
     idx = metin.find("İsabet")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -189,7 +199,15 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["isabet_ev"] = float(m.group(1))
             veri["isabet_dep"] = float(m.group(2))
 
-    # ---- Hava Topu (Ortalar) ----
+    # İkinci İsabet (Dep)
+    idx2 = metin.find("İsabet", idx + 1) if idx != -1 else -1
+    if idx2 != -1 and "isabet_dep" not in veri:
+        blok2 = metin[idx2:idx2+200]
+        m = re.search(r'İsabet[:\s]+%?([\d.]+)', blok2)
+        if m:
+            veri["isabet_dep"] = float(m.group(1))
+
+    # ---- Hava Topu ----
     idx = metin.find("Hava Topu")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -198,7 +216,15 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["hava_topu_ev"] = float(m.group(1))
             veri["hava_topu_dep"] = float(m.group(2))
 
-    # ---- Psikolojik Faktör: İlk Gol ----
+    # İkinci Hava Topu (Dep)
+    idx2 = metin.find("Hava Topu", idx + 1) if idx != -1 else -1
+    if idx2 != -1 and "hava_topu_dep" not in veri:
+        blok2 = metin[idx2:idx2+200]
+        m = re.search(r'Hava Topu[:\s]+(\d+)', blok2)
+        if m:
+            veri["hava_topu_dep"] = float(m.group(1))
+
+    # ---- İlk Gol ----
     idx = metin.find("İlk Golü Atar")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -206,6 +232,8 @@ def metinden_veri_cikar(metin: str) -> dict:
         if len(sayilar) >= 2:
             veri["ilk_gol_atar_ev"] = float(sayilar[0])
             veri["ilk_gol_atar_dep"] = float(sayilar[1])
+        elif len(sayilar) == 1:
+            veri["ilk_gol_atar_ev"] = float(sayilar[0])
 
     idx = metin.find("İlk Golü Yer")
     if idx != -1:
@@ -214,14 +242,24 @@ def metinden_veri_cikar(metin: str) -> dict:
         if len(sayilar) >= 2:
             veri["ilk_gol_yer_ev"] = float(sayilar[0])
             veri["ilk_gol_yer_dep"] = float(sayilar[1])
+        elif len(sayilar) == 1:
+            veri["ilk_gol_yer_ev"] = float(sayilar[0])
 
-    # ---- Reaksiyon Gücü ----
+    # ---- Reaksiyon ----
+    # Eski format
     m = re.search(r'Reaksiyon Gücü\s*\t?\s*([\d.]+)%\s*\t?\s*([\d.]+)%', metin)
     if m:
         veri["reaksiyon_ev"] = float(m.group(1))
         veri["reaksiyon_dep"] = float(m.group(2))
+    else:
+        # Yeni format: "Reak: %40" iki defa
+        reaks = re.findall(r'Reak[:\s]+%?([\d.]+)', metin)
+        if len(reaks) >= 2:
+            veri["reaksiyon_ev"] = float(reaks[0])
+            veri["reaksiyon_dep"] = float(reaks[1])
 
     # ---- xG ----
+    # Eski format
     idx = metin.find("Beklenen goller")
     if idx == -1:
         idx = metin.find("xG)")
@@ -232,6 +270,13 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["xg_ev"] = float(xg_values[0])
             veri["xg_dep"] = float(xg_values[1])
 
+    # Yeni format: "xG: 1.17" iki defa
+    if "xg_ev" not in veri or "xg_dep" not in veri:
+        xgs = re.findall(r'xG[:\s]+([\d.]+)', metin)
+        if len(xgs) >= 2:
+            veri["xg_ev"] = float(xgs[0])
+            veri["xg_dep"] = float(xgs[1])
+
     # ---- Atılan Gol ----
     idx = metin.find("Atılan Gol")
     if idx != -1:
@@ -240,6 +285,13 @@ def metinden_veri_cikar(metin: str) -> dict:
         if len(sayilar) >= 2:
             veri["atilan_ev"] = float(sayilar[0])
             veri["atilan_dep"] = float(sayilar[1])
+
+    # Yeni format: "Atılan: 1.4" iki defa
+    if "atilan_ev" not in veri or "atilan_dep" not in veri:
+        atilanlar = re.findall(r'Atılan[:\s]+([\d.]+)', metin)
+        if len(atilanlar) >= 2:
+            veri["atilan_ev"] = float(atilanlar[0])
+            veri["atilan_dep"] = float(atilanlar[1])
 
     # ---- Yenen Gol ----
     idx = metin.find("Yenen Gol")
@@ -250,53 +302,94 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["yenen_ev"] = float(sayilar[0])
             veri["yenen_dep"] = float(sayilar[1])
 
+    # Yeni format: "Yenen: 1.2" iki defa
+    if "yenen_ev" not in veri or "yenen_dep" not in veri:
+        yenenler = re.findall(r'Yenen[:\s]+([\d.]+)', metin)
+        if len(yenenler) >= 2:
+            veri["yenen_ev"] = float(yenenler[0])
+            veri["yenen_dep"] = float(yenenler[1])
+
     # ---- Standart Sapma ----
     ss_listesi = re.findall(r'\bSS\s*\n\s*([\d.]+)', metin)
     if len(ss_listesi) >= 2:
         veri["ss_ev"] = float(ss_listesi[0])
         veri["ss_dep"] = float(ss_listesi[1])
+    else:
+        # Yeni format: "SS: 1.17" iki defa
+        ss_yeni = re.findall(r'\bSS[:\s]+([\d.]+)', metin)
+        if len(ss_yeni) >= 2:
+            veri["ss_ev"] = float(ss_yeni[0])
+            veri["ss_dep"] = float(ss_yeni[1])
+
+    # ---- Yenilmezlik (yeni format) ----
+    if "yenilmezlik_ev" not in veri:
+        yen_listesi = re.findall(r'Yenilmezlik[:\s]+%?([\d.]+)', metin)
+        if len(yen_listesi) >= 2:
+            veri["yenilmezlik_ev"] = float(yen_listesi[0])
+            veri["yenilmezlik_dep"] = float(yen_listesi[1])
+
+    # ---- Galibiyet (yeni format) ----
+    if "galibiyet_ev" not in veri:
+        gal_listesi = re.findall(r'Galibiyet[:\s]+%?([\d.]+)', metin)
+        if len(gal_listesi) >= 2:
+            veri["galibiyet_ev"] = float(gal_listesi[0])
+            veri["galibiyet_dep"] = float(gal_listesi[1])
+
+    # ---- Beraberlik (yeni format) ----
+    if "beraberlik_ev" not in veri:
+        ber_listesi = re.findall(r'Beraberlik[:\s]+%?([\d.]+)', metin)
+        if len(ber_listesi) >= 2:
+            veri["beraberlik_ev"] = float(ber_listesi[0])
+            veri["beraberlik_dep"] = float(ber_listesi[1])
 
     # ---- Üst Sıklıkları ----
-    # 0.5 Üst: Alverca 90%, Rio Ave 70%
-    m = re.search(r'0\.5 Üst\s*\n\s*(?:\w+\s*\n\s*)?(\d+)%[\s\S]*?(?:\w+\s*\n\s*)?(\d+)%', metin)
-    if m:
-        veri["ust05_ev"] = float(m.group(1))
-        veri["ust05_dep"] = float(m.group(2))
+    # Yeni format: "Üst 2.5 Sıklığı: %30" iki defa
+    ust25_listesi = re.findall(r'Üst\s*2\.5\s*Sıklığı[:\s]+%?(\d+)', metin)
+    if len(ust25_listesi) >= 2:
+        veri["ust25_ev"] = float(ust25_listesi[0])
+        veri["ust25_dep"] = float(ust25_listesi[1])
 
-    m = re.search(r'1\.5 Üst\s*\n\s*(?:\w+\s*\n\s*)?(\d+)%[\s\S]*?(?:\w+\s*\n\s*)?(\d+)%', metin)
-    if m:
-        veri["ust15_ev"] = float(m.group(1))
-        veri["ust15_dep"] = float(m.group(2))
-
-    m = re.search(r'2\.5 Üst\s*\n\s*(?:\w+\s*\n\s*)?(\d+)%[\s\S]*?(?:\w+\s*\n\s*)?(\d+)%', metin)
-    if m:
-        veri["ust25_ev"] = float(m.group(1))
-        veri["ust25_dep"] = float(m.group(2))
-
-    m = re.search(r'3\.5 Üst\s*\n\s*(?:\w+\s*\n\s*)?(\d+)%[\s\S]*?(?:\w+\s*\n\s*)?(\d+)%', metin)
-    if m:
-        veri["ust35_ev"] = float(m.group(1))
-        veri["ust35_dep"] = float(m.group(2))
-
-    # ---- KG Oranı (ortalama) ve KG Sıklığı (takım) ----
-    idx = metin.find("KG Sıklığı")
-    if idx != -1:
-        blok = metin[idx:idx+500]
-        m = re.search(r'Ortalama\s*\n\s*(\d+)%', blok)
+    # Eski format
+    if "ust25_ev" not in veri:
+        m = re.search(r'2\.5 Üst\s*\n\s*(?:\w+\s*\n\s*)?(\d+)%[\s\S]*?(?:\w+\s*\n\s*)?(\d+)%', metin)
         if m:
-            veri["kg_oran"] = float(m.group(1))
-        # Takım KG sıklıkları (ilk ve son yüzde)
-        yuzdeler = re.findall(r'(\d+)%', blok)
-        if len(yuzdeler) >= 2:
-            # İlk = Alverca/Ev, son = Rio Ave/Dep
-            veri["kg_siklik_ev"] = float(yuzdeler[0])
-            veri["kg_siklik_dep"] = float(yuzdeler[-1])
+            veri["ust25_ev"] = float(m.group(1))
+            veri["ust25_dep"] = float(m.group(2))
+
+    # ---- KG Sıklığı ve Oranı ----
+    # Yeni format: "KG Sıklığı: %60" iki defa
+    kg_sik_listesi = re.findall(r'KG\s*Sıklığı[:\s]+%?(\d+)', metin)
+    if len(kg_sik_listesi) >= 2:
+        veri["kg_siklik_ev"] = float(kg_sik_listesi[0])
+        veri["kg_siklik_dep"] = float(kg_sik_listesi[1])
+
+    # Eski format: "KG Sıklığı" bloğu
+    if "kg_siklik_ev" not in veri:
+        idx = metin.find("KG Sıklığı")
+        if idx != -1:
+            blok = metin[idx:idx+500]
+            m = re.search(r'Ortalama\s*\n\s*(\d+)%', blok)
+            if m:
+                veri["kg_oran"] = float(m.group(1))
+            yuzdeler = re.findall(r'(\d+)%', blok)
+            if len(yuzdeler) >= 2:
+                veri["kg_siklik_ev"] = float(yuzdeler[0])
+                veri["kg_siklik_dep"] = float(yuzdeler[-1])
+
+    # ---- KG Oranı Fallback: takım sıklıkları varsa ortalama al ----
+    if "kg_oran" not in veri:
+        if "kg_siklik_ev" in veri and "kg_siklik_dep" in veri:
+            veri["kg_oran"] = round((veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2)
+        else:
+            m = re.search(r'KG Oranı[:\s]+%?(\d+)', metin)
+            if m:
+                veri["kg_oran"] = float(m.group(1))
 
     return veri
 
 
 # ==========================================
-# İŞ MANTIĞI (GELİŞMİŞ FORMÜLASYON)
+# İŞ MANTIĞI
 # ==========================================
 def poisson_pmf(k: int, lam: float) -> float:
     if lam <= 0:
@@ -312,35 +405,27 @@ def poisson_matris(lam_ev: float, lam_dep: float, max_gol: int = MAX_GOL):
 
 
 def hesapla_lambda(v: dict):
-    # Ana hücum gücü
     hucum_ev = v["xg_ev"] * 0.6 + v["atilan_ev"] * 0.4
     hucum_dep = v["xg_dep"] * 0.6 + v["atilan_dep"] * 0.4
 
-    # 🆕 İsabet çarpanı (şut doğruluğu → hücum verimliliği)
     isabet_kat_ev = 1 + (v.get("isabet_ev", 40) - 40) / 250
     isabet_kat_dep = 1 + (v.get("isabet_dep", 40) - 40) / 250
 
-    # 🆕 Hücum hakimiyeti
     hak_kat_ev = 1 + (v.get("hucum_hakimiyeti_ev", 50) - 50) / 250
     hak_kat_dep = 1 + (v.get("hucum_hakimiyeti_dep", 50) - 50) / 250
 
-    # 🆕 Galibiyet oranı (son 10 maç)
     gal_kat_ev = 1 + (v.get("galibiyet_ev", 30) - 30) / 300
     gal_kat_dep = 1 + (v.get("galibiyet_dep", 30) - 30) / 300
 
-    # 🆕 İlk golü atma
     ilk_kat_ev = 1 + (v.get("ilk_gol_atar_ev", 40) - 40) / 400
     ilk_kat_dep = 1 + (v.get("ilk_gol_atar_dep", 40) - 40) / 400
 
-    # 🆕 Agresiflik (şut sayısı)
     agres_kat_ev = 1 + (v.get("agresiflik_ev", 8) - 8) / 50
     agres_kat_dep = 1 + (v.get("agresiflik_dep", 8) - 8) / 50
 
-    # 🆕 Hava topu (duran top gücü)
     hava_kat_ev = 1 + (v.get("hava_topu_ev", 10) - 10) / 100
     hava_kat_dep = 1 + (v.get("hava_topu_dep", 10) - 10) / 100
 
-    # Hücum gücünü ağırlıklandır
     hucum_ev *= isabet_kat_ev * hak_kat_ev * gal_kat_ev * ilk_kat_ev * agres_kat_ev * hava_kat_ev
     hucum_dep *= isabet_kat_dep * hak_kat_dep * gal_kat_dep * ilk_kat_dep * agres_kat_dep * hava_kat_dep
 
@@ -415,7 +500,7 @@ def veri_yeterli_mi(v: dict) -> bool:
 
 
 # ==========================================
-# GENİŞ KAPSAMLI YORUM (GENİŞLETİLMİŞ)
+# DETAYLI YORUM
 # ==========================================
 def detayli_analiz_yorumu(v: dict):
     yorumlar = []
@@ -424,7 +509,7 @@ def detayli_analiz_yorumu(v: dict):
     ppg, mpg = v["ppg_ev"], v["mpg_dep"]
     fark = ppg - mpg
     if ppg >= 2.0 and mpg <= 1.0:
-        txt = f"Ev sahibi evinde mükemmel bir form yakalamış (**PPG {ppg:.2f}**), deplasman deplasmanda zorlanıyor (**MPG {mpg:.2f}**). Ev sahibi açık ara üstün."
+        txt = f"Ev sahibi evinde mükemmel form yakalamış (**PPG {ppg:.2f}**), deplasman deplasmanda zorlanıyor (**MPG {mpg:.2f}**). Ev sahibi açık ara üstün."
     elif fark >= 0.7:
         txt = f"Ev sahibi form olarak önde (**PPG {ppg:.2f}** vs **{mpg:.2f}**). Sahasında kaybetmeye alışkın değil."
     elif fark <= -0.7:
@@ -433,13 +518,13 @@ def detayli_analiz_yorumu(v: dict):
         txt = f"Form dengeli (**PPG {ppg:.2f}** vs **MPG {mpg:.2f}**)."
     yorumlar.append(("📈 FORM", txt))
 
-    # GALİBİYET ORANI
+    # GALİBİYET
     g_ev, g_dep = v.get("galibiyet_ev", 0), v.get("galibiyet_dep", 0)
     if g_ev > 0 or g_dep > 0:
         if g_ev >= g_dep + 20:
-            txt = f"Son maçlarda ev sahibi **%{g_ev:.0f}** galibiyet oranıyla açık ara üstün (Dep: %{g_dep:.0f}). Kazanma alışkanlığı yüksek."
+            txt = f"Son maçlarda ev sahibi **%{g_ev:.0f}** galibiyet oranıyla açık ara üstün (Dep: %{g_dep:.0f})."
         elif g_dep >= g_ev + 20:
-            txt = f"Deplasman **%{g_dep:.0f}** galibiyet oranıyla önde (Ev: %{g_ev:.0f}). Deplasman formda."
+            txt = f"Deplasman **%{g_dep:.0f}** galibiyet oranıyla önde (Ev: %{g_ev:.0f})."
         else:
             txt = f"Galibiyet oranları yakın (Ev %{g_ev:.0f} / Dep %{g_dep:.0f})."
         yorumlar.append(("🏅 GALİBİYET ORANI", txt))
@@ -450,7 +535,7 @@ def detayli_analiz_yorumu(v: dict):
         if y_ev >= 50:
             txt = f"Ev sahibi **%{y_ev:.0f}** yenilmezlik oranıyla çok sağlam. Kolay kaybetmiyor."
         elif y_dep >= 50:
-            txt = f"Deplasman **%{y_dep:.0f}** yenilmezlik oranıyla dirençli. Zor mağlup oluyor."
+            txt = f"Deplasman **%{y_dep:.0f}** yenilmezlik oranıyla dirençli."
         else:
             txt = f"Yenilmezlik oranları düşük (Ev %{y_ev:.0f} / Dep %{y_dep:.0f}). İkisi de mağlubiyet görebiliyor."
         yorumlar.append(("💎 YENİLMEZLİK", txt))
@@ -463,75 +548,75 @@ def detayli_analiz_yorumu(v: dict):
     elif fark_sira >= 3:
         txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. Ev sahibi üstün konumda."
     elif fark_sira <= -8:
-        txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman **{abs(fark_sira)} basamak** yukarıda, sürpriz yapabilir."
+        txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman **{abs(fark_sira)} basamak** yukarıda."
     elif fark_sira <= -3:
         txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman biraz üstün."
     else:
-        txt = f"Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**). Dengeli eşleşme."
+        txt = f"Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**)."
     yorumlar.append(("🏆 SIRALAMA", txt))
 
     # xG
     xg_ev, xg_dep = v["xg_ev"], v["xg_dep"]
     fark_xg = xg_ev - xg_dep
     if fark_xg >= 0.6:
-        txt = f"Ev sahibi hücumda üretken (**xG {xg_ev:.2f}** vs **{xg_dep:.2f}**). Deplasman savunması zorlanabilir."
+        txt = f"Ev sahibi hücumda üretken (**xG {xg_ev:.2f}** vs **{xg_dep:.2f}**)."
     elif fark_xg <= -0.6:
-        txt = f"Deplasman hücumda daha etkili (**xG {xg_dep:.2f}** vs **{xg_ev:.2f}**). Ev sahibi savunmada dikkatli olmalı."
+        txt = f"Deplasman hücumda daha etkili (**xG {xg_dep:.2f}** vs **{xg_ev:.2f}**)."
     else:
         txt = f"xG değerleri yakın (Ev **{xg_ev:.2f}** / Dep **{xg_dep:.2f}**)."
     yorumlar.append(("🎯 HÜCUM (xG)", txt))
 
-    # 🆕 HÜCUM HAKİMİYETİ
+    # HÜCUM HAKİMİYETİ
     h_ev, h_dep = v.get("hucum_hakimiyeti_ev", 50), v.get("hucum_hakimiyeti_dep", 50)
     if abs(h_ev - h_dep) >= 10:
         if h_ev > h_dep:
-            txt = f"Ev sahibi **%{h_ev:.0f}** topa sahip olma/tehlikeli atak üstünlüğüyle oyunu domine ediyor (Dep: %{h_dep:.0f})."
+            txt = f"Ev sahibi **%{h_ev:.0f}** hücum hakimiyetiyle oyunu domine ediyor (Dep: %{h_dep:.0f})."
         else:
             txt = f"Deplasman **%{h_dep:.0f}** hücum hakimiyeti ile oyunu yönlendiriyor (Ev: %{h_ev:.0f})."
     else:
         txt = f"Hücum hakimiyeti dengeli (Ev %{h_ev:.0f} / Dep %{h_dep:.0f})."
     yorumlar.append(("⚡ HÜCUM HAKİMİYETİ", txt))
 
-    # 🆕 AGRESİFLİK (ŞUT/MAÇ)
+    # AGRESİFLİK
     a_ev, a_dep = v.get("agresiflik_ev", 8), v.get("agresiflik_dep", 8)
     if abs(a_ev - a_dep) >= 2:
         if a_ev > a_dep:
-            txt = f"Ev sahibi maç başına **{a_ev:.1f}** şut atıyor (Dep: {a_dep:.1f}). Rakip kaleye çok gidiyor."
+            txt = f"Ev sahibi maç başına **{a_ev:.1f}** şut atıyor (Dep: {a_dep:.1f})."
         else:
-            txt = f"Deplasman maç başına **{a_dep:.1f}** şut atıyor (Ev: {a_ev:.1f}). Daha agresif hücum ediyor."
+            txt = f"Deplasman maç başına **{a_dep:.1f}** şut atıyor (Ev: {a_ev:.1f})."
     else:
         txt = f"Şut sayıları benzer (Ev {a_ev:.1f} / Dep {a_dep:.1f})."
     yorumlar.append(("🎯 AGRESİFLİK (Şut)", txt))
 
-    # 🆕 İSABET
+    # İSABET
     i_ev, i_dep = v.get("isabet_ev", 40), v.get("isabet_dep", 40)
     if abs(i_ev - i_dep) >= 8:
         if i_ev > i_dep:
-            txt = f"Ev sahibi şut isabeti **%{i_ev:.0f}** ile keskin nişancı (Dep: %{i_dep:.0f}). Az pozisyonu gole çeviriyor."
+            txt = f"Ev sahibi şut isabeti **%{i_ev:.0f}** ile keskin (Dep: %{i_dep:.0f})."
         else:
-            txt = f"Deplasman şut isabeti **%{i_dep:.0f}** ile etkili (Ev: %{i_ev:.0f}). Fırsatları iyi değerlendiriyor."
+            txt = f"Deplasman şut isabeti **%{i_dep:.0f}** ile etkili (Ev: %{i_ev:.0f})."
     else:
         txt = f"Şut isabeti yakın (Ev %{i_ev:.0f} / Dep %{i_dep:.0f})."
-    yorumlar.append(("🎯 İSABET (Doğruluk)", txt))
+    yorumlar.append(("🎯 İSABET", txt))
 
-    # 🆕 HAVA TOPU (ORTALAR)
+    # HAVA TOPU
     ht_ev, ht_dep = v.get("hava_topu_ev", 10), v.get("hava_topu_dep", 10)
     if abs(ht_ev - ht_dep) >= 3:
         if ht_ev > ht_dep:
-            txt = f"Ev sahibi maç başına **{ht_ev:.0f}** orta yapıyor (Dep: {ht_dep:.0f}). Kanat oyunu ve duran top silahı güçlü."
+            txt = f"Ev sahibi maç başına **{ht_ev:.0f}** orta yapıyor (Dep: {ht_dep:.0f}). Kanat oyunu güçlü."
         else:
             txt = f"Deplasman **{ht_dep:.0f}** orta yapıyor (Ev: {ht_ev:.0f}). Kanatları iyi kullanıyor."
     else:
         txt = f"Orta sayıları benzer (Ev {ht_ev:.0f} / Dep {ht_dep:.0f})."
-    yorumlar.append(("📡 HAVA TOPU (Ortalar)", txt))
+    yorumlar.append(("📡 HAVA TOPU", txt))
 
     # ATILAN
     at_ev, at_dep = v["atilan_ev"], v["atilan_dep"]
     fark_at = at_ev - at_dep
     if fark_at >= 0.6:
-        txt = f"Ev sahibi maç başına **{at_ev:.1f}** gol atıyor, deplasman **{at_dep:.1f}**. Gerçekleşen performansta üstün."
+        txt = f"Ev sahibi maç başına **{at_ev:.1f}** gol atıyor, deplasman **{at_dep:.1f}**."
     elif fark_at <= -0.6:
-        txt = f"Deplasman maç başına **{at_dep:.1f}** gol atıyor, ev sahibi **{at_ev:.1f}**. Deplasman hücumda daha verimli."
+        txt = f"Deplasman maç başına **{at_dep:.1f}** gol atıyor, ev sahibi **{at_ev:.1f}**."
     else:
         txt = f"Atılan goller benzer (Ev **{at_ev:.1f}** / Dep **{at_dep:.1f}**)."
     yorumlar.append(("⚽ ATILAN GOL", txt))
@@ -540,33 +625,32 @@ def detayli_analiz_yorumu(v: dict):
     y_ev_s, y_dep_s = v["yenen_ev"], v["yenen_dep"]
     fark_ys = y_dep_s - y_ev_s
     if fark_ys >= 0.7:
-        txt = f"Ev sahibi savunması sağlam (**{y_ev_s:.1f}**/maç), deplasman zayıf (**{y_dep_s:.1f}**). Deplasman gol yiyebilir."
+        txt = f"Ev sahibi savunması sağlam (**{y_ev_s:.1f}**/maç), deplasman zayıf (**{y_dep_s:.1f}**)."
     elif fark_ys <= -0.7:
-        txt = f"Deplasman savunması sağlam (**{y_dep_s:.1f}**/maç), ev sahibi zayıf (**{y_ev_s:.1f}**). Deplasman gol bulabilir."
+        txt = f"Deplasman savunması sağlam (**{y_dep_s:.1f}**/maç), ev sahibi zayıf (**{y_ev_s:.1f}**)."
     else:
         txt = f"Savunmalar benzer (Ev **{y_ev_s:.1f}** / Dep **{y_dep_s:.1f}**)."
     yorumlar.append(("🛡️ SAVUNMA", txt))
 
-    # 🆕 İLK GOLÜ ATAR
+    # İLK GOL
     iga_ev = v.get("ilk_gol_atar_ev", 40)
     iga_dep = v.get("ilk_gol_atar_dep", 40)
     if abs(iga_ev - iga_dep) >= 10:
         if iga_ev > iga_dep:
-            txt = f"Ev sahibi ilk golü **%{iga_ev:.0f}** oranında atıyor (Dep: %{iga_dep:.0f}). Öne geçme alışkanlığı var."
+            txt = f"Ev sahibi ilk golü **%{iga_ev:.0f}** oranında atıyor (Dep: %{iga_dep:.0f})."
         else:
-            txt = f"Deplasman ilk golü **%{iga_dep:.0f}** oranında atıyor (Ev: %{iga_ev:.0f}). Erken gol potansiyeli yüksek."
+            txt = f"Deplasman ilk golü **%{iga_dep:.0f}** oranında atıyor (Ev: %{iga_ev:.0f})."
     else:
         txt = f"İlk golü atma oranları yakın (Ev %{iga_ev:.0f} / Dep %{iga_dep:.0f})."
     yorumlar.append(("⚡ İLK GOLÜ ATAR", txt))
 
-    # 🆕 İLK GOLÜ YER
     igy_ev = v.get("ilk_gol_yer_ev", 40)
     igy_dep = v.get("ilk_gol_yer_dep", 40)
     if abs(igy_ev - igy_dep) >= 10:
         if igy_ev > igy_dep:
-            txt = f"Ev sahibi ilk golü **%{igy_ev:.0f}** oranında yiyor (Dep: %{igy_dep:.0f}). Erken gol riski yüksek."
+            txt = f"Ev sahibi ilk golü **%{igy_ev:.0f}** oranında yiyor (Dep: %{igy_dep:.0f})."
         else:
-            txt = f"Deplasman ilk golü **%{igy_dep:.0f}** oranında yiyor (Ev: %{igy_ev:.0f}). Erken gol yeme riski var."
+            txt = f"Deplasman ilk golü **%{igy_dep:.0f}** oranında yiyor (Ev: %{igy_ev:.0f})."
     else:
         txt = f"İlk golü yeme oranları yakın (Ev %{igy_ev:.0f} / Dep %{igy_dep:.0f})."
     yorumlar.append(("🥅 İLK GOLÜ YER", txt))
@@ -575,9 +659,9 @@ def detayli_analiz_yorumu(v: dict):
     r_ev, r_dep = v["reaksiyon_ev"], v["reaksiyon_dep"]
     fark_r = r_ev - r_dep
     if fark_r >= 15:
-        txt = f"Ev sahibi reaksiyon gücü yüksek (**%{r_ev:.0f}** vs **%{r_dep:.0f}**). Geriye düştüğünde toparlanma kabiliyeti fazla."
+        txt = f"Ev sahibi reaksiyon gücü yüksek (**%{r_ev:.0f}** vs **%{r_dep:.0f}**)."
     elif fark_r <= -15:
-        txt = f"Deplasman reaksiyon gücü yüksek (**%{r_dep:.0f}** vs **%{r_ev:.0f}**). Skor dezavantajında pes etmiyor."
+        txt = f"Deplasman reaksiyon gücü yüksek (**%{r_dep:.0f}** vs **%{r_ev:.0f}**)."
     else:
         txt = f"Reaksiyon güçleri benzer (Ev **%{r_ev:.0f}** / Dep **%{r_dep:.0f}**)."
     yorumlar.append(("💪 REAKSİYON", txt))
@@ -591,38 +675,38 @@ def detayli_analiz_yorumu(v: dict):
         return "çok istikrarsız"
     if abs(ss_ev - ss_dep) >= 0.5:
         if ss_ev < ss_dep:
-            txt = f"Ev sahibi **{istikrar(ss_ev)}** (SS {ss_ev:.2f}), deplasman **{istikrar(ss_dep)}** (SS {ss_dep:.2f}). Ev sahibi daha güvenilir."
+            txt = f"Ev sahibi **{istikrar(ss_ev)}** (SS {ss_ev:.2f}), deplasman **{istikrar(ss_dep)}** (SS {ss_dep:.2f})."
         else:
-            txt = f"Deplasman **{istikrar(ss_dep)}** (SS {ss_dep:.2f}), ev sahibi **{istikrar(ss_ev)}** (SS {ss_ev:.2f}). Deplasman daha öngörülebilir."
+            txt = f"Deplasman **{istikrar(ss_dep)}** (SS {ss_dep:.2f}), ev sahibi **{istikrar(ss_ev)}** (SS {ss_ev:.2f})."
     else:
         txt = f"İstikrar seviyeleri benzer (Ev **{ss_ev:.2f}** / Dep **{ss_dep:.2f}**)."
     yorumlar.append(("📊 İSTİKRAR", txt))
 
-    # 🆕 ÜST SIKLIKLARI (Takım bazlı)
+    # ÜST 2.5
     u25_ev, u25_dep = v.get("ust25_ev", 30), v.get("ust25_dep", 30)
     if u25_ev > 0 or u25_dep > 0:
         if u25_ev >= 50 or u25_dep >= 50:
-            txt = f"Üst 2.5 gol sıklığı: Ev **%{u25_ev:.0f}** / Dep **%{u25_dep:.0f}**. En az bir takım sık gol görüyor → Üst sinyali."
+            txt = f"Üst 2.5 sıklığı: Ev **%{u25_ev:.0f}** / Dep **%{u25_dep:.0f}**. Üst sinyali."
         elif u25_ev <= 20 and u25_dep <= 20:
-            txt = f"Üst 2.5 gol sıklığı düşük: Ev **%{u25_ev:.0f}** / Dep **%{u25_dep:.0f}**. Alt sinyali güçlü."
+            txt = f"Üst 2.5 sıklığı düşük: Ev **%{u25_ev:.0f}** / Dep **%{u25_dep:.0f}**. Alt sinyali."
         else:
-            txt = f"Üst 2.5 sıklığı: Ev **%{u25_ev:.0f}** / Dep **%{u25_dep:.0f}**. Kararsız sinyal."
+            txt = f"Üst 2.5 sıklığı: Ev **%{u25_ev:.0f}** / Dep **%{u25_dep:.0f}**."
         yorumlar.append(("📈 ÜST 2.5 SIKLIĞI", txt))
 
-    # 🆕 KG SIKLIĞI (Takım bazlı)
+    # KG SIKLIĞI
     kg_ev, kg_dep = v.get("kg_siklik_ev", 50), v.get("kg_siklik_dep", 50)
     if abs(kg_ev - kg_dep) >= 20 or kg_ev >= 70 or kg_dep >= 70:
         if kg_ev > kg_dep:
-            txt = f"Ev sahibi **%{kg_ev:.0f}** oranında KG görüyor (Dep: %{kg_dep:.0f}). Maçlarında karşılıklı gol sık."
-        elif kg_dep > kg_ev:
-            txt = f"Deplasman **%{kg_dep:.0f}** oranında KG görüyor (Ev: %{kg_ev:.0f}). Deplasman maçlarında gol karşılıklı."
+            txt = f"Ev sahibi **%{kg_ev:.0f}** oranında KG görüyor (Dep: %{kg_dep:.0f})."
+        else:
+            txt = f"Deplasman **%{kg_dep:.0f}** oranında KG görüyor (Ev: %{kg_ev:.0f})."
         yorumlar.append(("🥅 KG SIKLIĞI", txt))
 
     return yorumlar
 
 
 # ==========================================
-# FAVORİ KOMBO ÜRETİCİ
+# FAVORİ KOMBO
 # ==========================================
 def favori_kombolar(matris, max_gol: int = MAX_GOL):
     p1 = p_x = p2 = 0.0
@@ -693,10 +777,7 @@ if st.session_state.sayfa == "giris":
         height=250,
         key="yapistir_input",
         label_visibility="collapsed",
-        placeholder="İstatistik sitesinden kopyaladığın TÜM metni buraya yapıştır.\n\n"
-                    "Ne kadar çok veri olursa analiz o kadar detaylı olur:\n"
-                    "PPG, MBP, Galibiyet %, Beraberlik %, İsabet %, Agresiflik, "
-                    "Hücum Hakimiyeti, İlk Gol, Üst Sıklıkları, KG Sıklığı..."
+        placeholder="İstatistik sitesinden kopyaladığın TÜM metni buraya yapıştır."
     )
 
     st.divider()
@@ -760,7 +841,6 @@ elif st.session_state.sayfa == "sonuc":
     elif fark < -10:    senaryo = "Deplasman hafif favori."
     else:               senaryo = "Maç oldukça dengeli, beraberlik riski yüksek."
 
-    # ---- KULLANILAN VERİLER ----
     with st.expander("📋 Analizde Kullanılan Tüm Veriler", expanded=False):
         st.markdown(f"""
         **🏠 Ev Sahibi**
@@ -772,8 +852,8 @@ elif st.session_state.sayfa == "sonuc":
         - Agresiflik: {v.get('agresiflik_ev', 0):.1f} şut/maç
         - Hücum Hakimiyeti: %{v.get('hucum_hakimiyeti_ev', 0):.0f}
         - Hava Topu: {v.get('hava_topu_ev', 0):.0f} orta
-        - İlk Golü Atar: %{v.get('ilk_gol_atar_ev', 0):.0f} | Yer: %{v.get('ilk_gol_yer_ev', 0):.0f}
-        - Üst 2.5 Sıklığı: %{v.get('ust25_ev', 0):.0f} | KG Sıklığı: %{v.get('kg_siklik_ev', 0):.0f}
+        - İlk Gol Atar: %{v.get('ilk_gol_atar_ev', 0):.0f} | Yer: %{v.get('ilk_gol_yer_ev', 0):.0f}
+        - Üst 2.5: %{v.get('ust25_ev', 0):.0f} | KG Sıklığı: %{v.get('kg_siklik_ev', 0):.0f}
 
         **✈️ Deplasman**
         - MPG: {v['mpg_dep']} | Sıra: {v['siralama_dep']}
@@ -784,8 +864,8 @@ elif st.session_state.sayfa == "sonuc":
         - Agresiflik: {v.get('agresiflik_dep', 0):.1f} şut/maç
         - Hücum Hakimiyeti: %{v.get('hucum_hakimiyeti_dep', 0):.0f}
         - Hava Topu: {v.get('hava_topu_dep', 0):.0f} orta
-        - İlk Golü Atar: %{v.get('ilk_gol_atar_dep', 0):.0f} | Yer: %{v.get('ilk_gol_yer_dep', 0):.0f}
-        - Üst 2.5 Sıklığı: %{v.get('ust25_dep', 0):.0f} | KG Sıklığı: %{v.get('kg_siklik_dep', 0):.0f}
+        - İlk Gol Atar: %{v.get('ilk_gol_atar_dep', 0):.0f} | Yer: %{v.get('ilk_gol_yer_dep', 0):.0f}
+        - Üst 2.5: %{v.get('ust25_dep', 0):.0f} | KG Sıklığı: %{v.get('kg_siklik_dep', 0):.0f}
 
         **🤝 Ortak:** KG Oranı: %{v['kg_oran']:.0f}
         """)
