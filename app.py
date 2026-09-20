@@ -1,7 +1,7 @@
 import streamlit as st
 import re
 
-st.set_page_config(page_title="Futbol Analiz Pro V12", page_icon="⚽", layout="centered")
+st.set_page_config(page_title="Futbol Analiz Pro V13", page_icon="⚽", layout="centered")
 
 st.markdown("""
     <h1 style='text-align: center; color: #1f77b4;'>⚽ Futbol Analiz Pro Sistemi</h1>
@@ -10,7 +10,17 @@ st.markdown("""
 
 st.divider()
 
-ham_veri = st.text_area("📋 Maç Bilgilerini Buraya Yapıştırın:", height=180, placeholder="1 Ev takım ... \n2 Dep takım ... \n...")
+# Hafıza kontrolü (Kutuyu sıfırlamak için)
+if "ham_veri" not in st.session_state:
+    st.session_state.ham_veri = ""
+
+# Metin kutusunu hafızaya bağlıyoruz
+st.session_state.ham_veri = st.text_area(
+    "📋 Maç Bilgilerini Buraya Yapıştırın:", 
+    value=st.session_state.ham_veri, 
+    height=180, 
+    placeholder="1 Ev takım ... \n2 Dep takım ... \n..."
+)
 
 def sayi_bul(metin, anahtar, varsayilan):
     pattern = rf"{anahtar}\D*([0-9]+[.,]?[0-9]*)"
@@ -23,9 +33,11 @@ def sayi_bul(metin, anahtar, varsayilan):
     return varsayilan
 
 if st.button("🚀 Gelişmiş Analizi Çalıştır", type="primary", use_container_width=True):
-    if not ham_veri.strip():
+    if not st.session_state.ham_veri.strip():
         st.warning("⚠️ Lütfen analizi yapılacak verileri yapıştırın!")
     else:
+        ham_veri = st.session_state.ham_veri
+        
         # Verileri ayıkla
         xg_ev = sayi_bul(ham_veri, "xG Ev", 1.5)
         xg_dep = sayi_bul(ham_veri, "xG Dep", 1.3)
@@ -42,23 +54,19 @@ if st.button("🚀 Gelişmiş Analizi Çalıştır", type="primary", use_contain
         
         toplam_guc = guc_ev + guc_dep if (guc_ev + guc_dep) > 0 else 1
         
-        # Olasılık Dağılımı
         oran_ev = min(max((guc_ev / toplam_guc) * 100, 15), 72)
         oran_dep = min(max((guc_dep / toplam_guc) * 100, 15), 72)
         oran_beraberlik = max(100 - (oran_ev + oran_dep), 15)
         
-        # Toplam 100'e sabitleme
         toplam_oran = oran_ev + oran_dep + oran_beraberlik
         oran_ev = (oran_ev / toplam_oran) * 100
         oran_dep = (oran_dep / toplam_oran) * 100
         oran_beraberlik = (oran_beraberlik / toplam_oran) * 100
 
-        # Çifte Şans Olasılıkları
         cifte_1x = oran_ev + oran_beraberlik
         cifte_x2 = oran_dep + oran_beraberlik
         cifte_12 = oran_ev + oran_dep
 
-        # Tahmini Gol Hesaplama
         tahmini_gol = (xg_ev + xg_dep + atilan_ev + atilan_dep) / 2
 
         st.success("🎯 Gelişmiş Yapay Zeka Analizi Tamamlandı!")
@@ -70,7 +78,6 @@ if st.button("🚀 Gelişmiş Analizi Çalıştır", type="primary", use_contain
         col2.metric("X (Beraberlik)", f"%{oran_beraberlik:.1f}")
         col3.metric("2 (Deplasman)", f"%{oran_dep:.1f}")
 
-        # Görsel İlerleme Çubukları
         st.progress(int(oran_ev), text=f"Ev Sahibi Kazanma Gücü: %{oran_ev:.1f}")
         st.progress(int(oran_beraberlik), text=f"Beraberlik İhtimali: %{oran_beraberlik:.1f}")
         st.progress(int(oran_dep), text=f"Deplasman Kazanma Gücü: %{oran_dep:.1f}")
@@ -110,3 +117,7 @@ if st.button("🚀 Gelişmiş Analizi Çalıştır", type="primary", use_contain
         * **Deplasman Reaksiyonu:** Deplasman ekibinin xG değeri ({xg_dep}) skoru eşitleme veya maçta kalma potansiyelinin yüksek olduğuna işaret ediyor.
         * **Önerilen Strateji:** Risk severler için yüksek oranlı tercihler, garanti arayanlar için ise **Çifte Şans ({'1X' if oran_ev >= oran_dep else 'X2'})** ve gol limitleri ön planda tutulabilir.
         """)
+
+        # Analiz bitince kutuyu temizle ve sayfayı yenile
+        st.session_state.ham_veri = ""
+        st.rerun()
