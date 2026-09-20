@@ -3,38 +3,29 @@ import streamlit as st
 st.set_page_config(page_title="Futbol Analiz Pro Manuel", page_icon="⚽", layout="centered")
 
 st.markdown("""
-    <h1 style='text-align: center; color: #1f77b4;'>⚽ Futbol Analiz Pro - Manuel Giriş</h1>
-    <p style='text-align: center; color: gray;'>İstatistikleri sırasıyla girin, yapay zeka hatasız analiz etsin!</p>
+    <h1 style='text-align: center; color: #1f77b4;'>⚽ Futbol Analiz Pro - Sıralı Manuel Giriş</h1>
+    <p style='text-align: center; color: gray;'>İstediğin sırada verileri gir, yapay zeka anında analiz etsin!</p>
 """, unsafe_allow_html=True)
 
 st.divider()
 
 st.subheader("📋 Maç İstatistikleri Giriş Paneli")
 
-# Senin istediğin sırada Ev ve Deplasman verileri için ikili sütun yapısı
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown("### 🏠 Ev Sahibi")
-    ppg_ev = st.number_input("1. PPG Ev", value=2.3, step=0.1)
-    siralama_ev = st.number_input("3. Sıralama Ev", value=14, step=1)
-    reaksiyon_ev = st.number_input("5. Reaksiyon Gücü Ev (%)", value=66.7, step=0.1)
-    xg_ev = st.number_input("6. xG Ev", value=1.87, step=0.01)
-    atilan_ev = st.number_input("7. Atılan Gol Ev", value=2.2, step=0.1)
-    yenen_ev = st.number_input("8. Yenen Gol Ev", value=0.7, step=0.1)
-    ss_ev = st.number_input("9. Standart Sapma Ev", value=1.55, step=0.01)
-
-with col2:
-    st.markdown("### ✈️ Deplasman")
-    mpg_dep = st.number_input("2. MPG Dep", value=2.0, step=0.1)
-    siralama_dep = st.number_input("4. Sıralama Dep", value=3, step=1)
-    reaksiyon_dep = st.number_input("5. Reaksiyon Gücü Dep (%)", value=60.0, step=0.1)
-    xg_dep = st.number_input("6. xG Dep", value=1.64, step=0.01)
-    atilan_dep = st.number_input("7. Atılan Gol Dep", value=2.0, step=0.1)
-    yenen_dep = st.number_input("8. Yenen Gol Dep", value=1.2, step=0.1)
-    ss_dep = st.number_input("9. Standart Sapma Dep", value=0.94, step=0.01)
-
-st.divider()
+# Tam istediğin sırada alt alta sıralı alanlar
+ppg_ev = st.number_input("1. PPG Ev", value=2.3, step=0.1)
+mpg_dep = st.number_input("2. MPG Dep", value=2.0, step=0.1)
+siralama_ev = st.number_input("3. Sıralama Ev", value=14, step=1)
+siralama_dep = st.number_input("4. Sıralama Dep", value=3, step=1)
+reaksiyon_ev = st.number_input("5. Reaksiyon Gücü Ev (%)", value=66.7, step=0.1)
+reaksiyon_dep = st.number_input("5. Reaksiyon Gücü Dep (%)", value=60.0, step=0.1)
+xg_ev = st.number_input("6. xG Ev", value=1.87, step=0.01)
+xg_dep = st.number_input("6. xG Dep", value=1.64, step=0.01)
+atilan_ev = st.number_input("7. Atılan Gol Ev", value=2.2, step=0.1)
+atilan_dep = st.number_input("7. Atılan Gol Dep", value=2.0, step=0.1)
+yenen_ev = st.number_input("8. Yenen Gol Ev", value=0.7, step=0.1)
+yenen_dep = st.number_input("8. Yenen Gol Dep", value=1.2, step=0.1)
+ss_ev = st.number_input("9. Standart Sapma Ev", value=1.55, step=0.01)
+ss_dep = st.number_input("9. Standart Sapma Dep", value=0.94, step=0.01)
 kg_oran = st.number_input("10. KG Oranı / Sıklığı (%)", value=55.0, step=1.0)
 
 st.divider()
@@ -64,7 +55,7 @@ if st.button("🚀 Manuel Analizi Çalıştır", type="primary", use_container_w
 
     tahmini_gol = (xg_ev + xg_dep + atilan_ev + atilan_dep) / 2
 
-    st.success("🎯 Manuel Girdi Analizi Başarıyla Tamamlandı!")
+    st.success("🎯 Sıralı Manuel Analiz Başarıyla Tamamlandı!")
 
     # --- 1. ANA MAÇ SONUCU VE ÇİZELGE ---
     st.subheader("📊 1X2 Maç Sonucu Dağılımı")
