@@ -10,12 +10,20 @@ st.markdown("""
 
 st.divider()
 
-# Metin kutusu (Tertemiz ve donmasız)
+# Session State ile güvenli metin kutusu yönetimi
+if "metin_kutusu" not in st.session_state:
+    st.session_state.metin_kutusu = ""
+
+# Metin kutusunu state'e bağlıyoruz
 ham_veri = st.text_area(
     "📋 Maç Bilgilerini Buraya Yapıştırın:", 
+    value=st.session_state.metin_kutusu,
     height=180, 
     placeholder="1 Ev takım ... \n2 Dep takım ... \n..."
 )
+
+# Kutudaki yazıyı güncel tutalım
+st.session_state.metin_kutusu = ham_veri
 
 def sayi_bul(metin, anahtar, varsayilan):
     pattern = rf"{anahtar}\D*([0-9]+[.,]?[0-9]*)"
@@ -27,7 +35,15 @@ def sayi_bul(metin, anahtar, varsayilan):
             return varsayilan
     return varsayilan
 
-if st.button("🚀 Gelişmiş Analizi Çalıştır", type="primary", use_container_width=True):
+col_b1, col_b2 = st.columns(2)
+calistir = col_b1.button("🚀 Analizi Çalıştır", type="primary", use_container_width=True)
+temizle = col_b2.button("🧹 Yeni Maç (Temizle)", use_container_width=True)
+
+if temizle:
+    st.session_state.metin_kutusu = ""
+    st.rerun()
+
+if calistir:
     if not ham_veri.strip():
         st.warning("⚠️ Lütfen analizi yapılacak verileri yapıştırın!")
     else:
