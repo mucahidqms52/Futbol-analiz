@@ -126,7 +126,7 @@ def takim_form_yorumu(deger: float) -> str:
 
 
 # ==========================================
-# SAYFA 1: GİRİŞ
+# SAYFA 1: GİRİŞ (DİKEY SIRALI: ÖNCE EV, SONRA DEP)
 # ==========================================
 if st.session_state.sayfa == "giris":
     st.markdown("""
@@ -141,28 +141,32 @@ if st.session_state.sayfa == "giris":
     fv = st.session_state.form_version
 
     with st.form(f"analiz_formu_{fv}"):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("### 🏠 Ev Sahibi")
-            ppg_ev = st.number_input("PPG (Ev)", value=float(v["ppg_ev"]), step=0.1, min_value=0.0, key=f"ppg_ev_{fv}")
-            siralama_ev = st.number_input("Sıralama (Ev)", value=int(v["siralama_ev"]), step=1, min_value=1, key=f"siralama_ev_{fv}")
-            reaksiyon_ev = st.number_input("Reaksiyon Gücü % (Ev)", value=float(v["reaksiyon_ev"]), step=1.0, min_value=0.0, max_value=100.0, key=f"reaksiyon_ev_{fv}")
-            xg_ev = st.number_input("xG (Ev)", value=float(v["xg_ev"]), step=0.01, min_value=0.0, key=f"xg_ev_{fv}")
-            atilan_ev = st.number_input("Atılan Gol (Ev)", value=float(v["atilan_ev"]), step=0.1, min_value=0.0, key=f"atilan_ev_{fv}")
-            yenen_ev = st.number_input("Yenen Gol (Ev)", value=float(v["yenen_ev"]), step=0.1, min_value=0.0, key=f"yenen_ev_{fv}")
-            ss_ev = st.number_input("Standart Sapma (Ev)", value=float(v["ss_ev"]), step=0.1, min_value=0.0, key=f"ss_ev_{fv}")
-
-        with col2:
-            st.markdown("### ✈️ Deplasman")
-            mpg_dep = st.number_input("MPG (Dep)", value=float(v["mpg_dep"]), step=0.1, min_value=0.0, key=f"mpg_dep_{fv}")
-            siralama_dep = st.number_input("Sıralama (Dep)", value=int(v["siralama_dep"]), step=1, min_value=1, key=f"siralama_dep_{fv}")
-            reaksiyon_dep = st.number_input("Reaksiyon Gücü % (Dep)", value=float(v["reaksiyon_dep"]), step=1.0, min_value=0.0, max_value=100.0, key=f"reaksiyon_dep_{fv}")
-            xg_dep = st.number_input("xG (Dep)", value=float(v["xg_dep"]), step=0.01, min_value=0.0, key=f"xg_dep_{fv}")
-            atilan_dep = st.number_input("Atılan Gol (Dep)", value=float(v["atilan_dep"]), step=0.1, min_value=0.0, key=f"atilan_dep_{fv}")
-            yenen_dep = st.number_input("Yenen Gol (Dep)", value=float(v["yenen_dep"]), step=0.1, min_value=0.0, key=f"yenen_dep_{fv}")
-            ss_dep = st.number_input("Standart Sapma (Dep)", value=float(v["ss_dep"]), step=0.1, min_value=0.0, key=f"ss_dep_{fv}")
+        # ---------- EV SAHİBİ ----------
+        st.markdown("### 🏠 Ev Sahibi")
+        ppg_ev = st.number_input("PPG (Ev)", value=float(v["ppg_ev"]), step=0.1, min_value=0.0, key=f"ppg_ev_{fv}")
+        siralama_ev = st.number_input("Sıralama (Ev)", value=int(v["siralama_ev"]), step=1, min_value=1, key=f"siralama_ev_{fv}")
+        reaksiyon_ev = st.number_input("Reaksiyon Gücü % (Ev)", value=float(v["reaksiyon_ev"]), step=1.0, min_value=0.0, max_value=100.0, key=f"reaksiyon_ev_{fv}")
+        xg_ev = st.number_input("xG (Ev)", value=float(v["xg_ev"]), step=0.01, min_value=0.0, key=f"xg_ev_{fv}")
+        atilan_ev = st.number_input("Atılan Gol (Ev)", value=float(v["atilan_ev"]), step=0.1, min_value=0.0, key=f"atilan_ev_{fv}")
+        yenen_ev = st.number_input("Yenen Gol (Ev)", value=float(v["yenen_ev"]), step=0.1, min_value=0.0, key=f"yenen_ev_{fv}")
+        ss_ev = st.number_input("Standart Sapma (Ev)", value=float(v["ss_ev"]), step=0.1, min_value=0.0, key=f"ss_ev_{fv}")
 
         st.divider()
+
+        # ---------- DEPLASMAN ----------
+        st.markdown("### ✈️ Deplasman")
+        mpg_dep = st.number_input("MPG (Dep)", value=float(v["mpg_dep"]), step=0.1, min_value=0.0, key=f"mpg_dep_{fv}")
+        siralama_dep = st.number_input("Sıralama (Dep)", value=int(v["siralama_dep"]), step=1, min_value=1, key=f"siralama_dep_{fv}")
+        reaksiyon_dep = st.number_input("Reaksiyon Gücü % (Dep)", value=float(v["reaksiyon_dep"]), step=1.0, min_value=0.0, max_value=100.0, key=f"reaksiyon_dep_{fv}")
+        xg_dep = st.number_input("xG (Dep)", value=float(v["xg_dep"]), step=0.01, min_value=0.0, key=f"xg_dep_{fv}")
+        atilan_dep = st.number_input("Atılan Gol (Dep)", value=float(v["atilan_dep"]), step=0.1, min_value=0.0, key=f"atilan_dep_{fv}")
+        yenen_dep = st.number_input("Yenen Gol (Dep)", value=float(v["yenen_dep"]), step=0.1, min_value=0.0, key=f"yenen_dep_{fv}")
+        ss_dep = st.number_input("Standart Sapma (Dep)", value=float(v["ss_dep"]), step=0.1, min_value=0.0, key=f"ss_dep_{fv}")
+
+        st.divider()
+
+        # ---------- ORTAK VERİ ----------
+        st.markdown("### 📊 Ortak Veri")
         kg_oran = st.number_input(
             "KG Oranı / Karşılıklı Gol Sıklığı (%)",
             value=float(v["kg_oran"]), step=1.0,
@@ -326,7 +330,7 @@ elif st.session_state.sayfa == "sonuc":
     guc6.metric("Dep Dezavantajı", "×0.94")
     st.divider()
 
-    # ---- 6. DETAYLI YORUM (HEPSİ AÇIK) ----
+    # ---- 6. DETAYLI YORUM ----
     st.subheader("📝 Detaylı Analiz Yorumu")
 
     fark = p1 - p2
