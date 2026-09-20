@@ -357,6 +357,9 @@ def detayli_analiz_yorumu(v: dict):
     return yorumlar
 
 
+# ==========================================
+# FAVORİ KOMBO ÜRETİCİ (DÜZELTİLDİ)
+# ==========================================
 def favori_kombolar(matris, max_gol: int = MAX_GOL):
     p1 = p_x = p2 = 0.0
     alt = ust = 0.0
@@ -377,32 +380,31 @@ def favori_kombolar(matris, max_gol: int = MAX_GOL):
     favori_gol   = max([("Alt", alt), ("Üst", ust)], key=lambda x: x[1])
     favori_kg    = max([("Var", kg_var), ("Yok", kg_yok)], key=lambda x: x[1])
 
-    def filtre_sonuc(kod):
+    def fn_sonuc(kod):
         if kod == "1": return lambda i, j: i > j
         if kod == "X": return lambda i, j: i == j
         return lambda i, j: i < j
 
-    def filtre_gol(kod):
+    def fn_gol(kod):
         if kod == "Alt": return lambda i, j: i + j < 2.5
         return lambda i, j: i + j > 2.5
 
-    def filtre_kg(kod):
+    def fn_kg(kod):
         if kod == "Var": return lambda i, j: i > 0 and j > 0
         return lambda i, j: i == 0 or j == 0
 
     kombinasyonlar = [
-        (favori_sonuc, favori_gol, filtre_sonuc, filtre_gol),
-        (favori_sonuc, favori_kg,  filtre_sonuc, filtre_kg),
-        (favori_gol,   favori_kg,  filtre_gol,   filtre_kg),
+        (f"{favori_sonuc[0]} {favori_gol[0]}", fn_sonuc(favori_sonuc[0]), fn_gol(favori_gol[0])),
+        (f"{favori_sonuc[0]} {favori_kg[0]}",  fn_sonuc(favori_sonuc[0]), fn_kg(favori_kg[0])),
+        (f"{favori_gol[0]} {favori_kg[0]}",    fn_gol(favori_gol[0]),     fn_kg(favori_kg[0])),
     ]
 
     kombolar = []
-    for (f1, f2, fn1, fn2) in kombinasyonlar:
-        isim = f"{f1[0]} {f2[0]}"
+    for isim, f1, f2 in kombinasyonlar:
         toplam = 0.0
         for i in range(max_gol):
             for j in range(max_gol):
-                if fn1(i, j) and fn2(i, j):
+                if f1(i, j) and f2(i, j):
                     toplam += matris[i][j]
         kombolar.append((isim, toplam * 100))
 
@@ -427,11 +429,7 @@ if st.session_state.sayfa == "giris":
         height=250,
         key="yapistir_input",
         label_visibility="collapsed",
-        placeholder="İstatistik sitesinden kopyaladığın TÜM metni buraya yapıştır.\n\n"
-                    "Örn:\n"
-                    "PPG: 1.2\n"
-                    "MBP: 1.3\n"
-                    "Beklenen goller (maç öncesi xG)\nAlverca\n1.63\n61\nZayıf\n×\nRio Ave\n1.02\n59\n..."
+        placeholder="İstatistik sitesinden kopyaladığın TÜM metni buraya yapıştır."
     )
 
     st.divider()
@@ -446,7 +444,6 @@ if st.session_state.sayfa == "giris":
             if not cikan:
                 st.error("❌ Metinden hiçbir veri çıkarılamadı. Formatı kontrol et.")
             else:
-                # Varsayılanlarla birleştir
                 yeni_veri = copy.deepcopy(VARSAYILAN_VERI)
                 yeni_veri.update(cikan)
                 st.session_state.form_verileri = yeni_veri
@@ -496,7 +493,6 @@ elif st.session_state.sayfa == "sonuc":
     elif fark < -10:    senaryo = "Deplasman hafif favori."
     else:               senaryo = "Maç oldukça dengeli, beraberlik riski yüksek."
 
-    # ---- KULLANILAN VERİLER (üstte özet) ----
     with st.expander("📋 Analizde Kullanılan Veriler", expanded=False):
         st.markdown(f"""
         **🏠 Ev Sahibi**
