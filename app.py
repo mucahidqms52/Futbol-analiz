@@ -100,7 +100,6 @@ def metinden_veri_cikar(metin: str) -> dict:
     veri = {}
     metin = metin.replace(",", ".")
 
-    # FORM
     idx = metin.find("Güvenilirlik ve Form")
     if idx == -1:
         idx = metin.find("PPG")
@@ -133,7 +132,6 @@ def metinden_veri_cikar(metin: str) -> dict:
             m_y2 = re.search(r'(?:Invencibilidade|Yenilmezlik)[:\s]+([\d.]+)%', dep_blok)
             if m_y2: veri["yenilmezlik_dep"] = float(m_y2.group(1))
 
-        # Psikolojik Faktör
         idx_psy = metin.find("Psikolojik Faktör")
         if idx_psy != -1:
             psy_blok = metin[idx_psy:idx_psy+600]
@@ -150,7 +148,6 @@ def metinden_veri_cikar(metin: str) -> dict:
                 veri["ilk_gol_yer_ev"] = float(m_yer.group(1))
                 veri["ilk_gol_yer_dep"] = float(m_yer.group(2))
 
-    # SIRALAMA
     idx = metin.find("Tablo Pozisyonu")
     if idx != -1:
         blok = metin[idx:idx+500]
@@ -159,7 +156,6 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["siralama_ev"] = int(m.group(1))
             veri["siralama_dep"] = int(m.group(2))
 
-    # HÜCUM HAKİMİYETİ
     idx = metin.find("Hücum Hakimiyeti")
     if idx != -1:
         blok = metin[idx:idx+300]
@@ -168,7 +164,6 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["hucum_hakimiyeti_ev"] = float(yuzdeler[0])
             veri["hucum_hakimiyeti_dep"] = float(yuzdeler[1])
 
-    # AGRESİFLİK
     idx = metin.find("Agresiflik")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -177,7 +172,6 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["agresiflik_ev"] = float(m.group(1))
             veri["agresiflik_dep"] = float(m.group(2))
 
-    # İSABET
     idx = metin.find("İsabet")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -186,7 +180,6 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["isabet_ev"] = float(m.group(1))
             veri["isabet_dep"] = float(m.group(2))
 
-    # HAVA TOPU
     idx = metin.find("Hava Topu")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -195,7 +188,6 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["hava_topu_ev"] = float(m.group(1))
             veri["hava_topu_dep"] = float(m.group(2))
 
-    # xG
     idx = metin.find("Beklenen goller (maç öncesi xG)")
     if idx == -1:
         idx = metin.find("Beklenen goller")
@@ -206,7 +198,6 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["xg_ev"] = float(m.group(1))
             veri["xg_dep"] = float(m.group(2))
 
-    # ATILAN
     idx = metin.find("Atılan Gol (Ort)")
     if idx == -1:
         idx = metin.find("Atılan Gol")
@@ -217,7 +208,6 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["atilan_ev"] = float(sayilar[0])
             veri["atilan_dep"] = float(sayilar[1])
 
-    # YENEN
     idx = metin.find("Yenen Gol (Ort)")
     if idx == -1:
         idx = metin.find("Yenen Gol")
@@ -228,13 +218,11 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["yenen_ev"] = float(sayilar[0])
             veri["yenen_dep"] = float(sayilar[1])
 
-    # SS
     ss_listesi = re.findall(r'\bSS\s*\n\s*([\d.]+)', metin)
     if len(ss_listesi) >= 2:
         veri["ss_ev"] = float(ss_listesi[0])
         veri["ss_dep"] = float(ss_listesi[1])
 
-    # ÜST 2.5
     idx = metin.find("2.5 Üst")
     if idx != -1:
         blok = metin[idx:idx+400]
@@ -246,7 +234,6 @@ def metinden_veri_cikar(metin: str) -> dict:
             else:
                 veri["ust25_dep"] = float(yuzdeler[1])
 
-    # KG
     idx = metin.find("KG Sıklığı")
     if idx != -1:
         blok = metin[idx:idx+500]
@@ -260,7 +247,6 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["kg_siklik_dep"] = float(yuzdeler[1])
             veri["kg_oran"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
 
-    # ORANLAR
     m = re.search(r'Casa\s*\n\s*([\d.]+)\s*\n\s*\|\s*\n\s*(?:E|Empate)\s*\n\s*([\d.]+)\s*\n\s*\|\s*\n\s*(?:Visit|Fora)\s*\n\s*([\d.]+)', metin, re.IGNORECASE)
     if m:
         veri["oran_1"] = float(m.group(1))
@@ -837,31 +823,27 @@ elif st.session_state.sayfa == "sonuc":
         """)
 
     vb = value_bet_analizi(v, p1, px, p2, ust_25, kg_var_model)
-    if vb:
-        with st.expander("💎 Value Bet Analizi", expanded=True):
+
+    with st.expander("💎 Value Bet Analizi", expanded=False):
+        if vb:
             for market, isim, model, piy, fark_vb, oran, karar in vb:
                 st.markdown(f"**{market} — {isim}** (Oran {oran})")
                 st.markdown(f"Model: **%{model:.1f}** | Piyasa: **%{piy:.1f}** | Fark: **{fark_vb:+.1f}** {karar}")
                 st.markdown("")
+        else:
+            st.info("ℹ️ Value bet için oran verisi yok.")
 
-            en_iyi_vb = max(vb, key=lambda x: x[4])
-            if en_iyi_vb[4] >= 5:
-                st.success(f"🔥 **En Değerli Bahis:** {en_iyi_vb[1]} @ {en_iyi_vb[5]} → %{en_iyi_vb[4]:+.1f} fark")
+    # KOMBOLAR
+    kombolar_fav, favoriler = favori_kombolar(matris, MAX_GOL)
+    oran_map = {
+        "1": v.get("oran_1", 0), "X": v.get("oran_x", 0), "2": v.get("oran_2", 0),
+        "Üst": v.get("oran_ust25", 0), "Alt": v.get("oran_alt25", 0),
+        "Var": v.get("oran_kg_var", 0), "Yok": v.get("oran_kg_yok", 0),
+    }
 
     with st.expander("🎰 Kombolar (Favori + Value)", expanded=True):
-        # FAVORİ KOMBOLAR
-        st.markdown("### 🎯 Favori Kombolar (Güvenli)")
-        st.markdown("*En yüksek model olasılıklı — yüksek isabet, düşük oran*")
-
-        kombolar_fav, favoriler = favori_kombolar(matris, MAX_GOL)
+        st.markdown("### 🎯 Favori Kombolar")
         st.markdown(f"**Favoriler:** `{favoriler[0]}` • `{favoriler[1]}` • `{favoriler[2]}`")
-
-        oran_map = {
-            "1": v.get("oran_1", 0), "X": v.get("oran_x", 0), "2": v.get("oran_2", 0),
-            "Üst": v.get("oran_ust25", 0), "Alt": v.get("oran_alt25", 0),
-            "Var": v.get("oran_kg_var", 0), "Yok": v.get("oran_kg_yok", 0),
-        }
-
         for isim, yuzde in kombolar_fav:
             parcalar = isim.split()
             kombine_oran = 0
@@ -870,18 +852,13 @@ elif st.session_state.sayfa == "sonuc":
                 o2 = oran_map.get(parcalar[1], 0)
                 if o1 > 0 and o2 > 0:
                     kombine_oran = o1 * o2
-
             emoji = "🟢" if yuzde >= 50 else "🟡" if yuzde >= 35 else "🔴"
-            oran_str = f" | Kombine Oran: **{kombine_oran:.2f}**" if kombine_oran > 0 else ""
+            oran_str = f" | Oran: **{kombine_oran:.2f}**" if kombine_oran > 0 else ""
             st.markdown(f"{emoji} **{isim}** → %{yuzde:.1f}{oran_str}")
 
-        # TEKLİ VALUE BET'LER
         st.markdown("---")
         st.markdown("### 💎 VALUE Bet'ler (Tekli)")
-        st.markdown("*Model piyasadan daha güveniyor — tek bahis fırsatları*")
-
         tekli_value = [x for x in vb if x[4] >= 5] if vb else []
-
         if tekli_value:
             for market, isim, model, piy, fark_vb, oran, karar in tekli_value:
                 fark_emoji = "🔥" if fark_vb >= 10 else "✅"
@@ -891,31 +868,125 @@ elif st.session_state.sayfa == "sonuc":
         else:
             st.info("ℹ️ Tekli value bet yok.")
 
-        # 2'Lİ VALUE KOMBOLAR
         st.markdown("---")
         st.markdown("### 💎💎 VALUE Kombolar (2'li)")
-        st.markdown("*Value bet'lerden üretilen 2'li kombolar — düşük isabet, yüksek oran*")
-
         vk = value_kombolar(v, matris, MAX_GOL)
-
         if vk:
             for k in vk[:5]:
-                fark_emoji = "🔥" if k["fark"] >= 10 else "✅" if k["fark"] >= 5 else "🟡"
-                st.markdown(f"{fark_emoji} **{k['isim']}** → Kombine Oran: **{k['oran']:.2f}**")
+                fark_emoji = "🔥" if k["fark"] >= 10 else "✅"
+                st.markdown(f"{fark_emoji} **{k['isim']}** → Oran: **{k['oran']:.2f}**")
                 st.markdown(f"Model: **%{k['model']:.1f}** | Piyasa: **%{k['piyasa']:.1f}** | Fark: **{k['fark']:+.1f}**")
-
-            en_iyi_vk = vk[0]
-            if en_iyi_vk["fark"] >= 10:
-                st.success(f"🔥 **En İyi VALUE Kombo:** {en_iyi_vk['isim']} @ {en_iyi_vk['oran']:.2f} → +{en_iyi_vk['fark']:.1f} fark")
         else:
-            st.info("ℹ️ Şu an value içeren 2'li kombo yok.")
+            st.info("ℹ️ 2'li value kombo yok.")
+
+    # ==========================================
+    # 🏆 FİNAL ÖNERİ (EN İYİ 3)
+    # ==========================================
+    st.divider()
+    st.markdown("## 🏆 FİNAL ÖNERİ — EN İYİ 3 BAHİS")
+
+    # Tüm adayları topla
+    adaylar = []
+
+    # 1. Favori kombolar (kombine oranlı)
+    for isim, yuzde in kombolar_fav:
+        parcalar = isim.split()
+        if len(parcalar) == 2:
+            o1 = oran_map.get(parcalar[0], 0)
+            o2 = oran_map.get(parcalar[1], 0)
+            if o1 > 0 and o2 > 0:
+                kombine_oran = o1 * o2
+                ev = (yuzde / 100) * kombine_oran
+                adaylar.append({
+                    "tip": "🎯 Favori Kombo",
+                    "isim": isim,
+                    "yuzde": yuzde,
+                    "oran": kombine_oran,
+                    "ev": ev,
+                })
+
+    # 2. Tekli value bet'ler
+    tekli_value = [x for x in vb if x[4] >= 5] if vb else []
+    for market, isim, model, piy, fark_vb, oran, karar in tekli_value:
+        ev = (model / 100) * oran
+        adaylar.append({
+            "tip": "💎 Tekli Value",
+            "isim": isim,
+            "yuzde": model,
+            "oran": oran,
+            "ev": ev,
+        })
+
+    # 3. Value kombolar
+    for k in vk[:5]:
+        ev = (k["model"] / 100) * k["oran"]
+        adaylar.append({
+            "tip": "💎💎 Value Kombo",
+            "isim": k["isim"],
+            "yuzde": k["model"],
+            "oran": k["oran"],
+            "ev": ev,
+        })
+
+    # EV'ye göre sırala
+    adaylar.sort(key=lambda x: x["ev"], reverse=True)
+
+    if adaylar:
+        en_iyi_3 = adaylar[:3]
+
+        madalya = ["🥇", "🥈", "🥉"]
+
+        for i, a in enumerate(en_iyi_3):
+            if a["ev"] >= 1.5:
+                ev_yorumu = "🟢 Çok Kârlı"
+                kutu = st.success
+            elif a["ev"] >= 1.2:
+                ev_yorumu = "🟢 Kârlı"
+                kutu = st.success
+            elif a["ev"] >= 1.0:
+                ev_yorumu = "🟡 Sınırda"
+                kutu = st.warning
+            else:
+                ev_yorumu = "🔴 Kârsız"
+                kutu = st.error
+
+            kutu(f"""
+{madalya[i]} **{a['isim']}** — {a['tip']}
+
+- 📊 Model: **%{a['yuzde']:.1f}** | 💰 Oran: **{a['oran']:.2f}** | 🎲 EV: **{a['ev']:.2f}** → {ev_yorumu}
+""")
+
+        # Detaylı EV tablosu
+        st.markdown("### 📊 Karşılaştırma Tablosu")
+        st.markdown("| # | Bahis | Tip | Model % | Oran | EV | Karar |")
+        st.markdown("|---|---|---|---|---|---|---|")
+
+        for i, a in enumerate(en_iyi_3, 1):
+            if a["ev"] >= 1.2:
+                emoji = "🟢"
+            elif a["ev"] >= 1.0:
+                emoji = "🟡"
+            else:
+                emoji = "🔴"
+            st.markdown(
+                f"| {madalya[i-1]} | **{a['isim']}** | {a['tip']} | "
+                f"%{a['yuzde']:.1f} | {a['oran']:.2f} | **{a['ev']:.2f}** | {emoji} |"
+            )
 
         st.markdown("---")
-        st.markdown("""
-        - 🎯 **Favori Kombo** → Yüksek isabet, düşük kâr (güvenli)
-        - 💎 **Tekli VALUE** → Tek bahis, dengeli fırsat
-        - 💎💎 **VALUE Kombo** → Düşük isabet, yüksek kâr (riskli)
-        """)
+        st.markdown(f"💡 **Yorum:** En iyi bahis için her 1 TL yatırımda ortalama **{en_iyi_3[0]['ev']:.2f} TL** geri kazanç beklenir.")
+
+        # Diğer adayları göster (kalanlar)
+        if len(adaylar) > 3:
+            with st.expander(f"📋 Diğer Adaylar ({len(adaylar) - 3})", expanded=False):
+                for i, a in enumerate(adaylar[3:], 4):
+                    emoji = "🟢" if a["ev"] >= 1.2 else "🟡" if a["ev"] >= 1.0 else "🔴"
+                    st.markdown(
+                        f"{i}. {emoji} **{a['isim']}** ({a['tip']}) → "
+                        f"%{a['yuzde']:.1f} × {a['oran']:.2f} = **EV {a['ev']:.2f}**"
+                    )
+    else:
+        st.info("ℹ️ Oran verisi olmadığı için final öneri hesaplanamadı.")
 
     st.divider()
 
