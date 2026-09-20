@@ -1,15 +1,15 @@
 import streamlit as st
 import math
+import pandas as pd
 
-st.set_page_config(page_title="Futbol Analiz Pro Plus", page_icon="⚽", layout="centered")
+st.set_page_config(page_title="Futbol Analiz Pro Grafik", page_icon="⚽", layout="centered")
 
-# CSS ile yazı boyutlarını biraz küçülterek daha profesyonel ve toplu bir görünüm sağlıyoruz
+# Yazı boyutları ve şık kart tasarımları için CSS
 st.markdown("""
     <style>
-        .metric-text { font-size: 13px !important; }
         p, li, span { font-size: 14px !important; }
-        h3 { font-size: 20px !important; }
-        h4 { font-size: 16px !important; }
+        h3 { font-size: 18px !important; }
+        h4 { font-size: 15px !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -30,8 +30,8 @@ if "veriler" not in st.session_state:
 
 # --- 1. GİRİŞ EKRANI ---
 if st.session_state.sayfa == "giris":
-    st.markdown("<h3 style='text-align: center; color: #1f77b4; margin-bottom: 0px;'>⚽ Futbol Analiz Pro Plus</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: gray; font-size: 12px;'>Detaylı Veri Giriş Terminali</p>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #1f77b4; margin-bottom: 0px;'>⚽ Futbol Analiz Pro Grafik</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: gray; font-size: 12px;'>Veri Giriş Terminali</p>", unsafe_allow_html=True)
 
     v = st.session_state.veriler
 
@@ -57,11 +57,11 @@ if st.session_state.sayfa == "giris":
     v["kg_oran"] = st.number_input("10. KG Oranı (%)", value=v["kg_oran"], step=1.0)
 
     st.write("")
-    if st.button("🚀 Detaylı Pro Analizi Başlat", type="primary", use_container_width=True):
+    if st.button("🚀 Grafiksel Analizi Başlat", type="primary", use_container_width=True):
         st.session_state.sayfa = "sonuc"
         st.rerun()
 
-# --- 2. DETAYLI PRO SONUÇ EKRANI (Ayrıntılı & Kaydırmalı) ---
+# --- 2. GRAFİKSEL VE DETAYLI PRO SONUÇ EKRANI ---
 elif st.session_state.sayfa == "sonuc":
     v = st.session_state.veriler
 
@@ -102,67 +102,57 @@ elif st.session_state.sayfa == "sonuc":
 
     cifte_1x = oran_ev + oran_beraberlik
     cifte_x2 = oran_dep + oran_beraberlik
-    cifte_12 = oran_ev + oran_dep
 
     over25_oran = (1 - u25_prob) * 100
     btts_oran = btts_prob * 100
     tahmini_gol = lambda_ev + lambda_dep
     risk_skoru = (v["ss_ev"] + v["ss_dep"]) / 2
 
-    # En muhtemel skoru bulma
     en_yuksek_skor = max(skor_matrisi, key=skor_matrisi.get)
 
     # Başlık
-    st.markdown("<h4 style='text-align: center; color: #1f77b4; margin-bottom: 0px;'>📊 Detaylı Pro Terminal Raporu</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center; color: #1f77b4; margin-bottom: 0px;'>📊 Grafiksel Analiz Paneli</h4>", unsafe_allow_html=True)
     st.markdown("<hr style='margin: 6px 0px;'>", unsafe_allow_html=True)
 
-    # 1. Ana Maç Sonucu
-    st.markdown("<b>1. Maç Sonucu Olasılıkları (Poisson)</b>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    c1.metric("1 (Ev)", f"%{oran_ev:.1f}")
-    c2.metric("X (Ber)", f"%{oran_beraberlik:.1f}")
-    c3.metric("2 (Dep)", f"%{oran_dep:.1f}")
+    # 1. 1X2 Grafik Görselleştirmesi (Streamlit Bar Chart)
+    st.markdown("<b>1. Maç Sonucu Olasılık Grafiği</b>", unsafe_allow_html=True)
+    df_1x2 = pd.DataFrame({
+        "Sonuç": ["Ev Sahibi (1)", "Beraberlik (X)", "Deplasman (2)"],
+        "Olasılık (%)": [round(oran_ev, 1), round(oran_beraberlik, 1), round(oran_dep, 1)]
+    }).set_index("Sonuç")
+    st.bar_chart(df_1x2, color="#1f77b4")
 
-    st.progress(int(oran_ev), text=f"Ev Kazanma Gücü: %{oran_ev:.1f}")
-    st.progress(int(oran_beraberlik), text=f"Beraberlik İhtimali: %{oran_beraberlik:.1f}")
-    st.progress(int(oran_dep), text=f"Dep Kazanma Gücü: %{oran_dep:.1f}")
-
-    st.markdown("<hr style='margin: 6px 0px;'>", unsafe_allow_html=True)
-
-    # 2. Çifte Şans & Alternatifler
-    st.markdown("<b>2. Çifte Şans & Sürpriz Piyasalar</b>", unsafe_allow_html=True)
+    # 2. Çifte Şans ve Gol Piyasaları (Metrik Kartları)
+    st.markdown("<b>2. Çifte Şans ve Piyasalar</b>", unsafe_allow_html=True)
     cc1, cc2, cc3 = st.columns(3)
     cc1.metric("1X Şans", f"%{cifte_1x:.1f}")
     cc2.metric("X2 Şans", f"%{cifte_x2:.1f}")
-    cc3.metric("12 (Tek Maç)", f"%{cifte_12:.1f}")
+    cc3.metric("Risk Seviyesi", f"{risk_skoru:.2f}")
 
-    st.markdown("<hr style='margin: 6px 0px;'>", unsafe_allow_html=True)
-
-    # 3. Gol Analizi ve Beklentiler
-    st.markdown("<b>3. Gol ve Alt/Üst Piyasaları</b>", unsafe_allow_html=True)
     gc1, gc2, gc3 = st.columns(3)
-    gc1.metric("Gol Beklentisi", f"{tahmini_gol:.2f}")
+    gc1.metric("Gol Bekl.", f"{tahmini_gol:.2f}")
     gc2.metric("2.5 Üst", f"%{over25_oran:.1f}")
     gc3.metric("KG Var", f"%{btts_oran:.1f}")
 
     st.markdown("<hr style='margin: 6px 0px;'>", unsafe_allow_html=True)
 
-    # 4. Derinlemesine Teknik Göstergeler (Yeni Ayrıntılar)
-    st.markdown("<b>4. Gelişmiş Risk & Model Göstergeleri</b>", unsafe_allow_html=True)
-    dc1, dc2, dc3 = st.columns(3)
-    dc1.metric("Volatilite Risk", f"{risk_skoru:.2f}")
-    dc2.metric("Ev Lambda (xG)", f"{lambda_ev:.2f}")
-    dc3.metric("Dep Lambda (xG)", f"{lambda_dep:.2f}")
+    # 3. Gol Beklentisi Karşılaştırma Grafiği
+    st.markdown("<b>3. Takım xG / Gol Beklentisi Kıyaslaması</b>", unsafe_allow_html=True)
+    df_xg = pd.DataFrame({
+        "Takım": ["Ev Sahibi", "Deplasman"],
+        "Gol Beklentisi (Lambda)": [round(lambda_ev, 2), round(lambda_dep, 2)]
+    }).set_index("Takım")
+    st.bar_chart(df_xg, color="#2ca02c")
 
-    st.info(f"🎯 **Modelin En Muhtemel Skor Tahmini:** `{en_yuksek_skor[0]} - {en_yuksek_skor[1]}` (Olasılık: %{skor_matrisi[en_yuksek_skor]:.1f})")
+    # Model Sonuç Kartı
+    st.info(f"🎯 **En Muhtemel Skor Tahmini:** `{en_yuksek_skor[0]} - {en_yuksek_skor[1]}` (Olasılık: %{skor_matrisi[en_yuksek_skor]:.1f})")
 
-    # Yapay Zeka Strateji Notu
     if over25_oran > 60 and btts_oran > 60:
-        st.error("🔥 **Detaylı Strateji:** Tempolu geçiş oyunu bekleniyor. 2.5 Üst ve KG Var kuponlar için en ideal tercihler arasında.")
+        st.error("🔥 **Strateji:** Tempolu oyun bekleniyor. 2.5 Üst ve KG Var öncelikli.")
     elif oran_ev > 55:
-        st.success("🎯 **Detaylı Strateji:** Ev sahibinin form ve reaksiyon üstünlüğü var. 1X veya handikaplı ev tercihleri ön planda.")
+        st.success("🎯 **Strateji:** Ev sahibinin üstünlüğü net. 1X Şans değerlendirilebilir.")
     else:
-        st.warning("⚖️ **Detaylı Strateji:** Dengeli ve kontrollü hatlar. Alt/üst sınırları veya canlı bahis oran takibi önerilir.")
+        st.warning("⚖️ **Strateji:** Dengeli eşleşme. Canlı oran takibi önerilir.")
 
     st.write("")
 
