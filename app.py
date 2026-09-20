@@ -18,7 +18,7 @@ st.markdown("""
     }
     h1 { font-size: 1.2rem !important; margin: 0.2rem 0 !important; text-align: center; }
     h2 { font-size: 0.95rem !important; margin: 0.2rem 0 !important; }
-    h3 { font-size: 0.85rem !important; margin: 0.15rem 0 !important; }
+    h3 { font-size: 0.9rem !important; margin: 0.15rem 0 !important; }
     p { font-size: 0.85rem !important; margin: 0.2rem 0 !important; }
     hr { margin: 0.3rem 0 !important; }
 
@@ -259,7 +259,7 @@ if st.session_state.sayfa == "giris":
 
 
 # ==========================================
-# SAYFA 2: DETAYLI ANALİZ (TÜM BİLGİLER GÖRÜNÜR)
+# SAYFA 2: DETAYLI ANALİZ
 # ==========================================
 elif st.session_state.sayfa == "sonuc":
     v = st.session_state.form_verileri
@@ -293,42 +293,74 @@ elif st.session_state.sayfa == "sonuc":
 
     st.markdown("<h1>🎯 Detaylı Analiz Raporu</h1>", unsafe_allow_html=True)
 
-    # ---- 0. MODEL ÖZETİ ----
+    # ---- 📋 TAKIM İSTATİSTİKLERİ (EN ÜSTTE) ----
+    st.markdown("### 📋 Takım İstatistikleri")
+
+    stat_c1, stat_c2 = st.columns(2)
+    with stat_c1:
+        st.markdown("**🏠 Ev Sahibi**")
+        st.markdown(f"""
+        - PPG: **{v['ppg_ev']:.2f}** ({takim_form_yorumu(v['ppg_ev'])})
+        - Sıra: **{v['siralama_ev']}**
+        - Reaksiyon: **%{v['reaksiyon_ev']:.0f}**
+        - xG: **{v['xg_ev']:.2f}**
+        - Atılan: **{v['atilan_ev']:.1f}**
+        - Yenen: **{v['yenen_ev']:.1f}**
+        - Std.Sapma: **{v['ss_ev']:.2f}**
+        """)
+    with stat_c2:
+        st.markdown("**✈️ Deplasman**")
+        st.markdown(f"""
+        - MPG: **{v['mpg_dep']:.2f}** ({takim_form_yorumu(v['mpg_dep'])})
+        - Sıra: **{v['siralama_dep']}**
+        - Reaksiyon: **%{v['reaksiyon_dep']:.0f}**
+        - xG: **{v['xg_dep']:.2f}**
+        - Atılan: **{v['atilan_dep']:.1f}**
+        - Yenen: **{v['yenen_dep']:.1f}**
+        - Std.Sapma: **{v['ss_dep']:.2f}**
+        """)
+
+    st.markdown(f"**KG Oranı:** %{v['kg_oran']:.0f}")
+
+    st.divider()
+
+    # ---- 🔬 MODEL ÖZETİ ----
+    st.markdown("### 🔬 Model Özeti")
     m1, m2, m3 = st.columns(3)
     m1.metric("Ev Beklenen Gol", f"{lam_ev:.2f}")
     m2.metric("Dep Beklenen Gol", f"{lam_dep:.2f}")
     m3.metric("Model Güveni", guven_seviyesi(guven))
 
-    st.info(f"📌 Toplam Beklenen Gol: **{tahmini_gol:.2f}** | Güven: {guven:.2f}")
+    st.info(f"📌 **Toplam Beklenen Gol:** {tahmini_gol:.2f} | Güven: {guven:.2f}")
 
     if guven < 0.4:
         st.warning("⚠️ Standart sapmalar yüksek → tahminler düşük güvenilirlikte.")
 
     st.divider()
 
-    # ---- 1. 1X2 ----
+    # ---- 📊 1X2 ----
     st.markdown("### 📊 1 - X - 2 Maç Sonucu")
     c1, c2, c3 = st.columns(3)
     c1.metric("🏠 1 (Ev)", f"%{p1:.1f}")
     c2.metric("🤝 X (Beraberlik)", f"%{px:.1f}")
     c3.metric("✈️ 2 (Deplasman)", f"%{p2:.1f}")
 
-    st.success(f"🎯 **En Olası Sonuç:** {en_olasi[0]} (%{en_olasi[1]:.1f})")
+    st.success(f"🎯 **En Olası Sonuç:** {en_olasi[0]} (%{en_olasi[1]:.1f}) → 1: %{p1:.1f} • X: %{px:.1f} • 2: %{p2:.1f}")
 
     st.divider()
 
-    # ---- 2. ÇİFTE ŞANS ----
+    # ---- 🛡️ ÇİFTE ŞANS ----
     st.markdown("### 🛡️ Çifte Şans")
     cc1, cc2, cc3 = st.columns(3)
     cc1.metric("1X", f"%{cifte_1x:.1f}")
     cc2.metric("X2", f"%{cifte_x2:.1f}")
     cc3.metric("12", f"%{cifte_12:.1f}")
 
-    st.success(f"✅ **En Güvenli:** Çifte Şans **{en_guvenli[0]}** (%{en_guvenli[1]:.1f})")
+    st.success(f"✅ **En Güvenli:** Çifte Şans **{en_guvenli[0]}** (%{en_guvenli[1]:.1f}) → 1X: %{cifte_1x:.1f} • X2: %{cifte_x2:.1f} • 12: %{cifte_12:.1f}")
 
     st.divider()
 
-    # ---- 3. GOL ANALİZİ ----
+    # ---- ⚽ GOL ANALİZİ ----
     st.markdown("### ⚽ Gol Analizi")
 
     st.markdown("**Üst / Alt Bahisleri**")
@@ -362,7 +394,7 @@ elif st.session_state.sayfa == "sonuc":
 
     st.divider()
 
-    # ---- 4. EN OLASI SKORLAR ----
+    # ---- 🎲 EN OLASI SKORLAR ----
     st.markdown("### 🎲 En Olası Skorlar (İlk 6)")
     en_iyi = sorted(olas["skorlar"].items(), key=lambda x: x[1], reverse=True)[:6]
     sk_cols = st.columns(6)
@@ -371,7 +403,7 @@ elif st.session_state.sayfa == "sonuc":
 
     st.divider()
 
-    # ---- 5. TAKIM GÜÇ KARŞILAŞTIRMASI ----
+    # ---- ⚔️ TAKIM GÜÇ KARŞILAŞTIRMASI ----
     st.markdown("### ⚔️ Takım Güç Karşılaştırması")
 
     g1, g2 = st.columns(2)
@@ -388,7 +420,7 @@ elif st.session_state.sayfa == "sonuc":
 
     st.divider()
 
-    # ---- 6. DETAYLI YORUM ----
+    # ---- 📝 DETAYLI ANALİZ YORUMU ----
     st.markdown("### 📝 Detaylı Analiz Yorumu")
 
     fark = p1 - p2
@@ -419,16 +451,16 @@ elif st.session_state.sayfa == "sonuc":
     with st.expander("🎯 Strateji Önerileri", expanded=True):
         st.markdown(f"**Ana Senaryo:** {senaryo}")
         st.markdown(f"""
-        - 🥇 **En Olası Sonuç:** **{en_olasi[0]}** (%{en_olasi[1]:.1f})
-        - 🛡️ **En Güvenli Bahis:** Çifte Şans **{en_guvenli[0]}** (%{en_guvenli[1]:.1f})
-        - ⚽ **Gol Tercihi:** **{'2.5 Üst' if tahmini_gol > 2.6 else '2.5 Alt'}** (beklenen: {tahmini_gol:.2f})
-        - 🤝 **KG Tercihi:** **{'KG Var' if kg_ort > 55 else 'KG Yok' if kg_ort < 45 else 'Belirsiz - kaçınılmalı'}** (%{kg_ort:.0f})
+        - 🥇 **En Olası Sonuç:** **{en_olasi[0]}** (%{en_olasi[1]:.1f}) → 1: %{p1:.1f} • X: %{px:.1f} • 2: %{p2:.1f}
+        - 🛡️ **En Güvenli Bahis:** Çifte Şans **{en_guvenli[0]}** (%{en_guvenli[1]:.1f}) → 1X: %{cifte_1x:.1f} • X2: %{cifte_x2:.1f} • 12: %{cifte_12:.1f}
+        - ⚽ **Gol Tercihi:** **{'2.5 Üst' if tahmini_gol > 2.6 else '2.5 Alt'}** (beklenen: {tahmini_gol:.2f}) → Üst: %{ust_25:.0f} • Alt: %{100-ust_25:.0f}
+        - 🤝 **KG Tercihi:** **{'KG Var' if kg_ort > 55 else 'KG Yok' if kg_ort < 45 else 'Belirsiz - kaçınılmalı'}** (%{kg_ort:.0f}) → Var: %{kg_ort:.0f} • Yok: %{100-kg_ort:.0f}
         - 📈 **İkinci Tercih:** {'X2 çifte şans' if p1 > p2 else '1X çifte şans'} (%{max(cifte_1x, cifte_x2):.1f})
         """)
 
     st.divider()
 
-    # ---- 7. YENİ ANALİZ ----
+    # ---- 🔄 YENİ ANALİZ ----
     if st.button("🔄 Yeni Analiz", use_container_width=True, type="primary"):
         st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
         st.session_state.form_version += 1
