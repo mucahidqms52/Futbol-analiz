@@ -1,13 +1,11 @@
 import streamlit as st
 import math
 
-st.set_page_config(page_title="Futbol Analiz Pro Terminal", page_icon="⚽", layout="centered")
+st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
-# Sayfa durumu yönetimi (Giriş ekranı vs Sonuç ekranı geçişi için)
 if "sayfa" not in st.session_state:
     st.session_state.sayfa = "giris"
 
-# Form verileri için hafıza (Temizlenebilir yapı)
 if "veriler" not in st.session_state:
     st.session_state.veriler = {
         "ppg_ev": 2.3, "mpg_dep": 2.0,
@@ -20,45 +18,44 @@ if "veriler" not in st.session_state:
         "kg_oran": 55.0
     }
 
-# --- 1. GİRİŞ EKRANI ---
+# --- 1. TEK EKRAN GİRİŞ SAYFASI (YANA DOĞRU İKİLİ SÜTUN - KAYDIRMA YOK) ---
 if st.session_state.sayfa == "giris":
-    st.markdown("""
-        <h1 style='text-align: center; color: #1f77b4;'>⚽ Futbol Analiz Pro Terminal</h1>
-        <p style='text-align: center; color: gray;'>Poisson İstatistiksel Dağılım ve Risk Yönetim Paneli</p>
-    """, unsafe_allow_html=True)
-
-    st.divider()
-    st.subheader("📋 Sıralı Veri Giriş Terminali")
+    st.markdown("<h4 style='text-align: center; color: #1f77b4; margin-bottom: 2px;'>⚽ Futbol Analiz Pro</h4>", unsafe_allow_html=True)
 
     v = st.session_state.veriler
 
-    v["ppg_ev"] = st.number_input("1. PPG Ev", value=v["ppg_ev"], step=0.1)
-    v["mpg_dep"] = st.number_input("2. MPG Dep", value=v["mpg_dep"], step=0.1)
-    v["siralama_ev"] = st.number_input("3. Sıralama Ev", value=int(v["siralama_ev"]), step=1)
-    v["siralama_dep"] = st.number_input("4. Sıralama Dep", value=int(v["siralama_dep"]), step=1)
-    v["reaksiyon_ev"] = st.number_input("5. Reaksiyon Gücü Ev (%)", value=v["reaksiyon_ev"], step=0.1)
-    v["reaksiyon_dep"] = st.number_input("5. Reaksiyon Gücü Dep (%)", value=v["reaksiyon_dep"], step=0.1)
-    v["xg_ev"] = st.number_input("6. xG Ev", value=v["xg_ev"], step=0.01)
-    v["xg_dep"] = st.number_input("6. xG Dep", value=v["xg_dep"], step=0.01)
-    v["atilan_ev"] = st.number_input("7. Atılan Gol Ev", value=v["atilan_ev"], step=0.1)
-    v["atilan_dep"] = st.number_input("7. Atılan Gol Dep", value=v["atilan_dep"], step=0.1)
-    v["yenen_ev"] = st.number_input("8. Yenen Gol Ev", value=v["yenen_ev"], step=0.1)
-    v["yenen_dep"] = st.number_input("8. Yenen Gol Dep", value=v["yenen_dep"], step=0.1)
-    v["ss_ev"] = st.number_input("9. Standart Sapma Ev", value=v["ss_ev"], step=0.01)
-    v["ss_dep"] = st.number_input("9. Standart Sapma Dep", value=v["ss_dep"], step=0.01)
-    v["kg_oran"] = st.number_input("10. KG Oranı / Sıklığı (%)", value=v["kg_oran"], step=1.0)
+    # Alanları yan yana iki sütun yaparak dikey uzunluğu yarıya indirdik (Kaydırma yok)
+    col1, col2 = st.columns(2)
 
-    st.divider()
+    with col1:
+        v["ppg_ev"] = st.number_input("1. PPG Ev", value=v["ppg_ev"], step=0.1)
+        v["siralama_ev"] = st.number_input("3. Sıra Ev", value=int(v["siralama_ev"]), step=1)
+        v["reaksiyon_ev"] = st.number_input("5. Reak. Ev", value=v["reaksiyon_ev"], step=0.1)
+        v["xg_ev"] = st.number_input("6. xG Ev", value=v["xg_ev"], step=0.01)
+        v["atilan_ev"] = st.number_input("7. Atılan Ev", value=v["atilan_ev"], step=0.1)
+        v["yenen_ev"] = st.number_input("8. Yenen Ev", value=v["yenen_ev"], step=0.1)
+        v["ss_ev"] = st.number_input("9. SS Ev", value=v["ss_ev"], step=0.01)
 
-    if st.button("🚀 Pro Terminal Analizini Başlat", type="primary", use_container_width=True):
+    with col2:
+        v["mpg_dep"] = st.number_input("2. MPG Dep", value=v["mpg_dep"], step=0.1)
+        v["siralama_dep"] = st.number_input("4. Sıra Dep", value=int(v["siralama_dep"]), step=1)
+        v["reaksiyon_dep"] = st.number_input("5. Reak. Dep", value=v["reaksiyon_dep"], step=0.1)
+        v["xg_dep"] = st.number_input("6. xG Dep", value=v["xg_dep"], step=0.01)
+        v["atilan_dep"] = st.number_input("7. Atılan Dep", value=v["atilan_dep"], step=0.1)
+        v["yenen_dep"] = st.number_input("8. Yenen Dep", value=v["yenen_dep"], step=0.1)
+        v["ss_dep"] = st.number_input("9. SS Dep", value=v["ss_dep"], step=0.01)
+
+    v["kg_oran"] = st.number_input("10. KG Oranı (%)", value=v["kg_oran"], step=1.0)
+
+    st.write("")
+    if st.button("🚀 Analizi Başlat", type="primary", use_container_width=True):
         st.session_state.sayfa = "sonuc"
         st.rerun()
 
-# --- 2. ANALİZ SONUÇ EKRANI ---
+# --- 2. TEK EKRAN SONUÇ SAYFASI (KAYDIRMA YOK) ---
 elif st.session_state.sayfa == "sonuc":
     v = st.session_state.veriler
 
-    # Poisson & Matematiksel Hesaplamalar
     lambda_ev = (v["xg_ev"] * 0.45) + (v["atilan_ev"] * 0.35) + (v["yenen_dep"] * 0.2)
     lambda_dep = (v["xg_dep"] * 0.45) + (v["atilan_dep"] * 0.35) + (v["yenen_ev"] * 0.2)
     
@@ -80,17 +77,11 @@ elif st.session_state.sayfa == "sonuc":
     for i in range(6):
         for j in range(6):
             p = poisson(lambda_ev, i) * poisson(lambda_dep, j)
-            if i > j:
-                prob_ev_kazanir += p
-            elif i == j:
-                prob_beraberlik += p
-            else:
-                prob_dep_kazanir += p
-            
-            if i + j <= 2:
-                u25_prob += p
-            if i > 0 and j > 0:
-                btts_prob += p
+            if i > j: prob_ev_kazanir += p
+            elif i == j: prob_beraberlik += p
+            else: prob_dep_kazanir += p
+            if i + j <= 2: u25_prob += p
+            if i > 0 and j > 0: btts_prob += p
 
     toplam_prob = prob_ev_kazanir + prob_beraberlik + prob_dep_kazanir
     oran_ev = (prob_ev_kazanir / toplam_prob) * 100
@@ -99,77 +90,39 @@ elif st.session_state.sayfa == "sonuc":
 
     cifte_1x = oran_ev + oran_beraberlik
     cifte_x2 = oran_dep + oran_beraberlik
-    cifte_12 = oran_ev + oran_dep
 
     over25_oran = (1 - u25_prob) * 100
     btts_oran = btts_prob * 100
     tahmini_gol = lambda_ev + lambda_dep
-
     risk_skoru = (v["ss_ev"] + v["ss_dep"]) / 2
-    risk_durumu = "Yüksek Volatilite (Sürprize Açık)" if risk_skoru > 1.2 else "Dengeli / İstikrarlı Profil"
 
-    st.markdown("""
-        <h1 style='text-align: center; color: #2ca02c;'>🎯 Pro Terminal Analiz Raporu</h1>
-        <p style='text-align: center; color: gray;'>Poisson İstatistiksel Dağılım Sonuçları</p>
-    """, unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #2ca02c; margin-bottom: 2px;'>🎯 Analiz Sonucu</h3>", unsafe_allow_html=True)
 
-    st.divider()
-
-    # --- 1. PRO 1X2 PANELİ ---
-    st.subheader("📊 1X2 Olasılık Dağılımı (Poisson Model)")
     c1, c2, c3 = st.columns(3)
-    c1.metric("1 (Ev Sahibi)", f"%{oran_ev:.1f}")
-    c2.metric("X (Beraberlik)", f"%{oran_beraberlik:.1f}")
-    c3.metric("2 (Deplasman)", f"%{oran_dep:.1f}")
+    c1.metric("1 (Ev)", f"%{oran_ev:.1f}")
+    c2.metric("X (Ber)", f"%{oran_beraberlik:.1f}")
+    c3.metric("2 (Dep)", f"%{oran_dep:.1f}")
 
-    st.progress(int(oran_ev), text=f"Ev Sahibi Kazanma Olasılığı: %{oran_ev:.1f}")
-    st.progress(int(oran_beraberlik), text=f"Beraberlik Olasılığı: %{oran_beraberlik:.1f}")
-    st.progress(int(oran_dep), text=f"Deplasman Kazanma Olasılığı: %{oran_dep:.1f}")
-
-    st.divider()
-
-    # --- 2. ÇİFTE ŞANS & RİSK ENDEKSİ ---
-    st.subheader("🛡️ Çifte Şans & Volatilite Paneli")
     cc1, cc2, cc3 = st.columns(3)
-    cc1.metric("1X (Ev / Beraberlik)", f"%{cifte_1x:.1f}")
-    cc2.metric("X2 (Dep / Beraberlik)", f"%{cifte_x2:.1f}")
-    cc3.metric("Risk Seviyesi", f"{risk_skoru:.2f}", delta=risk_durumu, delta_color="inverse")
+    cc1.metric("1X Şans", f"%{cifte_1x:.1f}")
+    cc2.metric("X2 Şans", f"%{cifte_x2:.1f}")
+    cc3.metric("Risk", f"{risk_skoru:.2f}")
 
-    st.divider()
-
-    # --- 3. PRO GOL & ÜST/ALT MATRİSİ ---
-    st.subheader("⚽ Gelişmiş Gol & Piyasalar")
     gc1, gc2, gc3 = st.columns(3)
-    gc1.metric("📊 Poisson Gol Beklentisi", f"{tahmini_gol:.2f} Gol")
-    gc2.metric("⚡ 2.5 Üst Olasılığı", f"%{over25_oran:.1f}")
-    gc3.metric("🔥 KG Var Olasılığı", f"%{btts_oran:.1f}")
+    gc1.metric("Gol Bek.", f"{tahmini_gol:.2f}")
+    gc2.metric("2.5 Üst", f"%{over25_oran:.1f}")
+    gc3.metric("KG Var", f"%{btts_oran:.1f}")
 
-    st.divider()
-
-    # --- 4. YAPAY ZEKA PRO TAVSİYE & STRATEJİ ---
-    st.subheader("🧠 Terminal Yapay Zeka Strateji Raporu")
-    
     if over25_oran > 60 and btts_oran > 60:
-        tavsiye = "🔥 **Yüksek Tempolu Senaryo:** Model, karşılıklı gol ve 2.5 Üst ihtimalini güçlü görüyor. Alternatif olarak **KG Var + Üst** kombinasyonu değerlendirilebilir."
+        yorum = "🔥 **Yüksek Skor:** 2.5 Üst ve KG Var için uygun profil."
     elif oran_ev > 55:
-        tavsiye = "🎯 **Ev Sahibi Baskısı:** Ev sahibinin form ve xG üstünlüğü net. **1X Çifte Şans** veya handikaplı seçenekler güvenli liman."
-    elif oran_dep > 50:
-        tavsiye = "⚡ **Deplasman Reaksiyonu:** Deplasman ekibinin veri üstünlüğü var. **X2 Çifte Şans** kuponlar için ideal."
+        yorum = "🎯 **Ev Sahibi Baskısı:** 1X Çifte Şans önde."
     else:
-        tavsiye = "⚖️ **Kilit Maç / Düşük Marj:** Maç ortada geçmeye aday. Ortalama alt/üst sınırlarında kalınması veya canlı bahisler önerilir."
+        yorum = "⚖️ **Dengeli Maç:** Ortalama alt/üst değerlendirilebilir."
 
-    st.markdown(tavsiye)
-    st.markdown(f"""
-    * **Ev Sahibi Gol Beklentisi (Lambda):** {lambda_ev:.2f}
-    * **Deplasman Gol Beklentisi (Lambda):** {lambda_dep:.2f}
-    * **Piyasa Uyum Skoru:** %{v["kg_oran"]:.1f} (Geçmiş maç sıklığı verisiyle teyit edildi)
-    """)
+    st.info(yorum)
 
-    st.divider()
-
-    # --- 5. YENİ MAÇ ANALİZ BUTONU (Sıfırlama ve Geri Dönüş) ---
     if st.button("🔄 Yeni Maç Analiz Et", type="primary", use_container_width=True):
-        # Değerleri sıfırla ve giriş ekranına dön
         st.session_state.veriler = {
             "ppg_ev": 0.0, "mpg_dep": 0.0,
             "siralama_ev": 1, "siralama_dep": 1,
