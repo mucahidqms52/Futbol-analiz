@@ -19,7 +19,7 @@ if "form_verileri" not in st.session_state:
     }
 
 # ==========================================
-# 1. SAYFA: İSTATİSTİK GİRİŞ EKRANI
+# 1. SAYFA: İSTATİSTİK GİRİŞ EKRANI (FORM İÇİNDE)
 # ==========================================
 if st.session_state.sayfa == "giris":
     st.markdown("""
@@ -32,45 +32,57 @@ if st.session_state.sayfa == "giris":
 
     v = st.session_state.form_verileri
 
-    # Widget'lar key çakışması olmaması için bağımsız tanımlandı, değerler sözlükten okunur
-    v["ppg_ev"] = st.number_input("1. PPG Ev", value=v["ppg_ev"], step=0.1)
-    v["mpg_dep"] = st.number_input("2. MPG Dep", value=v["mpg_dep"], step=0.1)
-    v["siralama_ev"] = st.number_input("3. Sıralama Ev", value=int(v["siralama_ev"]), step=1)
-    v["siralama_dep"] = st.number_input("4. Sıralama Dep", value=int(v["siralama_dep"]), step=1)
-    v["reaksiyon_ev"] = st.number_input("5. Reaksiyon Gücü Ev (%)", value=v["reaksiyon_ev"], step=0.1)
-    v["reaksiyon_dep"] = st.number_input("5. Reaksiyon Gücü Dep (%)", value=v["reaksiyon_dep"], step=0.1)
-    v["xg_ev"] = st.number_input("6. xG Ev", value=v["xg_ev"], step=0.01)
-    v["xg_dep"] = st.number_input("6. xG Dep", value=v["xg_dep"], step=0.01)
-    v["atilan_ev"] = st.number_input("7. Atılan Gol Ev", value=v["atilan_ev"], step=0.1)
-    v["atilan_dep"] = st.number_input("7. Atılan Gol Dep", value=v["atilan_dep"], step=0.1)
-    v["yenen_ev"] = st.number_input("8. Yenen Gol Ev", value=v["yenen_ev"], step=0.1)
-    v["yenen_dep"] = st.number_input("8. Yenen Gol Dep", value=v["yenen_dep"], step=0.1)
-    v["ss_ev"] = st.number_input("9. Standart Sapma Ev", value=v["ss_ev"], step=0.01)
-    v["ss_dep"] = st.number_input("9. Standart Sapma Dep", value=v["ss_dep"], step=0.01)
-    v["kg_oran"] = st.number_input("10. KG Oranı / Sıklığı (%)", value=v["kg_oran"], step=1.0)
+    # Form kullanarak tüm girişlerin ve temizleme butonunun senkronize çalışmasını sağlıyoruz
+    with st.form("analiz_formu"):
+        ppg_ev = st.number_input("1. PPG Ev", value=float(v["ppg_ev"]), step=0.1)
+        mpg_dep = st.number_input("2. MPG Dep", value=float(v["mpg_dep"]), step=0.1)
+        siralama_ev = st.number_input("3. Sıralama Ev", value=int(v["siralama_ev"]), step=1)
+        siralama_dep = st.number_input("4. Sıralama Dep", value=int(v["siralama_dep"]), step=1)
+        reaksiyon_ev = st.number_input("5. Reaksiyon Gücü Ev (%)", value=float(v["reaksiyon_ev"]), step=0.1)
+        reaksiyon_dep = st.number_input("5. Reaksiyon Gücü Dep (%)", value=float(v["reaksiyon_dep"]), step=0.1)
+        xg_ev = st.number_input("6. xG Ev", value=float(v["xg_ev"]), step=0.01)
+        xg_dep = st.number_input("6. xG Dep", value=float(v["xg_dep"]), step=0.01)
+        atilan_ev = st.number_input("7. Atılan Gol Ev", value=float(v["atilan_ev"]), step=0.1)
+        atilan_dep = st.number_input("7. Atılan Gol Dep", value=float(v["atilan_dep"]), step=0.1)
+        yenen_ev = st.number_input("8. Yenen Gol Ev", value=float(v["yenen_ev"]), step=0.1)
+        yenen_dep = st.number_input("8. Yenen Gol Dep", value=float(v["yenen_dep"]), step=0.1)
+        ss_ev = st.number_input("9. Standart Sapma Ev", value=float(v["ss_ev"]), step=0.01)
+        ss_dep = st.number_input("9. Standart Sapma Dep", value=float(v["ss_dep"]), step=0.01)
+        kg_oran = st.number_input("10. KG Oranı / Sıklığı (%)", value=float(v["kg_oran"]), step=1.0)
 
-    st.divider()
+        st.divider()
 
-    col_b1, col_b2 = st.columns(2)
-    calistir = col_b1.button("🚀 Analizi Çalıştır (Sonuç Sayfasına Git)", type="primary", use_container_width=True)
-    temizle = col_b2.button("🧹 Alanları Temizle", use_container_width=True)
+        col_b1, col_b2 = st.columns(2)
+        calistir = col_b1.form_submit_button("🚀 Analizi Çalıştır (Sonuç Sayfasına Git)", use_container_width=True)
+        temizle = col_b2.form_submit_button("🧹 Alanları Temizle", use_container_width=True)
 
-    if temizle:
-        st.session_state.form_verileri = {
-            "ppg_ev": 0.0, "mpg_dep": 0.0,
-            "siralama_ev": 1, "siralama_dep": 1,
-            "reaksiyon_ev": 0.0, "reaksiyon_dep": 0.0,
-            "xg_ev": 0.0, "xg_dep": 0.0,
-            "atilan_ev": 0.0, "atilan_dep": 0.0,
-            "yenen_ev": 0.0, "yenen_dep": 0.0,
-            "ss_ev": 0.0, "ss_dep": 0.0,
-            "kg_oran": 50.0
-        }
-        st.rerun()
+        if temizle:
+            st.session_state.form_verileri = {
+                "ppg_ev": 0.0, "mpg_dep": 0.0,
+                "siralama_ev": 1, "siralama_dep": 1,
+                "reaksiyon_ev": 0.0, "reaksiyon_dep": 0.0,
+                "xg_ev": 0.0, "xg_dep": 0.0,
+                "atilan_ev": 0.0, "atilan_dep": 0.0,
+                "yenen_ev": 0.0, "yenen_dep": 0.0,
+                "ss_ev": 0.0, "ss_dep": 0.0,
+                "kg_oran": 50.0
+            }
+            st.rerun()
 
-    if calistir:
-        st.session_state.sayfa = "sonuc"
-        st.rerun()
+        if calistir:
+            # Girilen güncel değerleri session_state'e kaydet
+            st.session_state.form_verileri = {
+                "ppg_ev": ppg_ev, "mpg_dep": mpg_dep,
+                "siralama_ev": siralama_ev, "siralama_dep": siralama_dep,
+                "reaksiyon_ev": reaksiyon_ev, "reaksiyon_dep": reaksiyon_dep,
+                "xg_ev": xg_ev, "xg_dep": xg_dep,
+                "atilan_ev": atilan_ev, "atilan_dep": atilan_dep,
+                "yenen_ev": yenen_ev, "yenen_dep": yenen_dep,
+                "ss_ev": ss_ev, "ss_dep": ss_dep,
+                "kg_oran": kg_oran
+            }
+            st.session_state.sayfa = "sonuc"
+            st.rerun()
 
 # ==========================================
 # 2. SAYFA: TEK SAYFA ANALİZ SONUÇ EKRANI
