@@ -298,78 +298,66 @@ def detayli_analiz_yorumu(v: dict):
 
 
 # ==========================================
-# 🆕 KOMBO HESAPLAMA FONKSİYONU
+# FAVORİ KOMBO ÜRETİCİ (SADECE 2'Lİ)
 # ==========================================
-def kombo_hesapla(matris, max_gol: int = MAX_GOL):
+def favori_kombolar(matris, max_gol: int = MAX_GOL):
     """
-    Poisson matrisinden tüm kombine bahis olasılıklarını hesaplar.
-    Her kombo için ortak olasılık = ilgili hücrelerin toplamı
+    Sadece bu maçın favorilerinden 2'li kombolar üretir.
+    1X2, Alt/Üst 2.5, KG Var/Yok kategorilerinin her birinden favoriyi bulur,
+    sonra bu 3 favori arasından 2'li kombinasyonlar üretir.
     """
-    # Kriter tanımları: (isim, filtre fonksiyonu)
-    kriterler = {
-        "1":          lambda i, j: i > j,
-        "X":          lambda i, j: i == j,
-        "2":          lambda i, j: i < j,
-        "1X":         lambda i, j: i >= j,
-        "X2":         lambda i, j: i <= j,
-        "12":         lambda i, j: i != j,
-        "Alt 2.5":    lambda i, j: i + j < 2.5,
-        "Üst 2.5":    lambda i, j: i + j > 2.5,
-        "Alt 1.5":    lambda i, j: i + j < 1.5,
-        "Üst 1.5":    lambda i, j: i + j > 1.5,
-        "KG Var":     lambda i, j: i > 0 and j > 0,
-        "KG Yok":     lambda i, j: i == 0 or j == 0,
-    }
+    p1 = p_x = p2 = 0.0
+    alt = ust = 0.0
+    kg_var = kg_yok = 0.0
 
-    # Her kriterin toplam olasılığı
-    tek_olasilik = {}
-    for isim, filtre in kriterler.items():
-        toplam = 0.0
-        for i in range(max_gol):
-            for j in range(max_gol):
-                if filtre(i, j):
-                    toplam += matris[i][j]
-        tek_olasilik[isim] = toplam
+    for i in range(max_gol):
+        for j in range(max_gol):
+            p = matris[i][j]
+            if i > j:    p1 += p
+            elif i == j: p_x += p
+            else:        p2 += p
 
-    # Kombo tanımları (kombinasyon listesi)
-    kombo_listesi = [
-        # 2'li kombolar
-        ("1 + Alt 2.5",       ["1", "Alt 2.5"]),
-        ("1 + KG Yok",        ["1", "KG Yok"]),
-        ("1 + Alt 1.5",       ["1", "Alt 1.5"]),
-        ("2 + Alt 2.5",       ["2", "Alt 2.5"]),
-        ("2 + KG Yok",        ["2", "KG Yok"]),
-        ("Alt 2.5 + KG Yok",  ["Alt 2.5", "KG Yok"]),
-        ("Üst 2.5 + KG Var",  ["Üst 2.5", "KG Var"]),
-        ("X + Alt 2.5",       ["X", "Alt 2.5"]),
-        ("X + KG Yok",        ["X", "KG Yok"]),
-        # 3'lü kombolar
-        ("1 + Alt 2.5 + KG Yok", ["1", "Alt 2.5", "KG Yok"]),
-        ("1 + Alt 1.5 + KG Yok", ["1", "Alt 1.5", "KG Yok"]),
-        ("2 + Alt 2.5 + KG Yok", ["2", "Alt 2.5", "KG Yok"]),
-        ("X + Alt 2.5 + KG Yok", ["X", "Alt 2.5", "KG Yok"]),
-        ("1 + Üst 2.5 + KG Var", ["1", "Üst 2.5", "KG Var"]),
-        ("1X + Alt 2.5",         ["1X", "Alt 2.5"]),
-        ("1X + KG Yok",          ["1X", "KG Yok"]),
-        ("X2 + Alt 2.5",         ["X2", "Alt 2.5"]),
-        ("1X + Alt 2.5 + KG Yok",["1X", "Alt 2.5", "KG Yok"]),
-        ("X2 + Alt 2.5 + KG Yok",["X2", "Alt 2.5", "KG Yok"]),
+            if i + j < 2.5:   alt += p
+            elif i + j > 2.5: ust += p
+
+            if i > 0 and j > 0: kg_var += p
+            else:                kg_yok += p
+
+    favori_sonuc = max([("1", p1), ("X", p_x), ("2", p2)], key=lambda x: x[1])
+    favori_gol   = max([("Alt", alt), ("Üst", ust)], key=lambda x: x[1])
+    favori_kg    = max([("Var", kg_var), ("Yok", kg_yok)], key=lambda x: x[1])
+
+    def filtre_sonuc(kod):
+        if kod == "1": return lambda i, j: i > j
+        if kod == "X": return lambda i, j: i == j
+        return lambda i, j: i < j
+
+    def filtre_gol(kod):
+        if kod == "Alt": return lambda i, j: i + j < 2.5
+        return lambda i, j: i + j > 2.5
+
+    def filtre_kg(kod):
+        if kod == "Var": return lambda i, j: i > 0 and j > 0
+        return lambda i, j: i == 0 or j == 0
+
+    kombinasyonlar = [
+        (favori_sonuc, favori_gol,   filtre_sonuc, filtre_gol),
+        (favori_sonuc, favori_kg,    filtre_sonuc, filtre_kg),
+        (favori_gol,   favori_kg,    filtre_gol,   filtre_kg),
     ]
 
-    # Her kombo için ortak olasılık hesapla (matris üzerinden direkt filtre)
-    sonuclar = []
-    for isim, kriter_isimleri in kombo_listesi:
-        filtreler = [kriterler[k] for k in kriter_isimleri]
+    kombolar = []
+    for (f1, f2, fn1, fn2) in kombinasyonlar:
+        isim = f"{f1[0]} {f2[0]}"
         toplam = 0.0
         for i in range(max_gol):
             for j in range(max_gol):
-                if all(f(i, j) for f in filtreler):
+                if fn1(i, j) and fn2(i, j):
                     toplam += matris[i][j]
-        sonuclar.append((isim, toplam * 100))
+        kombolar.append((isim, toplam * 100))
 
-    # Yüzdeye göre büyükten küçüğe sırala
-    sonuclar.sort(key=lambda x: x[1], reverse=True)
-    return sonuclar
+    kombolar.sort(key=lambda x: x[1], reverse=True)
+    return kombolar, (favori_sonuc[0], favori_gol[0], favori_kg[0])
 
 
 # ==========================================
@@ -435,12 +423,11 @@ if st.session_state.sayfa == "giris":
 
 
 # ==========================================
-# SAYFA 2: SADE ANALİZ + KOMBO
+# SAYFA 2: DETAYLI ANALİZ
 # ==========================================
 elif st.session_state.sayfa == "sonuc":
     v = st.session_state.form_verileri
 
-    # ---- VERİ YETERLİLİK KONTROLÜ ----
     if not veri_yeterli_mi(v):
         st.markdown("<h1>⚠️ Yetersiz Veri</h1>", unsafe_allow_html=True)
         st.error("""
@@ -456,7 +443,6 @@ elif st.session_state.sayfa == "sonuc":
             st.rerun()
         st.stop()
 
-    # ---- Hesaplamalar ----
     lam_ev, lam_dep, guven = hesapla_lambda(v)
     matris = poisson_matris(lam_ev, lam_dep, MAX_GOL)
     olas = matristen_olasilik(matris, MAX_GOL)
@@ -481,7 +467,6 @@ elif st.session_state.sayfa == "sonuc":
 
     st.markdown("<h1>🎯 Detaylı Analiz Raporu</h1>", unsafe_allow_html=True)
 
-    # ---- SENARYO HESABI ----
     fark = p1 - p2
     if fark > 25:       senaryo = "Ev sahibi açık ara favori görünüyor."
     elif fark > 10:     senaryo = "Ev sahibi hafif favori konumunda."
@@ -528,32 +513,31 @@ elif st.session_state.sayfa == "sonuc":
         - 📈 **İkinci Tercih:** {'X2 çifte şans' if p1 > p2 else '1X çifte şans'} (%{max(cifte_1x, cifte_x2):.1f})
         """)
 
-    # ---- 🎰 KOMBO TERCİHLERİ ----
-    with st.expander("🎰 Kombo Tercihleri (Kupon Önerileri)", expanded=True):
-        kombolar = kombo_hesapla(matris, MAX_GOL)
+    # ---- 🎰 FAVORİ KOMBOLAR (SADECE 2'Lİ) ----
+    with st.expander("🎰 Favori Komboları (Bu Maça Özel)", expanded=True):
+        kombolar, favoriler = favori_kombolar(matris, MAX_GOL)
 
-        st.markdown("**En yüksek olasılıklı kombolar:**")
+        st.markdown(
+            f"**Bu maçın favorileri:** "
+            f"`{favoriler[0]}` • `{favoriler[1]}` • `{favoriler[2]}`"
+        )
+        st.markdown("**Favorilerden 2'li kombolar:**")
 
-        # İlk 10 komboyu göster (yüzdeye göre sıralı)
-        for isim, yuzde in kombolar[:10]:
-            if yuzde >= 60:
+        for isim, yuzde in kombolar:
+            if yuzde >= 50:
                 emoji = "🟢"
-            elif yuzde >= 45:
+            elif yuzde >= 35:
                 emoji = "🟡"
             else:
                 emoji = "🔴"
             st.markdown(f"{emoji} **{isim}** → %{yuzde:.1f}")
 
-        # En yüksek 3'ü öneri olarak sun
         st.markdown("---")
-        st.markdown("**🔥 Önerilen En İyi 3 Kombо:**")
-        en_iyi_3 = kombolar[:3]
-        for idx, (isim, yuzde) in enumerate(en_iyi_3, 1):
-            st.success(f"{idx}. **{isim}** → %{yuzde:.1f}")
+        en_iyi = kombolar[0]
+        st.success(f"🔥 **En İyi Kombo:** {en_iyi[0]} → %{en_iyi[1]:.1f}")
 
     st.divider()
 
-    # ---- 🔄 YENİ ANALİZ ----
     if st.button("🔄 Yeni Analiz", use_container_width=True, type="primary"):
         st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
         st.session_state.form_version += 1
