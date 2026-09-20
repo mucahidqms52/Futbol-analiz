@@ -2,14 +2,11 @@ import streamlit as st
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
-st.markdown("""
-    <h1 style='text-align: center; color: #1f77b4;'>⚽ Futbol Analiz Pro Sistemi</h1>
-    <p style='text-align: center; color: gray;'>Gelişmiş Yapay Zeka Destekli Maç Tahmin ve Senaryo Paneli</p>
-""", unsafe_allow_html=True)
+# Sayfa yönetimi için hafıza kontrolü
+if "sayfa" not in st.session_state:
+    st.session_state.sayfa = "giris"
 
-st.divider()
-
-# Hafıza yönetimi ve boş başlangıç değerleri
+# Form verileri için hafıza (İlk açılışta veya temizlendiğinde sıfır/boş başlar)
 if "veriler" not in st.session_state:
     st.session_state.veriler = {
         "ppg_ev": 0.0, "mpg_dep": 0.0,
@@ -22,47 +19,65 @@ if "veriler" not in st.session_state:
         "kg_oran": 50.0
     }
 
-st.subheader("📋 Sıralı Maç İstatistikleri Giriş Paneli")
+# ==========================================
+# 1. SAYFA: İSTATİSTİK GİRİŞ EKRANI (BOŞ BAŞLAR)
+# ==========================================
+if st.session_state.sayfa == "giris":
+    st.markdown("""
+        <h1 style='text-align: center; color: #1f77b4;'>⚽ Futbol Analiz Pro Sistemi</h1>
+        <p style='text-align: center; color: gray;'>İstatistikleri gir, profesyonel analiz sayfasına geçiş yap!</p>
+    """, unsafe_allow_html=True)
 
-v = st.session_state.veriler
+    st.divider()
+    st.subheader("📋 Sıralı Maç İstatistikleri Giriş Paneli")
 
-# Belirttiğin sırayla alt alta giriş alanları (İlk açılışta sıfır/boş gelir)
-v["ppg_ev"] = st.number_input("1. PPG Ev", value=v["ppg_ev"], step=0.1)
-v["mpg_dep"] = st.number_input("2. MPG Dep", value=v["mpg_dep"], step=0.1)
-v["siralama_ev"] = st.number_input("3. Sıralama Ev", value=int(v["siralama_ev"]), step=1)
-v["siralama_dep"] = st.number_input("4. Sıralama Dep", value=int(v["siralama_dep"]), step=1)
-v["reaksiyon_ev"] = st.number_input("5. Reaksiyon Gücü Ev (%)", value=v["reaksiyon_ev"], step=0.1)
-v["reaksiyon_dep"] = st.number_input("5. Reaksiyon Gücü Dep (%)", value=v["reaksiyon_dep"], step=0.1)
-v["xg_ev"] = st.number_input("6. xG Ev", value=v["xg_ev"], step=0.01)
-v["xg_dep"] = st.number_input("6. xG Dep", value=v["xg_dep"], step=0.01)
-v["atilan_ev"] = st.number_input("7. Atılan Gol Ev", value=v["atilan_ev"], step=0.1)
-v["atilan_dep"] = st.number_input("7. Atılan Gol Dep", value=v["atilan_dep"], step=0.1)
-v["yenen_ev"] = st.number_input("8. Yenen Gol Ev", value=v["yenen_ev"], step=0.1)
-v["yenen_dep"] = st.number_input("8. Yenen Gol Dep", value=v["yenen_dep"], step=0.1)
-v["ss_ev"] = st.number_input("9. Standart Sapma Ev", value=v["ss_ev"], step=0.01)
-v["ss_dep"] = st.number_input("9. Standart Sapma Dep", value=v["ss_dep"], step=0.01)
-v["kg_oran"] = st.number_input("10. KG Oranı / Sıklığı (%)", value=v["kg_oran"], step=1.0)
+    v = st.session_state.veriler
 
-st.divider()
+    v["ppg_ev"] = st.number_input("1. PPG Ev", value=v["ppg_ev"], step=0.1)
+    v["mpg_dep"] = st.number_input("2. MPG Dep", value=v["mpg_dep"], step=0.1)
+    v["siralama_ev"] = st.number_input("3. Sıralama Ev", value=int(v["siralama_ev"]), step=1)
+    v["siralama_dep"] = st.number_input("4. Sıralama Dep", value=int(v["siralama_dep"]), step=1)
+    v["reaksiyon_ev"] = st.number_input("5. Reaksiyon Gücü Ev (%)", value=v["reaksiyon_ev"], step=0.1)
+    v["reaksiyon_dep"] = st.number_input("5. Reaksiyon Gücü Dep (%)", value=v["reaksiyon_dep"], step=0.1)
+    v["xg_ev"] = st.number_input("6. xG Ev", value=v["xg_ev"], step=0.01)
+    v["xg_dep"] = st.number_input("6. xG Dep", value=v["xg_dep"], step=0.01)
+    v["atilan_ev"] = st.number_input("7. Atılan Gol Ev", value=v["atilan_ev"], step=0.1)
+    v["atilan_dep"] = st.number_input("7. Atılan Gol Dep", value=v["atilan_dep"], step=0.1)
+    v["yenen_ev"] = st.number_input("8. Yenen Gol Ev", value=v["yenen_ev"], step=0.1)
+    v["yenen_dep"] = st.number_input("8. Yenen Gol Dep", value=v["yenen_dep"], step=0.1)
+    v["ss_ev"] = st.number_input("9. Standart Sapma Ev", value=v["ss_ev"], step=0.01)
+    v["ss_dep"] = st.number_input("9. Standart Sapma Dep", value=v["ss_dep"], step=0.01)
+    v["kg_oran"] = st.number_input("10. KG Oranı / Sıklığı (%)", value=v["kg_oran"], step=1.0)
 
-col_b1, col_b2 = st.columns(2)
-calistir = col_b1.button("🚀 Analizi Çalıştır", type="primary", use_container_width=True)
-temizle = col_b2.button("🧹 Alanları Temizle", use_container_width=True)
+    st.divider()
 
-if temizle:
-    st.session_state.veriler = {
-        "ppg_ev": 0.0, "mpg_dep": 0.0,
-        "siralama_ev": 1, "siralama_dep": 1,
-        "reaksiyon_ev": 0.0, "reaksiyon_dep": 0.0,
-        "xg_ev": 0.0, "xg_dep": 0.0,
-        "atilan_ev": 0.0, "atilan_dep": 0.0,
-        "yenen_ev": 0.0, "yenen_dep": 0.0,
-        "ss_ev": 0.0, "ss_dep": 0.0,
-        "kg_oran": 50.0
-    }
-    st.rerun()
+    col_b1, col_b2 = st.columns(2)
+    calistir = col_b1.button("🚀 Analizi Çalıştır (Sonuç Sayfasına Git)", type="primary", use_container_width=True)
+    temizle = col_b2.button("🧹 Alanları Temizle", use_container_width=True)
 
-if calistir:
+    if temizle:
+        st.session_state.veriler = {
+            "ppg_ev": 0.0, "mpg_dep": 0.0,
+            "siralama_ev": 1, "siralama_dep": 1,
+            "reaksiyon_ev": 0.0, "reaksiyon_dep": 0.0,
+            "xg_ev": 0.0, "xg_dep": 0.0,
+            "atilan_ev": 0.0, "atilan_dep": 0.0,
+            "yenen_ev": 0.0, "yenen_dep": 0.0,
+            "ss_ev": 0.0, "ss_dep": 0.0,
+            "kg_oran": 50.0
+        }
+        st.rerun()
+
+    if calistir:
+        st.session_state.sayfa = "sonuc"
+        st.rerun()
+
+# ==========================================
+# 2. SAYFA: TEK SAYFA ANALİZ SONUÇ EKRANI
+# ==========================================
+elif st.session_state.sayfa == "sonuc":
+    v = st.session_state.veriler
+
     # Sıralama ve Formülasyon
     siralama_puani_ev = max(20 - v["siralama_ev"], 1) * 0.2
     siralama_puani_dep = max(20 - v["siralama_dep"], 1) * 0.2
@@ -87,7 +102,12 @@ if calistir:
 
     tahmini_gol = (v["xg_ev"] + v["xg_dep"] + v["atilan_ev"] + v["atilan_dep"]) / 2
 
-    st.success("🎯 Analiz Başarıyla Tamamlandı!")
+    st.markdown("""
+        <h1 style='text-align: center; color: #2ca02c;'>🎯 Maç Analiz Sonuç Paneli</h1>
+        <p style='text-align: center; color: gray;'>Yapay Zeka Değerlendirme Raporu</p>
+    """, unsafe_allow_html=True)
+
+    st.divider()
 
     # --- 1. ANA MAÇ SONUCU VE ÇİZELGE ---
     st.subheader("📊 1X2 Maç Sonucu Dağılımı")
@@ -131,3 +151,21 @@ if calistir:
     * **Kriz Yönetimi (Reaksiyon):** Takımların reaksiyon güçleri senaryoya yansıtıldı.
     * **Önerilen Strateji:** Güvenli tercihler için **Çifte Şans ({'1X' if oran_ev >= oran_dep else 'X2'})** ön planda tutulabilir.
     """)
+
+    st.divider()
+
+    # --- 5. YENİ ANALİZ / İSTATİSTİK SAYFASINA DÖNÜŞ BUTONU ---
+    if st.button("🔄 Yeni Maç / Yeni Analiz (İstatistik Sayfasına Dön)", type="primary", use_container_width=True):
+        # Alanları sıfırla ve giriş sayfasına git
+        st.session_state.veriler = {
+            "ppg_ev": 0.0, "mpg_dep": 0.0,
+            "siralama_ev": 1, "siralama_dep": 1,
+            "reaksiyon_ev": 0.0, "reaksiyon_dep": 0.0,
+            "xg_ev": 0.0, "xg_dep": 0.0,
+            "atilan_ev": 0.0, "atilan_dep": 0.0,
+            "yenen_ev": 0.0, "yenen_dep": 0.0,
+            "ss_ev": 0.0, "ss_dep": 0.0,
+            "kg_oran": 50.0
+        }
+        st.session_state.sayfa = "giris"
+        st.rerun()
