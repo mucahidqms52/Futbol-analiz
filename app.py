@@ -201,6 +201,104 @@ def veri_yeterli_mi(v: dict) -> bool:
 
 
 # ==========================================
+# GENİŞ KAPSAMLI ANALİZ FONKSİYONU
+# ==========================================
+def detayli_analiz_yorumu(v: dict):
+    """Her istatistiği tek tek karşılaştırıp yorum üretir."""
+    yorumlar = []
+
+    # 1. FORM
+    ppg, mpg = v["ppg_ev"], v["mpg_dep"]
+    fark = ppg - mpg
+    if ppg >= 2.0 and mpg <= 1.0:
+        txt = f"Ev sahibi evinde mükemmel bir form yakalamış (**PPG {ppg:.2f}**), deplasman ise deplasmanda zorlanıyor (**MPG {mpg:.2f}**). Ev sahibi form olarak açık ara üstün."
+    elif fark >= 0.7:
+        txt = f"Ev sahibi form olarak önde (**PPG {ppg:.2f}** vs **MPG {mpg:.2f}**). Sahasında kaybetmeye alışkın değil."
+    elif fark <= -0.7:
+        txt = f"Deplasman form olarak önde (**MPG {mpg:.2f}** vs **PPG {ppg:.2f}**). Deplasmanda beklenmedik bir performans sergiliyor."
+    else:
+        txt = f"Form dengeli (**PPG {ppg:.2f}** vs **MPG {mpg:.2f}**). İki takım da benzer ritimde."
+    yorumlar.append(("📈 FORM", txt))
+
+    # 2. SIRALAMA
+    s_ev, s_dep = v["siralama_ev"], v["siralama_dep"]
+    fark_sira = s_dep - s_ev
+    if fark_sira >= 8:
+        txt = f"Ev sahibi **{s_ev}.** sırada, deplasman **{s_dep}.** sırada. Aradaki **{fark_sira} basamak** ciddi bir güç farkına işaret ediyor. Ev sahibi kağıt üzerinde net favori."
+    elif fark_sira >= 3:
+        txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. Ev sahibi lig tablosunda üstün konumda."
+    elif fark_sira <= -8:
+        txt = f"Deplasman **{s_dep}.** sırada, ev sahibi **{s_ev}.** sırada. Deplasman **{abs(fark_sira)} basamak** yukarıda, sürpriz yapabilir."
+    elif fark_sira <= -3:
+        txt = f"Deplasman **{s_dep}.** sırada, ev sahibi **{s_ev}.** sırada. Deplasman kağıt üzerinde biraz üstün."
+    else:
+        txt = f"Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**). Dengeli bir eşleşme."
+    yorumlar.append(("🏆 SIRALAMA", txt))
+
+    # 3. HÜCUM (xG)
+    xg_ev, xg_dep = v["xg_ev"], v["xg_dep"]
+    fark_xg = xg_ev - xg_dep
+    if fark_xg >= 0.6:
+        txt = f"Ev sahibi hücumda üretken (**xG {xg_ev:.2f}** vs **{xg_dep:.2f}**). Rakip kaleye sürekli tehlike taşıyor. Deplasman savunması zor bir maç geçirebilir."
+    elif fark_xg <= -0.6:
+        txt = f"Deplasman hücumda daha etkili (**xG {xg_dep:.2f}** vs **{xg_ev:.2f}**). Ev sahibi savunmada dikkatli olmalı."
+    else:
+        txt = f"xG değerleri yakın (Ev **{xg_ev:.2f}** / Dep **{xg_dep:.2f}**). Hücum güçleri dengeli."
+    yorumlar.append(("🎯 HÜCUM (xG)", txt))
+
+    # 4. ATILAN GOL
+    at_ev, at_dep = v["atilan_ev"], v["atilan_dep"]
+    fark_at = at_ev - at_dep
+    if fark_at >= 0.6:
+        txt = f"Ev sahibi maç başına **{at_ev:.1f}** gol atıyor, deplasman **{at_dep:.1f}**. Gerçekleşen performansta ev sahibi üstün."
+    elif fark_at <= -0.6:
+        txt = f"Deplasman maç başına **{at_dep:.1f}** gol atıyor, ev sahibi **{at_ev:.1f}**. Deplasman hücumda daha verimli."
+    else:
+        txt = f"Atılan gol ortalamaları benzer (Ev **{at_ev:.1f}** / Dep **{at_dep:.1f}**)."
+    yorumlar.append(("⚽ ATILAN GOL", txt))
+
+    # 5. SAVUNMA (Yenen Gol)
+    y_ev, y_dep = v["yenen_ev"], v["yenen_dep"]
+    fark_y = y_dep - y_ev
+    if fark_y >= 0.7:
+        txt = f"Ev sahibi savunması sağlam (**{y_ev:.1f}** gol/maç), deplasman savunması zayıf (**{y_dep:.1f}** gol/maç). Deplasman bu maçta gol yemesi sürpriz olmaz."
+    elif fark_y <= -0.7:
+        txt = f"Deplasman savunması sağlam (**{y_dep:.1f}** gol/maç), ev sahibi savunması zayıf (**{y_ev:.1f}**). Deplasman gol bulabilir."
+    else:
+        txt = f"İki takımın da savunması benzer seviyede (Ev **{y_ev:.1f}** / Dep **{y_dep:.1f}**)."
+    yorumlar.append(("🛡️ SAVUNMA", txt))
+
+    # 6. REAKSİYON GÜCÜ
+    r_ev, r_dep = v["reaksiyon_ev"], v["reaksiyon_dep"]
+    fark_r = r_ev - r_dep
+    if fark_r >= 15:
+        txt = f"Ev sahibi maç içi reaksiyon gücü yüksek (**%{r_ev:.0f}** vs **%{r_dep:.0f}**). Geriye düştüğünde toparlanma kabiliyeti fazla. Deplasman kriz anlarında dağılabilir."
+    elif fark_r <= -15:
+        txt = f"Deplasman reaksiyon gücü yüksek (**%{r_dep:.0f}** vs **%{r_ev:.0f}**). Skor dezavantajında olsa bile pes etmiyor."
+    else:
+        txt = f"Reaksiyon güçleri benzer (Ev **%{r_ev:.0f}** / Dep **%{r_dep:.0f}**). Her iki takım da baskı altında benzer davranış sergiliyor."
+    yorumlar.append(("💪 REAKSİYON", txt))
+
+    # 7. İSTİKRAR (Standart Sapma)
+    ss_ev, ss_dep = v["ss_ev"], v["ss_dep"]
+    def istikrar(ss):
+        if ss <= 0.8: return "çok istikrarlı"
+        if ss <= 1.3: return "istikrarlı"
+        if ss <= 2.0: return "dalgalı"
+        return "çok istikrarsız"
+    if abs(ss_ev - ss_dep) >= 0.5:
+        if ss_ev < ss_dep:
+            txt = f"Ev sahibi performansı **{istikrar(ss_ev)}** (SS {ss_ev:.2f}), deplasman ise **{istikrar(ss_dep)}** (SS {ss_dep:.2f}). Tahmin edilebilirlik açısından ev sahibi daha güvenilir."
+        else:
+            txt = f"Deplasman performansı **{istikrar(ss_dep)}** (SS {ss_dep:.2f}), ev sahibi **{istikrar(ss_ev)}** (SS {ss_ev:.2f}). Deplasman sonuçları daha öngörülebilir."
+    else:
+        txt = f"İki takımın da istikrar seviyesi benzer (Ev **{ss_ev:.2f}** / Dep **{ss_dep:.2f}**)."
+    yorumlar.append(("📊 İSTİKRAR", txt))
+
+    return yorumlar
+
+
+# ==========================================
 # SAYFA 1: İSTATİSTİK GİRİŞİ
 # ==========================================
 if st.session_state.sayfa == "giris":
@@ -263,7 +361,7 @@ if st.session_state.sayfa == "giris":
 
 
 # ==========================================
-# SAYFA 2: SADE ANALİZ (SADECE 3 BÖLÜM)
+# SAYFA 2: SADE ANALİZ
 # ==========================================
 elif st.session_state.sayfa == "sonuc":
     v = st.session_state.form_verileri
@@ -337,6 +435,14 @@ elif st.session_state.sayfa == "sonuc":
         - **Standart Sapma:** {v['ss_dep']:.2f} → {'⚠️ İstikrarsız' if v['ss_dep'] > 2 else '✅ İstikrarlı' if v['ss_dep'] < 1 else 'Normal'}
         """)
 
+    # ---- 🔍 GENİŞ KAPSAMLI ANALİZ ----
+    with st.expander("🔍 Geniş Kapsamlı Analiz", expanded=True):
+        yorumlar = detayli_analiz_yorumu(v)
+        for baslik, metin in yorumlar:
+            st.markdown(f"**{baslik}**")
+            st.markdown(metin)
+            st.markdown("")
+
     # ---- 🎯 STRATEJİ ÖNERİLERİ ----
     with st.expander("🎯 Strateji Önerileri", expanded=True):
         st.markdown(f"**Ana Senaryo:** {senaryo}")
@@ -344,7 +450,7 @@ elif st.session_state.sayfa == "sonuc":
         - 🥇 **En Olası Sonuç:** **{en_olasi[0]}** → 1: %{p1:.1f} • X: %{px:.1f} • 2: %{p2:.1f}
         - 🛡️ **En Güvenli Bahis:** Çifte Şans **{en_guvenli[0]}** → 1X: %{cifte_1x:.1f} • X2: %{cifte_x2:.1f} • 12: %{cifte_12:.1f}
         - ⚽ **Gol Tercihi:** **{'2.5 Üst' if tahmini_gol > 2.6 else '2.5 Alt'}** (beklenen: {tahmini_gol:.2f}) → Üst: %{ust_25:.0f} • Alt: %{100-ust_25:.0f}
-        - 🤝 **KG Tercihi:** **{'KG Var' if kg_ort > 55 else 'KG Yok' if kg_ort < 45 else 'Belirsiz - kaçınılmalı'}** (%{kg_ort:.0f}) → Var: %{kg_ort:.0f} • Yok: %{100-kg_ort:.0f}
+        - 🤝 **KG Tercihi:** **{'KG Var' if kg_ort > 55 else 'KG Yok' if kg_ort < 45 else 'Belirsiz - kaçınılmalı'}** → Var: %{kg_ort:.0f} • Yok: %{100-kg_ort:.0f}
         - 📈 **İkinci Tercih:** {'X2 çifte şans' if p1 > p2 else '1X çifte şans'} (%{max(cifte_1x, cifte_x2):.1f})
         """)
 
