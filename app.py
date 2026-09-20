@@ -1,7 +1,7 @@
 import streamlit as st
 import re
 
-st.set_page_config(page_title="Futbol Analiz Pro V13", page_icon="⚽", layout="centered")
+st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
 st.markdown("""
     <h1 style='text-align: center; color: #1f77b4;'>⚽ Futbol Analiz Pro Sistemi</h1>
@@ -10,12 +10,11 @@ st.markdown("""
 
 st.divider()
 
-# Hafıza kontrolü (Kutuyu sıfırlamak için)
+# Ham metin alanı (Sayfa yenilendiğinde uçmaması için session_state kullanıyoruz)
 if "ham_veri" not in st.session_state:
     st.session_state.ham_veri = ""
 
-# Metin kutusunu hafızaya bağlıyoruz
-st.session_state.ham_veri = st.text_area(
+ham_veri = st.text_area(
     "📋 Maç Bilgilerini Buraya Yapıştırın:", 
     value=st.session_state.ham_veri, 
     height=180, 
@@ -32,12 +31,18 @@ def sayi_bul(metin, anahtar, varsayilan):
             return varsayilan
     return varsayilan
 
-if st.button("🚀 Gelişmiş Analizi Çalıştır", type="primary", use_container_width=True):
-    if not st.session_state.ham_veri.strip():
+col_btn1, col_btn2 = st.columns(2)
+calistir = col_btn1.button("🚀 Gelişmiş Analizi Çalıştır", type="primary", use_container_width=True)
+temizle = col_btn2.button("🧹 Kutuyu Temizle", use_container_width=True)
+
+if temizle:
+    st.session_state.ham_veri = ""
+    st.rerun()
+
+if calistir:
+    if not ham_veri.strip():
         st.warning("⚠️ Lütfen analizi yapılacak verileri yapıştırın!")
     else:
-        ham_veri = st.session_state.ham_veri
-        
         # Verileri ayıkla
         xg_ev = sayi_bul(ham_veri, "xG Ev", 1.5)
         xg_dep = sayi_bul(ham_veri, "xG Dep", 1.3)
@@ -73,10 +78,10 @@ if st.button("🚀 Gelişmiş Analizi Çalıştır", type="primary", use_contain
 
         # --- 1. ANA MAÇ SONUCU VE ÇİZELGE ---
         st.subheader("📊 1X2 Maç Sonucu Dağılımı")
-        col1, col2, col3 = st.columns(3)
-        col1.metric("1 (Ev Sahibi)", f"%{oran_ev:.1f}")
-        col2.metric("X (Beraberlik)", f"%{oran_beraberlik:.1f}")
-        col3.metric("2 (Deplasman)", f"%{oran_dep:.1f}")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("1 (Ev Sahibi)", f"%{oran_ev:.1f}")
+        c2.metric("X (Beraberlik)", f"%{oran_beraberlik:.1f}")
+        c3.metric("2 (Deplasman)", f"%{oran_dep:.1f}")
 
         st.progress(int(oran_ev), text=f"Ev Sahibi Kazanma Gücü: %{oran_ev:.1f}")
         st.progress(int(oran_beraberlik), text=f"Beraberlik İhtimali: %{oran_beraberlik:.1f}")
@@ -117,7 +122,3 @@ if st.button("🚀 Gelişmiş Analizi Çalıştır", type="primary", use_contain
         * **Deplasman Reaksiyonu:** Deplasman ekibinin xG değeri ({xg_dep}) skoru eşitleme veya maçta kalma potansiyelinin yüksek olduğuna işaret ediyor.
         * **Önerilen Strateji:** Risk severler için yüksek oranlı tercihler, garanti arayanlar için ise **Çifte Şans ({'1X' if oran_ev >= oran_dep else 'X2'})** ve gol limitleri ön planda tutulabilir.
         """)
-
-        # Analiz bitince kutuyu temizle ve sayfayı yenile
-        st.session_state.ham_veri = ""
-        st.rerun()
