@@ -196,6 +196,17 @@ def takim_form_yorumu(deger: float) -> str:
     return "🟡 Ortalama form"
 
 
+def veri_yeterli_mi(v: dict) -> bool:
+    """En az 2 hücum verisi girilmiş mi kontrol eder."""
+    onemli_alanlar = [
+        v["xg_ev"], v["xg_dep"],
+        v["atilan_ev"], v["atilan_dep"],
+        v["yenen_ev"], v["yenen_dep"],
+    ]
+    dolu_sayisi = sum(1 for x in onemli_alanlar if x > 0)
+    return dolu_sayisi >= 2
+
+
 # ==========================================
 # SAYFA 1: İSTATİSTİK GİRİŞİ
 # ==========================================
@@ -264,6 +275,23 @@ if st.session_state.sayfa == "giris":
 elif st.session_state.sayfa == "sonuc":
     v = st.session_state.form_verileri
 
+    # ---- VERİ YETERLİLİK KONTROLÜ ----
+    if not veri_yeterli_mi(v):
+        st.markdown("<h1>⚠️ Yetersiz Veri</h1>", unsafe_allow_html=True)
+        st.error("""
+        **Analiz için yeterli istatistik girilmedi.**
+        
+        Lütfen forma dönüp en az **2 alan** doldur:
+        - xG (Ev / Dep)
+        - Atılan Gol (Ev / Dep)
+        - Yenen Gol (Ev / Dep)
+        """)
+        if st.button("⬅️ Forma Dön", use_container_width=True, type="primary"):
+            st.session_state.sayfa = "giris"
+            st.rerun()
+        st.stop()
+
+    # ---- Hesaplamalar ----
     lam_ev, lam_dep, guven = hesapla_lambda(v)
     matris = poisson_matris(lam_ev, lam_dep, MAX_GOL)
     olas = matristen_olasilik(matris, MAX_GOL)
@@ -293,7 +321,7 @@ elif st.session_state.sayfa == "sonuc":
 
     st.markdown("<h1>🎯 Detaylı Analiz Raporu</h1>", unsafe_allow_html=True)
 
-    # ---- 📋 TAKIM İSTATİSTİKLERİ (EN ÜSTTE) ----
+    # ---- 📋 TAKIM İSTATİSTİKLERİ ----
     st.markdown("### 📋 Takım İstatistikleri")
 
     stat_c1, stat_c2 = st.columns(2)
