@@ -17,45 +17,49 @@ ham_veri = st.text_area(
     "📋 Maç Bilgilerini Buraya Yapıştırın:", 
     value=st.session_state.metin_kutusu,
     height=180, 
-    placeholder="Maç sitresinden kopyaladığınız ham metni buraya yapıştırın..."
+    placeholder="Maç sitesinden kopyaladığınız ham metni buraya yapıştırın..."
 )
 
 st.session_state.metin_kutusu = ham_veri
 
-def akilli_veri_ayikla(metin):
-    """Sitenin ham metin yapısından xG, şut ve gol verilerini akıllıca çeker"""
+def nokta_atisi_veri_cek(metin):
+    """Oranları ve çöp sayıları asla xG ile karıştırmayan nokta atışı ayıklama motoru"""
     
-    # Varsayılan değerler
+    # Varsayılan emniyet değerleri
     xg_ev, xg_dep = 1.5, 1.3
     atilan_ev, atilan_dep = 1.5, 1.2
     yenen_ev, yenen_dep = 1.0, 1.1
     sut_ev, sut_dep = 15.0, 10.0
 
-    # Metin içindeki tüm ondalıklı sayıları bul
-    sayilar = []
-    for m in re.finditer(r'\b([0-9]+[.,][0-9]+)\b', metin):
+    # 1. xG (Beklenen Gol) tespiti: "Beklenen goller" veya "xG" kelimesinin yakınındaki sayıları arar
+    xg_bloklari = re.findall(r'(?:Beklenen goller|xG).*?([0-9]+[.,][0-9]+).*?([0-9]+[.,][0-9]+)', metin, re.IGNORECASE | re.DOTALL)
+    if xg_bloklari:
         try:
-            val = float(m.group(1).replace(',', '.'))
-            sayilar.append(val)
+            xg_ev = float(xg_bloklari[0][0].replace(',', '.'))
+            xg_dep = float(xg_bloklari[0][1].replace(',', '.'))
         except:
             pass
+    else:
+        # Alternatif: Metindeki tüm 0.5 ile 3.5 arasındaki ondalıklı sayıları bulup oranlar (2.35, 3.90 vb.) hariç tutalım
+        temiz_sayilar = []
+        for m in re.finditer(r'\b([0-9]+[.,][0-9]+)\b', metin):
+            val = float(m.group(1).replace(',', '.'))
+            # Bahis oranlarını (2.35, 3.90, 2.70 vb.) listeye dahil etmiyoruz
+            if val not in [2.35, 3.90, 2.70] and 0.5 <= val <= 3.8:
+                temiz_sayilar.append(val)
+        if len(temiz_sayilar) >= 2:
+            xg_ev = temiz_sayilar[0]
+            xg_dep = temiz_sayilar[1]
 
-    # Stuttgart - Dortmund tarzı spesifik verileri yakalama mantığı
-    # xG değerleri genelde 0.5 ile 4.0 arasındadır ve maç önü xG kısmında ard arda geçer
-    xg_adaylari = [s for s in sayilar if 0.5 <= s <= 4.0]
-    if len(xg_adaylari) >= 2:
-        # Genelde ilk geçen mantıklı iki rakip xG'dir (örn: 1.87 ve 1.64)
-        xg_ev = xg_adaylari[0]
-        xg_dep = xg_adaylari[1]
-
-    # Toplam Şutlar genelde 5 ile 40 arasındadır (örn: 19.6 ve 9.4)
-    sut_adaylari = [s for s in sayilar if 5.0 <= s <= 45.0]
+    # 2. Şut ve Gol ortalamalarını güvenli aralıklardan çekme
+    tum_sayilar = [float(m.group(1).replace(',', '.')) for m in re.finditer(r'\b([0-9]+[.,][0-9]+)\b', metin)]
+    
+    sut_adaylari = [s for s in tum_sayilar if 8.0 <= s <= 35.0]
     if len(sut_adaylari) >= 2:
         sut_ev = sut_adaylari[0]
         sut_dep = sut_adaylari[1]
 
-    # Atılan gol ortalamaları (örn: 2.2 ve 2.0)
-    gol_adaylari = [s for s in sayilar if 0.1 <= s <= 3.5]
+    gol_adaylari = [s for s in tum_sayilar if 0.5 <= s <= 3.0]
     if len(gol_adaylari) >= 4:
         atilan_ev = gol_adaylari[2]
         atilan_dep = gol_adaylari[3]
@@ -74,8 +78,7 @@ if calistir:
     if not ham_veri.strip():
         st.warning("⚠️ Lütfen analizi yapılacak verileri yapıştırın!")
     else:
-        # Akıllı motor ile verileri çek
-        xg_ev, xg_dep, atilan_ev, atilan_dep, yenen_ev, yenen_dep, sut_ev, sut_dep = akilli_veri_ayikla(ham_veri)
+        xg_ev, xg_dep, atilan_ev, atilan_dep, yenen_ev, yenen_dep, sut_ev, sut_dep = nokta_atisi_veri_cek(ham_veri)
 
         # Gelişmiş Matematiksel Model
         guc_ev = (xg_ev * 1.6) + (atilan_ev * 1.1) + (sut_ev * 0.08) - (yenen_ev * 0.4)
@@ -98,11 +101,11 @@ if calistir:
 
         tahmini_gol = (xg_ev + xg_dep + atilan_ev + atilan_dep) / 2
 
-        st.success("🎯 Akıllı Yapay Zeka Analizi Tamamlandı!")
+        st.success("🎯 Nokta Atışı Yapay Zeka Analizi Tamamlandı!")
         
-        # Hangi verileri okuduğunu şeffafça gösterelim ki hatayı görebilelim
+        # Şeffaf Kontrol Paneli
         with st.expander("🔍 Okunan İstatistik Özeti (Kontrol Et)"):
-            st.write(f"- **Ev xG:** {xg_ev} | **Dep xG:** {xg_dep}")
+            st.write(f"- **Ev xG:** {xg_ev} | **Dep xG:** {xg_dep} *(Oranlar hariç tutuldu)*")
             st.write(f"- **Ev Şut:** {sut_ev} | **Dep Şut:** {sut_dep}")
             st.write(f"- **Ev Atılan Gol:** {atilan_ev} | **Dep Atılan Gol:** {atilan_dep}")
 
@@ -150,5 +153,5 @@ if calistir:
         st.markdown(f"""
         * **Hücum Üstünlüğü:** Ev sahibi takımın xG ({xg_ev}) ve şut hacmi verileri, baskılı başlamak istediklerini gösteriyor.
         * **Deplasman Reaksiyonu:** Deplasman ekibinin xG değeri ({xg_dep}) skoru eşitleme veya maçta kalma potansiyelinin yüksek olduğuna işaret ediyor.
-        * **Önerilen Strateji:** Risk severler için yüksek oranlı tercihler, garanti arayanlar için ise **Çifte Şans ({'1X' if oran_ev >= oran_dep else 'X2'})** ve gol limitleri ön planda tutulabilir.
+        * **Önerilen Strateji:** Risk severler için yüksek oranları, garanti arayanlar için ise **Çifte Şans ({'1X' if oran_ev >= oran_dep else 'X2'})** ve gol limitleri ön planda tutulabilir.
         """)
