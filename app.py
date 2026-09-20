@@ -10,30 +10,57 @@ st.markdown("""
 
 st.divider()
 
-# Session State ile güvenli metin kutusu yönetimi
 if "metin_kutusu" not in st.session_state:
     st.session_state.metin_kutusu = ""
 
-# Metin kutusunu state'e bağlıyoruz
 ham_veri = st.text_area(
     "📋 Maç Bilgilerini Buraya Yapıştırın:", 
     value=st.session_state.metin_kutusu,
     height=180, 
-    placeholder="1 Ev takım ... \n2 Dep takım ... \n..."
+    placeholder="Maç sitresinden kopyaladığınız ham metni buraya yapıştırın..."
 )
 
-# Kutudaki yazıyı güncel tutalım
 st.session_state.metin_kutusu = ham_veri
 
-def sayi_bul(metin, anahtar, varsayilan):
-    pattern = rf"{anahtar}\D*([0-9]+[.,]?[0-9]*)"
-    eslesme = re.search(pattern, metin, re.IGNORECASE)
-    if eslesme:
+def akilli_veri_ayikla(metin):
+    """Sitenin ham metin yapısından xG, şut ve gol verilerini akıllıca çeker"""
+    
+    # Varsayılan değerler
+    xg_ev, xg_dep = 1.5, 1.3
+    atilan_ev, atilan_dep = 1.5, 1.2
+    yenen_ev, yenen_dep = 1.0, 1.1
+    sut_ev, sut_dep = 15.0, 10.0
+
+    # Metin içindeki tüm ondalıklı sayıları bul
+    sayilar = []
+    for m in re.finditer(r'\b([0-9]+[.,][0-9]+)\b', metin):
         try:
-            return float(eslesme.group(1).replace(',', '.'))
+            val = float(m.group(1).replace(',', '.'))
+            sayilar.append(val)
         except:
-            return varsayilan
-    return varsayilan
+            pass
+
+    # Stuttgart - Dortmund tarzı spesifik verileri yakalama mantığı
+    # xG değerleri genelde 0.5 ile 4.0 arasındadır ve maç önü xG kısmında ard arda geçer
+    xg_adaylari = [s for s in sayilar if 0.5 <= s <= 4.0]
+    if len(xg_adaylari) >= 2:
+        # Genelde ilk geçen mantıklı iki rakip xG'dir (örn: 1.87 ve 1.64)
+        xg_ev = xg_adaylari[0]
+        xg_dep = xg_adaylari[1]
+
+    # Toplam Şutlar genelde 5 ile 40 arasındadır (örn: 19.6 ve 9.4)
+    sut_adaylari = [s for s in sayilar if 5.0 <= s <= 45.0]
+    if len(sut_adaylari) >= 2:
+        sut_ev = sut_adaylari[0]
+        sut_dep = sut_adaylari[1]
+
+    # Atılan gol ortalamaları (örn: 2.2 ve 2.0)
+    gol_adaylari = [s for s in sayilar if 0.1 <= s <= 3.5]
+    if len(gol_adaylari) >= 4:
+        atilan_ev = gol_adaylari[2]
+        atilan_dep = gol_adaylari[3]
+
+    return xg_ev, xg_dep, atilan_ev, atilan_dep, yenen_ev, yenen_dep, sut_ev, sut_dep
 
 col_b1, col_b2 = st.columns(2)
 calistir = col_b1.button("🚀 Analizi Çalıştır", type="primary", use_container_width=True)
@@ -47,15 +74,8 @@ if calistir:
     if not ham_veri.strip():
         st.warning("⚠️ Lütfen analizi yapılacak verileri yapıştırın!")
     else:
-        # Verileri ayıkla
-        xg_ev = sayi_bul(ham_veri, "xG Ev", 1.5)
-        xg_dep = sayi_bul(ham_veri, "xG Dep", 1.3)
-        atilan_ev = sayi_bul(ham_veri, "Atılan Ev", 1.5)
-        atilan_dep = sayi_bul(ham_veri, "Atılan Dep", 1.2)
-        yenen_ev = sayi_bul(ham_veri, "Yenen Ev", 1.0)
-        yenen_dep = sayi_bul(ham_veri, "Yenen Dep", 1.1)
-        sut_ev = sayi_bul(ham_veri, "Toplam Şut Ev", 15.0)
-        sut_dep = sayi_bul(ham_veri, "Toplam Şut Dep", 10.0)
+        # Akıllı motor ile verileri çek
+        xg_ev, xg_dep, atilan_ev, atilan_dep, yenen_ev, yenen_dep, sut_ev, sut_dep = akilli_veri_ayikla(ham_veri)
 
         # Gelişmiş Matematiksel Model
         guc_ev = (xg_ev * 1.6) + (atilan_ev * 1.1) + (sut_ev * 0.08) - (yenen_ev * 0.4)
@@ -78,7 +98,13 @@ if calistir:
 
         tahmini_gol = (xg_ev + xg_dep + atilan_ev + atilan_dep) / 2
 
-        st.success("🎯 Gelişmiş Yapay Zeka Analizi Tamamlandı!")
+        st.success("🎯 Akıllı Yapay Zeka Analizi Tamamlandı!")
+        
+        # Hangi verileri okuduğunu şeffafça gösterelim ki hatayı görebilelim
+        with st.expander("🔍 Okunan İstatistik Özeti (Kontrol Et)"):
+            st.write(f"- **Ev xG:** {xg_ev} | **Dep xG:** {xg_dep}")
+            st.write(f"- **Ev Şut:** {sut_ev} | **Dep Şut:** {sut_dep}")
+            st.write(f"- **Ev Atılan Gol:** {atilan_ev} | **Dep Atılan Gol:** {atilan_dep}")
 
         # --- 1. ANA MAÇ SONUCU VE ÇİZELGE ---
         st.subheader("📊 1X2 Maç Sonucu Dağılımı")
