@@ -184,12 +184,6 @@ def matristen_olasilik(matris, max_gol: int = MAX_GOL) -> dict:
     }
 
 
-def guven_seviyesi(g: float) -> str:
-    if g >= 0.7: return "🟢 Yüksek"
-    if g >= 0.4: return "🟡 Orta"
-    return "🔴 Düşük"
-
-
 def takim_form_yorumu(deger: float) -> str:
     if deger > 2.0: return "🟢 Güçlü form"
     if deger < 1.0: return "🔴 Zayıf form"
@@ -197,7 +191,6 @@ def takim_form_yorumu(deger: float) -> str:
 
 
 def veri_yeterli_mi(v: dict) -> bool:
-    """En az 2 hücum verisi girilmiş mi kontrol eder."""
     onemli_alanlar = [
         v["xg_ev"], v["xg_dep"],
         v["atilan_ev"], v["atilan_dep"],
@@ -270,7 +263,7 @@ if st.session_state.sayfa == "giris":
 
 
 # ==========================================
-# SAYFA 2: DETAYLI ANALİZ
+# SAYFA 2: SADE ANALİZ (SADECE 3 BÖLÜM)
 # ==========================================
 elif st.session_state.sayfa == "sonuc":
     v = st.session_state.form_verileri
@@ -306,14 +299,9 @@ elif st.session_state.sayfa == "sonuc":
     cifte_12 = p1 + p2
 
     tahmini_gol = lam_ev + lam_dep
-
-    ust_05 = olas["ust_05"] / toplam * 100
-    ust_15 = olas["ust_15"] / toplam * 100
     ust_25 = olas["ust_25"] / toplam * 100
-    ust_35 = olas["ust_35"] / toplam * 100
 
     kg_var_model = olas["kg_var"] / toplam * 100
-    kg_yok_model = 100 - kg_var_model
     kg_ort = (kg_var_model + v["kg_oran"]) / 2
 
     en_olasi = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
@@ -321,136 +309,7 @@ elif st.session_state.sayfa == "sonuc":
 
     st.markdown("<h1>🎯 Detaylı Analiz Raporu</h1>", unsafe_allow_html=True)
 
-    # ---- 📋 TAKIM İSTATİSTİKLERİ ----
-    st.markdown("### 📋 Takım İstatistikleri")
-
-    stat_c1, stat_c2 = st.columns(2)
-    with stat_c1:
-        st.markdown("**🏠 Ev Sahibi**")
-        st.markdown(f"""
-        - PPG: **{v['ppg_ev']:.2f}** ({takim_form_yorumu(v['ppg_ev'])})
-        - Sıra: **{v['siralama_ev']}**
-        - Reaksiyon: **%{v['reaksiyon_ev']:.0f}**
-        - xG: **{v['xg_ev']:.2f}**
-        - Atılan: **{v['atilan_ev']:.1f}**
-        - Yenen: **{v['yenen_ev']:.1f}**
-        - Std.Sapma: **{v['ss_ev']:.2f}**
-        """)
-    with stat_c2:
-        st.markdown("**✈️ Deplasman**")
-        st.markdown(f"""
-        - MPG: **{v['mpg_dep']:.2f}** ({takim_form_yorumu(v['mpg_dep'])})
-        - Sıra: **{v['siralama_dep']}**
-        - Reaksiyon: **%{v['reaksiyon_dep']:.0f}**
-        - xG: **{v['xg_dep']:.2f}**
-        - Atılan: **{v['atilan_dep']:.1f}**
-        - Yenen: **{v['yenen_dep']:.1f}**
-        - Std.Sapma: **{v['ss_dep']:.2f}**
-        """)
-
-    st.markdown(f"**KG Oranı:** %{v['kg_oran']:.0f}")
-
-    st.divider()
-
-    # ---- 🔬 MODEL ÖZETİ ----
-    st.markdown("### 🔬 Model Özeti")
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Ev Beklenen Gol", f"{lam_ev:.2f}")
-    m2.metric("Dep Beklenen Gol", f"{lam_dep:.2f}")
-    m3.metric("Model Güveni", guven_seviyesi(guven))
-
-    st.info(f"📌 **Toplam Beklenen Gol:** {tahmini_gol:.2f} | Güven: {guven:.2f}")
-
-    if guven < 0.4:
-        st.warning("⚠️ Standart sapmalar yüksek → tahminler düşük güvenilirlikte.")
-
-    st.divider()
-
-    # ---- 📊 1X2 ----
-    st.markdown("### 📊 1 - X - 2 Maç Sonucu")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("🏠 1 (Ev)", f"%{p1:.1f}")
-    c2.metric("🤝 X (Beraberlik)", f"%{px:.1f}")
-    c3.metric("✈️ 2 (Deplasman)", f"%{p2:.1f}")
-
-    st.success(f"🎯 **En Olası Sonuç:** {en_olasi[0]} (%{en_olasi[1]:.1f}) → 1: %{p1:.1f} • X: %{px:.1f} • 2: %{p2:.1f}")
-
-    st.divider()
-
-    # ---- 🛡️ ÇİFTE ŞANS ----
-    st.markdown("### 🛡️ Çifte Şans")
-    cc1, cc2, cc3 = st.columns(3)
-    cc1.metric("1X", f"%{cifte_1x:.1f}")
-    cc2.metric("X2", f"%{cifte_x2:.1f}")
-    cc3.metric("12", f"%{cifte_12:.1f}")
-
-    st.success(f"✅ **En Güvenli:** Çifte Şans **{en_guvenli[0]}** (%{en_guvenli[1]:.1f}) → 1X: %{cifte_1x:.1f} • X2: %{cifte_x2:.1f} • 12: %{cifte_12:.1f}")
-
-    st.divider()
-
-    # ---- ⚽ GOL ANALİZİ ----
-    st.markdown("### ⚽ Gol Analizi")
-
-    st.markdown("**Üst / Alt Bahisleri**")
-    gc1, gc2, gc3, gc4 = st.columns(4)
-    gc1.metric("Üst 0.5", f"%{ust_05:.0f}", f"Alt: %{100-ust_05:.0f}")
-    gc2.metric("Üst 1.5", f"%{ust_15:.0f}", f"Alt: %{100-ust_15:.0f}")
-    gc3.metric("Üst 2.5", f"%{ust_25:.0f}", f"Alt: %{100-ust_25:.0f}")
-    gc4.metric("Üst 3.5", f"%{ust_35:.0f}", f"Alt: %{100-ust_35:.0f}")
-
-    st.markdown("**Karşılıklı Gol (KG)**")
-    kc1, kc2, kc3 = st.columns(3)
-    kc1.metric("Model KG Var", f"%{kg_var_model:.1f}")
-    kc2.metric("Model KG Yok", f"%{kg_yok_model:.1f}")
-    kc3.metric("Kullanıcı Verisi", f"%{v['kg_oran']:.0f}", delta=f"{v['kg_oran']-kg_var_model:+.1f}")
-
-    if kg_ort >= 60:
-        st.success(f"🔥 KG Var güçlü: %{kg_ort:.0f}")
-    elif kg_ort <= 40:
-        st.info(f"🛡️ KG Yok eğilimi: %{100-kg_ort:.0f}")
-    else:
-        st.warning(f"⚖️ KG Belirsiz: %{kg_ort:.0f}")
-
-    if tahmini_gol > 3.0:
-        st.error(f"🔥 **Yüksek Skor Beklentisi:** {tahmini_gol:.2f} gol → **2.5 Üst** ve **KG Var** güçlü aday.")
-    elif tahmini_gol > 2.4:
-        st.warning(f"⚡ **Orta-Yüksek Skor:** {tahmini_gol:.2f} gol → **1.5 Üst** güvenli, 2.5 sınırda.")
-    elif tahmini_gol > 1.6:
-        st.info(f"⚖️ **Dengeli Maç:** {tahmini_gol:.2f} gol → **2.5 Alt** hafif önde.")
-    else:
-        st.success(f"🛡️ **Düşük Skor:** {tahmini_gol:.2f} gol → **2.5 Alt** ve **KG Yok** güçlü.")
-
-    st.divider()
-
-    # ---- 🎲 EN OLASI SKORLAR ----
-    st.markdown("### 🎲 En Olası Skorlar (İlk 6)")
-    en_iyi = sorted(olas["skorlar"].items(), key=lambda x: x[1], reverse=True)[:6]
-    sk_cols = st.columns(6)
-    for idx, (skor, olasilik) in enumerate(en_iyi):
-        sk_cols[idx].metric(skor, f"%{olasilik/toplam*100:.1f}")
-
-    st.divider()
-
-    # ---- ⚔️ TAKIM GÜÇ KARŞILAŞTIRMASI ----
-    st.markdown("### ⚔️ Takım Güç Karşılaştırması")
-
-    g1, g2 = st.columns(2)
-    with g1:
-        st.markdown("**🏠 Ev Sahibi**")
-        st.metric("Hücum", f"{v['xg_ev']*0.6 + v['atilan_ev']*0.4:.2f}")
-        st.metric("Zaafiyet", f"{v['yenen_ev']:.2f}")
-        st.metric("Avantaj", "×1.12")
-    with g2:
-        st.markdown("**✈️ Deplasman**")
-        st.metric("Hücum", f"{v['xg_dep']*0.6 + v['atilan_dep']*0.4:.2f}")
-        st.metric("Zaafiyet", f"{v['yenen_dep']:.2f}")
-        st.metric("Dezavantaj", "×0.94")
-
-    st.divider()
-
-    # ---- 📝 DETAYLI ANALİZ YORUMU ----
-    st.markdown("### 📝 Detaylı Analiz Yorumu")
-
+    # ---- SENARYO HESABI ----
     fark = p1 - p2
     if fark > 25:       senaryo = "Ev sahibi açık ara favori görünüyor."
     elif fark > 10:     senaryo = "Ev sahibi hafif favori konumunda."
@@ -458,6 +317,7 @@ elif st.session_state.sayfa == "sonuc":
     elif fark < -10:    senaryo = "Deplasman hafif favori."
     else:               senaryo = "Maç oldukça dengeli, beraberlik riski yüksek."
 
+    # ---- 🏠 EV SAHİBİ ANALİZİ ----
     with st.expander("🏠 Ev Sahibi Analizi", expanded=True):
         st.markdown(f"""
         - **PPG (Form):** {v['ppg_ev']:.2f} → {takim_form_yorumu(v['ppg_ev'])}
@@ -467,6 +327,7 @@ elif st.session_state.sayfa == "sonuc":
         - **Standart Sapma:** {v['ss_ev']:.2f} → {'⚠️ İstikrarsız' if v['ss_ev'] > 2 else '✅ İstikrarlı' if v['ss_ev'] < 1 else 'Normal'}
         """)
 
+    # ---- ✈️ DEPLASMAN ANALİZİ ----
     with st.expander("✈️ Deplasman Analizi", expanded=True):
         st.markdown(f"""
         - **MPG (Form):** {v['mpg_dep']:.2f} → {takim_form_yorumu(v['mpg_dep'])}
@@ -476,6 +337,7 @@ elif st.session_state.sayfa == "sonuc":
         - **Standart Sapma:** {v['ss_dep']:.2f} → {'⚠️ İstikrarsız' if v['ss_dep'] > 2 else '✅ İstikrarlı' if v['ss_dep'] < 1 else 'Normal'}
         """)
 
+    # ---- 🎯 STRATEJİ ÖNERİLERİ ----
     with st.expander("🎯 Strateji Önerileri", expanded=True):
         st.markdown(f"**Ana Senaryo:** {senaryo}")
         st.markdown(f"""
