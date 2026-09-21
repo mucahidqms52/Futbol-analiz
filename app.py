@@ -128,7 +128,7 @@ if "gecmis_analizler" not in st.session_state:
 if "secili_mac" not in st.session_state:
     st.session_state.secili_mac = None
 if "kayit_yapildi" not in st.session_state:
-    st.session_state.kayit_yapildi = False  # ⭐ Duplicate önleme
+    st.session_state.kayit_yapildi = False
 
 
 # ==========================================
@@ -508,31 +508,73 @@ def risk_seviyesi(genislik: float) -> str:
     else:               return "🔴 Yüksek"
 
 
+# ==========================================
+# DOĞRULUK KONTROLÜ (NORMALİZE EDİLMİŞ)
+# ==========================================
 def dogruluk_kontrol(skor_ev, skor_dep, tahminler: dict) -> dict:
+    """Skor ve tahminleri NORMALIZE ederek karşılaştırır."""
     sonuc = {}
 
+    # ---- 1X2 ----
     if skor_ev > skor_dep:      gercek_1x2 = "1"
     elif skor_ev == skor_dep:   gercek_1x2 = "X"
     else:                        gercek_1x2 = "2"
 
+    tahmin_1x2 = str(tahminler.get("1x2_tahmin", "")).strip()
+    # "1 (Ev)", "1", "Ev" → hepsi "1" olmalı
+    tahmin_1x2_norm = ""
+    if "1" in tahmin_1x2 or "ev" in tahmin_1x2.lower():
+        tahmin_1x2_norm = "1"
+    elif "x" in tahmin_1x2.lower() or "beraber" in tahmin_1x2.lower():
+        tahmin_1x2_norm = "X"
+    elif "2" in tahmin_1x2 or "dep" in tahmin_1x2.lower():
+        tahmin_1x2_norm = "2"
+
     sonuc["1X2_gercek"] = gercek_1x2
-    sonuc["1X2_tahmin"] = tahminler.get("1x2_tahmin", "")
-    sonuc["1X2_tuttu"] = (gercek_1x2 == tahminler.get("1x2_tahmin", ""))
+    sonuc["1X2_tahmin"] = tahmin_1x2
+    sonuc["1X2_tuttu"] = (gercek_1x2 == tahmin_1x2_norm)
 
-    sonuc["cifte_tahmin"] = tahminler.get("cifte_tahmin", "")
-    sonuc["cifte_tuttu"] = (gercek_1x2 in tahminler.get("cifte_tahmin", ""))
+    # ---- Çifte Şans ----
+    tahmin_cifte = str(tahminler.get("cifte_tahmin", "")).strip()
+    sonuc["cifte_tahmin"] = tahmin_cifte
+    sonuc["cifte_tuttu"] = (gercek_1x2 in tahmin_cifte)
 
+    # ---- Üst/Alt 2.5 (NORMALİZE) ----
     toplam_gol = skor_ev + skor_dep
-    gercek_ust = "Üst 2.5" if toplam_gol > 2.5 else "Alt 2.5"
-    sonuc["gol_gercek"] = gercek_ust
-    sonuc["gol_tahmin"] = tahminler.get("gol_tahmin", "")
-    sonuc["gol_tuttu"] = (gercek_ust == tahminler.get("gol_tahmin", ""))
+    gercek_ust_bool = toplam_gol > 2.5
 
-    gercek_kg = "KG Var" if (skor_ev > 0 and skor_dep > 0) else "KG Yok"
-    sonuc["kg_gercek"] = gercek_kg
-    sonuc["kg_tahmin"] = tahminler.get("kg_tahmin", "")
-    sonuc["kg_tuttu"] = (gercek_kg == tahminler.get("kg_tahmin", ""))
+    tahmin_str = str(tahminler.get("gol_tahmin", "")).strip()
+    tahmin_str_low = tahmin_str.lower()
 
+    if "üst" in tahmin_str_low or "ust" in tahmin_str_low:
+        tahmin_ust_bool = True
+    elif "alt" in tahmin_str_low:
+        tahmin_ust_bool = False
+    else:
+        tahmin_ust_bool = None
+
+    sonuc["gol_gercek"] = "Üst 2.5" if gercek_ust_bool else "Alt 2.5"
+    sonuc["gol_tahmin"] = tahmin_str
+    sonuc["gol_tuttu"] = (tahmin_ust_bool is not None and gercek_ust_bool == tahmin_ust_bool)
+
+    # ---- KG (NORMALİZE) ----
+    gercek_kg_var_bool = (skor_ev > 0 and skor_dep > 0)
+
+    tahmin_kg = str(tahminler.get("kg_tahmin", "")).strip()
+    tahmin_kg_low = tahmin_kg.lower()
+
+    if "var" in tahmin_kg_low:
+        tahmin_kg_bool = True
+    elif "yok" in tahmin_kg_low:
+        tahmin_kg_bool = False
+    else:
+        tahmin_kg_bool = None
+
+    sonuc["kg_gercek"] = "KG Var" if gercek_kg_var_bool else "KG Yok"
+    sonuc["kg_tahmin"] = tahmin_kg
+    sonuc["kg_tuttu"] = (tahmin_kg_bool is not None and gercek_kg_var_bool == tahmin_kg_bool)
+
+    # ---- Toplam ----
     tutan = sum([sonuc["1X2_tuttu"], sonuc["cifte_tuttu"], sonuc["gol_tuttu"], sonuc["kg_tuttu"]])
     sonuc["toplam_tutan"] = tutan
     sonuc["toplam_metrik"] = 4
@@ -852,7 +894,8 @@ def analiz_hesapla(v: dict):
     en_olasi = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
     en_guvenli = max([("1X", cifte_1x), ("X2", cifte_x2), ("12", cifte_12)], key=lambda x: x[1])
 
-    en_olasi_gol = "2.5 Üst" if tahmini_gol > 2.6 else "2.5 Alt"
+    # ⭐ "Üst 2.5" ve "Alt 2.5" — doğru format
+    en_olasi_gol = "Üst 2.5" if tahmini_gol > 2.6 else "Alt 2.5"
     en_olasi_kg = "KG Var" if kg_ort > 55 else "KG Yok" if kg_ort < 45 else "Belirsiz"
 
     vb = value_bet_analizi(v, p1, px, p2, ust_25, kg_var_model)
@@ -947,7 +990,7 @@ if st.session_state.sayfa == "giris":
                 yeni_veri = copy.deepcopy(VARSAYILAN_VERI)
                 yeni_veri.update(cikan)
                 st.session_state.form_verileri = yeni_veri
-                st.session_state.kayit_yapildi = False  # ⭐ Yeni analiz → sıfırla
+                st.session_state.kayit_yapildi = False
 
                 if not veri_yeterli_mi(yeni_veri):
                     st.error(f"⚠️ Sadece {len(cikan)} alan bulundu.")
@@ -1177,10 +1220,12 @@ elif st.session_state.sayfa == "sonuc":
                 emoji = "✅" if dogruluk["gol_tuttu"] else "❌"
                 st.markdown(f"{emoji} **Gol**")
                 st.markdown(f"Tahmin: {dogruluk['gol_tahmin']}")
+                st.markdown(f"Gerçek: {dogruluk['gol_gercek']}")
             with c4:
                 emoji = "✅" if dogruluk["kg_tuttu"] else "❌"
                 st.markdown(f"{emoji} **KG**")
                 st.markdown(f"Tahmin: {dogruluk['kg_tahmin']}")
+                st.markdown(f"Gerçek: {dogruluk['kg_gercek']}")
     else:
         dogruluk = None
 
@@ -1330,7 +1375,6 @@ elif st.session_state.sayfa == "sonuc":
         if dogruluk is not None:
             yeni_kayit["dogruluk"] = dogruluk
 
-        # Son kayıt ile karşılaştır (ekstra güvenlik)
         mevcut = st.session_state.gecmis_analizler
         tekrar_mi = False
         if mevcut:
@@ -1351,7 +1395,7 @@ elif st.session_state.sayfa == "sonuc":
             st.session_state.gecmis_analizler = st.session_state.gecmis_analizler[-100:]
             gecmis_kaydet(st.session_state.gecmis_analizler)
 
-        st.session_state.kayit_yapildi = True  # ⭐ Bir daha kaydetme
+        st.session_state.kayit_yapildi = True
 
     st.divider()
 
