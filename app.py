@@ -57,22 +57,20 @@ GECMIS_DOSYA = "gecmis.json"
 
 
 def gecmis_yukle() -> list:
-    """JSON dosyasından geçmiş analizleri yükler."""
     try:
         if os.path.exists(GECMIS_DOSYA):
             with open(GECMIS_DOSYA, "r", encoding="utf-8") as f:
                 return json.load(f)
-    except Exception as e:
+    except Exception:
         pass
     return []
 
 
 def gecmis_kaydet(gecmis: list):
-    """Geçmiş analizleri JSON dosyasına kaydeder."""
     try:
         with open(GECMIS_DOSYA, "w", encoding="utf-8") as f:
             json.dump(gecmis, f, ensure_ascii=False, indent=2)
-    except Exception as e:
+    except Exception:
         pass
 
 
@@ -117,7 +115,7 @@ MONTE_CARLO_N = 5000
 BELIRSIZLIK = 0.10
 
 # ==========================================
-# SESSION STATE (KALICI GEÇMİŞ)
+# SESSION STATE
 # ==========================================
 if "sayfa" not in st.session_state:
     st.session_state.sayfa = "giris"
@@ -126,10 +124,11 @@ if "form_verileri" not in st.session_state:
 if "form_version" not in st.session_state:
     st.session_state.form_version = 0
 if "gecmis_analizler" not in st.session_state:
-    # ⭐ Dosyadan yükle (kalıcı)
     st.session_state.gecmis_analizler = gecmis_yukle()
 if "secili_mac" not in st.session_state:
     st.session_state.secili_mac = None
+if "kayit_yapildi" not in st.session_state:
+    st.session_state.kayit_yapildi = False  # ⭐ Duplicate önleme
 
 
 # ==========================================
@@ -934,6 +933,7 @@ if st.session_state.sayfa == "giris":
     if gecmis_btn:
         st.session_state.sayfa = "gecmis"
         st.session_state.secili_mac = None
+        st.session_state.kayit_yapildi = False
         st.rerun()
 
     if analiz_btn:
@@ -947,6 +947,7 @@ if st.session_state.sayfa == "giris":
                 yeni_veri = copy.deepcopy(VARSAYILAN_VERI)
                 yeni_veri.update(cikan)
                 st.session_state.form_verileri = yeni_veri
+                st.session_state.kayit_yapildi = False  # ⭐ Yeni analiz → sıfırla
 
                 if not veri_yeterli_mi(yeni_veri):
                     st.error(f"⚠️ Sadece {len(cikan)} alan bulundu.")
@@ -1022,8 +1023,8 @@ elif st.session_state.sayfa == "gecmis":
                 en_iyi_3 = analiz.get("en_iyi_3", [])
                 if en_iyi_3:
                     st.markdown("**En İyi 3 Bahis:**")
-                    for i, a in enumerate(en_iyi_3, 1):
-                        st.markdown(f"{i}. **{a['isim']}** — {a['tip']} | EV: {a['ev']:.2f}")
+                    for i, ad in enumerate(en_iyi_3, 1):
+                        st.markdown(f"{i}. **{ad['isim']}** — {ad['tip']} | EV: {ad['ev']:.2f}")
 
             if st.button("⬅️ Geçmişe Dön", use_container_width=True, type="primary"):
                 st.session_state.secili_mac = None
@@ -1106,11 +1107,10 @@ elif st.session_state.sayfa == "gecmis":
     with c_temizle:
         if st.button("🗑️ Geçmişi Temizle", use_container_width=True):
             st.session_state.gecmis_analizler = []
-            # ⭐ Dosyayı da sil
             try:
                 if os.path.exists(GECMIS_DOSYA):
                     os.remove(GECMIS_DOSYA)
-            except:
+            except Exception:
                 pass
             st.rerun()
     with c_geri:
@@ -1309,8 +1309,8 @@ elif st.session_state.sayfa == "sonuc":
     else:
         st.info("ℹ️ Oran verisi olmadığı için final öneri hesaplanamadı.")
 
-    # ⭐ Geçmişe kaydet ve DOSYAYA YAZ (kalıcı)
-    if en_iyi_3:
+    # ⭐ GEÇMİŞE KAYDET — SADECE BİR KEZ
+    if en_iyi_3 and not st.session_state.kayit_yapildi:
         yeni_kayit = {
             "veri": copy.deepcopy(v),
             "analiz": {
@@ -1329,15 +1329,35 @@ elif st.session_state.sayfa == "sonuc":
         }
         if dogruluk is not None:
             yeni_kayit["dogruluk"] = dogruluk
-        st.session_state.gecmis_analizler.append(yeni_kayit)
-        st.session_state.gecmis_analizler = st.session_state.gecmis_analizler[-100:]
-        # ⭐ Dosyaya yaz (kalıcı)
-        gecmis_kaydet(st.session_state.gecmis_analizler)
+
+        # Son kayıt ile karşılaştır (ekstra güvenlik)
+        mevcut = st.session_state.gecmis_analizler
+        tekrar_mi = False
+        if mevcut:
+            son = mevcut[-1]
+            if (
+                son["veri"].get("takim_ev") == yeni_kayit["veri"].get("takim_ev")
+                and son["veri"].get("takim_dep") == yeni_kayit["veri"].get("takim_dep")
+                and son["veri"].get("skor_ev") == yeni_kayit["veri"].get("skor_ev")
+                and son["veri"].get("skor_dep") == yeni_kayit["veri"].get("skor_dep")
+                and abs(son["analiz"].get("p1", 0) - yeni_kayit["analiz"].get("p1", 0)) < 0.1
+                and abs(son["analiz"].get("px", 0) - yeni_kayit["analiz"].get("px", 0)) < 0.1
+                and abs(son["analiz"].get("p2", 0) - yeni_kayit["analiz"].get("p2", 0)) < 0.1
+            ):
+                tekrar_mi = True
+
+        if not tekrar_mi:
+            st.session_state.gecmis_analizler.append(yeni_kayit)
+            st.session_state.gecmis_analizler = st.session_state.gecmis_analizler[-100:]
+            gecmis_kaydet(st.session_state.gecmis_analizler)
+
+        st.session_state.kayit_yapildi = True  # ⭐ Bir daha kaydetme
 
     st.divider()
 
     if st.button("🔄 Yeni Maç Analizi", use_container_width=True, type="primary"):
         st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
         st.session_state.form_version += 1
+        st.session_state.kayit_yapildi = False
         st.session_state.sayfa = "giris"
         st.rerun()
