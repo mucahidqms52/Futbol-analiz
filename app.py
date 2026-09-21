@@ -3,6 +3,8 @@ import math
 import copy
 import re
 import random
+import json
+import os
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
@@ -49,6 +51,32 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
+# KALICI GEÇMİŞ YARDIMCILARI
+# ==========================================
+GECMIS_DOSYA = "gecmis.json"
+
+
+def gecmis_yukle() -> list:
+    """JSON dosyasından geçmiş analizleri yükler."""
+    try:
+        if os.path.exists(GECMIS_DOSYA):
+            with open(GECMIS_DOSYA, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception as e:
+        pass
+    return []
+
+
+def gecmis_kaydet(gecmis: list):
+    """Geçmiş analizleri JSON dosyasına kaydeder."""
+    try:
+        with open(GECMIS_DOSYA, "w", encoding="utf-8") as f:
+            json.dump(gecmis, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        pass
+
+
+# ==========================================
 # VARSAYILAN VERİ
 # ==========================================
 VARSAYILAN_VERI = {
@@ -77,7 +105,6 @@ VARSAYILAN_VERI = {
     "oran_1": 0.0, "oran_x": 0.0, "oran_2": 0.0,
     "oran_ust25": 0.0, "oran_alt25": 0.0,
     "oran_kg_var": 0.0, "oran_kg_yok": 0.0,
-    # Maç bilgisi
     "takim_ev": "", "takim_dep": "", "skor_ev": 0, "skor_dep": 0,
     "skor_belli": False,
 }
@@ -90,7 +117,7 @@ MONTE_CARLO_N = 5000
 BELIRSIZLIK = 0.10
 
 # ==========================================
-# SESSION STATE
+# SESSION STATE (KALICI GEÇMİŞ)
 # ==========================================
 if "sayfa" not in st.session_state:
     st.session_state.sayfa = "giris"
@@ -99,7 +126,8 @@ if "form_verileri" not in st.session_state:
 if "form_version" not in st.session_state:
     st.session_state.form_version = 0
 if "gecmis_analizler" not in st.session_state:
-    st.session_state.gecmis_analizler = []
+    # ⭐ Dosyadan yükle (kalıcı)
+    st.session_state.gecmis_analizler = gecmis_yukle()
 if "secili_mac" not in st.session_state:
     st.session_state.secili_mac = None
 
@@ -108,42 +136,24 @@ if "secili_mac" not in st.session_state:
 # METİNDEN VERİ ÇIKARMA
 # ==========================================
 def takimlari_cikar(metin: str) -> tuple:
-    """Metinden ev ve dep takım isimlerini çıkarır."""
     takim_ev = ""
     takim_dep = ""
 
-    # Yöntem 1: "X\nX\nHH:MM\nFT\nA\n:\nB\nY\nY" formatı
-    # Örn: "Tottenham\nTottenham\n14:30\nFT\n2\n:\n3\nAston Villa\nAston Villa"
     m = re.search(r'([A-ZÇĞİÖŞÜ][\w\s\.]+?)\n\1\n\d{1,2}:\d{2}\nFT\n(\d+)\n:\n(\d+)\n([A-ZÇĞİÖŞÜ][\w\s\.]+?)\n\4', metin)
     if m:
-        takim_ev = m.group(1).strip()
-        skor_ev = int(m.group(2))
-        skor_dep = int(m.group(3))
-        takim_dep = m.group(4).strip()
-        return takim_ev, takim_dep, skor_ev, skor_dep, True
+        return m.group(1).strip(), m.group(4).strip(), int(m.group(2)), int(m.group(3)), True
 
-    # Yöntem 2: "Alverca\nAlverca\n20:00\nFT\n1\n:\n0\nRio Ave"
     m = re.search(r'([A-ZÇĞİÖŞÜ][\w\s\.]+?)\n\1\n\d{1,2}:\d{2}\nFT\n(\d+)\n:\n(\d+)\n([A-ZÇĞİÖŞÜ][\w\s\.]+)', metin)
     if m:
-        takim_ev = m.group(1).strip()
-        skor_ev = int(m.group(2))
-        skor_dep = int(m.group(3))
-        takim_dep = m.group(4).strip()
-        return takim_ev, takim_dep, skor_ev, skor_dep, True
+        return m.group(1).strip(), m.group(4).strip(), int(m.group(2)), int(m.group(3)), True
 
-    # Yöntem 3: VS formatı → "New York City FC\n19\nNew York City FC\nVS\nNew York Red Bulls\n15"
     m = re.search(r'([A-ZÇĞİÖŞÜ][\w\s\.]+?)\n\1\nVS\n([A-ZÇĞİÖŞÜ][\w\s\.]+?)\n\2', metin)
     if m:
-        takim_ev = m.group(1).strip()
-        takim_dep = m.group(2).strip()
-        return takim_ev, takim_dep, 0, 0, False
+        return m.group(1).strip(), m.group(2).strip(), 0, 0, False
 
-    # Yöntem 4: Sadece skor formatı → "X 2 : 3 Y"
     m = re.search(r'FT\n(\d+)\n:\n(\d+)', metin)
     if m:
-        skor_ev = int(m.group(1))
-        skor_dep = int(m.group(2))
-        return takim_ev, takim_dep, skor_ev, skor_dep, True
+        return takim_ev, takim_dep, int(m.group(1)), int(m.group(2)), True
 
     return takim_ev, takim_dep, 0, 0, False
 
@@ -152,7 +162,6 @@ def metinden_veri_cikar(metin: str) -> dict:
     veri = {}
     metin = metin.replace(",", ".")
 
-    # Takım isimleri ve skor
     takim_ev, takim_dep, skor_ev, skor_dep, skor_belli = takimlari_cikar(metin)
     veri["takim_ev"] = takim_ev
     veri["takim_dep"] = takim_dep
@@ -500,47 +509,31 @@ def risk_seviyesi(genislik: float) -> str:
     else:               return "🔴 Yüksek"
 
 
-# ==========================================
-# DOĞRULUK KONTROLÜ
-# ==========================================
 def dogruluk_kontrol(skor_ev, skor_dep, tahminler: dict) -> dict:
-    """Maç sonucuna göre hangi tahminlerin tuttuğunu kontrol eder."""
     sonuc = {}
 
-    # 1X2
-    if skor_ev > skor_dep:
-        gercek_1x2 = "1"
-    elif skor_ev == skor_dep:
-        gercek_1x2 = "X"
-    else:
-        gercek_1x2 = "2"
+    if skor_ev > skor_dep:      gercek_1x2 = "1"
+    elif skor_ev == skor_dep:   gercek_1x2 = "X"
+    else:                        gercek_1x2 = "2"
 
     sonuc["1X2_gercek"] = gercek_1x2
     sonuc["1X2_tahmin"] = tahminler.get("1x2_tahmin", "")
     sonuc["1X2_tuttu"] = (gercek_1x2 == tahminler.get("1x2_tahmin", ""))
 
-    # Çifte Şans
-    gercek_cifte = ""
-    if skor_ev > skor_dep: gercek_cifte = "1"
-    elif skor_ev == skor_dep: gercek_cifte = "X"
-    else: gercek_cifte = "2"
     sonuc["cifte_tahmin"] = tahminler.get("cifte_tahmin", "")
-    sonuc["cifte_tuttu"] = (gercek_cifte in tahminler.get("cifte_tahmin", ""))
+    sonuc["cifte_tuttu"] = (gercek_1x2 in tahminler.get("cifte_tahmin", ""))
 
-    # Üst/Alt 2.5
     toplam_gol = skor_ev + skor_dep
     gercek_ust = "Üst 2.5" if toplam_gol > 2.5 else "Alt 2.5"
     sonuc["gol_gercek"] = gercek_ust
     sonuc["gol_tahmin"] = tahminler.get("gol_tahmin", "")
     sonuc["gol_tuttu"] = (gercek_ust == tahminler.get("gol_tahmin", ""))
 
-    # KG
     gercek_kg = "KG Var" if (skor_ev > 0 and skor_dep > 0) else "KG Yok"
     sonuc["kg_gercek"] = gercek_kg
     sonuc["kg_tahmin"] = tahminler.get("kg_tahmin", "")
     sonuc["kg_tuttu"] = (gercek_kg == tahminler.get("kg_tahmin", ""))
 
-    # Toplam tutan
     tutan = sum([sonuc["1X2_tuttu"], sonuc["cifte_tuttu"], sonuc["gol_tuttu"], sonuc["kg_tuttu"]])
     sonuc["toplam_tutan"] = tutan
     sonuc["toplam_metrik"] = 4
@@ -548,9 +541,6 @@ def dogruluk_kontrol(skor_ev, skor_dep, tahminler: dict) -> dict:
     return sonuc
 
 
-# ==========================================
-# VALUE BET ANALİZİ
-# ==========================================
 def value_bet_analizi(v: dict, p1, px, p2, ust25_model, kg_var_model):
     sonuclar = []
 
@@ -840,11 +830,7 @@ def detayli_analiz_yorumu(v: dict):
     return yorumlar
 
 
-# ==========================================
-# ANALİZ HESAPLAMA
-# ==========================================
 def analiz_hesapla(v: dict):
-    """Tüm analiz hesaplamalarını yapar ve sonuç dict döndürür."""
     lam_ev, lam_dep, guven = hesapla_lambda(v)
     matris = poisson_matris(lam_ev, lam_dep, MAX_GOL)
     olas = matristen_olasilik(matris, MAX_GOL)
@@ -870,7 +856,6 @@ def analiz_hesapla(v: dict):
     en_olasi_gol = "2.5 Üst" if tahmini_gol > 2.6 else "2.5 Alt"
     en_olasi_kg = "KG Var" if kg_ort > 55 else "KG Yok" if kg_ort < 45 else "Belirsiz"
 
-    # Final öneri adayları
     vb = value_bet_analizi(v, p1, px, p2, ust_25, kg_var_model)
     kombolar_fav, favoriler = favori_kombolar(matris, MAX_GOL)
 
@@ -979,14 +964,12 @@ elif st.session_state.sayfa == "gecmis":
 
     gecmis = st.session_state.gecmis_analizler
 
-    # Seçili maç varsa detay göster
     if st.session_state.secili_mac is not None:
         idx = st.session_state.secili_mac
         if 0 <= idx < len(gecmis):
             g = gecmis[idx]
             v_old = g["veri"]
 
-            # Takım isimleri
             takim_ev = v_old.get("takim_ev", "Ev Sahibi") or "Ev Sahibi"
             takim_dep = v_old.get("takim_dep", "Deplasman") or "Deplasman"
             skor_ev = v_old.get("skor_ev", 0)
@@ -999,7 +982,6 @@ elif st.session_state.sayfa == "gecmis":
 
             st.divider()
 
-            # Doğruluk sonuçları
             if skor_belli and "dogruluk" in g:
                 d = g["dogruluk"]
                 st.markdown("### ✅ Tahmin Doğruluğu")
@@ -1027,7 +1009,6 @@ elif st.session_state.sayfa == "gecmis":
 
                 st.info(f"**Toplam: {d['toplam_tutan']}/{d['toplam_metrik']} tuttu**")
 
-            # Analiz detayları
             st.divider()
             st.markdown("### 📋 Analiz Detayları")
 
@@ -1049,7 +1030,6 @@ elif st.session_state.sayfa == "gecmis":
                 st.rerun()
             st.stop()
 
-    # Genel istatistik
     if not gecmis:
         st.info("ℹ️ Henüz kayıtlı analiz yok.")
         if st.button("⬅️ Geri Dön", use_container_width=True, type="primary"):
@@ -1057,13 +1037,11 @@ elif st.session_state.sayfa == "gecmis":
             st.rerun()
         st.stop()
 
-    # Skor girilmiş olanlar
     skorlu = [g for g in gecmis if g["veri"].get("skor_belli", False) and "dogruluk" in g]
 
     toplam = len(gecmis)
     toplam_skorlu = len(skorlu)
 
-    # Doğruluk istatistikleri
     if skorlu:
         tutan_1x2 = sum(1 for g in skorlu if g["dogruluk"]["1X2_tuttu"])
         tutan_cifte = sum(1 for g in skorlu if g["dogruluk"]["cifte_tuttu"])
@@ -1085,7 +1063,6 @@ elif st.session_state.sayfa == "gecmis":
 
         st.divider()
 
-        # En iyi market
         oranlar = {
             "1X2": tutan_1x2 / toplam_skorlu * 100,
             "Çifte Şans": tutan_cifte / toplam_skorlu * 100,
@@ -1100,7 +1077,6 @@ elif st.session_state.sayfa == "gecmis":
 
         st.divider()
 
-    # Maç listesi
     st.markdown("### 📋 Analiz Edilen Maçlar")
 
     for i, g in enumerate(reversed(gecmis)):
@@ -1111,10 +1087,8 @@ elif st.session_state.sayfa == "gecmis":
         takim_dep = v_g.get("takim_dep", "Dep") or "Dep"
         skor_belli = v_g.get("skor_belli", False)
 
-        # Başlık
         if skor_belli:
             baslik = f"⚽ {takim_ev} {v_g.get('skor_ev', 0)} - {v_g.get('skor_dep', 0)} {takim_dep}"
-            # Doğruluk emoji
             if "dogruluk" in g:
                 d = g["dogruluk"]
                 emoji = "✅" if d["toplam_tutan"] >= 3 else "🟡" if d["toplam_tutan"] >= 2 else "❌"
@@ -1132,6 +1106,12 @@ elif st.session_state.sayfa == "gecmis":
     with c_temizle:
         if st.button("🗑️ Geçmişi Temizle", use_container_width=True):
             st.session_state.gecmis_analizler = []
+            # ⭐ Dosyayı da sil
+            try:
+                if os.path.exists(GECMIS_DOSYA):
+                    os.remove(GECMIS_DOSYA)
+            except:
+                pass
             st.rerun()
     with c_geri:
         if st.button("⬅️ Geri Dön", use_container_width=True, type="primary"):
@@ -1156,7 +1136,6 @@ elif st.session_state.sayfa == "sonuc":
     vb = a["vb"]; kombolar_fav = a["kombolar_fav"]; favoriler = a["favoriler"]
     vk = a["vk"]; adaylar = a["adaylar"]; en_iyi_3 = a["en_iyi_3"]
 
-    # Takım isimleri
     takim_ev = v.get("takim_ev", "") or "Ev Sahibi"
     takim_dep = v.get("takim_dep", "") or "Deplasman"
     skor_belli = v.get("skor_belli", False)
@@ -1174,7 +1153,6 @@ elif st.session_state.sayfa == "sonuc":
     elif fark < -10:    senaryo = "Deplasman hafif favori."
     else:               senaryo = "Maç oldukça dengeli, beraberlik riski yüksek."
 
-    # Doğruluk kontrolü (skor belli ise)
     if skor_belli:
         tahminler = {
             "1x2_tahmin": en_olasi[0],
@@ -1211,10 +1189,6 @@ elif st.session_state.sayfa == "sonuc":
         **🏠 Ev:** PPG {v['ppg_ev']} | Sıra {v['siralama_ev']} | xG {v['xg_ev']} | Atılan {v['atilan_ev']} | Yenen {v['yenen_ev']}
 
         **✈️ Dep:** MPG {v['mpg_dep']} | Sıra {v['siralama_dep']} | xG {v['xg_dep']} | Atılan {v['atilan_dep']} | Yenen {v['yenen_dep']}
-
-        **📊 Oranlar:** 1: {v.get('oran_1', 0)} | X: {v.get('oran_x', 0)} | 2: {v.get('oran_2', 0)}
-        **📊 O/U 2.5:** Üst: {v.get('oran_ust25', 0)} | Alt: {v.get('oran_alt25', 0)}
-        **📊 KG:** Var: {v.get('oran_kg_var', 0)} | Yok: {v.get('oran_kg_yok', 0)}
         """)
 
     with st.expander("🏠 Ev Sahibi Analizi", expanded=True):
@@ -1254,22 +1228,10 @@ elif st.session_state.sayfa == "sonuc":
         st.markdown(f"""
         - **KG Var Olasılığı (Model):** **%{kg_var_model:.1f}**
         - **KG Yok Olasılığı (Model):** **%{100-kg_var_model:.1f}**
-        - **Kullanıcı KG Sıklığı (Veri):** %{v['kg_oran']:.0f}
         - **Ortalama:** %{kg_ort:.1f}
         """)
 
-        if kg_var_model >= 60:
-            st.success(f"🟢 **KG Var güçlü** (%{kg_var_model:.1f})")
-        elif kg_var_model >= 50:
-            st.info(f"🟡 **KG Var hafif önde** (%{kg_var_model:.1f})")
-        elif kg_var_model >= 40:
-            st.warning(f"🟡 **KG Yok hafif önde** (%{100-kg_var_model:.1f})")
-        else:
-            st.error(f"🔴 **KG Yok güçlü** (%{100-kg_var_model:.1f})")
-
     with st.expander("🎲 Monte Carlo Simülasyonu (5000 sim)", expanded=False):
-        st.markdown(f"**{MONTE_CARLO_N} kez** maç simüle edildi.")
-
         mc = monte_carlo_simulasyon(lam_ev, lam_dep, MONTE_CARLO_N)
 
         st.markdown("### 📊 1 - X - 2")
@@ -1347,7 +1309,7 @@ elif st.session_state.sayfa == "sonuc":
     else:
         st.info("ℹ️ Oran verisi olmadığı için final öneri hesaplanamadı.")
 
-    # Geçmişe kaydet
+    # ⭐ Geçmişe kaydet ve DOSYAYA YAZ (kalıcı)
     if en_iyi_3:
         yeni_kayit = {
             "veri": copy.deepcopy(v),
@@ -1369,6 +1331,8 @@ elif st.session_state.sayfa == "sonuc":
             yeni_kayit["dogruluk"] = dogruluk
         st.session_state.gecmis_analizler.append(yeni_kayit)
         st.session_state.gecmis_analizler = st.session_state.gecmis_analizler[-100:]
+        # ⭐ Dosyaya yaz (kalıcı)
+        gecmis_kaydet(st.session_state.gecmis_analizler)
 
     st.divider()
 
