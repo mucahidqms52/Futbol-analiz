@@ -125,10 +125,10 @@ if "form_version" not in st.session_state:
     st.session_state.form_version = 0
 if "gecmis_analizler" not in st.session_state:
     st.session_state.gecmis_analizler = gecmis_yukle()
-if "secili_mac" not in st.session_state:
-    st.session_state.secili_mac = None
 if "kayit_yapildi" not in st.session_state:
     st.session_state.kayit_yapildi = False
+if "gecmisten_gelindi" not in st.session_state:
+    st.session_state.gecmisten_gelindi = False
 
 
 # ==========================================
@@ -508,20 +508,14 @@ def risk_seviyesi(genislik: float) -> str:
     else:               return "🔴 Yüksek"
 
 
-# ==========================================
-# DOĞRULUK KONTROLÜ (NORMALİZE EDİLMİŞ)
-# ==========================================
 def dogruluk_kontrol(skor_ev, skor_dep, tahminler: dict) -> dict:
-    """Skor ve tahminleri NORMALIZE ederek karşılaştırır."""
     sonuc = {}
 
-    # ---- 1X2 ----
     if skor_ev > skor_dep:      gercek_1x2 = "1"
     elif skor_ev == skor_dep:   gercek_1x2 = "X"
     else:                        gercek_1x2 = "2"
 
     tahmin_1x2 = str(tahminler.get("1x2_tahmin", "")).strip()
-    # "1 (Ev)", "1", "Ev" → hepsi "1" olmalı
     tahmin_1x2_norm = ""
     if "1" in tahmin_1x2 or "ev" in tahmin_1x2.lower():
         tahmin_1x2_norm = "1"
@@ -534,12 +528,10 @@ def dogruluk_kontrol(skor_ev, skor_dep, tahminler: dict) -> dict:
     sonuc["1X2_tahmin"] = tahmin_1x2
     sonuc["1X2_tuttu"] = (gercek_1x2 == tahmin_1x2_norm)
 
-    # ---- Çifte Şans ----
     tahmin_cifte = str(tahminler.get("cifte_tahmin", "")).strip()
     sonuc["cifte_tahmin"] = tahmin_cifte
     sonuc["cifte_tuttu"] = (gercek_1x2 in tahmin_cifte)
 
-    # ---- Üst/Alt 2.5 (NORMALİZE) ----
     toplam_gol = skor_ev + skor_dep
     gercek_ust_bool = toplam_gol > 2.5
 
@@ -557,7 +549,6 @@ def dogruluk_kontrol(skor_ev, skor_dep, tahminler: dict) -> dict:
     sonuc["gol_tahmin"] = tahmin_str
     sonuc["gol_tuttu"] = (tahmin_ust_bool is not None and gercek_ust_bool == tahmin_ust_bool)
 
-    # ---- KG (NORMALİZE) ----
     gercek_kg_var_bool = (skor_ev > 0 and skor_dep > 0)
 
     tahmin_kg = str(tahminler.get("kg_tahmin", "")).strip()
@@ -574,7 +565,6 @@ def dogruluk_kontrol(skor_ev, skor_dep, tahminler: dict) -> dict:
     sonuc["kg_tahmin"] = tahmin_kg
     sonuc["kg_tuttu"] = (tahmin_kg_bool is not None and gercek_kg_var_bool == tahmin_kg_bool)
 
-    # ---- Toplam ----
     tutan = sum([sonuc["1X2_tuttu"], sonuc["cifte_tuttu"], sonuc["gol_tuttu"], sonuc["kg_tuttu"]])
     sonuc["toplam_tutan"] = tutan
     sonuc["toplam_metrik"] = 4
@@ -894,7 +884,6 @@ def analiz_hesapla(v: dict):
     en_olasi = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
     en_guvenli = max([("1X", cifte_1x), ("X2", cifte_x2), ("12", cifte_12)], key=lambda x: x[1])
 
-    # ⭐ "Üst 2.5" ve "Alt 2.5" — doğru format
     en_olasi_gol = "Üst 2.5" if tahmini_gol > 2.6 else "Alt 2.5"
     en_olasi_kg = "KG Var" if kg_ort > 55 else "KG Yok" if kg_ort < 45 else "Belirsiz"
 
@@ -975,8 +964,8 @@ if st.session_state.sayfa == "giris":
 
     if gecmis_btn:
         st.session_state.sayfa = "gecmis"
-        st.session_state.secili_mac = None
         st.session_state.kayit_yapildi = False
+        st.session_state.gecmisten_gelindi = False
         st.rerun()
 
     if analiz_btn:
@@ -991,6 +980,7 @@ if st.session_state.sayfa == "giris":
                 yeni_veri.update(cikan)
                 st.session_state.form_verileri = yeni_veri
                 st.session_state.kayit_yapildi = False
+                st.session_state.gecmisten_gelindi = False
 
                 if not veri_yeterli_mi(yeni_veri):
                     st.error(f"⚠️ Sadece {len(cikan)} alan bulundu.")
@@ -1008,72 +998,6 @@ elif st.session_state.sayfa == "gecmis":
 
     gecmis = st.session_state.gecmis_analizler
 
-    if st.session_state.secili_mac is not None:
-        idx = st.session_state.secili_mac
-        if 0 <= idx < len(gecmis):
-            g = gecmis[idx]
-            v_old = g["veri"]
-
-            takim_ev = v_old.get("takim_ev", "Ev Sahibi") or "Ev Sahibi"
-            takim_dep = v_old.get("takim_dep", "Deplasman") or "Deplasman"
-            skor_ev = v_old.get("skor_ev", 0)
-            skor_dep = v_old.get("skor_dep", 0)
-            skor_belli = v_old.get("skor_belli", False)
-
-            st.markdown(f"## ⚽ {takim_ev} vs {takim_dep}")
-            if skor_belli:
-                st.markdown(f"### Sonuç: **{skor_ev} - {skor_dep}**")
-
-            st.divider()
-
-            if skor_belli and "dogruluk" in g:
-                d = g["dogruluk"]
-                st.markdown("### ✅ Tahmin Doğruluğu")
-
-                c1, c2, c3, c4 = st.columns(4)
-                with c1:
-                    emoji = "✅" if d["1X2_tuttu"] else "❌"
-                    st.markdown(f"{emoji} **1X2**")
-                    st.markdown(f"Tahmin: {d['1X2_tahmin']}")
-                    st.markdown(f"Gerçek: {d['1X2_gercek']}")
-                with c2:
-                    emoji = "✅" if d["cifte_tuttu"] else "❌"
-                    st.markdown(f"{emoji} **Çifte**")
-                    st.markdown(f"Tahmin: {d['cifte_tahmin']}")
-                with c3:
-                    emoji = "✅" if d["gol_tuttu"] else "❌"
-                    st.markdown(f"{emoji} **Gol**")
-                    st.markdown(f"Tahmin: {d['gol_tahmin']}")
-                    st.markdown(f"Gerçek: {d['gol_gercek']}")
-                with c4:
-                    emoji = "✅" if d["kg_tuttu"] else "❌"
-                    st.markdown(f"{emoji} **KG**")
-                    st.markdown(f"Tahmin: {d['kg_tahmin']}")
-                    st.markdown(f"Gerçek: {d['kg_gercek']}")
-
-                st.info(f"**Toplam: {d['toplam_tutan']}/{d['toplam_metrik']} tuttu**")
-
-            st.divider()
-            st.markdown("### 📋 Analiz Detayları")
-
-            analiz = g.get("analiz", {})
-            if analiz:
-                st.markdown(f"**Model:** 1: %{analiz.get('p1', 0):.1f} • X: %{analiz.get('px', 0):.1f} • 2: %{analiz.get('p2', 0):.1f}")
-                st.markdown(f"**Beklenen Gol:** {analiz.get('tahmini_gol', 0):.2f}")
-                st.markdown(f"**KG Var:** %{analiz.get('kg_var_model', 0):.1f}")
-                st.markdown(f"**Üst 2.5:** %{analiz.get('ust_25', 0):.1f}")
-
-                en_iyi_3 = analiz.get("en_iyi_3", [])
-                if en_iyi_3:
-                    st.markdown("**En İyi 3 Bahis:**")
-                    for i, ad in enumerate(en_iyi_3, 1):
-                        st.markdown(f"{i}. **{ad['isim']}** — {ad['tip']} | EV: {ad['ev']:.2f}")
-
-            if st.button("⬅️ Geçmişe Dön", use_container_width=True, type="primary"):
-                st.session_state.secili_mac = None
-                st.rerun()
-            st.stop()
-
     if not gecmis:
         st.info("ℹ️ Henüz kayıtlı analiz yok.")
         if st.button("⬅️ Geri Dön", use_container_width=True, type="primary"):
@@ -1082,7 +1006,6 @@ elif st.session_state.sayfa == "gecmis":
         st.stop()
 
     skorlu = [g for g in gecmis if g["veri"].get("skor_belli", False) and "dogruluk" in g]
-
     toplam = len(gecmis)
     toplam_skorlu = len(skorlu)
 
@@ -1122,6 +1045,7 @@ elif st.session_state.sayfa == "gecmis":
         st.divider()
 
     st.markdown("### 📋 Analiz Edilen Maçlar")
+    st.caption("Bir maça tıkla → o maçın **tam analiz ekranı** açılır")
 
     for i, g in enumerate(reversed(gecmis)):
         idx_gercek = len(gecmis) - 1 - i
@@ -1140,8 +1064,12 @@ elif st.session_state.sayfa == "gecmis":
         else:
             baslik = f"⚽ {takim_ev} vs {takim_dep}"
 
+        # ⭐ Butona basınca o maçın verilerini yükle ve analiz sayfasına git
         if st.button(baslik, use_container_width=True, key=f"mac_{idx_gercek}"):
-            st.session_state.secili_mac = idx_gercek
+            st.session_state.form_verileri = copy.deepcopy(v_g)
+            st.session_state.kayit_yapildi = True       # Tekrar kaydetmesin
+            st.session_state.gecmisten_gelindi = True   # Geçmişten gelindi işareti
+            st.session_state.sayfa = "sonuc"
             st.rerun()
 
     st.divider()
@@ -1399,9 +1327,18 @@ elif st.session_state.sayfa == "sonuc":
 
     st.divider()
 
+    # ⭐ Butonlar
+    if st.session_state.gecmisten_gelindi:
+        if st.button("⬅️ Geçmişe Dön", use_container_width=True):
+            st.session_state.sayfa = "gecmis"
+            st.session_state.gecmisten_gelindi = False
+            st.rerun()
+        st.markdown("")
+
     if st.button("🔄 Yeni Maç Analizi", use_container_width=True, type="primary"):
         st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
         st.session_state.form_version += 1
         st.session_state.kayit_yapildi = False
+        st.session_state.gecmisten_gelindi = False
         st.session_state.sayfa = "giris"
         st.rerun()
