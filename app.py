@@ -18,7 +18,7 @@ st.markdown("""
         max-width: 100% !important;
     }
     h1 { font-size: 1.2rem !important; margin: 0.2rem 0 !important; text-align: center; }
-    h2 { font-size: 0.95rem !important; margin: 0.2rem 0 !important; }
+    h2 { font-size: 1rem !important; margin: 0.3rem 0 !important; }
     h3 { font-size: 0.9rem !important; margin: 0.15rem 0 !important; }
     p { font-size: 0.85rem !important; margin: 0.2rem 0 !important; }
     hr { margin: 0.3rem 0 !important; }
@@ -35,7 +35,7 @@ st.markdown("""
 
     div[data-testid="stAlert"] {
         padding: 0.3rem 0.5rem !important;
-        font-size: 0.8rem !important;
+        font-size: 0.85rem !important;
     }
 
     details summary {
@@ -384,7 +384,7 @@ def normalize_olasilik(oranlar: list) -> list:
 
 
 # ==========================================
-# VALUE BET ANALİZİ
+# VALUE BET ANALİZİ (TEKLİ)
 # ==========================================
 def value_bet_analizi(v: dict, p1, px, p2, ust25_model, kg_var_model):
     sonuclar = []
@@ -766,23 +766,9 @@ elif st.session_state.sayfa == "sonuc":
 
     with st.expander("📋 Analizde Kullanılan Tüm Veriler", expanded=False):
         st.markdown(f"""
-        **🏠 Ev Sahibi**
-        - PPG: {v['ppg_ev']} | Sıra: {v['siralama_ev']} | Reak: %{v['reaksiyon_ev']:.0f}
-        - Yenilmezlik: %{v.get('yenilmezlik_ev', 0):.0f} | Galibiyet: %{v.get('galibiyet_ev', 0):.0f} | Beraberlik: %{v.get('beraberlik_ev', 0):.0f}
-        - xG: {v['xg_ev']} | Atılan: {v['atilan_ev']} | Yenen: {v['yenen_ev']}
-        - SS: {v['ss_ev']} | İsabet: %{v.get('isabet_ev', 0):.0f} | Agresiflik: {v.get('agresiflik_ev', 0):.1f}
-        - Hücum Hakimiyeti: %{v.get('hucum_hakimiyeti_ev', 0):.0f} | Hava Topu: {v.get('hava_topu_ev', 0):.0f}
-        - İlk Gol Atar: %{v.get('ilk_gol_atar_ev', 0):.0f} | Yer: %{v.get('ilk_gol_yer_ev', 0):.0f}
-        - Üst 2.5: %{v.get('ust25_ev', 0):.0f} | KG Sıklığı: %{v.get('kg_siklik_ev', 0):.0f}
+        **🏠 Ev:** PPG {v['ppg_ev']} | Sıra {v['siralama_ev']} | xG {v['xg_ev']} | Atılan {v['atilan_ev']} | Yenen {v['yenen_ev']}
 
-        **✈️ Deplasman**
-        - MPG: {v['mpg_dep']} | Sıra: {v['siralama_dep']} | Reak: %{v['reaksiyon_dep']:.0f}
-        - Yenilmezlik: %{v.get('yenilmezlik_dep', 0):.0f} | Galibiyet: %{v.get('galibiyet_dep', 0):.0f} | Beraberlik: %{v.get('beraberlik_dep', 0):.0f}
-        - xG: {v['xg_dep']} | Atılan: {v['atilan_dep']} | Yenen: {v['yenen_dep']}
-        - SS: {v['ss_dep']} | İsabet: %{v.get('isabet_dep', 0):.0f} | Agresiflik: {v.get('agresiflik_dep', 0):.1f}
-        - Hücum Hakimiyeti: %{v.get('hucum_hakimiyeti_dep', 0):.0f} | Hava Topu: {v.get('hava_topu_dep', 0):.0f}
-        - İlk Gol Atar: %{v.get('ilk_gol_atar_dep', 0):.0f} | Yer: %{v.get('ilk_gol_yer_dep', 0):.0f}
-        - Üst 2.5: %{v.get('ust25_dep', 0):.0f} | KG Sıklığı: %{v.get('kg_siklik_dep', 0):.0f}
+        **✈️ Dep:** MPG {v['mpg_dep']} | Sıra {v['siralama_dep']} | xG {v['xg_dep']} | Atılan {v['atilan_dep']} | Yenen {v['yenen_dep']}
 
         **📊 Oranlar:** 1: {v.get('oran_1', 0)} | X: {v.get('oran_x', 0)} | 2: {v.get('oran_2', 0)}
         **📊 O/U 2.5:** Üst: {v.get('oran_ust25', 0)} | Alt: {v.get('oran_alt25', 0)}
@@ -822,18 +808,47 @@ elif st.session_state.sayfa == "sonuc":
         - 📈 **İkinci Tercih:** {'X2' if p1 > p2 else '1X'} (%{max(cifte_1x, cifte_x2):.1f})
         """)
 
+    # ==========================================
+    # 💎 ORAN ANALİZİ (SADE)
+    # ==========================================
     vb = value_bet_analizi(v, p1, px, p2, ust_25, kg_var_model)
 
-    with st.expander("💎 Value Bet Analizi", expanded=False):
+    with st.expander("💎 Oran Analizi", expanded=True):
         if vb:
+            # 1X2 Grubu
+            st.markdown("### 📊 1 - X - 2")
             for market, isim, model, piy, fark_vb, oran, karar in vb:
-                st.markdown(f"**{market} — {isim}** (Oran {oran})")
-                st.markdown(f"Model: **%{model:.1f}** | Piyasa: **%{piy:.1f}** | Fark: **{fark_vb:+.1f}** {karar}")
-                st.markdown("")
-        else:
-            st.info("ℹ️ Value bet için oran verisi yok.")
+                if market == "1X2":
+                    st.markdown(f"**{isim}** (Oran: {oran})")
+                    st.markdown(f"Model: **%{model:.1f}** | Piyasa: **%{piy:.1f}** | Fark: **{fark_vb:+.1f}** {karar}")
 
-    # KOMBOLAR
+            # Üst/Alt 2.5
+            st.markdown("---")
+            st.markdown("### ⚽ Üst / Alt 2.5")
+            for market, isim, model, piy, fark_vb, oran, karar in vb:
+                if market == "Üst/Alt 2.5":
+                    st.markdown(f"**{isim}** (Oran: {oran})")
+                    st.markdown(f"Model: **%{model:.1f}** | Piyasa: **%{piy:.1f}** | Fark: **{fark_vb:+.1f}** {karar}")
+
+            # KG
+            st.markdown("---")
+            st.markdown("### 🤝 KG Var / Yok")
+            for market, isim, model, piy, fark_vb, oran, karar in vb:
+                if market == "KG":
+                    st.markdown(f"**{isim}** (Oran: {oran})")
+                    st.markdown(f"Model: **%{model:.1f}** | Piyasa: **%{piy:.1f}** | Fark: **{fark_vb:+.1f}** {karar}")
+        else:
+            st.info("ℹ️ Oran verisi bulunamadı.")
+
+    # ==========================================
+    # 🏆 FİNAL ÖNERİ — EN İYİ 3 BAHİS
+    # ==========================================
+    st.divider()
+    st.markdown("## 🏆 FİNAL ÖNERİ — EN İYİ 3 BAHİS")
+
+    adaylar = []
+
+    # 1. Favori kombolar (kombine oranlı)
     kombolar_fav, favoriler = favori_kombolar(matris, MAX_GOL)
     oran_map = {
         "1": v.get("oran_1", 0), "X": v.get("oran_x", 0), "2": v.get("oran_2", 0),
@@ -841,54 +856,6 @@ elif st.session_state.sayfa == "sonuc":
         "Var": v.get("oran_kg_var", 0), "Yok": v.get("oran_kg_yok", 0),
     }
 
-    with st.expander("🎰 Kombolar (Favori + Value)", expanded=True):
-        st.markdown("### 🎯 Favori Kombolar")
-        st.markdown(f"**Favoriler:** `{favoriler[0]}` • `{favoriler[1]}` • `{favoriler[2]}`")
-        for isim, yuzde in kombolar_fav:
-            parcalar = isim.split()
-            kombine_oran = 0
-            if len(parcalar) == 2:
-                o1 = oran_map.get(parcalar[0], 0)
-                o2 = oran_map.get(parcalar[1], 0)
-                if o1 > 0 and o2 > 0:
-                    kombine_oran = o1 * o2
-            emoji = "🟢" if yuzde >= 50 else "🟡" if yuzde >= 35 else "🔴"
-            oran_str = f" | Oran: **{kombine_oran:.2f}**" if kombine_oran > 0 else ""
-            st.markdown(f"{emoji} **{isim}** → %{yuzde:.1f}{oran_str}")
-
-        st.markdown("---")
-        st.markdown("### 💎 VALUE Bet'ler (Tekli)")
-        tekli_value = [x for x in vb if x[4] >= 5] if vb else []
-        if tekli_value:
-            for market, isim, model, piy, fark_vb, oran, karar in tekli_value:
-                fark_emoji = "🔥" if fark_vb >= 10 else "✅"
-                st.markdown(f"{fark_emoji} **{isim}** @ **{oran}** → %{fark_vb:+.1f} fark")
-                st.markdown(f"Model: **%{model:.1f}** | Piyasa: **%{piy:.1f}**")
-                st.markdown("")
-        else:
-            st.info("ℹ️ Tekli value bet yok.")
-
-        st.markdown("---")
-        st.markdown("### 💎💎 VALUE Kombolar (2'li)")
-        vk = value_kombolar(v, matris, MAX_GOL)
-        if vk:
-            for k in vk[:5]:
-                fark_emoji = "🔥" if k["fark"] >= 10 else "✅"
-                st.markdown(f"{fark_emoji} **{k['isim']}** → Oran: **{k['oran']:.2f}**")
-                st.markdown(f"Model: **%{k['model']:.1f}** | Piyasa: **%{k['piyasa']:.1f}** | Fark: **{k['fark']:+.1f}**")
-        else:
-            st.info("ℹ️ 2'li value kombo yok.")
-
-    # ==========================================
-    # 🏆 FİNAL ÖNERİ (EN İYİ 3)
-    # ==========================================
-    st.divider()
-    st.markdown("## 🏆 FİNAL ÖNERİ — EN İYİ 3 BAHİS")
-
-    # Tüm adayları topla
-    adaylar = []
-
-    # 1. Favori kombolar (kombine oranlı)
     for isim, yuzde in kombolar_fav:
         parcalar = isim.split()
         if len(parcalar) == 2:
@@ -918,6 +885,7 @@ elif st.session_state.sayfa == "sonuc":
         })
 
     # 3. Value kombolar
+    vk = value_kombolar(v, matris, MAX_GOL)
     for k in vk[:5]:
         ev = (k["model"] / 100) * k["oran"]
         adaylar.append({
@@ -933,7 +901,6 @@ elif st.session_state.sayfa == "sonuc":
 
     if adaylar:
         en_iyi_3 = adaylar[:3]
-
         madalya = ["🥇", "🥈", "🥉"]
 
         for i, a in enumerate(en_iyi_3):
@@ -953,30 +920,11 @@ elif st.session_state.sayfa == "sonuc":
             kutu(f"""
 {madalya[i]} **{a['isim']}** — {a['tip']}
 
-- 📊 Model: **%{a['yuzde']:.1f}** | 💰 Oran: **{a['oran']:.2f}** | 🎲 EV: **{a['ev']:.2f}** → {ev_yorumu}
+📊 Model: **%{a['yuzde']:.1f}** | 💰 Oran: **{a['oran']:.2f}** | 🎲 EV: **{a['ev']:.2f}** → {ev_yorumu}
 """)
 
-        # Detaylı EV tablosu
-        st.markdown("### 📊 Karşılaştırma Tablosu")
-        st.markdown("| # | Bahis | Tip | Model % | Oran | EV | Karar |")
-        st.markdown("|---|---|---|---|---|---|---|")
+        st.markdown(f"💡 **Yorum:** Her 1 TL yatırımda ortalama **{en_iyi_3[0]['ev']:.2f} TL** geri kazanç beklenir.")
 
-        for i, a in enumerate(en_iyi_3, 1):
-            if a["ev"] >= 1.2:
-                emoji = "🟢"
-            elif a["ev"] >= 1.0:
-                emoji = "🟡"
-            else:
-                emoji = "🔴"
-            st.markdown(
-                f"| {madalya[i-1]} | **{a['isim']}** | {a['tip']} | "
-                f"%{a['yuzde']:.1f} | {a['oran']:.2f} | **{a['ev']:.2f}** | {emoji} |"
-            )
-
-        st.markdown("---")
-        st.markdown(f"💡 **Yorum:** En iyi bahis için her 1 TL yatırımda ortalama **{en_iyi_3[0]['ev']:.2f} TL** geri kazanç beklenir.")
-
-        # Diğer adayları göster (kalanlar)
         if len(adaylar) > 3:
             with st.expander(f"📋 Diğer Adaylar ({len(adaylar) - 3})", expanded=False):
                 for i, a in enumerate(adaylar[3:], 4):
