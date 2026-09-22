@@ -107,13 +107,89 @@ VARSAYILAN_VERI = {
     "skor_belli": False,
 }
 
-# 🎯 Model katsayıları
-EV_AVANTAJ = 1.12       # Ev sahibi avantajı (+%12)
-DEP_DEZAVANTAJ = 0.94   # Deplasman dezavantajı (-%6)
-MAX_GOL = 8             # Poisson matrisi üst limiti
+# Manuel giriş için hangi alanların etiketi / tipi
+MANUEL_ALANLAR = {
+    "Sıralama": [
+        ("siralama_ev", "Ev Sıralaması", "int", 1),
+        ("siralama_dep", "Dep Sıralaması", "int", 1),
+    ],
+    "KG Oranları": [
+        ("oran_kg_var", "KG Var Oranı", "float", 0.0),
+        ("oran_kg_yok", "KG Yok Oranı", "float", 0.0),
+    ],
+    "1X2 Oranları": [
+        ("oran_1", "1 (Ev) Oranı", "float", 0.0),
+        ("oran_x", "X (Beraberlik) Oranı", "float", 0.0),
+        ("oran_2", "2 (Dep) Oranı", "float", 0.0),
+    ],
+    "Üst/Alt 2.5 Oranları": [
+        ("oran_ust25", "Üst 2.5 Oranı", "float", 0.0),
+        ("oran_alt25", "Alt 2.5 Oranı", "float", 0.0),
+    ],
+    "Takım isimleri (Ev)": [
+        ("takim_ev", "Ev Takım Adı", "str", ""),
+    ],
+    "Takım isimleri (Dep)": [
+        ("takim_dep", "Dep Takım Adı", "str", ""),
+    ],
+    "PPG (Ev Form)": [
+        ("ppg_ev", "PPG (Ev)", "float", 0.0),
+    ],
+    "MPG (Dep Form)": [
+        ("mpg_dep", "MPG (Dep)", "float", 0.0),
+    ],
+    "Reaksiyon Gücü": [
+        ("reaksiyon_ev", "Reaksiyon % (Ev)", "float", 50.0),
+        ("reaksiyon_dep", "Reaksiyon % (Dep)", "float", 50.0),
+    ],
+    "Hücum Hakimiyeti": [
+        ("hucum_hakimiyeti_ev", "Hücum Hakimiyeti % (Ev)", "float", 50.0),
+        ("hucum_hakimiyeti_dep", "Hücum Hakimiyeti % (Dep)", "float", 50.0),
+    ],
+    "Agresiflik (Şut/Maç)": [
+        ("agresiflik_ev", "Agresiflik (Ev)", "float", 8.0),
+        ("agresiflik_dep", "Agresiflik (Dep)", "float", 8.0),
+    ],
+    "İsabet (Doğruluk)": [
+        ("isabet_ev", "İsabet % (Ev)", "float", 40.0),
+        ("isabet_dep", "İsabet % (Dep)", "float", 40.0),
+    ],
+    "Hava Topu (Ortalar)": [
+        ("hava_topu_ev", "Hava Topu (Ev)", "float", 10.0),
+        ("hava_topu_dep", "Hava Topu (Dep)", "float", 10.0),
+    ],
+    "xG": [
+        ("xg_ev", "xG (Ev)", "float", 0.0),
+        ("xg_dep", "xG (Dep)", "float", 0.0),
+    ],
+    "Atılan Gol": [
+        ("atilan_ev", "Atılan Gol (Ev)", "float", 0.0),
+        ("atilan_dep", "Atılan Gol (Dep)", "float", 0.0),
+    ],
+    "Yenen Gol": [
+        ("yenen_ev", "Yenen Gol (Ev)", "float", 0.0),
+        ("yenen_dep", "Yenen Gol (Dep)", "float", 0.0),
+    ],
+    "Standart Sapma (SS)": [
+        ("ss_ev", "Standart Sapma (Ev)", "float", 1.0),
+        ("ss_dep", "Standart Sapma (Dep)", "float", 1.0),
+    ],
+    "Form bloğu (PPG/MPG)": [
+        ("ppg_ev", "PPG (Ev)", "float", 0.0),
+        ("mpg_dep", "MPG (Dep)", "float", 0.0),
+    ],
+    "Sıralama": [
+        ("siralama_ev", "Ev Sıralaması", "int", 1),
+        ("siralama_dep", "Dep Sıralaması", "int", 1),
+    ],
+}
 
-MONTE_CARLO_N = 5000    # Simülasyon sayısı
-BELIRSIZLIK = 0.10      # λ ±%10 sapma
+EV_AVANTAJ = 1.12
+DEP_DEZAVANTAJ = 0.94
+MAX_GOL = 8
+
+MONTE_CARLO_N = 5000
+BELIRSIZLIK = 0.10
 
 # ==========================================
 # SESSION STATE
@@ -135,7 +211,12 @@ if "silme_onay" not in st.session_state:
 if "aktif_kayit_idx" not in st.session_state:
     st.session_state.aktif_kayit_idx = None
 if "okunamayan_alanlar" not in st.session_state:
-    st.session_state.okunamayan_alanlar = []  # ⭐ Regex uyarı listesi
+    st.session_state.okunamayan_alanlar = []
+# ⭐ Manuel giriş bekleyen alanlar
+if "manuel_bekleyen" not in st.session_state:
+    st.session_state.manuel_bekleyen = []
+if "tek_silme_onay" not in st.session_state:
+    st.session_state.tek_silme_onay = None  # Hangi kayıt silinecek
 
 
 # ==========================================
@@ -165,17 +246,10 @@ def takimlari_cikar(metin: str) -> tuple:
 
 
 def metinden_veri_cikar(metin: str) -> tuple:
-    """
-    Metinden veri çıkarır.
-    Dönüş: (veri_dict, okunamayan_alanlar_listesi)
-    """
     veri = {}
-    okunamayanlar = []  # ⭐ Hangi alan okunamadı
+    okunamayanlar = []
     metin = metin.replace(",", ".")
 
-    # ==========================================
-    # TAKIM İSİMLERİ VE SKOR
-    # ==========================================
     takim_ev, takim_dep, skor_ev, skor_dep, skor_belli = takimlari_cikar(metin)
     veri["takim_ev"] = takim_ev
     veri["takim_dep"] = takim_dep
@@ -188,9 +262,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
     if not takim_dep:
         okunamayanlar.append("Takım isimleri (Dep)")
 
-    # ==========================================
-    # FORM (PPG / MPG)
-    # ==========================================
     idx = metin.find("Güvenilirlik ve Form")
     if idx == -1:
         idx = metin.find("PPG")
@@ -208,7 +279,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
         else:
             okunamayanlar.append("MPG (Dep Form)")
 
-        # Galibiyet/Beraberlik/Yenilmezlik (Ev)
         idx_ppg = blok.find("PPG")
         if idx_ppg != -1:
             ev_blok = blok[idx_ppg:idx_ppg+400]
@@ -219,7 +289,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
             if m_b: veri["beraberlik_ev"] = float(m_b.group(1))
             if m_y: veri["yenilmezlik_ev"] = float(m_y.group(1))
 
-        # Galibiyet/Beraberlik/Yenilmezlik (Dep)
         idx_mbp = blok.find("MBP")
         if idx_mbp == -1:
             idx_mbp = blok.find("MPG")
@@ -232,7 +301,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
             if m_b2: veri["beraberlik_dep"] = float(m_b2.group(1))
             if m_y2: veri["yenilmezlik_dep"] = float(m_y2.group(1))
 
-        # Psikolojik Faktör (Reaksiyon + İlk Gol)
         idx_psy = metin.find("Psikolojik Faktör")
         if idx_psy != -1:
             psy_blok = metin[idx_psy:idx_psy+600]
@@ -254,9 +322,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
     else:
         okunamayanlar.append("Form bloğu (PPG/MPG)")
 
-    # ==========================================
-    # SIRALAMA
-    # ==========================================
     idx = metin.find("Tablo Pozisyonu")
     if idx != -1:
         blok = metin[idx:idx+500]
@@ -269,9 +334,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
     else:
         okunamayanlar.append("Sıralama")
 
-    # ==========================================
-    # HÜCUM HAKİMİYETİ
-    # ==========================================
     idx = metin.find("Hücum Hakimiyeti")
     if idx != -1:
         blok = metin[idx:idx+300]
@@ -282,9 +344,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
     else:
         okunamayanlar.append("Hücum Hakimiyeti")
 
-    # ==========================================
-    # AGRESİFLİK
-    # ==========================================
     idx = metin.find("Agresiflik")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -295,9 +354,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
     else:
         okunamayanlar.append("Agresiflik (Şut/Maç)")
 
-    # ==========================================
-    # İSABET
-    # ==========================================
     idx = metin.find("İsabet")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -308,9 +364,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
     else:
         okunamayanlar.append("İsabet (Doğruluk)")
 
-    # ==========================================
-    # HAVA TOPU
-    # ==========================================
     idx = metin.find("Hava Topu")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -321,9 +374,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
     else:
         okunamayanlar.append("Hava Topu (Ortalar)")
 
-    # ==========================================
-    # xG
-    # ==========================================
     idx = metin.find("Beklenen goller (maç öncesi xG)")
     if idx == -1:
         idx = metin.find("Beklenen goller")
@@ -338,9 +388,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
     else:
         okunamayanlar.append("xG")
 
-    # ==========================================
-    # ATILAN GOL
-    # ==========================================
     idx = metin.find("Atılan Gol (Ort)")
     if idx == -1:
         idx = metin.find("Atılan Gol")
@@ -355,9 +402,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
     else:
         okunamayanlar.append("Atılan Gol")
 
-    # ==========================================
-    # YENEN GOL
-    # ==========================================
     idx = metin.find("Yenen Gol (Ort)")
     if idx == -1:
         idx = metin.find("Yenen Gol")
@@ -372,9 +416,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
     else:
         okunamayanlar.append("Yenen Gol")
 
-    # ==========================================
-    # STANDART SAPMA
-    # ==========================================
     ss_listesi = re.findall(r'\bSS\s*\n\s*([\d.]+)', metin)
     if len(ss_listesi) >= 2:
         veri["ss_ev"] = float(ss_listesi[0])
@@ -382,9 +423,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
     else:
         okunamayanlar.append("Standart Sapma (SS)")
 
-    # ==========================================
-    # ÜST 2.5 (veri)
-    # ==========================================
     idx = metin.find("2.5 Üst")
     if idx != -1:
         blok = metin[idx:idx+400]
@@ -396,9 +434,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
             else:
                 veri["ust25_dep"] = float(yuzdeler[1])
 
-    # ==========================================
-    # KG SIKLIĞI (veri)
-    # ==========================================
     idx = metin.find("KG Sıklığı")
     if idx != -1:
         blok = metin[idx:idx+500]
@@ -412,9 +447,7 @@ def metinden_veri_cikar(metin: str) -> tuple:
             veri["kg_siklik_dep"] = float(yuzdeler[1])
             veri["kg_oran"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
 
-    # ==========================================
     # 1X2 ORANLARI
-    # ==========================================
     m = re.search(r'Casa\s*\n\s*([\d.]+)\s*\n\s*\|\s*\n\s*(?:E|Empate)\s*\n\s*([\d.]+)\s*\n\s*\|\s*\n\s*(?:Visit|Fora)\s*\n\s*([\d.]+)', metin, re.IGNORECASE)
     if m:
         veri["oran_1"] = float(m.group(1))
@@ -423,9 +456,7 @@ def metinden_veri_cikar(metin: str) -> tuple:
     else:
         okunamayanlar.append("1X2 Oranları")
 
-    # ==========================================
-    # ÜST/ALT 2.5 ORANLARI (çoklu format)
-    # ==========================================
+    # ÜST/ALT 2.5 ORANLARI
     ust_alt_bulundu = False
 
     if not ust_alt_bulundu:
@@ -474,9 +505,7 @@ def metinden_veri_cikar(metin: str) -> tuple:
     if not ust_alt_bulundu:
         okunamayanlar.append("Üst/Alt 2.5 Oranları")
 
-    # ==========================================
     # KG ORANLARI
-    # ==========================================
     m = re.search(r'Sim\s*\n\s*([\d.]+)\s*\n\s*N[ãa]o\s*\n\s*([\d.]+)', metin, re.IGNORECASE)
     if m:
         veri["oran_kg_var"] = float(m.group(1))
@@ -515,15 +544,6 @@ def poisson_random(lam: float) -> int:
 
 
 def poisson_matris(lam_ev: float, lam_dep: float, max_gol: int = MAX_GOL):
-    """
-    Poisson matrisi oluşturur.
-    
-    ⚠️ VARSAYIM: Ev ve deplasman golleri BAĞIMSIZ.
-    Gerçekte takımlardan biri öne geçtiğinde maç dinamikleri değişir.
-    Bu durumu modellemek için "Bivariate Poisson" veya "Dixon-Coles" 
-    yaklaşımı kullanılır. Ancak mevcut model amatör/yarı profesyonel
-    analizler için yeterince iyi sonuç verir.
-    """
     return [
         [poisson_pmf(i, lam_ev) * poisson_pmf(j, lam_dep) for j in range(max_gol)]
         for i in range(max_gol)
@@ -531,12 +551,6 @@ def poisson_matris(lam_ev: float, lam_dep: float, max_gol: int = MAX_GOL):
 
 
 def hesapla_lambda(v: dict):
-    """
-    Takımlar için beklenen gol (λ) değerini hesaplar.
-    
-    Formül:
-        λ = ((hücum + rakip_savunma) / 2) × ev_avantajı × form × moral × sıralama
-    """
     hucum_ev = v["xg_ev"] * 0.6 + v["atilan_ev"] * 0.4
     hucum_dep = v["xg_dep"] * 0.6 + v["atilan_dep"] * 0.4
 
@@ -571,7 +585,6 @@ def hesapla_lambda(v: dict):
     lam_ev_ham = ((hucum_ev + sav_dep) / 2) * EV_AVANTAJ * form_ev * moral_ev * sira_ev
     lam_dep_ham = ((hucum_dep + sav_ev) / 2) * DEP_DEZAVANTAJ * form_dep * moral_dep * sira_dep
 
-    # Standart sapma → güven ağırlığı
     ort = (lam_ev_ham + lam_dep_ham) / 2
     guven_ev = max(0.0, min(1.0, 1 - v["ss_ev"] / 5))
     guven_dep = max(0.0, min(1.0, 1 - v["ss_dep"] / 5))
@@ -1125,7 +1138,7 @@ def analiz_hesapla(v: dict):
 
 
 # ==========================================
-# SAYFA 1
+# SAYFA 1: GİRİŞ
 # ==========================================
 if st.session_state.sayfa == "giris":
     st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
@@ -1158,15 +1171,15 @@ if st.session_state.sayfa == "giris":
         st.session_state.gecmisten_gelindi = False
         st.session_state.aktif_kayit_idx = None
         st.session_state.okunamayan_alanlar = []
+        st.session_state.manuel_bekleyen = []
         st.rerun()
 
     if analiz_btn:
         if not yapistir_metni.strip():
             st.warning("⚠️ Önce metni yapıştır.")
         else:
-            # 🆕 Fonksiyon artık tuple döndürüyor
             cikan, okunamayanlar = metinden_veri_cikar(yapistir_metni)
-            
+
             if not cikan:
                 st.error("❌ Metinden hiçbir veri çıkarılamadı.")
             else:
@@ -1176,14 +1189,85 @@ if st.session_state.sayfa == "giris":
                 st.session_state.kayit_yapildi = False
                 st.session_state.gecmisten_gelindi = False
                 st.session_state.aktif_kayit_idx = None
-                st.session_state.okunamayan_alanlar = okunamayanlar  # ⭐ Uyarıları kaydet
+                st.session_state.okunamayan_alanlar = okunamayanlar
+                # ⭐ Manuel giriş bekleyenleri ayarla
+                st.session_state.manuel_bekleyen = okunamayanlar.copy()
 
                 if not veri_yeterli_mi(yeni_veri):
                     st.error(f"⚠️ Analiz için yeterli veri yok. En az 2 gol verisi (xG/Atılan/Yenen) gerekli.")
                     st.info(f"Bulunan alanlar: {', '.join([k for k, val in cikan.items() if val])}")
                 else:
-                    st.session_state.sayfa = "sonuc"
+                    # ⭐ Eğer okunamayan varsa manuel doldurma ekranına git
+                    if okunamayanlar:
+                        st.session_state.sayfa = "manuel_giris"
+                    else:
+                        st.session_state.sayfa = "sonuc"
                     st.rerun()
+
+
+# ==========================================
+# SAYFA: MANUEL GİRİŞ
+# ==========================================
+elif st.session_state.sayfa == "manuel_giris":
+    st.markdown("<h1>📝 Eksik Alanları Doldur</h1>", unsafe_allow_html=True)
+    st.warning(
+        f"Aşağıdaki **{len(st.session_state.manuel_bekleyen)}** alan metinden çıkarılamadı. "
+        "Lütfen değerleri manuel girin:"
+    )
+
+    v = st.session_state.form_verileri
+
+    with st.form("manuel_form"):
+        yeni_degerler = {}
+
+        for alan_basligi in st.session_state.manuel_bekleyen:
+            if alan_basligi in MANUEL_ALANLAR:
+                st.markdown(f"**{alan_basligi}**")
+                for (key, etiket, tip, varsayilan) in MANUEL_ALANLAR[alan_basligi]:
+                    mevcut = v.get(key, varsayilan)
+                    if tip == "int":
+                        val = st.number_input(
+                            etiket,
+                            value=int(mevcut) if mevcut else int(varsayilan),
+                            min_value=1, max_value=100, step=1,
+                            key=f"manuel_{key}"
+                        )
+                        yeni_degerler[key] = int(val)
+                    elif tip == "float":
+                        val = st.number_input(
+                            etiket,
+                            value=float(mevcut) if mevcut else float(varsayilan),
+                            min_value=0.0, step=0.1,
+                            key=f"manuel_{key}"
+                        )
+                        yeni_degerler[key] = float(val)
+                    else:  # str
+                        val = st.text_input(
+                            etiket,
+                            value=str(mevcut) if mevcut else "",
+                            key=f"manuel_{key}"
+                        )
+                        yeni_degerler[key] = val
+                st.markdown("")
+
+        col_a, col_b = st.columns(2)
+        with col_a:
+            kaydet = st.form_submit_button("✅ Kaydet ve Analiz Et", use_container_width=True, type="primary")
+        with col_b:
+            atla = st.form_submit_button("⏭️ Atla (Varsayılan Kullan)", use_container_width=True)
+
+        if kaydet or atla:
+            if kaydet:
+                st.session_state.form_verileri.update(yeni_degerler)
+                st.success("✅ Manuel girişler kaydedildi.")
+
+            st.session_state.manuel_bekleyen = []
+            st.session_state.sayfa = "sonuc"
+            st.rerun()
+
+    if st.button("⬅️ Metni Yeniden Yapıştır"):
+        st.session_state.sayfa = "giris"
+        st.rerun()
 
 
 # ==========================================
@@ -1260,21 +1344,44 @@ elif st.session_state.sayfa == "gecmis":
         else:
             baslik = f"⏳ {takim_ev} vs {takim_dep} (skor yok)"
 
-        if st.button(baslik, use_container_width=True, key=f"mac_{idx_gercek}"):
-            st.session_state.form_verileri = copy.deepcopy(v_g)
-            st.session_state.kayit_yapildi = True
-            st.session_state.gecmisten_gelindi = True
-            st.session_state.aktif_kayit_idx = idx_gercek
-            st.session_state.okunamayan_alanlar = []
-            st.session_state.sayfa = "sonuc"
-            st.rerun()
+        # ⭐ Her maç için 2 buton: analiz + sil
+        col_maç, col_sil = st.columns([5, 1])
+        with col_maç:
+            if st.button(baslik, use_container_width=True, key=f"mac_{idx_gercek}"):
+                st.session_state.form_verileri = copy.deepcopy(v_g)
+                st.session_state.kayit_yapildi = True
+                st.session_state.gecmisten_gelindi = True
+                st.session_state.aktif_kayit_idx = idx_gercek
+                st.session_state.okunamayan_alanlar = []
+                st.session_state.sayfa = "sonuc"
+                st.rerun()
+        with col_sil:
+            if st.button("🗑️", key=f"sil_{idx_gercek}", help="Bu maçı sil"):
+                st.session_state.tek_silme_onay = idx_gercek
+                st.rerun()
+
+        # ⭐ Silme onayı bu maç için
+        if st.session_state.tek_silme_onay == idx_gercek:
+            st.warning(f"⚠️ **{takim_ev} vs {takim_dep}** maçını silmek istediğine emin misin?")
+            col_evet, col_hayir = st.columns(2)
+            with col_evet:
+                if st.button("✅ Evet, Sil", use_container_width=True, key=f"evet_{idx_gercek}", type="primary"):
+                    st.session_state.gecmis_analizler.pop(idx_gercek)
+                    gecmis_kaydet(st.session_state.gecmis_analizler)
+                    st.session_state.tek_silme_onay = None
+                    st.success("✅ Maç silindi!")
+                    st.rerun()
+            with col_hayir:
+                if st.button("❌ İptal", use_container_width=True, key=f"hayir_{idx_gercek}"):
+                    st.session_state.tek_silme_onay = None
+                    st.rerun()
 
     st.divider()
 
     if not st.session_state.silme_onay:
         c_temizle, c_geri = st.columns(2)
         with c_temizle:
-            if st.button("🗑️ Geçmişi Temizle", use_container_width=True):
+            if st.button("🗑️ Tüm Geçmişi Temizle", use_container_width=True):
                 st.session_state.silme_onay = True
                 st.rerun()
         with c_geri:
@@ -1285,7 +1392,7 @@ elif st.session_state.sayfa == "gecmis":
         st.warning("⚠️ **Emin misin?** Tüm geçmiş kalıcı olarak silinecek. Bu işlem geri alınamaz.")
         c_evet, c_hayir = st.columns(2)
         with c_evet:
-            if st.button("✅ Evet, Sil", use_container_width=True, type="primary"):
+            if st.button("✅ Evet, Hepsini Sil", use_container_width=True, type="primary"):
                 st.session_state.gecmis_analizler = []
                 try:
                     if os.path.exists(GECMIS_DOSYA):
@@ -1295,7 +1402,7 @@ elif st.session_state.sayfa == "gecmis":
                 st.session_state.silme_onay = False
                 st.rerun()
         with c_hayir:
-            if st.button("❌ Hayır, İptal", use_container_width=True):
+            if st.button("❌ Hayır, İptal", use_container_width=True, key="hayir_hepsi"):
                 st.session_state.silme_onay = False
                 st.rerun()
 
@@ -1326,18 +1433,6 @@ elif st.session_state.sayfa == "sonuc":
     st.markdown(f"<h1>🎯 {takim_ev} vs {takim_dep}</h1>", unsafe_allow_html=True)
     if skor_belli:
         st.markdown(f"<p style='text-align:center; font-size:1.1rem;'><b>Sonuç: {skor_ev} - {skor_dep}</b></p>", unsafe_allow_html=True)
-
-    # ⭐ REGEX UYARI MESAJLARI
-    okunamayanlar = st.session_state.get("okunamayan_alanlar", [])
-    if okunamayanlar:
-        with st.expander(f"⚠️ Okunamayan Alanlar ({len(okunamayanlar)})", expanded=False):
-            st.warning(
-                "**Aşağıdaki alanlar metinden çıkarılamadı.** Varsayılan değerler kullanıldı. "
-                "Bu, analiz sonuçlarının doğruluğunu etkileyebilir.\n\n"
-                "İpucu: İstatistik sitesinden **daha fazla metin kopyalayıp** tekrar deneyin."
-            )
-            for alan in okunamayanlar:
-                st.markdown(f"- ❌ **{alan}**")
 
     fark = p1 - p2
     if fark > 25:       senaryo = "Ev sahibi açık ara favori görünüyor."
@@ -1608,5 +1703,6 @@ elif st.session_state.sayfa == "sonuc":
         st.session_state.gecmisten_gelindi = False
         st.session_state.aktif_kayit_idx = None
         st.session_state.okunamayan_alanlar = []
+        st.session_state.manuel_bekleyen = []
         st.session_state.sayfa = "giris"
         st.rerun()
