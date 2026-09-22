@@ -129,6 +129,10 @@ if "kayit_yapildi" not in st.session_state:
     st.session_state.kayit_yapildi = False
 if "gecmisten_gelindi" not in st.session_state:
     st.session_state.gecmisten_gelindi = False
+if "silme_onay" not in st.session_state:
+    st.session_state.silme_onay = False
+if "aktif_kayit_idx" not in st.session_state:
+    st.session_state.aktif_kayit_idx = None  # Geçmişteki hangi kayıt aktif
 
 
 # ==========================================
@@ -315,17 +319,16 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["kg_siklik_dep"] = float(yuzdeler[1])
             veri["kg_oran"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
 
-    # ---- 1X2 ORANLARI ----
+    # 1X2 ORANLARI
     m = re.search(r'Casa\s*\n\s*([\d.]+)\s*\n\s*\|\s*\n\s*(?:E|Empate)\s*\n\s*([\d.]+)\s*\n\s*\|\s*\n\s*(?:Visit|Fora)\s*\n\s*([\d.]+)', metin, re.IGNORECASE)
     if m:
         veri["oran_1"] = float(m.group(1))
         veri["oran_x"] = float(m.group(2))
         veri["oran_2"] = float(m.group(3))
 
-    # ---- ÜST/ALT 2.5 ORANLARI (ÇOKLU FORMAT) ----
+    # ÜST/ALT 2.5 ORANLARI (ÇOKLU FORMAT)
     ust_alt_bulundu = False
 
-    # Format 1: "2.5 1.73 2.10" (tab/boşluk)
     if not ust_alt_bulundu:
         m = re.search(r'\b2\.5\s+([\d.]+)\s+([\d.]+)', metin)
         if m:
@@ -336,7 +339,6 @@ def metinden_veri_cikar(metin: str) -> dict:
                 veri["oran_alt25"] = alt25
                 ust_alt_bulundu = True
 
-    # Format 2: "2.5\n1.73\n2.10" (satır bazlı)
     if not ust_alt_bulundu:
         m = re.search(r'\b2\.5\s*\n\s*([\d.]+)\s*\n\s*([\d.]+)', metin)
         if m:
@@ -347,7 +349,6 @@ def metinden_veri_cikar(metin: str) -> dict:
                 veri["oran_alt25"] = alt25
                 ust_alt_bulundu = True
 
-    # Format 3: "Hat\tOver\tUnder\n2.5\t1.73\t2.10"
     if not ust_alt_bulundu:
         m = re.search(r'Hat[\s\t]+Over[\s\t]+Under\s*\n\s*2\.5[\s\t]+([\d.]+)[\s\t]+([\d.]+)', metin)
         if m:
@@ -358,7 +359,6 @@ def metinden_veri_cikar(metin: str) -> dict:
                 veri["oran_alt25"] = alt25
                 ust_alt_bulundu = True
 
-    # Format 4: "Gols Over/Under" bloğundan
     if not ust_alt_bulundu:
         idx = metin.find("Over/Under")
         if idx != -1:
@@ -372,14 +372,12 @@ def metinden_veri_cikar(metin: str) -> dict:
                     veri["oran_alt25"] = alt25
                     ust_alt_bulundu = True
 
-    # ---- KG ORANLARI (ÇOKLU FORMAT) ----
-    # Format 1: "Sim\n1.50\nNão\n2.50"
+    # KG ORANLARI
     m = re.search(r'Sim\s*\n\s*([\d.]+)\s*\n\s*N[ãa]o\s*\n\s*([\d.]+)', metin, re.IGNORECASE)
     if m:
         veri["oran_kg_var"] = float(m.group(1))
         veri["oran_kg_yok"] = float(m.group(2))
     else:
-        # Format 2: "Sim 1.50 Não 2.50"
         m = re.search(r'Sim\s+([\d.]+)\s+N[ãa]o\s+([\d.]+)', metin, re.IGNORECASE)
         if m:
             veri["oran_kg_var"] = float(m.group(1))
@@ -621,6 +619,26 @@ def dogruluk_kontrol(skor_ev, skor_dep, tahminler: dict) -> dict:
     sonuc["toplam_metrik"] = 4
 
     return sonuc
+
+
+def dogruluk_hesapla_ve_guncelle(kayit: dict) -> dict:
+    """Bir kayıt için dogruluk dict'i oluşturur (kayıtlı analiz verisinden)."""
+    v = kayit["veri"]
+    analiz = kayit.get("analiz", {})
+
+    if not v.get("skor_belli", False):
+        return None
+
+    skor_ev = v.get("skor_ev", 0)
+    skor_dep = v.get("skor_dep", 0)
+
+    tahminler = {
+        "1x2_tahmin": analiz.get("en_olasi_1x2", "1"),
+        "cifte_tahmin": analiz.get("en_guvenli_cifte", "1X"),
+        "gol_tahmin": analiz.get("en_olasi_gol", ""),
+        "kg_tahmin": analiz.get("en_olasi_kg", ""),
+    }
+    return dogruluk_kontrol(skor_ev, skor_dep, tahminler)
 
 
 def value_bet_analizi(v: dict, p1, px, p2, ust25_model, kg_var_model):
@@ -1002,7 +1020,7 @@ if st.session_state.sayfa == "giris":
         height=280,
         key="yapistir_input",
         label_visibility="collapsed",
-        placeholder="İstatistik + oran metnini buraya yapıştır."
+        placeholder="İstatistik + oran metnini buraya yapıştır.\n\nNot: Oynanmamış maçlarda FT ve skor olmayabilir, sorun değil. Analiz sonrası skoru girebilirsin."
     )
 
     st.divider()
@@ -1017,6 +1035,7 @@ if st.session_state.sayfa == "giris":
         st.session_state.sayfa = "gecmis"
         st.session_state.kayit_yapildi = False
         st.session_state.gecmisten_gelindi = False
+        st.session_state.aktif_kayit_idx = None
         st.rerun()
 
     if analiz_btn:
@@ -1032,6 +1051,7 @@ if st.session_state.sayfa == "giris":
                 st.session_state.form_verileri = yeni_veri
                 st.session_state.kayit_yapildi = False
                 st.session_state.gecmisten_gelindi = False
+                st.session_state.aktif_kayit_idx = None
 
                 if not veri_yeterli_mi(yeni_veri):
                     st.error(f"⚠️ Sadece {len(cikan)} alan bulundu.")
@@ -1113,31 +1133,46 @@ elif st.session_state.sayfa == "gecmis":
                 emoji = "✅" if d["toplam_tutan"] >= 3 else "🟡" if d["toplam_tutan"] >= 2 else "❌"
                 baslik = f"{emoji} {baslik} ({d['toplam_tutan']}/{d['toplam_metrik']})"
         else:
-            baslik = f"⚽ {takim_ev} vs {takim_dep}"
+            baslik = f"⏳ {takim_ev} vs {takim_dep} (skor yok)"
 
         if st.button(baslik, use_container_width=True, key=f"mac_{idx_gercek}"):
             st.session_state.form_verileri = copy.deepcopy(v_g)
             st.session_state.kayit_yapildi = True
             st.session_state.gecmisten_gelindi = True
+            st.session_state.aktif_kayit_idx = idx_gercek
             st.session_state.sayfa = "sonuc"
             st.rerun()
 
     st.divider()
 
-    c_temizle, c_geri = st.columns(2)
-    with c_temizle:
-        if st.button("🗑️ Geçmişi Temizle", use_container_width=True):
-            st.session_state.gecmis_analizler = []
-            try:
-                if os.path.exists(GECMIS_DOSYA):
-                    os.remove(GECMIS_DOSYA)
-            except Exception:
-                pass
-            st.rerun()
-    with c_geri:
-        if st.button("⬅️ Geri Dön", use_container_width=True, type="primary"):
-            st.session_state.sayfa = "giris"
-            st.rerun()
+    # ⭐ Silme onay mekanizması
+    if not st.session_state.silme_onay:
+        c_temizle, c_geri = st.columns(2)
+        with c_temizle:
+            if st.button("🗑️ Geçmişi Temizle", use_container_width=True):
+                st.session_state.silme_onay = True
+                st.rerun()
+        with c_geri:
+            if st.button("⬅️ Geri Dön", use_container_width=True, type="primary"):
+                st.session_state.sayfa = "giris"
+                st.rerun()
+    else:
+        st.warning("⚠️ **Emin misin?** Tüm geçmiş kalıcı olarak silinecek. Bu işlem geri alınamaz.")
+        c_evet, c_hayir = st.columns(2)
+        with c_evet:
+            if st.button("✅ Evet, Sil", use_container_width=True, type="primary"):
+                st.session_state.gecmis_analizler = []
+                try:
+                    if os.path.exists(GECMIS_DOSYA):
+                        os.remove(GECMIS_DOSYA)
+                except Exception:
+                    pass
+                st.session_state.silme_onay = False
+                st.rerun()
+        with c_hayir:
+            if st.button("❌ Hayır, İptal", use_container_width=True):
+                st.session_state.silme_onay = False
+                st.rerun()
 
 
 # ==========================================
@@ -1174,6 +1209,52 @@ elif st.session_state.sayfa == "sonuc":
     elif fark < -10:    senaryo = "Deplasman hafif favori."
     else:               senaryo = "Maç oldukça dengeli, beraberlik riski yüksek."
 
+    # ⭐ SKOR GİRİŞİ (skor belli değilse veya geçmişten gelindiyse)
+    if not skor_belli:
+        with st.expander("📝 Maç Sonucu Gir (Skor Belli Olduğunda)", expanded=False):
+            st.caption("Maç bittikten sonra sonucu buraya gir → doğruluk otomatik hesaplanır.")
+
+            sc1, sc2, sc3 = st.columns([1, 1, 2])
+            with sc1:
+                yeni_skor_ev = st.number_input(
+                    f"{takim_ev} Gol",
+                    min_value=0, max_value=20, value=0, step=1,
+                    key="skor_gir_ev"
+                )
+            with sc2:
+                yeni_skor_dep = st.number_input(
+                    f"{takim_dep} Gol",
+                    min_value=0, max_value=20, value=0, step=1,
+                    key="skor_gir_dep"
+                )
+            with sc3:
+                st.markdown("")
+                st.markdown("")
+                if st.button("💾 Skoru Kaydet", use_container_width=True, type="primary"):
+                    # Skoru kaydet
+                    st.session_state.form_verileri["skor_ev"] = yeni_skor_ev
+                    st.session_state.form_verileri["skor_dep"] = yeni_skor_dep
+                    st.session_state.form_verileri["skor_belli"] = True
+
+                    # Bu kayıt geçmişte mi? Güncelle
+                    if st.session_state.aktif_kayit_idx is not None:
+                        idx = st.session_state.aktif_kayit_idx
+                        if 0 <= idx < len(st.session_state.gecmis_analizler):
+                            st.session_state.gecmis_analizler[idx]["veri"]["skor_ev"] = yeni_skor_ev
+                            st.session_state.gecmis_analizler[idx]["veri"]["skor_dep"] = yeni_skor_dep
+                            st.session_state.gecmis_analizler[idx]["veri"]["skor_belli"] = True
+
+                            # Doğruluk hesapla
+                            d = dogruluk_hesapla_ve_guncelle(st.session_state.gecmis_analizler[idx])
+                            if d is not None:
+                                st.session_state.gecmis_analizler[idx]["dogruluk"] = d
+
+                            gecmis_kaydet(st.session_state.gecmis_analizler)
+
+                    st.success("✅ Skor kaydedildi!")
+                    st.rerun()
+
+    # Doğruluk
     if skor_belli:
         tahminler = {
             "1x2_tahmin": en_olasi[0],
@@ -1277,12 +1358,8 @@ elif st.session_state.sayfa == "sonuc":
         st.markdown("### 🤝 KG Var")
         st.markdown(f"**KG Var** — %{mc['kg_var']['oran']:.1f} (GA: %{mc['kg_var']['alt']:.1f} - %{mc['kg_var']['ust']:.1f})")
 
-    # ==========================================
-    # 💎 ORAN ANALİZİ (Boş başlık gösterme)
-    # ==========================================
     with st.expander("💎 Oran Analizi", expanded=True):
         if vb:
-            # 1X2
             x12_satirlar = [x for x in vb if x[0] == "1X2"]
             if x12_satirlar:
                 st.markdown("### 📊 1 - X - 2")
@@ -1290,7 +1367,6 @@ elif st.session_state.sayfa == "sonuc":
                     st.markdown(f"**{isim}** (Oran: {oran})")
                     st.markdown(f"Model: **%{model:.1f}** | Piyasa: **%{piy:.1f}** | Fark: **{fark_vb:+.1f}** {karar}")
 
-            # Üst/Alt 2.5
             ust_alt_satirlar = [x for x in vb if x[0] == "Üst/Alt 2.5"]
             if ust_alt_satirlar:
                 st.markdown("---")
@@ -1299,7 +1375,6 @@ elif st.session_state.sayfa == "sonuc":
                     st.markdown(f"**{isim}** (Oran: {oran})")
                     st.markdown(f"Model: **%{model:.1f}** | Piyasa: **%{piy:.1f}** | Fark: **{fark_vb:+.1f}** {karar}")
 
-            # KG
             kg_satirlar = [x for x in vb if x[0] == "KG"]
             if kg_satirlar:
                 st.markdown("---")
@@ -1381,6 +1456,8 @@ elif st.session_state.sayfa == "sonuc":
             st.session_state.gecmis_analizler.append(yeni_kayit)
             st.session_state.gecmis_analizler = st.session_state.gecmis_analizler[-100:]
             gecmis_kaydet(st.session_state.gecmis_analizler)
+            # Yeni kayıt indeksini sakla
+            st.session_state.aktif_kayit_idx = len(st.session_state.gecmis_analizler) - 1
 
         st.session_state.kayit_yapildi = True
 
@@ -1390,6 +1467,7 @@ elif st.session_state.sayfa == "sonuc":
         if st.button("⬅️ Geçmişe Dön", use_container_width=True):
             st.session_state.sayfa = "gecmis"
             st.session_state.gecmisten_gelindi = False
+            st.session_state.aktif_kayit_idx = None
             st.rerun()
         st.markdown("")
 
@@ -1398,5 +1476,6 @@ elif st.session_state.sayfa == "sonuc":
         st.session_state.form_version += 1
         st.session_state.kayit_yapildi = False
         st.session_state.gecmisten_gelindi = False
+        st.session_state.aktif_kayit_idx = None
         st.session_state.sayfa = "giris"
         st.rerun()
