@@ -84,7 +84,6 @@ ESIK_YUKSEK = 65.0
 ESIK_ORTA = 55.0
 ESIK_BELIRSIZ = 50.0
 
-# Harman oranı: model vs lig
 HARMAN_MODEL = 0.40
 HARMAN_LIG = 0.60
 
@@ -122,7 +121,6 @@ VARSAYILAN_VERI = {
     "savunma_sag_ev": 0.0, "savunma_sag_dep": 0.0,
     "takim_ev": "", "takim_dep": "", "skor_ev": 0, "skor_dep": 0,
     "skor_belli": False,
-    # LİG VERİLERİ (metinden otomatik okunur)
     "lig_ort_ev": 0.0, "lig_ort_dep": 0.0, "lig_ort_toplam": 0.0,
     "lig_ust05": 0.0, "lig_ust15": 0.0, "lig_ust25": 0.0,
     "lig_ust35": 0.0, "lig_ust45": 0.0, "lig_ust55": 0.0,
@@ -183,7 +181,6 @@ def geo_ort(carpanlar):
 
 
 def harmanla(model_deger, lig_deger, model_agirlik=HARMAN_MODEL):
-    """Model ve lig değerini harmanlar. Lig değeri 0 ise model kullanılır."""
     if lig_deger <= 0:
         return model_deger
     return model_deger * model_agirlik + lig_deger * (1 - model_agirlik)
@@ -316,10 +313,8 @@ def etiket_to_deger(metin_blok, etiketler):
 
 
 def lig_verilerini_cikar(metin):
-    """Lig gol ortalaması ve Over/Under verilerini metinden çıkarır."""
     lig = {}
 
-    # Médias de Gols: Casa X.XX, Fora Y.YY, Total Z.ZZ
     m = re.search(r'Médias de Gols.*?Casa\s*\n\s*([\d.,]+).*?Fora\s*\n\s*([\d.,]+).*?Total\s*\n\s*([\d.,]+)', metin, re.DOTALL | re.IGNORECASE)
     if not m:
         m = re.search(r'Médias de Gols.*?Casa\s*\n\s*([\d.,]+).*?Fora\s*\n\s*([\d.,]+)', metin, re.DOTALL | re.IGNORECASE)
@@ -334,7 +329,6 @@ def lig_verilerini_cikar(metin):
         except (ValueError, AttributeError):
             pass
 
-    # Over/Under (Mais de X.5 Gols)
     for key, etiket in [
         ("lig_ust05", "Mais de 0.5 Gols"),
         ("lig_ust15", "Mais de 1.5 Gols"),
@@ -350,7 +344,6 @@ def lig_verilerini_cikar(metin):
             except ValueError:
                 pass
 
-    # BTTS / NG
     m = re.search(r'Ambos Marcam \(BTTS\)\s*\n\s*([\d.,]+)%', metin, re.IGNORECASE)
     if m:
         try: lig["lig_kg"] = float(m.group(1).replace(",", "."))
@@ -360,7 +353,6 @@ def lig_verilerini_cikar(metin):
         try: lig["lig_kg_yok"] = float(m.group(1).replace(",", "."))
         except ValueError: pass
 
-    # Casa/Fora Marcou Primeiro
     m = re.search(r'Casa Marcou Primeiro\s*\n\s*([\d.,]+)%', metin, re.IGNORECASE)
     if m:
         try: lig["lig_ilk_gol_ev"] = float(m.group(1).replace(",", "."))
@@ -384,7 +376,6 @@ def metinden_veri_cikar(metin):
     if not takim_ev: okunamayanlar.append("Takım isimleri (Ev)")
     if not takim_dep: okunamayanlar.append("Takım isimleri (Dep)")
 
-    # LİG VERİLERİ
     lig_veri = lig_verilerini_cikar(metin)
     veri.update(lig_veri)
 
@@ -451,7 +442,6 @@ def metinden_veri_cikar(metin):
                 veri["ilk_gol_yer_dep"] = float(m_yer.group(2))
     else: okunamayanlar.append("Form bloğu (PPG/MPG)")
 
-    # SIRALAMA
     idx = metin.find("Tablo Pozisyonu")
     if idx != -1:
         blok = metin[idx:idx+800]
@@ -742,7 +732,6 @@ def hesapla_lambda(v):
     lam_ev = max(lam_ev, 0.1)
     lam_dep = max(lam_dep, 0.1)
 
-    # LİG ORTALAMASI İLE KALİBRASYON (metinden okunan)
     lig_toplam = v.get("lig_ort_toplam", 0.0)
     if lig_toplam > 0:
         mevcut_ort = lam_ev + lam_dep
@@ -971,6 +960,72 @@ def sonuc_hesapla(kayit):
 
 
 # ==========================================
+# YORUM (EKLENDİ)
+# ==========================================
+def detayli_analiz_yorumu(v):
+    yorumlar = []
+    ppg, mpg = v["ppg_ev"], v["mpg_dep"]
+    fark = ppg - mpg
+    if ppg >= 2.0 and mpg <= 1.0:
+        txt = f"Ev sahibi evinde mükemmel form (**PPG {ppg:.2f}**), deplasman deplasmanda zayıf (**MPG {mpg:.2f}**)."
+    elif fark >= 0.7:
+        txt = f"Ev sahibi form olarak önde (**PPG {ppg:.2f}** vs **{mpg:.2f}**)."
+    elif fark <= -0.7:
+        txt = f"Deplasman form olarak önde (**MPG {mpg:.2f}** vs **{ppg:.2f}**)."
+    else:
+        txt = f"Form dengeli (**PPG {ppg:.2f}** vs **MPG {mpg:.2f}**)."
+    yorumlar.append(("📈 FORM", txt))
+
+    s_ev, s_dep = v["siralama_ev"], v["siralama_dep"]
+    if s_ev > 0 and s_dep > 0:
+        fark_sira = s_dep - s_ev
+        if fark_sira >= 8: txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. **{fark_sira} basamak** ciddi fark."
+        elif fark_sira >= 3: txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. Ev sahibi üstün."
+        elif fark_sira <= -8: txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman **{abs(fark_sira)} basamak** yukarıda."
+        elif fark_sira <= -3: txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman biraz üstün."
+        else: txt = f"Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**)."
+        yorumlar.append(("🏆 SIRALAMA", txt))
+
+    xg_ev, xg_dep = v["xg_ev"], v["xg_dep"]
+    if xg_ev - xg_dep >= 0.6: txt = f"Ev sahibi hücumda üretken (**xG {xg_ev:.2f}** vs **{xg_dep:.2f}**)."
+    elif xg_ev - xg_dep <= -0.6: txt = f"Deplasman hücumda daha etkili (**xG {xg_dep:.2f}** vs **{xg_ev:.2f}**)."
+    else: txt = f"xG yakın (Ev **{xg_ev:.2f}** / Dep **{xg_dep:.2f}**)."
+    yorumlar.append(("🎯 HÜCUM (xG)", txt))
+
+    at_ev, at_dep = v["atilan_ev"], v["atilan_dep"]
+    if at_ev - at_dep >= 0.6: txt = f"Ev sahibi maç başına **{at_ev:.1f}** gol atıyor, deplasman **{at_dep:.1f}**."
+    elif at_ev - at_dep <= -0.6: txt = f"Deplasman maç başına **{at_dep:.1f}** gol atıyor, ev sahibi **{at_ev:.1f}**."
+    else: txt = f"Atılan goller benzer (Ev **{at_ev:.1f}** / Dep **{at_dep:.1f}**)."
+    yorumlar.append(("⚽ ATILAN GOL", txt))
+
+    y_ev, y_dep = v["yenen_ev"], v["yenen_dep"]
+    if y_dep - y_ev >= 0.7: txt = f"Ev sahibi savunması sağlam (**{y_ev:.1f}**), deplasman zayıf (**{y_dep:.1f}**)."
+    elif y_dep - y_ev <= -0.7: txt = f"Deplasman savunması sağlam (**{y_dep:.1f}**), ev sahibi zayıf (**{y_ev:.1f}**)."
+    else: txt = f"Savunmalar benzer (Ev **{y_ev:.1f}** / Dep **{y_dep:.1f}**)."
+    yorumlar.append(("🛡️ YENEN GOL", txt))
+
+    r_ev, r_dep = v["reaksiyon_ev"], v["reaksiyon_dep"]
+    if r_ev - r_dep >= 15: txt = f"Ev sahibi reaksiyon gücü yüksek (**%{r_ev:.0f}** vs **%{r_dep:.0f}**)."
+    elif r_ev - r_dep <= -15: txt = f"Deplasman reaksiyon gücü yüksek (**%{r_dep:.0f}** vs **%{r_ev:.0f}**)."
+    else: txt = f"Reaksiyon güçleri benzer (Ev **%{r_ev:.0f}** / Dep **%{r_dep:.0f}**)."
+    yorumlar.append(("💪 REAKSİYON", txt))
+
+    ss_ev, ss_dep = v["ss_ev"], v["ss_dep"]
+    def ist(ss):
+        if ss <= 0.8: return "çok istikrarlı"
+        if ss <= 1.3: return "istikrarlı"
+        if ss <= 2.0: return "dalgalı"
+        return "çok istikrarsız"
+    if abs(ss_ev - ss_dep) >= 0.5:
+        if ss_ev < ss_dep: txt = f"Ev sahibi **{ist(ss_ev)}** (SS {ss_ev:.2f}), deplasman **{ist(ss_dep)}** (SS {ss_dep:.2f})."
+        else: txt = f"Deplasman **{ist(ss_dep)}** (SS {ss_dep:.2f}), ev sahibi **{ist(ss_ev)}** (SS {ss_ev:.2f})."
+    else: txt = f"İstikrar seviyeleri benzer (Ev **{ss_ev:.2f}** / Dep **{ss_dep:.2f}**)."
+    yorumlar.append(("📊 İSTİKRAR", txt))
+
+    return yorumlar
+
+
+# ==========================================
 # ANALİZ (B HARMAN)
 # ==========================================
 def analiz_hesapla(v):
@@ -979,27 +1034,21 @@ def analiz_hesapla(v):
     olas = matristen_olasilik(matris, MAX_GOL)
     toplam = olas["toplam"] or 1
 
-    # MODEL olasılıkları
     p1_m = olas["1"] / toplam * 100
     px_m = olas["X"] / toplam * 100
     p2_m = olas["2"] / toplam * 100
     ust25_m = olas["ust_25"] / toplam * 100
     kg_var_m = olas["kg_var"] / toplam * 100
 
-    # LİG verileri
     lig_kg = v.get("lig_kg", 0.0)
     lig_ust25 = v.get("lig_ust25", 0.0)
     lig_ilk_gol_ev = v.get("lig_ilk_gol_ev", 0.0)
     lig_ilk_gol_dep = v.get("lig_ilk_gol_dep", 0.0)
 
-    # 1X2 HARMAN (lig verisi yoksa model kullan)
     if lig_ilk_gol_ev > 0 and lig_ilk_gol_dep > 0:
-        # Lig ilk gol verisini 1X2 için hafif ağırlık olarak kullan
-        # İlk golü atan takım maçı kazanma eğilimindedir
         lig_toplam = lig_ilk_gol_ev + lig_ilk_gol_dep
         oran_ev = lig_ilk_gol_ev / lig_toplam
         oran_dep = lig_ilk_gol_dep / lig_toplam
-        # Sadece hafif etki (%10)
         p1_lig_etki = p1_m * (1 + (oran_ev - 0.5) * 0.10)
         p2_lig_etki = p2_m * (1 + (oran_dep - 0.5) * 0.10)
         px_lig_etki = px_m
@@ -1013,11 +1062,9 @@ def analiz_hesapla(v):
     else:
         p1, px, p2 = p1_m, px_m, p2_m
 
-    # ÜST 2.5 HARMAN
     ust_25 = harmanla(ust25_m, lig_ust25)
     alt_25 = 100 - ust_25
 
-    # KG HARMAN
     kg_var_model = harmanla(kg_var_m, lig_kg)
     kg_yok_model = 100 - kg_var_model
 
@@ -1404,7 +1451,6 @@ elif st.session_state.sayfa == "sonuc":
 
     st.markdown(f"<h1>🎯 {takim_ev} vs {takim_dep}</h1>", unsafe_allow_html=True)
 
-    # LİG VERİSİ GÖSTER
     lig_toplam = v.get("lig_ort_toplam", 0.0)
     if lig_toplam > 0:
         st.markdown(
@@ -1477,7 +1523,6 @@ elif st.session_state.sayfa == "sonuc":
     st.divider()
     st.markdown("## 🏆 FİNAL ÖNERİ")
 
-    # MODEL vs LİG KARŞILAŞTIRMA
     if lig_toplam > 0 or v.get("lig_ust25", 0) > 0:
         with st.expander("🔬 Model vs Lig Karşılaştırması", expanded=False):
             col_m, col_l, col_f = st.columns(3)
