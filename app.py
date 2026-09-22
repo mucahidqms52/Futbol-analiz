@@ -315,24 +315,75 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["kg_siklik_dep"] = float(yuzdeler[1])
             veri["kg_oran"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
 
+    # ---- 1X2 ORANLARI ----
     m = re.search(r'Casa\s*\n\s*([\d.]+)\s*\n\s*\|\s*\n\s*(?:E|Empate)\s*\n\s*([\d.]+)\s*\n\s*\|\s*\n\s*(?:Visit|Fora)\s*\n\s*([\d.]+)', metin, re.IGNORECASE)
     if m:
         veri["oran_1"] = float(m.group(1))
         veri["oran_x"] = float(m.group(2))
         veri["oran_2"] = float(m.group(3))
 
-    m = re.search(r'2\.5\s*\t?\s*([\d.]+)\s*\t?\s*([\d.]+)', metin)
-    if m:
-        ust25 = float(m.group(1))
-        alt25 = float(m.group(2))
-        if 1.0 < ust25 < 20 and 1.0 < alt25 < 20:
-            veri["oran_ust25"] = ust25
-            veri["oran_alt25"] = alt25
+    # ---- ÜST/ALT 2.5 ORANLARI (ÇOKLU FORMAT) ----
+    ust_alt_bulundu = False
 
+    # Format 1: "2.5 1.73 2.10" (tab/boşluk)
+    if not ust_alt_bulundu:
+        m = re.search(r'\b2\.5\s+([\d.]+)\s+([\d.]+)', metin)
+        if m:
+            ust25 = float(m.group(1))
+            alt25 = float(m.group(2))
+            if 1.0 < ust25 < 20 and 1.0 < alt25 < 20:
+                veri["oran_ust25"] = ust25
+                veri["oran_alt25"] = alt25
+                ust_alt_bulundu = True
+
+    # Format 2: "2.5\n1.73\n2.10" (satır bazlı)
+    if not ust_alt_bulundu:
+        m = re.search(r'\b2\.5\s*\n\s*([\d.]+)\s*\n\s*([\d.]+)', metin)
+        if m:
+            ust25 = float(m.group(1))
+            alt25 = float(m.group(2))
+            if 1.0 < ust25 < 20 and 1.0 < alt25 < 20:
+                veri["oran_ust25"] = ust25
+                veri["oran_alt25"] = alt25
+                ust_alt_bulundu = True
+
+    # Format 3: "Hat\tOver\tUnder\n2.5\t1.73\t2.10"
+    if not ust_alt_bulundu:
+        m = re.search(r'Hat[\s\t]+Over[\s\t]+Under\s*\n\s*2\.5[\s\t]+([\d.]+)[\s\t]+([\d.]+)', metin)
+        if m:
+            ust25 = float(m.group(1))
+            alt25 = float(m.group(2))
+            if 1.0 < ust25 < 20 and 1.0 < alt25 < 20:
+                veri["oran_ust25"] = ust25
+                veri["oran_alt25"] = alt25
+                ust_alt_bulundu = True
+
+    # Format 4: "Gols Over/Under" bloğundan
+    if not ust_alt_bulundu:
+        idx = metin.find("Over/Under")
+        if idx != -1:
+            blok = metin[idx:idx+500]
+            m = re.search(r'2\.5[\s\t]+([\d.]+)[\s\t]+([\d.]+)', blok)
+            if m:
+                ust25 = float(m.group(1))
+                alt25 = float(m.group(2))
+                if 1.0 < ust25 < 20 and 1.0 < alt25 < 20:
+                    veri["oran_ust25"] = ust25
+                    veri["oran_alt25"] = alt25
+                    ust_alt_bulundu = True
+
+    # ---- KG ORANLARI (ÇOKLU FORMAT) ----
+    # Format 1: "Sim\n1.50\nNão\n2.50"
     m = re.search(r'Sim\s*\n\s*([\d.]+)\s*\n\s*N[ãa]o\s*\n\s*([\d.]+)', metin, re.IGNORECASE)
     if m:
         veri["oran_kg_var"] = float(m.group(1))
         veri["oran_kg_yok"] = float(m.group(2))
+    else:
+        # Format 2: "Sim 1.50 Não 2.50"
+        m = re.search(r'Sim\s+([\d.]+)\s+N[ãa]o\s+([\d.]+)', metin, re.IGNORECASE)
+        if m:
+            veri["oran_kg_var"] = float(m.group(1))
+            veri["oran_kg_yok"] = float(m.group(2))
 
     return veri
 
@@ -1064,11 +1115,10 @@ elif st.session_state.sayfa == "gecmis":
         else:
             baslik = f"⚽ {takim_ev} vs {takim_dep}"
 
-        # ⭐ Butona basınca o maçın verilerini yükle ve analiz sayfasına git
         if st.button(baslik, use_container_width=True, key=f"mac_{idx_gercek}"):
             st.session_state.form_verileri = copy.deepcopy(v_g)
-            st.session_state.kayit_yapildi = True       # Tekrar kaydetmesin
-            st.session_state.gecmisten_gelindi = True   # Geçmişten gelindi işareti
+            st.session_state.kayit_yapildi = True
+            st.session_state.gecmisten_gelindi = True
             st.session_state.sayfa = "sonuc"
             st.rerun()
 
@@ -1227,25 +1277,34 @@ elif st.session_state.sayfa == "sonuc":
         st.markdown("### 🤝 KG Var")
         st.markdown(f"**KG Var** — %{mc['kg_var']['oran']:.1f} (GA: %{mc['kg_var']['alt']:.1f} - %{mc['kg_var']['ust']:.1f})")
 
+    # ==========================================
+    # 💎 ORAN ANALİZİ (Boş başlık gösterme)
+    # ==========================================
     with st.expander("💎 Oran Analizi", expanded=True):
         if vb:
-            st.markdown("### 📊 1 - X - 2")
-            for market, isim, model, piy, fark_vb, oran, karar in vb:
-                if market == "1X2":
+            # 1X2
+            x12_satirlar = [x for x in vb if x[0] == "1X2"]
+            if x12_satirlar:
+                st.markdown("### 📊 1 - X - 2")
+                for market, isim, model, piy, fark_vb, oran, karar in x12_satirlar:
                     st.markdown(f"**{isim}** (Oran: {oran})")
                     st.markdown(f"Model: **%{model:.1f}** | Piyasa: **%{piy:.1f}** | Fark: **{fark_vb:+.1f}** {karar}")
 
-            st.markdown("---")
-            st.markdown("### ⚽ Üst / Alt 2.5")
-            for market, isim, model, piy, fark_vb, oran, karar in vb:
-                if market == "Üst/Alt 2.5":
+            # Üst/Alt 2.5
+            ust_alt_satirlar = [x for x in vb if x[0] == "Üst/Alt 2.5"]
+            if ust_alt_satirlar:
+                st.markdown("---")
+                st.markdown("### ⚽ Üst / Alt 2.5")
+                for market, isim, model, piy, fark_vb, oran, karar in ust_alt_satirlar:
                     st.markdown(f"**{isim}** (Oran: {oran})")
                     st.markdown(f"Model: **%{model:.1f}** | Piyasa: **%{piy:.1f}** | Fark: **{fark_vb:+.1f}** {karar}")
 
-            st.markdown("---")
-            st.markdown("### 🤝 KG Var / Yok")
-            for market, isim, model, piy, fark_vb, oran, karar in vb:
-                if market == "KG":
+            # KG
+            kg_satirlar = [x for x in vb if x[0] == "KG"]
+            if kg_satirlar:
+                st.markdown("---")
+                st.markdown("### 🤝 KG Var / Yok")
+                for market, isim, model, piy, fark_vb, oran, karar in kg_satirlar:
                     st.markdown(f"**{isim}** (Oran: {oran})")
                     st.markdown(f"Model: **%{model:.1f}** | Piyasa: **%{piy:.1f}** | Fark: **{fark_vb:+.1f}** {karar}")
         else:
@@ -1282,7 +1341,7 @@ elif st.session_state.sayfa == "sonuc":
     else:
         st.info("ℹ️ Oran verisi olmadığı için final öneri hesaplanamadı.")
 
-    # ⭐ GEÇMİŞE KAYDET — SADECE BİR KEZ
+    # GEÇMİŞE KAYDET — SADECE BİR KEZ
     if en_iyi_3 and not st.session_state.kayit_yapildi:
         yeni_kayit = {
             "veri": copy.deepcopy(v),
@@ -1327,7 +1386,6 @@ elif st.session_state.sayfa == "sonuc":
 
     st.divider()
 
-    # ⭐ Butonlar
     if st.session_state.gecmisten_gelindi:
         if st.button("⬅️ Geçmişe Dön", use_container_width=True):
             st.session_state.sayfa = "gecmis"
