@@ -75,7 +75,15 @@ def gecmis_kaydet(gecmis: list):
 
 
 # ==========================================
-# VARSAYILAN VERİ (ORANLAR KALDIRILDI)
+# EŞİK SABİTLERİ
+# ==========================================
+ESIK_YUKSEK = 65.0     # ≥ %65 → Yüksek güven
+ESIK_ORTA = 55.0       # ≥ %55 → Orta güven (önerilir)
+ESIK_BELIRSIZ = 50.0   # ≥ %50 → Belirsiz (önerilmez ama gösterilir)
+                       # < %50 → Hiç gösterme
+
+# ==========================================
+# VARSAYILAN VERİ
 # ==========================================
 VARSAYILAN_VERI = {
     "ppg_ev": 0.0, "mpg_dep": 0.0,
@@ -162,6 +170,24 @@ if "tek_silme_onay" not in st.session_state:
 
 
 # ==========================================
+# GÜVEN SEVİYESİ FONKSİYONU
+# ==========================================
+def guven_seviyesi_bul(olasilik: float) -> tuple:
+    """
+    Olasılığa göre güven seviyesi döner.
+    Dönüş: (seviye, emoji, renk, mesaj)
+    """
+    if olasilik >= ESIK_YUKSEK:
+        return ("yuksek", "🟢", "success", "Yüksek güven — OYNA")
+    elif olasilik >= ESIK_ORTA:
+        return ("orta", "🟡", "warning", "Orta güven — Dikkatli oyna")
+    elif olasilik >= ESIK_BELIRSIZ:
+        return ("belirsiz", "🔴", "error", "Belirsiz — KAÇIN")
+    else:
+        return ("cok_dusuk", "⚫", "error", "Çok düşük — OYNAMA")
+
+
+# ==========================================
 # MANUEL GİRİŞ ALANLARI
 # ==========================================
 MANUEL_ALANLAR = {
@@ -217,7 +243,7 @@ MANUEL_ALANLAR = {
 
 
 # ==========================================
-# METİNDEN VERİ ÇIKARMA (ORANLAR KALDIRILDI)
+# METİNDEN VERİ ÇIKARMA
 # ==========================================
 def takimlari_cikar(metin: str) -> tuple:
     takim_ev = ""
@@ -748,9 +774,6 @@ def dogruluk_hesapla_ve_guncelle(kayit: dict) -> dict:
     return dogruluk_kontrol(skor_ev, skor_dep, tahminler)
 
 
-# ==========================================
-# YORUM FONKSİYONU
-# ==========================================
 def detayli_analiz_yorumu(v: dict):
     yorumlar = []
 
@@ -897,9 +920,6 @@ def detayli_analiz_yorumu(v: dict):
     return yorumlar
 
 
-# ==========================================
-# ANALİZ HESAPLA
-# ==========================================
 def analiz_hesapla(v: dict):
     lam_ev, lam_dep, guven = hesapla_lambda(v)
     matris = poisson_matris(lam_ev, lam_dep, MAX_GOL)
@@ -1177,7 +1197,7 @@ elif st.session_state.sayfa == "gecmis":
 
 
 # ==========================================
-# SAYFA 2: ANALİZ (ORAN ANALİZİ YOK)
+# SAYFA 2: ANALİZ (EŞİK SİSTEMİ)
 # ==========================================
 elif st.session_state.sayfa == "sonuc":
     v = st.session_state.form_verileri
@@ -1320,29 +1340,128 @@ elif st.session_state.sayfa == "sonuc":
         st.markdown("### 🤝 KG Var")
         st.markdown(f"**KG Var** — %{mc['kg_var']['oran']:.1f}")
 
-    # ⭐ FİNAL ÖNERİ
+    # ==========================================
+    # 🏆 FİNAL ÖNERİ — EŞİK SİSTEMLİ
+    # ==========================================
     st.divider()
     st.markdown("## 🏆 FİNAL ÖNERİ")
+    st.caption(f"📊 Eşik: ≥%{ESIK_ORTA:.0f} öneri | %{ESIK_BELIRSIZ:.0f}-{ESIK_ORTA:.0f} belirsiz | <%{ESIK_BELIRSIZ:.0f} gizli")
 
-    # Model en yüksek 3
+    # --- 1X2 ---
     st.markdown("### 📊 1X2")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("🏠 1 (Ev)", f"%{p1:.1f}")
-    c2.metric("🤝 X (Beraberlik)", f"%{px:.1f}")
-    c3.metric("✈️ 2 (Dep)", f"%{p2:.1f}")
 
-    st.success(f"🎯 **En Olası:** {en_olasi[0]} (%{en_olasi[1]:.1f})")
-    st.info(f"🛡️ **En Güvenli (Çifte Şans):** {en_guvenli[0]} (%{en_guvenli[1]:.1f})")
+    # Hem tek maç hem çifte şans değerlendir
+    tek_secimler = [("1", p1), ("X", px), ("2", p2)]
+    tek_secimler.sort(key=lambda x: x[1], reverse=True)
 
+    cift_secimler = [("1X", cifte_1x), ("X2", cifte_x2), ("12", cifte_12)]
+    cift_secimler.sort(key=lambda x: x[1], reverse=True)
+
+    # En yüksek tek ve çifte
+    en_yuksek_tek = tek_secimler[0]
+    en_yuksek_cift = cift_secimler[0]
+
+    # Çifte şans daha yüksekse onu göster
+    if en_yuksek_cift[1] > en_yuksek_tek[1]:
+        goster_secim = en_yuksek_cift
+        tip = "Çifte Şans"
+    else:
+        goster_secim = en_yuksek_tek
+        tip = "Tek Sonuç"
+
+    seviye, emoji, kutu, mesaj = guven_seviyesi_bul(goster_secim[1])
+
+    if seviye in ["yuksek", "orta"]:
+        if kutu == "success":
+            st.success(f"{emoji} **{tip}: {goster_secim[0]}** → %{goster_secim[1]:.1f} — {mesaj}")
+        else:
+            st.warning(f"{emoji} **{tip}: {goster_secim[0]}** → %{goster_secim[1]:.1f} — {mesaj}")
+    elif seviye == "belirsiz":
+        st.error(f"{emoji} **{tip}: {goster_secim[0]}** → %{goster_secim[1]:.1f} — {mesaj}")
+        st.caption(f"ℹ️ Bu maçta 1X2 sonucu belirsiz. En yüksek model olasılığı bile yetersiz.")
+    else:
+        st.error(f"⚫ 1X2 için yeterli veri yok (en yüksek: %{goster_secim[1]:.1f})")
+
+    # Tüm seçenekleri göster
+    st.markdown(f"""
+    <small>
+    Tek: 1 %{p1:.1f} • X %{px:.1f} • 2 %{p2:.1f}
+    Çifte: 1X %{cifte_1x:.1f} • X2 %{cifte_x2:.1f} • 12 %{cifte_12:.1f}
+    </small>
+    """, unsafe_allow_html=True)
+
+    # --- GOL ---
     st.markdown("### ⚽ Gol (2.5)")
-    st.markdown(f"- **Üst 2.5:** %{ust_25:.1f}")
-    st.markdown(f"- **Alt 2.5:** %{alt_25:.1f}")
-    st.success(f"🎯 **Gol Tercihi:** {a['en_olasi_gol']} (beklenen: {tahmini_gol:.2f})")
 
+    gol_secimler = [("Üst 2.5", ust_25), ("Alt 2.5", alt_25)]
+    gol_secimler.sort(key=lambda x: x[1], reverse=True)
+    en_yuksek_gol = gol_secimler[0]
+
+    seviye, emoji, kutu, mesaj = guven_seviyesi_bul(en_yuksek_gol[1])
+
+    if seviye in ["yuksek", "orta"]:
+        if kutu == "success":
+            st.success(f"{emoji} **{en_yuksek_gol[0]}** → %{en_yuksek_gol[1]:.1f} — {mesaj}")
+        else:
+            st.warning(f"{emoji} **{en_yuksek_gol[0]}** → %{en_yuksek_gol[1]:.1f} — {mesaj}")
+    elif seviye == "belirsiz":
+        st.error(f"{emoji} **{en_yuksek_gol[0]}** → %{en_yuksek_gol[1]:.1f} — {mesaj}")
+        st.caption(f"ℹ️ Gol tahmini belirsiz (Üst: %{ust_25:.1f} / Alt: %{alt_25:.1f}). Beklenen: {tahmini_gol:.2f}")
+    else:
+        st.error(f"⚫ Gol için yeterli veri yok")
+
+    # --- KG ---
     st.markdown("### 🤝 KG (Karşılıklı Gol)")
-    st.markdown(f"- **KG Var:** %{kg_var_model:.1f}")
-    st.markdown(f"- **KG Yok:** %{kg_yok_model:.1f}")
-    st.success(f"🎯 **KG Tercihi:** {a['en_olasi_kg']}")
+
+    kg_secimler = [("KG Var", kg_var_model), ("KG Yok", kg_yok_model)]
+    kg_secimler.sort(key=lambda x: x[1], reverse=True)
+    en_yuksek_kg = kg_secimler[0]
+
+    seviye, emoji, kutu, mesaj = guven_seviyesi_bul(en_yuksek_kg[1])
+
+    if seviye in ["yuksek", "orta"]:
+        if kutu == "success":
+            st.success(f"{emoji} **{en_yuksek_kg[0]}** → %{en_yuksek_kg[1]:.1f} — {mesaj}")
+        else:
+            st.warning(f"{emoji} **{en_yuksek_kg[0]}** → %{en_yuksek_kg[1]:.1f} — {mesaj}")
+    elif seviye == "belirsiz":
+        st.error(f"{emoji} **{en_yuksek_kg[0]}** → %{en_yuksek_kg[1]:.1f} — {mesaj}")
+        st.caption(f"ℹ️ KG belirsiz (Var: %{kg_var_model:.1f} / Yok: %{kg_yok_model:.1f}).")
+    else:
+        st.error(f"⚫ KG için yeterli veri yok")
+
+    # Özet
+    st.divider()
+    st.markdown("### 📊 Özet")
+
+    oneriler = []
+    if en_yuksek_cift[1] >= ESIK_ORTA:
+        oneriler.append(f"✅ {tip} {en_yuksek_cift[0]} (%{en_yuksek_cift[1]:.1f})")
+    elif en_yuksek_tek[1] >= ESIK_ORTA:
+        oneriler.append(f"✅ {en_yuksek_tek[0]} (%{en_yuksek_tek[1]:.1f})")
+    else:
+        oneriler.append("⚠️ 1X2 — Öneri yok")
+
+    if en_yuksek_gol[1] >= ESIK_ORTA:
+        oneriler.append(f"✅ {en_yuksek_gol[0]} (%{en_yuksek_gol[1]:.1f})")
+    else:
+        oneriler.append("⚠️ Gol — Öneri yok")
+
+    if en_yuksek_kg[1] >= ESIK_ORTA:
+        oneriler.append(f"✅ {en_yuksek_kg[0]} (%{en_yuksek_kg[1]:.1f})")
+    else:
+        oneriler.append("⚠️ KG — Öneri yok")
+
+    for o in oneriler:
+        st.markdown(o)
+
+    oneri_sayisi = sum(1 for o in oneriler if o.startswith("✅"))
+    if oneri_sayisi == 0:
+        st.warning("⚠️ **Bu maçta güvenilir öneri yok.** Belirsiz maç, oynamamanız önerilir.")
+    elif oneri_sayisi == 1:
+        st.info(f"📌 **Sadece 1 güvenilir öneri var.** Diğer marketler belirsiz.")
+    else:
+        st.success(f"✅ **{oneri_sayisi} güvenilir öneri** bulundu.")
 
     # Kayıt
     if not st.session_state.kayit_yapildi:
