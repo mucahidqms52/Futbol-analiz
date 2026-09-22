@@ -107,12 +107,13 @@ VARSAYILAN_VERI = {
     "skor_belli": False,
 }
 
-EV_AVANTAJ = 1.12
-DEP_DEZAVANTAJ = 0.94
-MAX_GOL = 8
+# 🎯 Model katsayıları
+EV_AVANTAJ = 1.12       # Ev sahibi avantajı (+%12)
+DEP_DEZAVANTAJ = 0.94   # Deplasman dezavantajı (-%6)
+MAX_GOL = 8             # Poisson matrisi üst limiti
 
-MONTE_CARLO_N = 5000
-BELIRSIZLIK = 0.10
+MONTE_CARLO_N = 5000    # Simülasyon sayısı
+BELIRSIZLIK = 0.10      # λ ±%10 sapma
 
 # ==========================================
 # SESSION STATE
@@ -132,7 +133,9 @@ if "gecmisten_gelindi" not in st.session_state:
 if "silme_onay" not in st.session_state:
     st.session_state.silme_onay = False
 if "aktif_kayit_idx" not in st.session_state:
-    st.session_state.aktif_kayit_idx = None  # Geçmişteki hangi kayıt aktif
+    st.session_state.aktif_kayit_idx = None
+if "okunamayan_alanlar" not in st.session_state:
+    st.session_state.okunamayan_alanlar = []  # ⭐ Regex uyarı listesi
 
 
 # ==========================================
@@ -161,10 +164,18 @@ def takimlari_cikar(metin: str) -> tuple:
     return takim_ev, takim_dep, 0, 0, False
 
 
-def metinden_veri_cikar(metin: str) -> dict:
+def metinden_veri_cikar(metin: str) -> tuple:
+    """
+    Metinden veri çıkarır.
+    Dönüş: (veri_dict, okunamayan_alanlar_listesi)
+    """
     veri = {}
+    okunamayanlar = []  # ⭐ Hangi alan okunamadı
     metin = metin.replace(",", ".")
 
+    # ==========================================
+    # TAKIM İSİMLERİ VE SKOR
+    # ==========================================
     takim_ev, takim_dep, skor_ev, skor_dep, skor_belli = takimlari_cikar(metin)
     veri["takim_ev"] = takim_ev
     veri["takim_dep"] = takim_dep
@@ -172,26 +183,43 @@ def metinden_veri_cikar(metin: str) -> dict:
     veri["skor_dep"] = skor_dep
     veri["skor_belli"] = skor_belli
 
+    if not takim_ev:
+        okunamayanlar.append("Takım isimleri (Ev)")
+    if not takim_dep:
+        okunamayanlar.append("Takım isimleri (Dep)")
+
+    # ==========================================
+    # FORM (PPG / MPG)
+    # ==========================================
     idx = metin.find("Güvenilirlik ve Form")
     if idx == -1:
         idx = metin.find("PPG")
     if idx != -1:
         blok = metin[idx:idx+1200]
         m = re.search(r'PPG[:\s]+([\d.]+)', blok)
-        if m: veri["ppg_ev"] = float(m.group(1))
-        m = re.search(r'(?:MBP|MPG)[:\s]+([\d.]+)', blok)
-        if m: veri["mpg_dep"] = float(m.group(1))
+        if m:
+            veri["ppg_ev"] = float(m.group(1))
+        else:
+            okunamayanlar.append("PPG (Ev Form)")
 
+        m = re.search(r'(?:MBP|MPG)[:\s]+([\d.]+)', blok)
+        if m:
+            veri["mpg_dep"] = float(m.group(1))
+        else:
+            okunamayanlar.append("MPG (Dep Form)")
+
+        # Galibiyet/Beraberlik/Yenilmezlik (Ev)
         idx_ppg = blok.find("PPG")
         if idx_ppg != -1:
             ev_blok = blok[idx_ppg:idx_ppg+400]
             m_g = re.search(r'([\d.]+)%\s*\n\s*Galibiyet', ev_blok)
             m_b = re.search(r'([\d.]+)%\s*\n\s*Beraberlik', ev_blok)
+            m_y = re.search(r'(?:Invencibilidade|Yenilmezlik)[:\s]+([\d.]+)%', ev_blok)
             if m_g: veri["galibiyet_ev"] = float(m_g.group(1))
             if m_b: veri["beraberlik_ev"] = float(m_b.group(1))
-            m_y = re.search(r'(?:Invencibilidade|Yenilmezlik)[:\s]+([\d.]+)%', ev_blok)
             if m_y: veri["yenilmezlik_ev"] = float(m_y.group(1))
 
+        # Galibiyet/Beraberlik/Yenilmezlik (Dep)
         idx_mbp = blok.find("MBP")
         if idx_mbp == -1:
             idx_mbp = blok.find("MPG")
@@ -199,11 +227,12 @@ def metinden_veri_cikar(metin: str) -> dict:
             dep_blok = blok[idx_mbp:idx_mbp+400]
             m_g2 = re.search(r'([\d.]+)%\s*\n\s*Galibiyet', dep_blok)
             m_b2 = re.search(r'([\d.]+)%\s*\n\s*Beraberlik', dep_blok)
+            m_y2 = re.search(r'(?:Invencibilidade|Yenilmezlik)[:\s]+([\d.]+)%', dep_blok)
             if m_g2: veri["galibiyet_dep"] = float(m_g2.group(1))
             if m_b2: veri["beraberlik_dep"] = float(m_b2.group(1))
-            m_y2 = re.search(r'(?:Invencibilidade|Yenilmezlik)[:\s]+([\d.]+)%', dep_blok)
             if m_y2: veri["yenilmezlik_dep"] = float(m_y2.group(1))
 
+        # Psikolojik Faktör (Reaksiyon + İlk Gol)
         idx_psy = metin.find("Psikolojik Faktör")
         if idx_psy != -1:
             psy_blok = metin[idx_psy:idx_psy+600]
@@ -211,6 +240,9 @@ def metinden_veri_cikar(metin: str) -> dict:
             if m:
                 veri["reaksiyon_ev"] = float(m.group(1))
                 veri["reaksiyon_dep"] = float(m.group(2))
+            else:
+                okunamayanlar.append("Reaksiyon Gücü")
+
             m_atar = re.search(r'İlk Golü Atar\s*\t?\s*([\d.]+)%\s*\t?\s*([\d.]+)%', psy_blok)
             if m_atar:
                 veri["ilk_gol_atar_ev"] = float(m_atar.group(1))
@@ -219,7 +251,12 @@ def metinden_veri_cikar(metin: str) -> dict:
             if m_yer:
                 veri["ilk_gol_yer_ev"] = float(m_yer.group(1))
                 veri["ilk_gol_yer_dep"] = float(m_yer.group(2))
+    else:
+        okunamayanlar.append("Form bloğu (PPG/MPG)")
 
+    # ==========================================
+    # SIRALAMA
+    # ==========================================
     idx = metin.find("Tablo Pozisyonu")
     if idx != -1:
         blok = metin[idx:idx+500]
@@ -227,7 +264,14 @@ def metinden_veri_cikar(metin: str) -> dict:
         if m:
             veri["siralama_ev"] = int(m.group(1))
             veri["siralama_dep"] = int(m.group(2))
+        else:
+            okunamayanlar.append("Sıralama")
+    else:
+        okunamayanlar.append("Sıralama")
 
+    # ==========================================
+    # HÜCUM HAKİMİYETİ
+    # ==========================================
     idx = metin.find("Hücum Hakimiyeti")
     if idx != -1:
         blok = metin[idx:idx+300]
@@ -235,7 +279,12 @@ def metinden_veri_cikar(metin: str) -> dict:
         if len(yuzdeler) >= 2:
             veri["hucum_hakimiyeti_ev"] = float(yuzdeler[0])
             veri["hucum_hakimiyeti_dep"] = float(yuzdeler[1])
+    else:
+        okunamayanlar.append("Hücum Hakimiyeti")
 
+    # ==========================================
+    # AGRESİFLİK
+    # ==========================================
     idx = metin.find("Agresiflik")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -243,7 +292,12 @@ def metinden_veri_cikar(metin: str) -> dict:
         if m:
             veri["agresiflik_ev"] = float(m.group(1))
             veri["agresiflik_dep"] = float(m.group(2))
+    else:
+        okunamayanlar.append("Agresiflik (Şut/Maç)")
 
+    # ==========================================
+    # İSABET
+    # ==========================================
     idx = metin.find("İsabet")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -251,7 +305,12 @@ def metinden_veri_cikar(metin: str) -> dict:
         if m:
             veri["isabet_ev"] = float(m.group(1))
             veri["isabet_dep"] = float(m.group(2))
+    else:
+        okunamayanlar.append("İsabet (Doğruluk)")
 
+    # ==========================================
+    # HAVA TOPU
+    # ==========================================
     idx = metin.find("Hava Topu")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -259,7 +318,12 @@ def metinden_veri_cikar(metin: str) -> dict:
         if m:
             veri["hava_topu_ev"] = float(m.group(1))
             veri["hava_topu_dep"] = float(m.group(2))
+    else:
+        okunamayanlar.append("Hava Topu (Ortalar)")
 
+    # ==========================================
+    # xG
+    # ==========================================
     idx = metin.find("Beklenen goller (maç öncesi xG)")
     if idx == -1:
         idx = metin.find("Beklenen goller")
@@ -269,7 +333,14 @@ def metinden_veri_cikar(metin: str) -> dict:
         if m:
             veri["xg_ev"] = float(m.group(1))
             veri["xg_dep"] = float(m.group(2))
+        else:
+            okunamayanlar.append("xG")
+    else:
+        okunamayanlar.append("xG")
 
+    # ==========================================
+    # ATILAN GOL
+    # ==========================================
     idx = metin.find("Atılan Gol (Ort)")
     if idx == -1:
         idx = metin.find("Atılan Gol")
@@ -279,7 +350,14 @@ def metinden_veri_cikar(metin: str) -> dict:
         if len(sayilar) >= 2:
             veri["atilan_ev"] = float(sayilar[0])
             veri["atilan_dep"] = float(sayilar[1])
+        else:
+            okunamayanlar.append("Atılan Gol")
+    else:
+        okunamayanlar.append("Atılan Gol")
 
+    # ==========================================
+    # YENEN GOL
+    # ==========================================
     idx = metin.find("Yenen Gol (Ort)")
     if idx == -1:
         idx = metin.find("Yenen Gol")
@@ -289,12 +367,24 @@ def metinden_veri_cikar(metin: str) -> dict:
         if len(sayilar) >= 2:
             veri["yenen_ev"] = float(sayilar[0])
             veri["yenen_dep"] = float(sayilar[1])
+        else:
+            okunamayanlar.append("Yenen Gol")
+    else:
+        okunamayanlar.append("Yenen Gol")
 
+    # ==========================================
+    # STANDART SAPMA
+    # ==========================================
     ss_listesi = re.findall(r'\bSS\s*\n\s*([\d.]+)', metin)
     if len(ss_listesi) >= 2:
         veri["ss_ev"] = float(ss_listesi[0])
         veri["ss_dep"] = float(ss_listesi[1])
+    else:
+        okunamayanlar.append("Standart Sapma (SS)")
 
+    # ==========================================
+    # ÜST 2.5 (veri)
+    # ==========================================
     idx = metin.find("2.5 Üst")
     if idx != -1:
         blok = metin[idx:idx+400]
@@ -306,6 +396,9 @@ def metinden_veri_cikar(metin: str) -> dict:
             else:
                 veri["ust25_dep"] = float(yuzdeler[1])
 
+    # ==========================================
+    # KG SIKLIĞI (veri)
+    # ==========================================
     idx = metin.find("KG Sıklığı")
     if idx != -1:
         blok = metin[idx:idx+500]
@@ -319,14 +412,20 @@ def metinden_veri_cikar(metin: str) -> dict:
             veri["kg_siklik_dep"] = float(yuzdeler[1])
             veri["kg_oran"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
 
+    # ==========================================
     # 1X2 ORANLARI
+    # ==========================================
     m = re.search(r'Casa\s*\n\s*([\d.]+)\s*\n\s*\|\s*\n\s*(?:E|Empate)\s*\n\s*([\d.]+)\s*\n\s*\|\s*\n\s*(?:Visit|Fora)\s*\n\s*([\d.]+)', metin, re.IGNORECASE)
     if m:
         veri["oran_1"] = float(m.group(1))
         veri["oran_x"] = float(m.group(2))
         veri["oran_2"] = float(m.group(3))
+    else:
+        okunamayanlar.append("1X2 Oranları")
 
-    # ÜST/ALT 2.5 ORANLARI (ÇOKLU FORMAT)
+    # ==========================================
+    # ÜST/ALT 2.5 ORANLARI (çoklu format)
+    # ==========================================
     ust_alt_bulundu = False
 
     if not ust_alt_bulundu:
@@ -372,7 +471,12 @@ def metinden_veri_cikar(metin: str) -> dict:
                     veri["oran_alt25"] = alt25
                     ust_alt_bulundu = True
 
+    if not ust_alt_bulundu:
+        okunamayanlar.append("Üst/Alt 2.5 Oranları")
+
+    # ==========================================
     # KG ORANLARI
+    # ==========================================
     m = re.search(r'Sim\s*\n\s*([\d.]+)\s*\n\s*N[ãa]o\s*\n\s*([\d.]+)', metin, re.IGNORECASE)
     if m:
         veri["oran_kg_var"] = float(m.group(1))
@@ -382,8 +486,10 @@ def metinden_veri_cikar(metin: str) -> dict:
         if m:
             veri["oran_kg_var"] = float(m.group(1))
             veri["oran_kg_yok"] = float(m.group(2))
+        else:
+            okunamayanlar.append("KG Oranları")
 
-    return veri
+    return veri, okunamayanlar
 
 
 # ==========================================
@@ -409,6 +515,15 @@ def poisson_random(lam: float) -> int:
 
 
 def poisson_matris(lam_ev: float, lam_dep: float, max_gol: int = MAX_GOL):
+    """
+    Poisson matrisi oluşturur.
+    
+    ⚠️ VARSAYIM: Ev ve deplasman golleri BAĞIMSIZ.
+    Gerçekte takımlardan biri öne geçtiğinde maç dinamikleri değişir.
+    Bu durumu modellemek için "Bivariate Poisson" veya "Dixon-Coles" 
+    yaklaşımı kullanılır. Ancak mevcut model amatör/yarı profesyonel
+    analizler için yeterince iyi sonuç verir.
+    """
     return [
         [poisson_pmf(i, lam_ev) * poisson_pmf(j, lam_dep) for j in range(max_gol)]
         for i in range(max_gol)
@@ -416,6 +531,12 @@ def poisson_matris(lam_ev: float, lam_dep: float, max_gol: int = MAX_GOL):
 
 
 def hesapla_lambda(v: dict):
+    """
+    Takımlar için beklenen gol (λ) değerini hesaplar.
+    
+    Formül:
+        λ = ((hücum + rakip_savunma) / 2) × ev_avantajı × form × moral × sıralama
+    """
     hucum_ev = v["xg_ev"] * 0.6 + v["atilan_ev"] * 0.4
     hucum_dep = v["xg_dep"] * 0.6 + v["atilan_dep"] * 0.4
 
@@ -450,6 +571,7 @@ def hesapla_lambda(v: dict):
     lam_ev_ham = ((hucum_ev + sav_dep) / 2) * EV_AVANTAJ * form_ev * moral_ev * sira_ev
     lam_dep_ham = ((hucum_dep + sav_ev) / 2) * DEP_DEZAVANTAJ * form_dep * moral_dep * sira_dep
 
+    # Standart sapma → güven ağırlığı
     ort = (lam_ev_ham + lam_dep_ham) / 2
     guven_ev = max(0.0, min(1.0, 1 - v["ss_ev"] / 5))
     guven_dep = max(0.0, min(1.0, 1 - v["ss_dep"] / 5))
@@ -622,7 +744,6 @@ def dogruluk_kontrol(skor_ev, skor_dep, tahminler: dict) -> dict:
 
 
 def dogruluk_hesapla_ve_guncelle(kayit: dict) -> dict:
-    """Bir kayıt için dogruluk dict'i oluşturur (kayıtlı analiz verisinden)."""
     v = kayit["veri"]
     analiz = kayit.get("analiz", {})
 
@@ -1036,13 +1157,16 @@ if st.session_state.sayfa == "giris":
         st.session_state.kayit_yapildi = False
         st.session_state.gecmisten_gelindi = False
         st.session_state.aktif_kayit_idx = None
+        st.session_state.okunamayan_alanlar = []
         st.rerun()
 
     if analiz_btn:
         if not yapistir_metni.strip():
             st.warning("⚠️ Önce metni yapıştır.")
         else:
-            cikan = metinden_veri_cikar(yapistir_metni)
+            # 🆕 Fonksiyon artık tuple döndürüyor
+            cikan, okunamayanlar = metinden_veri_cikar(yapistir_metni)
+            
             if not cikan:
                 st.error("❌ Metinden hiçbir veri çıkarılamadı.")
             else:
@@ -1052,10 +1176,11 @@ if st.session_state.sayfa == "giris":
                 st.session_state.kayit_yapildi = False
                 st.session_state.gecmisten_gelindi = False
                 st.session_state.aktif_kayit_idx = None
+                st.session_state.okunamayan_alanlar = okunamayanlar  # ⭐ Uyarıları kaydet
 
                 if not veri_yeterli_mi(yeni_veri):
-                    st.error(f"⚠️ Sadece {len(cikan)} alan bulundu.")
-                    st.info(f"Bulunan: {', '.join(cikan.keys())}")
+                    st.error(f"⚠️ Analiz için yeterli veri yok. En az 2 gol verisi (xG/Atılan/Yenen) gerekli.")
+                    st.info(f"Bulunan alanlar: {', '.join([k for k, val in cikan.items() if val])}")
                 else:
                     st.session_state.sayfa = "sonuc"
                     st.rerun()
@@ -1140,12 +1265,12 @@ elif st.session_state.sayfa == "gecmis":
             st.session_state.kayit_yapildi = True
             st.session_state.gecmisten_gelindi = True
             st.session_state.aktif_kayit_idx = idx_gercek
+            st.session_state.okunamayan_alanlar = []
             st.session_state.sayfa = "sonuc"
             st.rerun()
 
     st.divider()
 
-    # ⭐ Silme onay mekanizması
     if not st.session_state.silme_onay:
         c_temizle, c_geri = st.columns(2)
         with c_temizle:
@@ -1202,6 +1327,18 @@ elif st.session_state.sayfa == "sonuc":
     if skor_belli:
         st.markdown(f"<p style='text-align:center; font-size:1.1rem;'><b>Sonuç: {skor_ev} - {skor_dep}</b></p>", unsafe_allow_html=True)
 
+    # ⭐ REGEX UYARI MESAJLARI
+    okunamayanlar = st.session_state.get("okunamayan_alanlar", [])
+    if okunamayanlar:
+        with st.expander(f"⚠️ Okunamayan Alanlar ({len(okunamayanlar)})", expanded=False):
+            st.warning(
+                "**Aşağıdaki alanlar metinden çıkarılamadı.** Varsayılan değerler kullanıldı. "
+                "Bu, analiz sonuçlarının doğruluğunu etkileyebilir.\n\n"
+                "İpucu: İstatistik sitesinden **daha fazla metin kopyalayıp** tekrar deneyin."
+            )
+            for alan in okunamayanlar:
+                st.markdown(f"- ❌ **{alan}**")
+
     fark = p1 - p2
     if fark > 25:       senaryo = "Ev sahibi açık ara favori görünüyor."
     elif fark > 10:     senaryo = "Ev sahibi hafif favori konumunda."
@@ -1209,7 +1346,6 @@ elif st.session_state.sayfa == "sonuc":
     elif fark < -10:    senaryo = "Deplasman hafif favori."
     else:               senaryo = "Maç oldukça dengeli, beraberlik riski yüksek."
 
-    # ⭐ SKOR GİRİŞİ (skor belli değilse veya geçmişten gelindiyse)
     if not skor_belli:
         with st.expander("📝 Maç Sonucu Gir (Skor Belli Olduğunda)", expanded=False):
             st.caption("Maç bittikten sonra sonucu buraya gir → doğruluk otomatik hesaplanır.")
@@ -1231,12 +1367,10 @@ elif st.session_state.sayfa == "sonuc":
                 st.markdown("")
                 st.markdown("")
                 if st.button("💾 Skoru Kaydet", use_container_width=True, type="primary"):
-                    # Skoru kaydet
                     st.session_state.form_verileri["skor_ev"] = yeni_skor_ev
                     st.session_state.form_verileri["skor_dep"] = yeni_skor_dep
                     st.session_state.form_verileri["skor_belli"] = True
 
-                    # Bu kayıt geçmişte mi? Güncelle
                     if st.session_state.aktif_kayit_idx is not None:
                         idx = st.session_state.aktif_kayit_idx
                         if 0 <= idx < len(st.session_state.gecmis_analizler):
@@ -1244,7 +1378,6 @@ elif st.session_state.sayfa == "sonuc":
                             st.session_state.gecmis_analizler[idx]["veri"]["skor_dep"] = yeni_skor_dep
                             st.session_state.gecmis_analizler[idx]["veri"]["skor_belli"] = True
 
-                            # Doğruluk hesapla
                             d = dogruluk_hesapla_ve_guncelle(st.session_state.gecmis_analizler[idx])
                             if d is not None:
                                 st.session_state.gecmis_analizler[idx]["dogruluk"] = d
@@ -1254,7 +1387,6 @@ elif st.session_state.sayfa == "sonuc":
                     st.success("✅ Skor kaydedildi!")
                     st.rerun()
 
-    # Doğruluk
     if skor_belli:
         tahminler = {
             "1x2_tahmin": en_olasi[0],
@@ -1416,7 +1548,6 @@ elif st.session_state.sayfa == "sonuc":
     else:
         st.info("ℹ️ Oran verisi olmadığı için final öneri hesaplanamadı.")
 
-    # GEÇMİŞE KAYDET — SADECE BİR KEZ
     if en_iyi_3 and not st.session_state.kayit_yapildi:
         yeni_kayit = {
             "veri": copy.deepcopy(v),
@@ -1456,7 +1587,6 @@ elif st.session_state.sayfa == "sonuc":
             st.session_state.gecmis_analizler.append(yeni_kayit)
             st.session_state.gecmis_analizler = st.session_state.gecmis_analizler[-100:]
             gecmis_kaydet(st.session_state.gecmis_analizler)
-            # Yeni kayıt indeksini sakla
             st.session_state.aktif_kayit_idx = len(st.session_state.gecmis_analizler) - 1
 
         st.session_state.kayit_yapildi = True
@@ -1477,5 +1607,6 @@ elif st.session_state.sayfa == "sonuc":
         st.session_state.kayit_yapildi = False
         st.session_state.gecmisten_gelindi = False
         st.session_state.aktif_kayit_idx = None
+        st.session_state.okunamayan_alanlar = []
         st.session_state.sayfa = "giris"
         st.rerun()
