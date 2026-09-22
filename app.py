@@ -185,18 +185,10 @@ MANUEL_ALANLAR = {
         ("oran_ust25", "Üst 2.5 Oranı", "float", 0.0),
         ("oran_alt25", "Alt 2.5 Oranı", "float", 0.0),
     ],
-    "Takım isimleri (Ev)": [
-        ("takim_ev", "Ev Takım Adı", "str", ""),
-    ],
-    "Takım isimleri (Dep)": [
-        ("takim_dep", "Dep Takım Adı", "str", ""),
-    ],
-    "PPG (Ev Form)": [
-        ("ppg_ev", "PPG (Ev)", "float", 0.0),
-    ],
-    "MPG (Dep Form)": [
-        ("mpg_dep", "MPG (Dep)", "float", 0.0),
-    ],
+    "Takım isimleri (Ev)": [("takim_ev", "Ev Takım Adı", "str", "")],
+    "Takım isimleri (Dep)": [("takim_dep", "Dep Takım Adı", "str", "")],
+    "PPG (Ev Form)": [("ppg_ev", "PPG (Ev)", "float", 0.0)],
+    "MPG (Dep Form)": [("mpg_dep", "MPG (Dep)", "float", 0.0)],
     "Reaksiyon Gücü": [
         ("reaksiyon_ev", "Reaksiyon % (Ev)", "float", 50.0),
         ("reaksiyon_dep", "Reaksiyon % (Dep)", "float", 50.0),
@@ -285,15 +277,11 @@ def metinden_veri_cikar(metin: str) -> tuple:
     veri["skor_dep"] = skor_dep
     veri["skor_belli"] = skor_belli
 
-    if not takim_ev:
-        okunamayanlar.append("Takım isimleri (Ev)")
-    if not takim_dep:
-        okunamayanlar.append("Takım isimleri (Dep)")
+    if not takim_ev: okunamayanlar.append("Takım isimleri (Ev)")
+    if not takim_dep: okunamayanlar.append("Takım isimleri (Dep)")
 
-    # FORM + MAĞLUBİYET + xG PERF
     idx = metin.find("Güvenilirlik ve Form")
-    if idx == -1:
-        idx = metin.find("PPG")
+    if idx == -1: idx = metin.find("PPG")
     if idx != -1:
         blok = metin[idx:idx+1500]
         m = re.search(r'PPG[:\s]+([\d.]+)', blok)
@@ -320,12 +308,10 @@ def metinden_veri_cikar(metin: str) -> tuple:
             if not m_perf:
                 m_perf = re.search(r'xG Performans[ıi]?[:\s]*\n?\s*([A-ZÇĞİÖŞÜ][\w\s]+?)(?:\n|$)', ev_blok)
             if m_perf:
-                perf_text = m_perf.group(1).strip()
-                veri["xg_perf_ev"] = etiket_to_deger(perf_text, XG_PERF_MAP)
+                veri["xg_perf_ev"] = etiket_to_deger(m_perf.group(1).strip(), XG_PERF_MAP)
 
         idx_mbp = blok.find("MBP")
-        if idx_mbp == -1:
-            idx_mbp = blok.find("MPG")
+        if idx_mbp == -1: idx_mbp = blok.find("MPG")
         if idx_mbp != -1:
             dep_blok = blok[idx_mbp:idx_mbp+600]
             m_g2 = re.search(r'([\d.]+)%\s*\n\s*Galibiyet', dep_blok)
@@ -339,8 +325,7 @@ def metinden_veri_cikar(metin: str) -> tuple:
 
             m_perf2 = re.search(r'xG Performans[ıi]?[:\s]*\n?\s*([A-ZÇĞİÖŞÜ][\w\s]+?)(?:\n|$)', dep_blok)
             if m_perf2:
-                perf_text2 = m_perf2.group(1).strip()
-                veri["xg_perf_dep"] = etiket_to_deger(perf_text2, XG_PERF_MAP)
+                veri["xg_perf_dep"] = etiket_to_deger(m_perf2.group(1).strip(), XG_PERF_MAP)
 
         idx_psy = metin.find("Psikolojik Faktör")
         if idx_psy != -1:
@@ -349,8 +334,7 @@ def metinden_veri_cikar(metin: str) -> tuple:
             if m:
                 veri["reaksiyon_ev"] = float(m.group(1))
                 veri["reaksiyon_dep"] = float(m.group(2))
-            else:
-                okunamayanlar.append("Reaksiyon Gücü")
+            else: okunamayanlar.append("Reaksiyon Gücü")
 
             m_atar = re.search(r'İlk Golü Atar\s*\t?\s*([\d.]+)%\s*\t?\s*([\d.]+)%', psy_blok)
             if m_atar:
@@ -363,7 +347,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
     else:
         okunamayanlar.append("Form bloğu (PPG/MPG)")
 
-    # SIRALAMA
     idx = metin.find("Tablo Pozisyonu")
     if idx != -1:
         blok = metin[idx:idx+500]
@@ -371,12 +354,9 @@ def metinden_veri_cikar(metin: str) -> tuple:
         if m:
             veri["siralama_ev"] = int(m.group(1))
             veri["siralama_dep"] = int(m.group(2))
-        else:
-            okunamayanlar.append("Sıralama")
-    else:
-        okunamayanlar.append("Sıralama")
+        else: okunamayanlar.append("Sıralama")
+    else: okunamayanlar.append("Sıralama")
 
-    # HÜCUM HAKİMİYETİ
     idx = metin.find("Hücum Hakimiyeti")
     if idx != -1:
         blok = metin[idx:idx+300]
@@ -384,10 +364,8 @@ def metinden_veri_cikar(metin: str) -> tuple:
         if len(yuzdeler) >= 2:
             veri["hucum_hakimiyeti_ev"] = float(yuzdeler[0])
             veri["hucum_hakimiyeti_dep"] = float(yuzdeler[1])
-    else:
-        okunamayanlar.append("Hücum Hakimiyeti")
+    else: okunamayanlar.append("Hücum Hakimiyeti")
 
-    # AGRESİFLİK
     idx = metin.find("Agresiflik")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -395,10 +373,8 @@ def metinden_veri_cikar(metin: str) -> tuple:
         if m:
             veri["agresiflik_ev"] = float(m.group(1))
             veri["agresiflik_dep"] = float(m.group(2))
-    else:
-        okunamayanlar.append("Agresiflik (Şut/Maç)")
+    else: okunamayanlar.append("Agresiflik (Şut/Maç)")
 
-    # İSABET
     idx = metin.find("İsabet")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -406,10 +382,8 @@ def metinden_veri_cikar(metin: str) -> tuple:
         if m:
             veri["isabet_ev"] = float(m.group(1))
             veri["isabet_dep"] = float(m.group(2))
-    else:
-        okunamayanlar.append("İsabet (Doğruluk)")
+    else: okunamayanlar.append("İsabet (Doğruluk)")
 
-    # SAVUNMA SAĞLAMLIĞI
     idx = metin.find("Savunma Sağlamlığı")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -424,7 +398,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
             veri["savunma_sag_ev"] = savunma_degerleri[0]
             veri["savunma_sag_dep"] = savunma_degerleri[1]
 
-    # HAVA TOPU
     idx = metin.find("Hava Topu")
     if idx != -1:
         blok = metin[idx:idx+200]
@@ -432,40 +405,31 @@ def metinden_veri_cikar(metin: str) -> tuple:
         if m:
             veri["hava_topu_ev"] = float(m.group(1))
             veri["hava_topu_dep"] = float(m.group(2))
-    else:
-        okunamayanlar.append("Hava Topu (Ortalar)")
+    else: okunamayanlar.append("Hava Topu (Ortalar)")
 
-    # xG
     idx = metin.find("Beklenen goller (maç öncesi xG)")
-    if idx == -1:
-        idx = metin.find("Beklenen goller")
+    if idx == -1: idx = metin.find("Beklenen goller")
     if idx != -1:
         blok = metin[idx:idx+500]
         m = re.search(r'\n([\d.]+)\n\d+\n[\w\s]+\n[×xX]\s*\n\w[\w\s]*\n([\d.]+)\n\d+', blok)
         if m:
             veri["xg_ev"] = float(m.group(1))
             veri["xg_dep"] = float(m.group(2))
-        else:
-            okunamayanlar.append("xG")
-    else:
-        okunamayanlar.append("xG")
+        else: okunamayanlar.append("xG")
+    else: okunamayanlar.append("xG")
 
-    # ATILAN GOL + TOPLAM MAÇ ORT.
     idx = metin.find("Atılan Gol (Ort)")
-    if idx == -1:
-        idx = metin.find("Atılan Gol")
+    if idx == -1: idx = metin.find("Atılan Gol")
     if idx != -1:
         blok = metin[idx:idx+400]
         sayilar = re.findall(r'\n\s*([\d.]+)\s*\n\s*\d+%', blok)
         if len(sayilar) >= 2:
             veri["atilan_ev"] = float(sayilar[0])
             veri["atilan_dep"] = float(sayilar[1])
-        else:
-            okunamayanlar.append("Atılan Gol")
+        else: okunamayanlar.append("Atılan Gol")
 
     idx_tm = metin.find("Toplam Maç Ortalaması")
-    if idx_tm == -1:
-        idx_tm = metin.find("Toplam Maç Ort")
+    if idx_tm == -1: idx_tm = metin.find("Toplam Maç Ort")
     if idx_tm != -1:
         blok = metin[idx_tm:idx_tm+400]
         sayilar = re.findall(r'\n\s*([\d.]+)\s*\n\s*\d+%', blok)
@@ -473,26 +437,20 @@ def metinden_veri_cikar(metin: str) -> tuple:
             veri["toplam_mac_ort_ev"] = float(sayilar[0])
             veri["toplam_mac_ort_dep"] = float(sayilar[1])
 
-    # YENEN GOL
     idx = metin.find("Yenen Gol (Ort)")
-    if idx == -1:
-        idx = metin.find("Yenen Gol")
+    if idx == -1: idx = metin.find("Yenen Gol")
     if idx != -1:
         blok = metin[idx:idx+400]
         sayilar = re.findall(r'\n\s*([\d.]+)\s*\n\s*\d+%', blok)
         if len(sayilar) >= 2:
             veri["yenen_ev"] = float(sayilar[0])
             veri["yenen_dep"] = float(sayilar[1])
-        else:
-            okunamayanlar.append("Yenen Gol")
+        else: okunamayanlar.append("Yenen Gol")
 
-    # MAÇ BAŞINA LEHİNE GOL — ✅ DÜZELTİLDİ
     idx_lehine = metin.find("Maç başına lehine gol")
     if idx_lehine != -1:
         blok = metin[idx_lehine:idx_lehine+500]
-        # Sadece ondalıklı 1-2 haneli sayılar (yüzdeleri atla)
         lehine_sayilar = re.findall(r'\n\s*(\d{1,2}\.\d)\s*\n', blok)
-
         if len(lehine_sayilar) >= 6:
             veri["lehine_1y_ev"] = float(lehine_sayilar[0])
             veri["lehine_2y_ev"] = float(lehine_sayilar[1])
@@ -507,15 +465,12 @@ def metinden_veri_cikar(metin: str) -> tuple:
             veri["lehine_mac_ev"] = float(lehine_sayilar[0])
             veri["lehine_mac_dep"] = float(lehine_sayilar[1])
 
-    # STANDART SAPMA
     ss_listesi = re.findall(r'\bSS\s*\n\s*([\d.]+)', metin)
     if len(ss_listesi) >= 2:
         veri["ss_ev"] = float(ss_listesi[0])
         veri["ss_dep"] = float(ss_listesi[1])
-    else:
-        okunamayanlar.append("Standart Sapma (SS)")
+    else: okunamayanlar.append("Standart Sapma (SS)")
 
-    # GOL SIKLIĞI
     idx_05 = metin.find("0.5 Üst")
     if idx_05 != -1:
         blok = metin[idx_05:idx_05+400]
@@ -548,7 +503,6 @@ def metinden_veri_cikar(metin: str) -> tuple:
             veri["ust35_ev"] = float(yuzdeler[0])
             veri["ust35_dep"] = float(yuzdeler[-1]) if len(yuzdeler) >= 4 else float(yuzdeler[1])
 
-    # KG SIKLIĞI
     idx = metin.find("KG Sıklığı")
     if idx != -1:
         blok = metin[idx:idx+500]
@@ -562,39 +516,32 @@ def metinden_veri_cikar(metin: str) -> tuple:
             veri["kg_siklik_dep"] = float(yuzdeler[1])
             veri["kg_oran"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
 
-    # 1X2 ORANLARI
     m = re.search(r'Casa\s*\n\s*([\d.]+)\s*\n\s*\|\s*\n\s*(?:E|Empate)\s*\n\s*([\d.]+)\s*\n\s*\|\s*\n\s*(?:Visit|Fora)\s*\n\s*([\d.]+)', metin, re.IGNORECASE)
     if m:
         veri["oran_1"] = float(m.group(1))
         veri["oran_x"] = float(m.group(2))
         veri["oran_2"] = float(m.group(3))
-    else:
-        okunamayanlar.append("1X2 Oranları")
+    else: okunamayanlar.append("1X2 Oranları")
 
-    # ÜST/ALT 2.5 ORANLARI
     ust_alt_bulundu = False
-
     if not ust_alt_bulundu:
         m = re.search(r'\b2\.5\s+([\d.]+)\s+([\d.]+)', metin)
         if m:
             u = float(m.group(1)); a = float(m.group(2))
             if 1.0 < u < 20 and 1.0 < a < 20:
                 veri["oran_ust25"] = u; veri["oran_alt25"] = a; ust_alt_bulundu = True
-
     if not ust_alt_bulundu:
         m = re.search(r'\b2\.5\s*\n\s*([\d.]+)\s*\n\s*([\d.]+)', metin)
         if m:
             u = float(m.group(1)); a = float(m.group(2))
             if 1.0 < u < 20 and 1.0 < a < 20:
                 veri["oran_ust25"] = u; veri["oran_alt25"] = a; ust_alt_bulundu = True
-
     if not ust_alt_bulundu:
         m = re.search(r'Hat[\s\t]+Over[\s\t]+Under\s*\n\s*2\.5[\s\t]+([\d.]+)[\s\t]+([\d.]+)', metin)
         if m:
             u = float(m.group(1)); a = float(m.group(2))
             if 1.0 < u < 20 and 1.0 < a < 20:
                 veri["oran_ust25"] = u; veri["oran_alt25"] = a; ust_alt_bulundu = True
-
     if not ust_alt_bulundu:
         idx = metin.find("Over/Under")
         if idx != -1:
@@ -604,11 +551,8 @@ def metinden_veri_cikar(metin: str) -> tuple:
                 u = float(m.group(1)); a = float(m.group(2))
                 if 1.0 < u < 20 and 1.0 < a < 20:
                     veri["oran_ust25"] = u; veri["oran_alt25"] = a; ust_alt_bulundu = True
+    if not ust_alt_bulundu: okunamayanlar.append("Üst/Alt 2.5 Oranları")
 
-    if not ust_alt_bulundu:
-        okunamayanlar.append("Üst/Alt 2.5 Oranları")
-
-    # KG ORANLARI
     m = re.search(r'Sim\s*\n\s*([\d.]+)\s*\n\s*N[ãa]o\s*\n\s*([\d.]+)', metin, re.IGNORECASE)
     if m:
         veri["oran_kg_var"] = float(m.group(1))
@@ -618,8 +562,7 @@ def metinden_veri_cikar(metin: str) -> tuple:
         if m:
             veri["oran_kg_var"] = float(m.group(1))
             veri["oran_kg_yok"] = float(m.group(2))
-        else:
-            okunamayanlar.append("KG Oranları")
+        else: okunamayanlar.append("KG Oranları")
 
     return veri, okunamayanlar
 
@@ -634,16 +577,14 @@ def poisson_pmf(k: int, lam: float) -> float:
 
 
 def poisson_random(lam: float) -> int:
-    if lam <= 0:
-        return 0
+    if lam <= 0: return 0
     L = math.exp(-lam)
     k = 0
     p = 1.0
     while True:
         k += 1
         p *= random.random()
-        if p <= L:
-            return k - 1
+        if p <= L: return k - 1
 
 
 def poisson_matris(lam_ev: float, lam_dep: float, max_gol: int = MAX_GOL):
@@ -669,13 +610,10 @@ def hesapla_lambda(v: dict):
     agres_kat_dep = 1 + (v.get("agresiflik_dep", 8) - 8) / 50
     hava_kat_ev = 1 + (v.get("hava_topu_ev", 10) - 10) / 100
     hava_kat_dep = 1 + (v.get("hava_topu_dep", 10) - 10) / 100
-
     xgperf_kat_ev = 1 + v.get("xg_perf_ev", 0.0) * 0.10
     xgperf_kat_dep = 1 + v.get("xg_perf_dep", 0.0) * 0.10
-
     tm_kat_ev = 1 + (v.get("toplam_mac_ort_ev", 2.5) - 2.5) / 25
     tm_kat_dep = 1 + (v.get("toplam_mac_ort_dep", 2.5) - 2.5) / 25
-
     lehine_kat_ev = 1 + (v.get("lehine_mac_ev", 1.5) - 1.5) / 15
     lehine_kat_dep = 1 + (v.get("lehine_mac_dep", 1.5) - 1.5) / 15
 
@@ -695,10 +633,8 @@ def hesapla_lambda(v: dict):
 
     form_ev = 1 + (v["ppg_ev"] - 1.5) / 12
     form_dep = 1 + (v["mpg_dep"] - 1.5) / 12
-
     moral_ev = 1 + (v["reaksiyon_ev"] - 50) / 500
     moral_dep = 1 + (v["reaksiyon_dep"] - 50) / 500
-
     sira_ev = 1 + (10 - v["siralama_ev"]) / 150
     sira_dep = 1 + (10 - v["siralama_dep"]) / 150
 
@@ -751,7 +687,7 @@ def veri_yeterli_mi(v: dict) -> bool:
         v["atilan_ev"], v["atilan_dep"],
         v["yenen_ev"], v["yenen_dep"],
     ]
-    return sum(1 for x in onemli_alanlar if x > 0) >= 2
+    return sum(1 for x in emli_alanlar if x > 0) >= 2 if False else sum(1 for x in onemli_alanlar if x > 0) >= 2
 
 
 def takim_form_yorumu(deger: float) -> str:
@@ -763,8 +699,7 @@ def takim_form_yorumu(deger: float) -> str:
 def normalize_olasilik(oranlar: list) -> list:
     ham = [100.0 / o if o > 1 else 0 for o in oranlar]
     toplam = sum(ham)
-    if toplam <= 0:
-        return ham
+    if toplam <= 0: return ham
     return [(h / toplam) * 100 for h in ham]
 
 
@@ -788,8 +723,7 @@ def monte_carlo_simulasyon(lam_ev_base, lam_dep_base, n=MONTE_CARLO_N):
         if ev_gol > 0 and dep_gol > 0: sonuclar["kg_var"].append(1)
 
     def hesapla_ci(veri, n):
-        if not veri:
-            return 0, 0, 0, 0
+        if not veri: return 0, 0, 0, 0
         basari = len(veri)
         oran = basari / n * 100
         z = 1.645
@@ -821,12 +755,9 @@ def dogruluk_kontrol(skor_ev, skor_dep, tahminler: dict) -> dict:
 
     tahmin_1x2 = str(tahminler.get("1x2_tahmin", "")).strip()
     tahmin_1x2_norm = ""
-    if "1" in tahmin_1x2 or "ev" in tahmin_1x2.lower():
-        tahmin_1x2_norm = "1"
-    elif "x" in tahmin_1x2.lower() or "beraber" in tahmin_1x2.lower():
-        tahmin_1x2_norm = "X"
-    elif "2" in tahmin_1x2 or "dep" in tahmin_1x2.lower():
-        tahmin_1x2_norm = "2"
+    if "1" in tahmin_1x2 or "ev" in tahmin_1x2.lower(): tahmin_1x2_norm = "1"
+    elif "x" in tahmin_1x2.lower() or "beraber" in tahmin_1x2.lower(): tahmin_1x2_norm = "X"
+    elif "2" in tahmin_1x2 or "dep" in tahmin_1x2.lower(): tahmin_1x2_norm = "2"
 
     sonuc["1X2_gercek"] = gercek_1x2
     sonuc["1X2_tahmin"] = tahmin_1x2
@@ -842,12 +773,9 @@ def dogruluk_kontrol(skor_ev, skor_dep, tahminler: dict) -> dict:
     tahmin_str = str(tahminler.get("gol_tahmin", "")).strip()
     tahmin_str_low = tahmin_str.lower()
 
-    if "üst" in tahmin_str_low or "ust" in tahmin_str_low:
-        tahmin_ust_bool = True
-    elif "alt" in tahmin_str_low:
-        tahmin_ust_bool = False
-    else:
-        tahmin_ust_bool = None
+    if "üst" in tahmin_str_low or "ust" in tahmin_str_low: tahmin_ust_bool = True
+    elif "alt" in tahmin_str_low: tahmin_ust_bool = False
+    else: tahmin_ust_bool = None
 
     sonuc["gol_gercek"] = "Üst 2.5" if gercek_ust_bool else "Alt 2.5"
     sonuc["gol_tahmin"] = tahmin_str
@@ -858,12 +786,9 @@ def dogruluk_kontrol(skor_ev, skor_dep, tahminler: dict) -> dict:
     tahmin_kg = str(tahminler.get("kg_tahmin", "")).strip()
     tahmin_kg_low = tahmin_kg.lower()
 
-    if "var" in tahmin_kg_low:
-        tahmin_kg_bool = True
-    elif "yok" in tahmin_kg_low:
-        tahmin_kg_bool = False
-    else:
-        tahmin_kg_bool = None
+    if "var" in tahmin_kg_low: tahmin_kg_bool = True
+    elif "yok" in tahmin_kg_low: tahmin_kg_bool = False
+    else: tahmin_kg_bool = None
 
     sonuc["kg_gercek"] = "KG Var" if gercek_kg_var_bool else "KG Yok"
     sonuc["kg_tahmin"] = tahmin_kg
@@ -880,8 +805,7 @@ def dogruluk_hesapla_ve_guncelle(kayit: dict) -> dict:
     v = kayit["veri"]
     analiz = kayit.get("analiz", {})
 
-    if not v.get("skor_belli", False):
-        return None
+    if not v.get("skor_belli", False): return None
 
     skor_ev = v.get("skor_ev", 0)
     skor_dep = v.get("skor_dep", 0)
@@ -895,208 +819,129 @@ def dogruluk_hesapla_ve_guncelle(kayit: dict) -> dict:
     return dogruluk_kontrol(skor_ev, skor_dep, tahminler)
 
 
-def value_bet_analizi(v: dict, p1, px, p2, ust25_model, kg_var_model):
-    sonuclar = []
+# ==========================================
+# ⭐ AKILLI BİRLEŞTİRME — MODEL + VALUE
+# ==========================================
+def akilli_oneri(v: dict, a: dict):
+    """
+    Model ve Value önerilerini birleştirir.
+    
+    Mantık:
+    1. Her kategori (1X2, Gol, KG) için model en yüksek ve value en yüksek alınır.
+    2. İkisi AYNIYSA → tek öneri (uyumlu)
+    3. İkisi FARKLIYSA → VALUE olanı göster (kâr potansiyeli)
+    4. Value yoksa → Model olanı göster
+    """
+    p1 = a["p1"]; px = a["px"]; p2 = a["p2"]
+    ust_25 = a["ust_25"]; alt_25 = 100 - ust_25
+    kg_var = a["kg_var_model"]; kg_yok = 100 - kg_var
 
-    if v.get("oran_1", 0) > 0 and v.get("oran_x", 0) > 0 and v.get("oran_2", 0) > 0:
-        piyasa = normalize_olasilik([v["oran_1"], v["oran_x"], v["oran_2"]])
-        for isim, model, piy, oran in [
-            ("1 (Ev)", p1, piyasa[0], v["oran_1"]),
-            ("X", px, piyasa[1], v["oran_x"]),
-            ("2 (Dep)", p2, piyasa[2], v["oran_2"]),
-        ]:
-            fark = model - piy
-            if fark >= 5:    karar = "✅ VALUE"
-            elif fark >= 2:  karar = "🟡 Sınırda"
-            else:            karar = "❌ Value yok"
-            sonuclar.append(("1X2", isim, model, piy, fark, oran, karar))
+    vb = a["vb"]
+    
+    # ---- MODEL en yüksek 3 ----
+    model_1x2 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
+    model_gol = max([("Alt 2.5", alt_25), ("Üst 2.5", ust_25)], key=lambda x: x[1])
+    model_kg  = max([("KG Var", kg_var), ("KG Yok", kg_yok)], key=lambda x: x[1])
 
-    if v.get("oran_ust25", 0) > 0 and v.get("oran_alt25", 0) > 0:
-        piyasa = normalize_olasilik([v["oran_ust25"], v["oran_alt25"]])
-        alt25_model = 100 - ust25_model
-        for isim, model, piy, oran in [
-            ("Üst 2.5", ust25_model, piyasa[0], v["oran_ust25"]),
-            ("Alt 2.5", alt25_model, piyasa[1], v["oran_alt25"]),
-        ]:
-            fark = model - piy
-            if fark >= 5:    karar = "✅ VALUE"
-            elif fark >= 2:  karar = "🟡 Sınırda"
-            else:            karar = "❌ Value yok"
-            sonuclar.append(("Üst/Alt 2.5", isim, model, piy, fark, oran, karar))
+    # ---- VALUE en yüksek 3 ----
+    # vb: (market, isim, model, piyasa, fark, oran, karar)
+    value_1x2_list = [x for x in vb if x[0] == "1X2"]
+    value_gol_list = [x for x in vb if x[0] == "Üst/Alt 2.5"]
+    value_kg_list = [x for x in vb if x[0] == "KG"]
 
-    if v.get("oran_kg_var", 0) > 0 and v.get("oran_kg_yok", 0) > 0:
-        piyasa = normalize_olasilik([v["oran_kg_var"], v["oran_kg_yok"]])
-        kg_yok_model = 100 - kg_var_model
-        for isim, model, piy, oran in [
-            ("KG Var", kg_var_model, piyasa[0], v["oran_kg_var"]),
-            ("KG Yok", kg_yok_model, piyasa[1], v["oran_kg_yok"]),
-        ]:
-            fark = model - piy
-            if fark >= 5:    karar = "✅ VALUE"
-            elif fark >= 2:  karar = "🟡 Sınırda"
-            else:            karar = "❌ Value yok"
-            sonuclar.append(("KG", isim, model, piy, fark, oran, karar))
+    def en_iyi_value(lst):
+        """Pozitif farklı en yüksek value bet'i bul."""
+        pozitif = [x for x in lst if x[4] > 0]
+        if not pozitif: return None
+        return max(pozitif, key=lambda x: x[4])
 
-    return sonuclar
+    value_1x2 = en_iyi_value(value_1x2_list)
+    value_gol = en_iyi_value(value_gol_list)
+    value_kg  = en_iyi_value(value_kg_list)
 
+    # ---- KARŞILAŞTIR & BİRLEŞTİR ----
+    def kategori_sec(model_kod, model_isim, model_yuzde, value_bet, kategori_orani_map):
+        """
+        Tek kategori için model vs value karşılaştır.
+        
+        Dönüş: dict — seçilen bahis bilgisi
+        """
+        sonuc = {
+            "model_kod": model_kod,
+            "model_isim": model_isim,
+            "model_yuzde": model_yuzde,
+            "value_var": value_bet is not None,
+            "uyumlu": False,
+            "secim": model_isim,      # varsayılan: model
+            "secim_tip": "Model",
+            "secim_yuzde": model_yuzde,
+            "secim_oran": 0.0,
+            "value_fark": 0.0,
+        }
 
-def favori_kombolar(matris, max_gol: int = MAX_GOL):
-    p1 = p_x = p2 = 0.0
-    alt = ust = 0.0
-    kg_var = kg_yok = 0.0
+        if value_bet is None:
+            # Value yok → model
+            oran = kategori_orani_map.get(model_isim, 0.0)
+            sonuc["secim_oran"] = oran
+            return sonuc
 
-    for i in range(max_gol):
-        for j in range(max_gol):
-            p = matris[i][j]
-            if i > j:    p1 += p
-            elif i == j: p_x += p
-            else:        p2 += p
-            if i + j < 2.5:   alt += p
-            elif i + j > 2.5: ust += p
-            if i > 0 and j > 0: kg_var += p
-            else:                kg_yok += p
+        # Value var
+        _, v_isim, v_model, v_piyasa, v_fark, v_oran, _ = value_bet
+        sonuc["value_fark"] = v_fark
+        sonuc["value_isim"] = v_isim
+        sonuc["value_oran"] = v_oran
 
-    favori_sonuc = max([("1", p1), ("X", p_x), ("2", p2)], key=lambda x: x[1])
-    favori_gol   = max([("Alt", alt), ("Üst", ust)], key=lambda x: x[1])
-    favori_kg    = max([("Var", kg_var), ("Yok", kg_yok)], key=lambda x: x[1])
+        # Uyumlu mu? (aynı yön mü?)
+        # Örn: model "1" diyor, value "1 (Ev)" ise uyumlu
+        def norm(s):
+            s = str(s).lower()
+            if "1" in s or "ev" in s: return "1"
+            if "x" in s or "beraber" in s: return "X"
+            if "2" in s or "dep" in s: return "2"
+            if "üst" in s or "ust" in s: return "Üst"
+            if "alt" in s: return "Alt"
+            if "var" in s: return "Var"
+            if "yok" in s: return "Yok"
+            return s
 
-    def fn_sonuc(kod):
-        if kod == "1": return lambda i, j: i > j
-        if kod == "X": return lambda i, j: i == j
-        return lambda i, j: i < j
+        model_norm = norm(model_kod) if model_kod else norm(model_isim)
+        value_norm = norm(v_isim)
+        # Model kod "1" value isim "1 (Ev)" → norm ikisi de "1"
+        uyumlu = (model_norm == value_norm)
 
-    def fn_gol(kod):
-        if kod == "Alt": return lambda i, j: i + j < 2.5
-        return lambda i, j: i + j > 2.5
+        if uyumlu:
+            sonuc["uyumlu"] = True
+            sonuc["secim"] = v_isim      # ikisi aynı zaten
+            sonuc["secim_tip"] = "Model + Value ✅"
+            sonuc["secim_yuzde"] = v_model
+            sonuc["secim_oran"] = v_oran
+        else:
+            # Çelişki → value tarafı (kâr potansiyeli)
+            sonuc["secim"] = v_isim
+            sonuc["secim_tip"] = "Value ⚠️"
+            sonuc["secim_yuzde"] = v_model
+            sonuc["secim_oran"] = v_oran
 
-    def fn_kg(kod):
-        if kod == "Var": return lambda i, j: i > 0 and j > 0
-        return lambda i, j: i == 0 or j == 0
+        return sonuc
 
-    kombinasyonlar = [
-        (f"{favori_sonuc[0]} {favori_gol[0]}", fn_sonuc(favori_sonuc[0]), fn_gol(favori_gol[0])),
-        (f"{favori_sonuc[0]} {favori_kg[0]}",  fn_sonuc(favori_sonuc[0]), fn_kg(favori_kg[0])),
-        (f"{favori_gol[0]} {favori_kg[0]}",    fn_gol(favori_gol[0]),     fn_kg(favori_kg[0])),
-    ]
+    # 1X2 için oran map
+    oran_map = {
+        "1": v.get("oran_1", 0), "X": v.get("oran_x", 0), "2": v.get("oran_2", 0),
+        "Alt 2.5": v.get("oran_alt25", 0), "Üst 2.5": v.get("oran_ust25", 0),
+        "KG Var": v.get("oran_kg_var", 0), "KG Yok": v.get("oran_kg_yok", 0),
+        "1 (Ev)": v.get("oran_1", 0), "X (Beraberlik)": v.get("oran_x", 0), "2 (Dep)": v.get("oran_2", 0),
+    }
 
-    kombolar = []
-    for isim, f1, f2 in kombinasyonlar:
-        toplam = 0.0
-        for i in range(max_gol):
-            for j in range(max_gol):
-                if f1(i, j) and f2(i, j):
-                    toplam += matris[i][j]
-        kombolar.append((isim, toplam * 100))
+    r_1x2 = kategori_sec(model_1x2[0], model_1x2[0], model_1x2[1], value_1x2, oran_map)
+    r_gol = kategori_sec(model_gol[0], model_gol[0], model_gol[1], value_gol, oran_map)
+    r_kg  = kategori_sec(model_kg[0],  model_kg[0],  model_kg[1],  value_kg,  oran_map)
 
-    kombolar.sort(key=lambda x: x[1], reverse=True)
-    return kombolar, (favori_sonuc[0], favori_gol[0], favori_kg[0])
-
-
-def value_kombolar(v: dict, matris, max_gol: int = MAX_GOL):
-    p1 = p_x = p2 = 0.0
-    alt = ust = 0.0
-    kg_var = kg_yok = 0.0
-
-    for i in range(max_gol):
-        for j in range(max_gol):
-            p = matris[i][j]
-            if i > j:    p1 += p
-            elif i == j: p_x += p
-            else:        p2 += p
-            if i + j < 2.5:   alt += p
-            elif i + j > 2.5: ust += p
-            if i > 0 and j > 0: kg_var += p
-            else:                kg_yok += p
-
-    p1 *= 100; p_x *= 100; p2 *= 100
-    alt *= 100; ust *= 100
-    kg_var *= 100; kg_yok *= 100
-
-    piyasa_1x2 = normalize_olasilik([v.get("oran_1", 0), v.get("oran_x", 0), v.get("oran_2", 0)]) if v.get("oran_1", 0) > 0 else [0, 0, 0]
-    piyasa_ou = normalize_olasilik([v.get("oran_ust25", 0), v.get("oran_alt25", 0)]) if v.get("oran_ust25", 0) > 0 else [0, 0]
-    piyasa_kg = normalize_olasilik([v.get("oran_kg_var", 0), v.get("oran_kg_yok", 0)]) if v.get("oran_kg_var", 0) > 0 else [0, 0]
-
-    value_bets = []
-
-    if v.get("oran_1", 0) > 0:
-        for isim, model, piy, oran, f in [
-            ("1", p1, piyasa_1x2[0], v["oran_1"], p1 - piyasa_1x2[0]),
-            ("X", p_x, piyasa_1x2[1], v["oran_x"], p_x - piyasa_1x2[1]),
-            ("2", p2, piyasa_1x2[2], v["oran_2"], p2 - piyasa_1x2[2]),
-        ]:
-            if f >= 5:
-                value_bets.append(("1X2", isim, model, f, oran))
-
-    if v.get("oran_ust25", 0) > 0:
-        for isim, model, piy, oran, f in [
-            ("Üst 2.5", ust, piyasa_ou[0], v["oran_ust25"], ust - piyasa_ou[0]),
-            ("Alt 2.5", alt, piyasa_ou[1], v["oran_alt25"], alt - piyasa_ou[1]),
-        ]:
-            if f >= 5:
-                value_bets.append(("O/U", isim, model, f, oran))
-
-    if v.get("oran_kg_var", 0) > 0:
-        for isim, model, piy, oran, f in [
-            ("KG Var", kg_var, piyasa_kg[0], v["oran_kg_var"], kg_var - piyasa_kg[0]),
-            ("KG Yok", kg_yok, piyasa_kg[1], v["oran_kg_yok"], kg_yok - piyasa_kg[1]),
-        ]:
-            if f >= 5:
-                value_bets.append(("KG", isim, model, f, oran))
-
-    kombolar = []
-    for i in range(len(value_bets)):
-        for j in range(i + 1, len(value_bets)):
-            vb1 = value_bets[i]
-            vb2 = value_bets[j]
-
-            if vb1[0] == vb2[0]:
-                continue
-
-            isim = f"{vb1[1]} + {vb2[1]}"
-            kombine_oran = vb1[4] * vb2[4]
-
-            def filtre_vb(kod, market):
-                if market == "1X2":
-                    if kod == "1": return lambda i, j: i > j
-                    if kod == "X": return lambda i, j: i == j
-                    return lambda i, j: i < j
-                if market == "O/U":
-                    if kod == "Üst 2.5": return lambda i, j: i + j > 2.5
-                    return lambda i, j: i + j < 2.5
-                if market == "KG":
-                    if kod == "KG Var": return lambda i, j: i > 0 and j > 0
-                    return lambda i, j: i == 0 or j == 0
-                return None
-
-            f1 = filtre_vb(vb1[1], vb1[0])
-            f2 = filtre_vb(vb2[1], vb2[0])
-
-            if f1 is None or f2 is None:
-                continue
-
-            model_p = 0.0
-            for ii in range(max_gol):
-                for jj in range(max_gol):
-                    if f1(ii, jj) and f2(ii, jj):
-                        model_p += matris[ii][jj]
-            model_p *= 100
-
-            piyasa_p = (100.0 / kombine_oran) if kombine_oran > 0 else 0
-            fark = model_p - piyasa_p
-
-            if fark >= 5:
-                kombolar.append({
-                    "isim": isim,
-                    "model": model_p,
-                    "piyasa": piyasa_p,
-                    "oran": kombine_oran,
-                    "fark": fark,
-                })
-
-    kombolar.sort(key=lambda x: x["fark"], reverse=True)
-    return kombolar
+    return [r_1x2, r_gol, r_kg]
 
 
+# ==========================================
+# YORUM FONKSİYONU
+# ==========================================
 def detayli_analiz_yorumu(v: dict):
     yorumlar = []
 
@@ -1243,6 +1088,9 @@ def detayli_analiz_yorumu(v: dict):
     return yorumlar
 
 
+# ==========================================
+# ANALİZ HESAPLA
+# ==========================================
 def analiz_hesapla(v: dict):
     lam_ev, lam_dep, guven = hesapla_lambda(v)
     matris = poisson_matris(lam_ev, lam_dep, MAX_GOL)
@@ -1269,37 +1117,46 @@ def analiz_hesapla(v: dict):
     en_olasi_gol = "Üst 2.5" if tahmini_gol > 2.6 else "Alt 2.5"
     en_olasi_kg = "KG Var" if kg_ort > 55 else "KG Yok" if kg_ort < 45 else "Belirsiz"
 
-    vb = value_bet_analizi(v, p1, px, p2, ust_25, kg_var_model)
-    kombolar_fav, favoriler = favori_kombolar(matris, MAX_GOL)
+    # Value bet analizi (ham)
+    vb = []
+    if v.get("oran_1", 0) > 0 and v.get("oran_x", 0) > 0 and v.get("oran_2", 0) > 0:
+        piyasa = normalize_olasilik([v["oran_1"], v["oran_x"], v["oran_2"]])
+        for isim, model, piy, oran in [
+            ("1 (Ev)", p1, piyasa[0], v["oran_1"]),
+            ("X (Beraberlik)", px, piyasa[1], v["oran_x"]),
+            ("2 (Dep)", p2, piyasa[2], v["oran_2"]),
+        ]:
+            fark = model - piy
+            if fark >= 5:    karar = "✅ VALUE"
+            elif fark >= 2:  karar = "🟡 Sınırda"
+            else:            karar = "❌ Value yok"
+            vb.append(("1X2", isim, model, piy, fark, oran, karar))
 
-    oran_map = {
-        "1": v.get("oran_1", 0), "X": v.get("oran_x", 0), "2": v.get("oran_2", 0),
-        "Üst": v.get("oran_ust25", 0), "Alt": v.get("oran_alt25", 0),
-        "Var": v.get("oran_kg_var", 0), "Yok": v.get("oran_kg_yok", 0),
-    }
+    if v.get("oran_ust25", 0) > 0 and v.get("oran_alt25", 0) > 0:
+        piyasa = normalize_olasilik([v["oran_ust25"], v["oran_alt25"]])
+        alt25_model = 100 - ust_25
+        for isim, model, piy, oran in [
+            ("Üst 2.5", ust_25, piyasa[0], v["oran_ust25"]),
+            ("Alt 2.5", alt25_model, piyasa[1], v["oran_alt25"]),
+        ]:
+            fark = model - piy
+            if fark >= 5:    karar = "✅ VALUE"
+            elif fark >= 2:  karar = "🟡 Sınırda"
+            else:            karar = "❌ Value yok"
+            vb.append(("Üst/Alt 2.5", isim, model, piy, fark, oran, karar))
 
-    adaylar = []
-    for isim, yuzde in kombolar_fav:
-        parcalar = isim.split()
-        if len(parcalar) == 2:
-            o1 = oran_map.get(parcalar[0], 0)
-            o2 = oran_map.get(parcalar[1], 0)
-            if o1 > 0 and o2 > 0:
-                kombine_oran = o1 * o2
-                ev = (yuzde / 100) * kombine_oran
-                adaylar.append({"tip": "🎯 Favori Kombo", "isim": isim, "yuzde": yuzde, "oran": kombine_oran, "ev": ev})
-
-    tekli_value = [x for x in vb if x[4] >= 5] if vb else []
-    for market, isim, model, piy, fark_vb, oran, karar in tekli_value:
-        ev = (model / 100) * oran
-        adaylar.append({"tip": "💎 Tekli Value", "isim": isim, "yuzde": model, "oran": oran, "ev": ev})
-
-    vk = value_kombolar(v, matris, MAX_GOL)
-    for k in vk[:5]:
-        ev = (k["model"] / 100) * k["oran"]
-        adaylar.append({"tip": "💎💎 Value Kombo", "isim": k["isim"], "yuzde": k["model"], "oran": k["oran"], "ev": ev})
-
-    adaylar.sort(key=lambda x: x["ev"], reverse=True)
+    if v.get("oran_kg_var", 0) > 0 and v.get("oran_kg_yok", 0) > 0:
+        piyasa = normalize_olasilik([v["oran_kg_var"], v["oran_kg_yok"]])
+        kg_yok_model = 100 - kg_var_model
+        for isim, model, piy, oran in [
+            ("KG Var", kg_var_model, piyasa[0], v["oran_kg_var"]),
+            ("KG Yok", kg_yok_model, piyasa[1], v["oran_kg_yok"]),
+        ]:
+            fark = model - piy
+            if fark >= 5:    karar = "✅ VALUE"
+            elif fark >= 2:  karar = "🟡 Sınırda"
+            else:            karar = "❌ Value yok"
+            vb.append(("KG", isim, model, piy, fark, oran, karar))
 
     return {
         "lam_ev": lam_ev, "lam_dep": lam_dep, "guven": guven,
@@ -1310,9 +1167,7 @@ def analiz_hesapla(v: dict):
         "kg_var_model": kg_var_model, "kg_ort": kg_ort,
         "en_olasi": en_olasi, "en_guvenli": en_guvenli,
         "en_olasi_gol": en_olasi_gol, "en_olasi_kg": en_olasi_kg,
-        "vb": vb, "kombolar_fav": kombolar_fav, "favoriler": favoriler,
-        "vk": vk, "adaylar": adaylar,
-        "en_iyi_3": adaylar[:3],
+        "vb": vb,
     }
 
 
@@ -1321,20 +1176,11 @@ def analiz_hesapla(v: dict):
 # ==========================================
 if st.session_state.sayfa == "giris":
     st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
-    st.markdown(
-        "<p style='text-align:center; color:gray;'>İstatistik + oran metnini kopyala → yapıştır → analiz et.</p>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<p style='text-align:center; color:gray;'>İstatistik + oran metnini kopyala → yapıştır → analiz et.</p>", unsafe_allow_html=True)
 
     st.markdown("### 📋 İstatistik ve Oranları Yapıştır")
 
-    yapistir_metni = st.text_area(
-        "Yapıştırma alanı",
-        height=280,
-        key="yapistir_input",
-        label_visibility="collapsed",
-        placeholder="İstatistik + oran metnini buraya yapıştır."
-    )
+    yapistir_metni = st.text_area("Yapıştırma alanı", height=280, key="yapistir_input", label_visibility="collapsed", placeholder="İstatistik + oran metnini buraya yapıştır.")
 
     st.divider()
 
@@ -1358,7 +1204,6 @@ if st.session_state.sayfa == "giris":
             st.warning("⚠️ Önce metni yapıştır.")
         else:
             cikan, okunamayanlar = metinden_veri_cikar(yapistir_metni)
-
             if not cikan:
                 st.error("❌ Metinden hiçbir veri çıkarılamadı.")
             else:
@@ -1372,8 +1217,7 @@ if st.session_state.sayfa == "giris":
                 st.session_state.manuel_bekleyen = okunamayanlar.copy()
 
                 if not veri_yeterli_mi(yeni_veri):
-                    st.error(f"⚠️ Analiz için yeterli veri yok. En az 2 gol verisi (xG/Atılan/Yenen) gerekli.")
-                    st.info(f"Bulunan alanlar: {', '.join([k for k, val in cikan.items() if val])}")
+                    st.error(f"⚠️ Analiz için yeterli veri yok.")
                 else:
                     if okunamayanlar:
                         st.session_state.sayfa = "manuel_giris"
@@ -1387,16 +1231,12 @@ if st.session_state.sayfa == "giris":
 # ==========================================
 elif st.session_state.sayfa == "manuel_giris":
     st.markdown("<h1>📝 Eksik Alanları Doldur</h1>", unsafe_allow_html=True)
-    st.warning(
-        f"Aşağıdaki **{len(st.session_state.manuel_bekleyen)}** alan metinden çıkarılamadı. "
-        "Lütfen değerleri manuel girin:"
-    )
+    st.warning(f"Aşağıdaki **{len(st.session_state.manuel_bekleyen)}** alan metinden çıkarılamadı. Lütfen değerleri manuel girin:")
 
     v = st.session_state.form_verileri
 
     with st.form("manuel_form"):
         yeni_degerler = {}
-
         for alan_basligi in st.session_state.manuel_bekleyen:
             if alan_basligi in MANUEL_ALANLAR:
                 st.markdown(f"**{alan_basligi}**")
@@ -1579,8 +1419,7 @@ elif st.session_state.sayfa == "sonuc":
     tahmini_gol = a["tahmini_gol"]; ust_25 = a["ust_25"]
     kg_var_model = a["kg_var_model"]; kg_ort = a["kg_ort"]
     en_olasi = a["en_olasi"]; en_guvenli = a["en_guvenli"]
-    vb = a["vb"]; kombolar_fav = a["kombolar_fav"]; favoriler = a["favoriler"]
-    vk = a["vk"]; adaylar = a["adaylar"]; en_iyi_3 = a["en_iyi_3"]
+    vb = a["vb"]
 
     takim_ev = v.get("takim_ev", "") or "Ev Sahibi"
     takim_dep = v.get("takim_dep", "") or "Deplasman"
@@ -1599,6 +1438,7 @@ elif st.session_state.sayfa == "sonuc":
     elif fark < -10:    senaryo = "Deplasman hafif favori."
     else:               senaryo = "Maç oldukça dengeli, beraberlik riski yüksek."
 
+    # Skor girişi
     if not skor_belli:
         with st.expander("📝 Maç Sonucu Gir", expanded=False):
             sc1, sc2, sc3 = st.columns([1, 1, 2])
@@ -1628,6 +1468,7 @@ elif st.session_state.sayfa == "sonuc":
                     st.success("✅ Skor kaydedildi!")
                     st.rerun()
 
+    # Doğruluk
     if skor_belli:
         tahminler = {
             "1x2_tahmin": en_olasi[0],
@@ -1691,37 +1532,40 @@ elif st.session_state.sayfa == "sonuc":
             st.markdown(metin)
             st.markdown("")
 
-    with st.expander("🎯 Strateji Önerileri", expanded=True):
-        st.markdown(f"**Ana Senaryo:** {senaryo}")
+    with st.expander("🎯 Model ve Value Karşılaştırması", expanded=True):
         st.markdown(f"""
-        - 🥇 **En Olası Sonuç:** **{en_olasi[0]}** → 1: %{p1:.1f} • X: %{px:.1f} • 2: %{p2:.1f}
-        - 🛡️ **En Güvenli:** Çifte Şans **{en_guvenli[0]}** → 1X: %{cifte_1x:.1f} • X2: %{cifte_x2:.1f} • 12: %{cifte_12:.1f}
-        - ⚽ **Gol:** **{a['en_olasi_gol']}** (beklenen: {tahmini_gol:.2f}) → Üst: %{ust_25:.0f} • Alt: %{100-ust_25:.0f}
-        - 🤝 **KG:** **{a['en_olasi_kg']}** → Var: %{kg_ort:.0f} • Yok: %{100-kg_ort:.0f}
-        - 📈 **İkinci Tercih:** {'X2' if p1 > p2 else '1X'} (%{max(cifte_1x, cifte_x2):.1f})
+        **Model En Yüksek 3:**
+        - 1X2: **{en_olasi[0]}** (%{en_olasi[1]:.1f})
+        - Gol: **{a['en_olasi_gol']}** (Üst: %{ust_25:.1f} / Alt: %{100-ust_25:.1f})
+        - KG: **{a['en_olasi_kg']}** (Var: %{kg_var_model:.1f} / Yok: %{100-kg_var_model:.1f})
+
+        **Value Bet'ler:**
         """)
+        if vb:
+            for market, isim, model, piy, fark_vb, oran, karar in vb:
+                if fark_vb > 0:
+                    st.markdown(f"- **{isim}** ({market}) → Oran: {oran} | Fark: {fark_vb:+.1f} {karar}")
+        else:
+            st.markdown("- Oran verisi yok")
 
     with st.expander("🎲 Monte Carlo Simülasyonu", expanded=False):
         mc = monte_carlo_simulasyon(lam_ev, lam_dep, MONTE_CARLO_N)
-
         st.markdown("### 📊 1 - X - 2")
         c1, c2, c3 = st.columns(3)
         c1.metric("1 (Ev)", f"%{mc['1']['oran']:.1f}")
         c2.metric("X", f"%{mc['X']['oran']:.1f}")
         c3.metric("2 (Dep)", f"%{mc['2']['oran']:.1f}")
-
         for isim, key in [("1 (Ev)", "1"), ("X", "X"), ("2 (Dep)", "2")]:
             gen = mc[key]["genislik"]
             risk = risk_seviyesi(gen)
             st.markdown(f"**{isim}** — GA (%90): **%{mc[key]['alt']:.1f} - %{mc[key]['ust']:.1f}** → {risk}")
-
         st.markdown("### ⚽ Üst 2.5")
         st.markdown(f"**Üst 2.5** — %{mc['ust25']['oran']:.1f}")
-
         st.markdown("### 🤝 KG Var")
         st.markdown(f"**KG Var** — %{mc['kg_var']['oran']:.1f}")
 
-    with st.expander("💎 Oran Analizi", expanded=True):
+    # Oran Analizi
+    with st.expander("💎 Oran Analizi (Detaylı)", expanded=False):
         if vb:
             x12_satirlar = [x for x in vb if x[0] == "1X2"]
             if x12_satirlar:
@@ -1748,26 +1592,42 @@ elif st.session_state.sayfa == "sonuc":
         else:
             st.info("ℹ️ Oran verisi bulunamadı.")
 
+    # ⭐ AKILLI FİNAL ÖNERİ
     st.divider()
-    st.markdown("## 🏆 FİNAL ÖNERİ")
+    st.markdown("## 🏆 FİNAL ÖNERİ — Model + Value Birleşik")
 
-    if en_iyi_3:
-        madalya = ["🥇", "🥈", "🥉"]
-        for i, ad in enumerate(en_iyi_3):
-            if ad["ev"] >= 1.5: ev_yorumu = "🟢 Çok Kârlı"; kutu = st.success
-            elif ad["ev"] >= 1.2: ev_yorumu = "🟢 Kârlı"; kutu = st.success
-            elif ad["ev"] >= 1.0: ev_yorumu = "🟡 Sınırda"; kutu = st.warning
-            else: ev_yorumu = "🔴 Kârsız"; kutu = st.error
+    oneriler = akilli_oneri(v, a)
 
-            kutu(f"""
-{madalya[i]} **{ad['isim']}** — {ad['tip']}
+    kategori_isimleri = ["📊 1X2", "⚽ Gol (2.5)", "🤝 KG (Karşılıklı Gol)"]
 
-📊 Model: **%{ad['yuzde']:.1f}** | 💰 Oran: **{ad['oran']:.2f}** | 🎲 EV: **{ad['ev']:.2f}** → {ev_yorumu}
+    for i, oneri in enumerate(oneriler):
+        st.markdown(f"### {kategori_isimleri[i]}")
+
+        if oneri["value_var"] and oneri["uyumlu"]:
+            # Uyumlu + value
+            kutu = st.success
+            durum = "✅ Model + Value UYUMLU"
+        elif oneri["value_var"]:
+            # Çelişki → value tarafı
+            kutu = st.warning
+            durum = f"⚠️ Model: {oneri['model_isim']} (%{oneri['model_yuzde']:.1f}) — Value: **{oneri['secim']}** (%{oneri['secim_yuzde']:.1f})"
+        else:
+            # Value yok → model
+            kutu = st.info
+            durum = f"🎯 Model: {oneri['secim']} (%{oneri['secim_yuzde']:.1f}) — Value yok"
+
+        kutu(f"""
+**{oneri['secim']}** @ {oneri['secim_oran']:.2f}
+
+{durum}
 """)
-    else:
-        st.info("ℹ️ Oran verisi olmadığı için final öneri hesaplanamadı.")
 
-    if en_iyi_3 and not st.session_state.kayit_yapildi:
+        # Detay
+        if oneri["value_var"]:
+            st.caption(f"Model: {oneri['model_isim']} (%{oneri['model_yuzde']:.1f}) | Value fark: {oneri['value_fark']:+.1f}")
+
+    # Kayıt
+    if oneriler and not st.session_state.kayit_yapildi:
         yeni_kayit = {
             "veri": copy.deepcopy(v),
             "analiz": {
@@ -1775,14 +1635,12 @@ elif st.session_state.sayfa == "sonuc":
                 "tahmini_gol": tahmini_gol,
                 "kg_var_model": kg_var_model,
                 "ust_25": ust_25,
-                "en_iyi_3": en_iyi_3,
-                "en_olasi_gol": a["en_olasi_gol"],
-                "en_olasi_kg": a["en_olasi_kg"],
+                "oneriler": oneriler,
                 "en_olasi_1x2": en_olasi[0],
                 "en_guvenli_cifte": en_guvenli[0],
+                "en_olasi_gol": a["en_olasi_gol"],
+                "en_olasi_kg": a["en_olasi_kg"],
             },
-            "en_iyi_bahis": en_iyi_3[0]["isim"],
-            "en_iyi_ev": en_iyi_3[0]["ev"],
         }
         if dogruluk is not None:
             yeni_kayit["dogruluk"] = dogruluk
