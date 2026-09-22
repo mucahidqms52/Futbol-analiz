@@ -159,9 +159,6 @@ VARSAYILAN_VERI = {
     "dht_wft_ev": 0.0, "dht_wft_dep": 0.0,
     "dht_dft_ev": 0.0, "dht_dft_dep": 0.0,
     "dht_lft_ev": 0.0, "dht_lft_dep": 0.0,
-    "lht_wft_ev": 0.0, "lht_wft_dep": 0.0,
-    "lht_dft_ev": 0.0, "lht_dft_dep": 0.0,
-    "lht_lft_ev": 0.0, "lht_lft_dep": 0.0,
     "puan_ev": 0, "puan_dep": 0,
     "form_str_ev": "", "form_str_dep": "",
     "form_puan_ev": 0.0, "form_puan_dep": 0.0,
@@ -589,7 +586,7 @@ def poisson_matris(lam_ev, lam_dep, max_gol=MAX_GOL):
 
 def hesapla_lambda(v):
     """
-    Gelişmiş xG ve İç/Dış Saha Dengeli Lambda Hesabı
+    Gelişmiş xG, İç/Dış Saha ve Sert Clean Sheet Frenli Lambda Hesabı
     """
     atilan_e = v.get("atilan_ev", 0.0)
     yenen_e = v.get("yenen_ev", 0.0)
@@ -627,11 +624,21 @@ def hesapla_lambda(v):
     cs_ev = v.get("clean_sheets_ev", 0.0)
     cs_dep = v.get("clean_sheets_dep", 0.0)
 
-    dep_freni = 1.0 - (cs_ev / 200.0) if cs_ev > 0 else 1.0
-    ev_freni = 1.0 - (cs_dep / 200.0) if cs_dep > 0 else 1.0
+    # Sert Clean Sheet Freni: %40 ve üzeri gole kapama oranlarında agresif kesinti uygula
+    def clean_sheet_freni(cs_orani):
+        if cs_orani >= 40.0:
+            return max(0.40, 1.0 - (cs_orani / 100.0 * 0.75)) # Örn: %50 için ~0.625 çarpanı (ciddi düşüş)
+        return 1.0 - (cs_orani / 250.0) if cs_orani > 0 else 1.0
+
+    dep_freni = clean_sheet_freni(cs_ev)
+    ev_freni = clean_sheet_freni(cs_dep)
 
     lam_ev = lam_ev_ham * EV_ETKISI * form_ev * ev_freni
     lam_dep = lam_dep_ham * DEP_ETKISI * form_dep * dep_freni
+
+    # Aşırı yüksek beklentilere "azalan verim" (diminishing returns) uygula (Tek başına 3 gol atmak zordur)
+    if lam_ev > 2.20: lam_ev = 2.20 + (lam_ev - 2.20) * 0.5
+    if lam_dep > 2.20: lam_dep = 2.20 + (lam_dep - 2.20) * 0.5
 
     lam_ev = clamp(lam_ev, 0.05, 4.5)
     lam_dep = clamp(lam_dep, 0.05, 4.5)
@@ -867,12 +874,27 @@ def analiz_hesapla(v):
     ust_25 = (ust25_po * 0.60) + (ust25_mc * 0.40)
     kg_var_model = (kg_var_po * 0.60) + (kg_var_mc * 0.40)
 
-    # KISIR MAÇ (BARİYER) DÜZELTMESİ (Top. Beklenen Gol < 1.80 ise Baskıla)
     toplam_beklenen_gol = lam_ev + lam_dep
+
+    # 1. KISIR MAÇ (BARİYER) DÜZELTMESİ (Top. Beklenen Gol < 1.80 ise Baskıla)
     if toplam_beklenen_gol < 1.80:
         baski_faktoru = (1.80 - toplam_beklenen_gol) / 1.80
         ust_25 = max(10.0, ust_25 * (1.0 - baski_faktoru * 0.8))
         kg_var_model = max(15.0, kg_var_model * (1.0 - baski_faktoru * 0.9))
+
+    # 2. ASİMETRİK MAÇ VE CLEAN SHEET BARİYERİ (Leverkusen - Leipzig gibi maçlar için)
+    cs_ev = v.get("clean_sheets_ev", 0.0)
+    cs_dep = v.get("clean_sheets_dep", 0.0)
+    
+    # Eğer ev sahibinin gol yememe oranı yüksekse ve deplasmanın gol beklentisi düşükse (KG ihtimalini törpüle)
+    if cs_ev >= 40.0 and lam_dep < 1.1:
+        kg_var_model *= 0.65 
+    if cs_dep >= 40.0 and lam_ev < 1.1:
+        kg_var_model *= 0.65
+
+    # Tek taraflı maçlarda (Örn: 2.30'a 0.60) tek takımın 3 gol atma zorluğunu (Üst 2.5) simüle et:
+    if abs(lam_ev - lam_dep) > 1.2 and (lam_ev < 2.5 and lam_dep < 2.5):
+        ust_25 *= 0.80  # Güç farkı var ama favori takım xG'si 2.5'in altındaysa Üst ihtimalini %20 düşür
 
     alt_25 = 100.0 - ust_25
     kg_yok_model = 100.0 - kg_var_model
