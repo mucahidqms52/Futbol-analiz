@@ -302,13 +302,11 @@ def _cift_tab(etiket, blok):
 def sportytrader_veri_cikar(metin):
     veri = {}; okunamayanlar = []
 
-    # Takım isimleri
     m = re.search(r'^([A-ZÇĞİÖŞÜ][\w\s\.\-]+?)\s*-\s*([A-ZÇĞİÖŞÜ][\w\s\.\-]+?)\s+Stats', metin, re.MULTILINE)
     if m:
         veri["takim_ev"] = m.group(1).strip()
         veri["takim_dep"] = m.group(2).strip()
 
-    # Skor
     m = re.search(r'FT\n(\d+)\s*-\s*(\d+)', metin)
     if m:
         veri["skor_ev"] = int(m.group(1)); veri["skor_dep"] = int(m.group(2))
@@ -319,7 +317,6 @@ def sportytrader_veri_cikar(metin):
     takim_ev = veri.get("takim_ev", "")
     takim_dep = veri.get("takim_dep", "")
 
-    # MAIN STATS
     idx = metin.find("Main Stats")
     if idx != -1:
         blok = metin[idx:idx+1000]
@@ -345,7 +342,6 @@ def sportytrader_veri_cikar(metin):
         v1, v2 = _cift_tab("Goal in both halves", blok)
         if v1 is not None: veri["goal_both_halves_ev"] = v1; veri["goal_both_halves_dep"] = v2
 
-    # WIN DRAW LOSE
     idx = metin.find("Win Draw Lose")
     if idx != -1:
         blok = metin[idx:idx+1000]
@@ -384,7 +380,6 @@ def sportytrader_veri_cikar(metin):
                 veri["maglubiyet_dep"] = float(m.group(2).replace(",", "."))
             except ValueError: pass
 
-    # BOTH TEAMS TO SCORE
     idx = metin.find("Both Teams to Score")
     if idx != -1:
         blok = metin[idx:idx+1000]
@@ -418,7 +413,6 @@ def sportytrader_veri_cikar(metin):
                 veri["kg_oran"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
             except ValueError: pass
 
-    # MATCH TOTAL GOALS
     idx = metin.find("Match Total Goals")
     if idx != -1:
         blok = metin[idx:idx+1000]
@@ -448,7 +442,6 @@ def sportytrader_veri_cikar(metin):
             veri["tg_4_ev"] = veri["tg_4p_ev"]
             veri["tg_4_dep"] = veri["tg_4p_dep"]
 
-    # OVER UNDER GOALS
     idx = metin.find("Over Under Goals")
     if idx != -1:
         blok = metin[idx:idx+1200]
@@ -471,7 +464,6 @@ def sportytrader_veri_cikar(metin):
         v1, v2 = _cift_tab("Over 3.5 goals", blok)
         if v1 is not None: veri["ust35_ev"] = v1; veri["ust35_dep"] = v2
 
-    # HALF TIME - FULL TIME
     idx = metin.find("Half Time-Full Time")
     if idx != -1:
         blok = metin[idx:idx+1500]
@@ -492,7 +484,6 @@ def sportytrader_veri_cikar(metin):
                 veri[key + "_ev"] = v1
                 veri[key + "_dep"] = v2
 
-    # STANDINGS
     if takim_ev and takim_dep:
         for takim, key_sira, key_puan in [(takim_ev, "siralama_ev", "puan_ev"),
                                           (takim_dep, "siralama_dep", "puan_dep")]:
@@ -515,7 +506,6 @@ def sportytrader_veri_cikar(metin):
     if veri.get("siralama_ev", 0) == 0 or veri.get("siralama_dep", 0) == 0:
         okunamayanlar.append("Sıralama")
 
-    # FORM
     m = re.search(r'\n([WDL])\s*\n([WDL])\s*\n([WDL])\s*\n([WDL])\s*\n([WDL])\s*\nForm\s*\t?\s*\n([WDL])\s*\n([WDL])\s*\n([WDL])\s*\n([WDL])\s*\n([WDL])', metin)
     if m:
         form_ev = m.group(1) + m.group(2) + m.group(3) + m.group(4) + m.group(5)
@@ -527,7 +517,6 @@ def sportytrader_veri_cikar(metin):
         veri["form_puan_ev"] = _form_puan(form_ev)
         veri["form_puan_dep"] = _form_puan(form_dep)
 
-    # TÜRETİLMİŞ DEĞERLER
     if veri.get("atilan_ev", 0) > 0 and veri.get("yenen_ev", 0) > 0:
         veri["lig_ort_toplam"] = (veri.get("atilan_ev", 0) + veri.get("atilan_dep", 0) +
                                   veri.get("yenen_ev", 0) + veri.get("yenen_dep", 0)) / 2
@@ -586,14 +575,13 @@ def poisson_matris(lam_ev, lam_dep, max_gol=MAX_GOL):
 
 def hesapla_lambda(v):
     """
-    Gelişmiş xG, İç/Dış Saha ve Sert Clean Sheet Frenli Lambda Hesabı
+    Gelişmiş xG, İç/Dış Saha, Clean Sheet Freni ve Favori Dominasyonlu Lambda Hesabı
     """
     atilan_e = v.get("atilan_ev", 0.0)
     yenen_e = v.get("yenen_ev", 0.0)
     atilan_d = v.get("atilan_dep", 0.0)
     yenen_d = v.get("yenen_dep", 0.0)
 
-    # xG Düzeltmesi (Varsa %70 xG, %30 Atılan Gol)
     xg_e = v.get("xg_ev", 0.0)
     xg_d = v.get("xg_dep", 0.0)
 
@@ -610,11 +598,9 @@ def hesapla_lambda(v):
     savunma_dep_zaaf = yenen_d if yenen_d > 0 else 1.2
     savunma_ev_zaaf = yenen_e if yenen_e > 0 else 1.0
 
-    # Çapraz Lambda Hesabı
     lam_ev_ham = (hucum_ev_baz * 0.60) + (savunma_dep_zaaf * 0.40)
     lam_dep_ham = (hucum_dep_baz * 0.60) + (savunma_ev_zaaf * 0.40)
 
-    # Saha Avantajı ve Form Çarpanları
     EV_ETKISI = 1.05
     DEP_ETKISI = 0.95
 
@@ -624,21 +610,26 @@ def hesapla_lambda(v):
     cs_ev = v.get("clean_sheets_ev", 0.0)
     cs_dep = v.get("clean_sheets_dep", 0.0)
 
-    # Sert Clean Sheet Freni: %40 ve üzeri gole kapama oranlarında agresif kesinti uygula
     def clean_sheet_freni(cs_orani):
         if cs_orani >= 40.0:
-            return max(0.40, 1.0 - (cs_orani / 100.0 * 0.75)) # Örn: %50 için ~0.625 çarpanı (ciddi düşüş)
+            return max(0.40, 1.0 - (cs_orani / 100.0 * 0.75))
         return 1.0 - (cs_orani / 250.0) if cs_orani > 0 else 1.0
 
     dep_freni = clean_sheet_freni(cs_ev)
     ev_freni = clean_sheet_freni(cs_dep)
 
-    lam_ev = lam_ev_ham * EV_ETKISI * form_ev * ev_freni
+    # GÜNCELLEME 1: FAVORİ DOMİNASYON ÇARPAN (Büyük Takım İç Saha Gücü)
+    sira_e = v.get("siralama_ev", 10)
+    sira_d = v.get("siralama_dep", 10)
+    dominasyon_bonus_ev = 1.0
+    if 1 <= sira_e <= 5 and sira_d >= 10:
+        dominasyon_bonus_ev = 1.25  # Ev sahibi ilk 5'te, deplasman alt sıradaysa +%25 gol gücü
+
+    lam_ev = lam_ev_ham * EV_ETKISI * form_ev * ev_freni * dominasyon_bonus_ev
     lam_dep = lam_dep_ham * DEP_ETKISI * form_dep * dep_freni
 
-    # Aşırı yüksek beklentilere "azalan verim" (diminishing returns) uygula (Tek başına 3 gol atmak zordur)
-    if lam_ev > 2.20: lam_ev = 2.20 + (lam_ev - 2.20) * 0.5
-    if lam_dep > 2.20: lam_dep = 2.20 + (lam_dep - 2.20) * 0.5
+    if lam_ev > 2.50: lam_ev = 2.50 + (lam_ev - 2.50) * 0.5
+    if lam_dep > 2.50: lam_dep = 2.50 + (lam_dep - 2.50) * 0.5
 
     lam_ev = clamp(lam_ev, 0.05, 4.5)
     lam_dep = clamp(lam_dep, 0.05, 4.5)
@@ -857,12 +848,10 @@ def analiz_hesapla(v):
     ust25_po = olas["ust_25"] / toplam * 100
     kg_var_po = olas["kg_var"] / toplam * 100
 
-    # Monte Carlo Simulasyonu
     mc = monte_carlo_simulasyon(lam_ev, lam_dep, MONTE_CARLO_N)
     p1_mc = mc["p1"]; px_mc = mc["px"]; p2_mc = mc["p2"]
     ust25_mc = mc["ust25"]; kg_var_mc = mc["kg_var"]
 
-    # HARMANLAMA (%60 Poisson + %40 Monte Carlo)
     p1 = (p1_po * 0.60) + (p1_mc * 0.40)
     px = (px_po * 0.60) + (px_mc * 0.40)
     p2 = (p2_po * 0.60) + (p2_mc * 0.40)
@@ -876,28 +865,29 @@ def analiz_hesapla(v):
 
     toplam_beklenen_gol = lam_ev + lam_dep
 
-    # 1. KISIR MAÇ (BARİYER) DÜZELTMESİ (Top. Beklenen Gol < 1.80 ise Baskıla)
+    # 1. KISIR MAÇ DÜZELTMESİ (Top. Beklenen Gol < 1.80 ise Baskıla)
     if toplam_beklenen_gol < 1.80:
         baski_faktoru = (1.80 - toplam_beklenen_gol) / 1.80
         ust_25 = max(10.0, ust_25 * (1.0 - baski_faktoru * 0.8))
         kg_var_model = max(15.0, kg_var_model * (1.0 - baski_faktoru * 0.9))
 
-    # 2. ASİMETRİK MAÇ VE CLEAN SHEET BARİYERİ (Leverkusen - Leipzig gibi maçlar için)
+    # 2. ASİMETRİK MAÇ VE CLEAN SHEET BARİYERİ
     cs_ev = v.get("clean_sheets_ev", 0.0)
     cs_dep = v.get("clean_sheets_dep", 0.0)
     
-    # Eğer ev sahibinin gol yememe oranı yüksekse ve deplasmanın gol beklentisi düşükse (KG ihtimalini törpüle)
     if cs_ev >= 40.0 and lam_dep < 1.1:
         kg_var_model *= 0.65 
     if cs_dep >= 40.0 and lam_ev < 1.1:
         kg_var_model *= 0.65
 
-    # Tek taraflı maçlarda (Örn: 2.30'a 0.60) tek takımın 3 gol atma zorluğunu (Üst 2.5) simüle et:
-    if abs(lam_ev - lam_dep) > 1.2 and (lam_ev < 2.5 and lam_dep < 2.5):
-        ust_25 *= 0.80  # Güç farkı var ama favori takım xG'si 2.5'in altındaysa Üst ihtimalini %20 düşür
+    kg_yok_model = 100.0 - kg_var_model
+
+    # GÜNCELLEME 2: TEK TARAFLI FARK VE KG YOK / ÜST DENGESİ (AC Milan 3-0 Lecce Filtresi)
+    # Eğer KG Yok %68 üstüyse ama Favori (1) galibiyete çok yakınsa (%55+), Üst ihtimalini yapay Alt baskısından kurtar
+    if kg_yok_model > 68.0 and p1 > 55.0 and lam_ev >= 1.70:
+        ust_25 = min(68.0, ust_25 * 1.35)
 
     alt_25 = 100.0 - ust_25
-    kg_yok_model = 100.0 - kg_var_model
 
     cifte_1x = p1 + px
     cifte_x2 = p2 + px
