@@ -95,7 +95,7 @@ MONTE_CARLO_N = 10000
 # ==========================================
 VARSAYILAN_VERI = {
     "ppg_ev": 0.0, "mpg_dep": 0.0,
-    "siralama_ev": 1, "siralama_dep": 1,
+    "siralama_ev": 0, "siralama_dep": 0,
     "reaksiyon_ev": 50.0, "reaksiyon_dep": 50.0,
     "xg_ev": 0.0, "xg_dep": 0.0,
     "atilan_ev": 0.0, "atilan_dep": 0.0,
@@ -129,7 +129,6 @@ VARSAYILAN_VERI = {
     "lig_ust35": 0.0, "lig_ust45": 0.0, "lig_ust55": 0.0,
     "lig_kg": 0.0, "lig_kg_yok": 0.0,
     "lig_ilk_gol_ev": 0.0, "lig_ilk_gol_dep": 0.0,
-    # === SPORTYTRADER FORMATI İÇİN YENİ ALANLAR ===
     "clean_sheets_ev": 0.0, "clean_sheets_dep": 0.0,
     "team_scored_ev": 0.0, "team_scored_dep": 0.0,
     "team_scored_2_ev": 0.0, "team_scored_2_dep": 0.0,
@@ -323,47 +322,39 @@ MANUEL_ALANLAR = {
 
 
 # ==========================================
-# METİNDEN VERİ ÇIKARMA — YARDIMCI
+# SPORTYTRADER FORMAT ÇIKARICI
 # ==========================================
-def _yuzde(blok, etiket):
-    """'etiket  45.00%' kalıbını yakalar."""
-    m = re.search(re.escape(etiket) + r'\s+([\d.,]+)\s*%', blok, re.IGNORECASE)
+def _cift_tab(etiket, blok):
+    """'1.67\tGoals scored per game\t1.13' kalıbını yakalar."""
+    pattern = r'([\d.,]+)%?\s*\t\s*' + re.escape(etiket) + r'\s*\t\s*([\d.,]+)%?'
+    m = re.search(pattern, blok, re.IGNORECASE)
     if m:
-        try: return float(m.group(1).replace(",", "."))
-        except ValueError: return None
-    return None
-
-
-def _deger(blok, etiket):
-    """'etiket  2.90' kalıbını yakalar (yüzdesiz)."""
-    m = re.search(re.escape(etiket) + r'\s+([\d.,]+)\s*\n', blok, re.IGNORECASE)
+        try:
+            return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
+        except ValueError:
+            pass
+    # Yedek: boşlukla ayrılmış
+    pattern2 = r'([\d.,]+)%?\s{1,4}' + re.escape(etiket) + r'\s{1,4}([\d.,]+)%?'
+    m = re.search(pattern2, blok, re.IGNORECASE)
     if m:
-        try: return float(m.group(1).replace(",", "."))
-        except ValueError: return None
-    return None
+        try:
+            return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
+        except ValueError:
+            pass
+    return None, None
 
 
 def sportytrader_veri_cikar(metin):
-    """SportyTrader formatındaki veriyi çıkarır."""
-    veri = {}
-    okunamayanlar = []
+    """SportyTrader formatı: Değer1 \t Etiket \t Değer2"""
+    veri = {}; okunamayanlar = []
 
-    # TAKIM İSİMLERİ — "Bournemouth - Liverpool Stats" üst satır
+    # Takım isimleri
     m = re.search(r'^([A-ZÇĞİÖŞÜ][\w\s\.\-]+?)\s*-\s*([A-ZÇĞİÖŞÜ][\w\s\.\-]+?)\s+Stats', metin, re.MULTILINE)
     if m:
         veri["takim_ev"] = m.group(1).strip()
         veri["takim_dep"] = m.group(2).strip()
-    else:
-        # Yedek: "Bournemouth\nBournemouth\n...\nLiverpool\nLiverpool"
-        m = re.search(r'([A-ZÇĞİÖŞÜ][\w\s\.]+?)\n\1\n\d{2}\.\d{2}\.\d{4}', metin)
-        if m:
-            veri["takim_ev"] = m.group(1).strip()
-            # deplasmanı bul
-            m2 = re.search(r'([A-ZÇĞİÖŞÜ][\w\s\.]+?)\n\1\nFT\n', metin)
-            if m2:
-                veri["takim_dep"] = m2.group(1).strip()
 
-    # SKOR
+    # Skor
     m = re.search(r'FT\n(\d+)\s*-\s*(\d+)', metin)
     if m:
         veri["skor_ev"] = int(m.group(1)); veri["skor_dep"] = int(m.group(2))
@@ -376,81 +367,52 @@ def sportytrader_veri_cikar(metin):
 
     # === MAIN STATS ===
     idx = metin.find("Main Stats")
-    if idx == -1: idx = metin.find("Main statistics")
     if idx != -1:
-        blok = metin[idx:idx+800]
+        blok = metin[idx:idx+1000]
 
-        # Değer çifti (ev/dep) yakalayan helper
-        def _cift(etiket):
-            m = re.search(re.escape(etiket) + r'\s+([\d.,]+)\s+([\d.,]+)', blok, re.IGNORECASE)
-            if m:
-                try: return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
-                except ValueError: pass
-            return None, None
+        v1, v2 = _cift_tab("Goals scored per game", blok)
+        if v1 is not None: veri["atilan_ev"] = v1; veri["atilan_dep"] = v2
 
-        v1, v2 = _cift("Goals scored per game")
-        if v1 is not None:
-            veri["atilan_ev"] = v1; veri["atilan_dep"] = v2
-        else: okunamayanlar.append("Atılan Gol")
+        v1, v2 = _cift_tab("Goals conceded per game", blok)
+        if v1 is not None: veri["yenen_ev"] = v1; veri["yenen_dep"] = v2
 
-        v1, v2 = _cift("Goals conceded per game")
-        if v1 is not None:
-            veri["yenen_ev"] = v1; veri["yenen_dep"] = v2
-        else: okunamayanlar.append("Yenen Gol")
+        v1, v2 = _cift_tab("Clean sheets", blok)
+        if v1 is not None: veri["clean_sheets_ev"] = v1; veri["clean_sheets_dep"] = v2
 
-        v1, v2 = _cift("Clean sheets")
-        if v1 is not None:
-            veri["clean_sheets_ev"] = v1; veri["clean_sheets_dep"] = v2
+        v1, v2 = _cift_tab("Team scored", blok)
+        if v1 is not None: veri["team_scored_ev"] = v1; veri["team_scored_dep"] = v2
 
-        v1, v2 = _cift("Team scored")
-        if v1 is not None:
-            veri["team_scored_ev"] = v1; veri["team_scored_dep"] = v2
+        v1, v2 = _cift_tab("Team scored twice", blok)
+        if v1 is not None: veri["team_scored_2_ev"] = v1; veri["team_scored_2_dep"] = v2
 
-        v1, v2 = _cift("Team scored twice")
-        if v1 is not None:
-            veri["team_scored_2_ev"] = v1; veri["team_scored_2_dep"] = v2
+        v1, v2 = _cift_tab("Scored in both halves", blok)
+        if v1 is not None: veri["scored_both_halves_ev"] = v1; veri["scored_both_halves_dep"] = v2
 
-        v1, v2 = _cift("Scored in both halves")
-        if v1 is not None:
-            veri["scored_both_halves_ev"] = v1; veri["scored_both_halves_dep"] = v2
-
-        v1, v2 = _cift("Goal in both halves")
-        if v1 is not None:
-            veri["goal_both_halves_ev"] = v1; veri["goal_both_halves_dep"] = v2
+        v1, v2 = _cift_tab("Goal in both halves", blok)
+        if v1 is not None: veri["goal_both_halves_ev"] = v1; veri["goal_both_halves_dep"] = v2
 
     # === WIN DRAW LOSE ===
     idx = metin.find("Win Draw Lose")
     if idx != -1:
-        blok = metin[idx:idx+900]
+        blok = metin[idx:idx+1000]
 
-        def _cift(etiket):
-            m = re.search(re.escape(etiket) + r'\s+([\d.,]+)\s+([\d.,]+)', blok, re.IGNORECASE)
-            if m:
-                try: return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
-                except ValueError: pass
-            return None, None
+        # DİKKAT: "Win", "Draw", "Lose" kısa etiketler — daha spesifik olanları ÖNCE ara
+        v1, v2 = _cift_tab("Win and Over 1.5 goals", blok)
+        if v1 is not None: veri["win_over15_ev"] = v1; veri["win_over15_dep"] = v2
 
-        v1, v2 = _cift("Win and Over 1.5 goals")
-        if v1 is not None:
-            veri["win_over15_ev"] = v1; veri["win_over15_dep"] = v2
+        v1, v2 = _cift_tab("Lose and Over 1.5 goals", blok)
+        if v1 is not None: veri["lose_over15_ev"] = v1; veri["lose_over15_dep"] = v2
 
-        v1, v2 = _cift("Lose and Over 1.5 goals")
-        if v1 is not None:
-            veri["lose_over15_ev"] = v1; veri["lose_over15_dep"] = v2
+        v1, v2 = _cift_tab("Team win first half", blok)
+        if v1 is not None: veri["win_1h_ev"] = v1; veri["win_1h_dep"] = v2
 
-        v1, v2 = _cift("Team win first half")
-        if v1 is not None:
-            veri["win_1h_ev"] = v1; veri["win_1h_dep"] = v2
+        v1, v2 = _cift_tab("Team draw at half time", blok)
+        if v1 is not None: veri["draw_ht_ev"] = v1; veri["draw_ht_dep"] = v2
 
-        v1, v2 = _cift("Team draw at half time")
-        if v1 is not None:
-            veri["draw_ht_ev"] = v1; veri["draw_ht_dep"] = v2
+        v1, v2 = _cift_tab("Team lost first half", blok)
+        if v1 is not None: veri["lose_1h_ev"] = v1; veri["lose_1h_dep"] = v2
 
-        v1, v2 = _cift("Team lost first half")
-        if v1 is not None:
-            veri["lose_1h_ev"] = v1; veri["lose_1h_dep"] = v2
-
-        # Win/Draw/Lose ana (etiketler ayırt edici: "Win\t40.00%\t30.00%")
+        # Ana Win/Draw/Lose — tab'ın HEMEN ardından gelmeli
         m = re.search(r'\tWin\t([\d.,]+)%\t([\d.,]+)%', blok)
         if m:
             try:
@@ -472,79 +434,67 @@ def sportytrader_veri_cikar(metin):
 
     # === BOTH TEAMS TO SCORE ===
     idx = metin.find("Both Teams to Score")
-    if idx == -1: idx = metin.find("Both Teams To Score")
     if idx != -1:
-        blok = metin[idx:idx+900]
+        blok = metin[idx:idx+1000]
 
-        def _cift(etiket):
-            m = re.search(re.escape(etiket) + r'\s+([\d.,]+)\s+([\d.,]+)', blok, re.IGNORECASE)
-            if m:
-                try: return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
-                except ValueError: pass
-            return None, None
+        # Önce spesifik olanlar
+        v1, v2 = _cift_tab("BTTS in first-half", blok)
+        if v1 is not None: veri["btts_1h_ev"] = v1; veri["btts_1h_dep"] = v2
 
-        v1, v2 = _cift("Both Teams to Score")
-        if v1 is not None:
-            veri["kg_siklik_ev"] = v1; veri["kg_siklik_dep"] = v2
-            veri["kg_oran"] = (v1 + v2) / 2
+        v1, v2 = _cift_tab("BBTS in second-half", blok)
+        if v1 is not None: veri["btts_2h_ev"] = v1; veri["btts_2h_dep"] = v2
 
-        v1, v2 = _cift("BTTS in first-half")
-        if v1 is not None:
-            veri["btts_1h_ev"] = v1; veri["btts_1h_dep"] = v2
+        v1, v2 = _cift_tab("BBTS and Over 1.5", blok)
+        if v1 is not None: veri["btts_over15_ev"] = v1; veri["btts_over15_dep"] = v2
 
-        v1, v2 = _cift("BBTS in second-half")
-        if v1 is not None:
-            veri["btts_2h_ev"] = v1; veri["btts_2h_dep"] = v2
+        v1, v2 = _cift_tab("BBTS and Over 2.5", blok)
+        if v1 is not None: veri["btts_over25_ev"] = v1; veri["btts_over25_dep"] = v2
 
-        v1, v2 = _cift("BBTS and Over 1.5")
-        if v1 is not None:
-            veri["btts_over15_ev"] = v1; veri["btts_over15_dep"] = v2
+        v1, v2 = _cift_tab("Win and BTTS", blok)
+        if v1 is not None: veri["win_btts_ev"] = v1; veri["win_btts_dep"] = v2
 
-        v1, v2 = _cift("BBTS and Over 2.5")
-        if v1 is not None:
-            veri["btts_over25_ev"] = v1; veri["btts_over25_dep"] = v2
+        v1, v2 = _cift_tab("Draw and BTTS", blok)
+        if v1 is not None: veri["draw_btts_ev"] = v1; veri["draw_btts_dep"] = v2
 
-        v1, v2 = _cift("Win and BTTS")
-        if v1 is not None:
-            veri["win_btts_ev"] = v1; veri["win_btts_dep"] = v2
+        v1, v2 = _cift_tab("Lose and BTTS", blok)
+        if v1 is not None: veri["lose_btts_ev"] = v1; veri["lose_btts_dep"] = v2
 
-        v1, v2 = _cift("Draw and BTTS")
-        if v1 is not None:
-            veri["draw_btts_ev"] = v1; veri["draw_btts_dep"] = v2
-
-        v1, v2 = _cift("Lose and BTTS")
-        if v1 is not None:
-            veri["lose_btts_ev"] = v1; veri["lose_btts_dep"] = v2
+        # Ana "Both Teams to Score" — SADECE satır başında
+        m = re.search(r'\n([\d.,]+)%\tBoth Teams to Score\t([\d.,]+)%', blok)
+        if m:
+            try:
+                veri["kg_siklik_ev"] = float(m.group(1).replace(",", "."))
+                veri["kg_siklik_dep"] = float(m.group(2).replace(",", "."))
+                veri["kg_oran"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
+            except ValueError: pass
 
     # === MATCH TOTAL GOALS ===
     idx = metin.find("Match Total Goals")
     if idx != -1:
-        blok = metin[idx:idx+900]
+        blok = metin[idx:idx+1000]
 
-        def _cift(etiket):
-            m = re.search(re.escape(etiket) + r'\s+([\d.,]+)%\s+([\d.,]+)%', blok, re.IGNORECASE)
-            if m:
-                try: return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
-                except ValueError: pass
-            return None, None
-
-        v1, v2 = _cift("Match total goals 0")
-        if v1 is not None: veri["tg_0_ev"] = v1; veri["tg_0_dep"] = v2
-        v1, v2 = _cift("Match total goals 1")
-        if v1 is not None: veri["tg_1_ev"] = v1; veri["tg_1_dep"] = v2
-        v1, v2 = _cift("Match total goals 2")
-        if v1 is not None: veri["tg_2_ev"] = v1; veri["tg_2_dep"] = v2
-        v1, v2 = _cift("Match total goals 3")
-        if v1 is not None: veri["tg_3_ev"] = v1; veri["tg_3_dep"] = v2
-        v1, v2 = _cift("Match total goals 4+")
-        if v1 is not None: veri["tg_4p_ev"] = v1; veri["tg_4p_dep"] = v2
-
-        v1, v2 = _cift("Match total goals 0 or 1")
+        v1, v2 = _cift_tab("Match total goals 0 or 1", blok)
         if v1 is not None: veri["tg_01_ev"] = v1; veri["tg_01_dep"] = v2
-        v1, v2 = _cift("Match total goals 2 or 3")
+
+        v1, v2 = _cift_tab("Match total goals 2 or 3", blok)
         if v1 is not None: veri["tg_23_ev"] = v1; veri["tg_23_dep"] = v2
 
-        # tg_4 (4+ zaten tg_4p) — 4 satırı için yoksa tg_4p kullan
+        v1, v2 = _cift_tab("Match total goals 4+", blok)
+        if v1 is not None: veri["tg_4p_ev"] = v1; veri["tg_4p_dep"] = v2
+
+        # Tek tek (spesifik önce)
+        v1, v2 = _cift_tab("Match total goals 0", blok)
+        if v1 is not None: veri["tg_0_ev"] = v1; veri["tg_0_dep"] = v2
+
+        v1, v2 = _cift_tab("Match total goals 1", blok)
+        if v1 is not None: veri["tg_1_ev"] = v1; veri["tg_1_dep"] = v2
+
+        v1, v2 = _cift_tab("Match total goals 2", blok)
+        if v1 is not None: veri["tg_2_ev"] = v1; veri["tg_2_dep"] = v2
+
+        v1, v2 = _cift_tab("Match total goals 3", blok)
+        if v1 is not None: veri["tg_3_ev"] = v1; veri["tg_3_dep"] = v2
+
         if veri.get("tg_4_ev", 0) == 0 and veri.get("tg_4p_ev", 0) > 0:
             veri["tg_4_ev"] = veri["tg_4p_ev"]
             veri["tg_4_dep"] = veri["tg_4p_dep"]
@@ -552,130 +502,90 @@ def sportytrader_veri_cikar(metin):
     # === OVER UNDER GOALS ===
     idx = metin.find("Over Under Goals")
     if idx != -1:
-        blok = metin[idx:idx+900]
-
-        def _cift(etiket):
-            m = re.search(re.escape(etiket) + r'\s+([\d.,]+)%\s+([\d.,]+)%', blok, re.IGNORECASE)
-            if m:
-                try: return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
-                except ValueError: pass
-            return None, None
-
-        v1, v2 = _cift("Over 1.5 goals")
-        if v1 is not None:
-            veri["ust15_ev"] = v1; veri["ust15_dep"] = v2
-
-        v1, v2 = _cift("Over 2.5 goals")
-        if v1 is not None:
-            veri["ust25_ev"] = v1; veri["ust25_dep"] = v2
-
-        v1, v2 = _cift("Over 3.5 goals")
-        if v1 is not None:
-            veri["ust35_ev"] = v1; veri["ust35_dep"] = v2
-
-        v1, v2 = _cift("Over 0.5 goals at half-time")
-        if v1 is not None:
-            veri["ht_ust05_ev"] = v1; veri["ht_ust05_dep"] = v2
-
-        v1, v2 = _cift("Over 1.5 goals at half-time")
-        if v1 is not None:
-            veri["ht_ust15_ev"] = v1; veri["ht_ust15_dep"] = v2
-
-        v1, v2 = _cift("Over 2.5 goals at half-time")
-        if v1 is not None:
-            veri["ht_ust25_ev"] = v1; veri["ht_ust25_dep"] = v2
-
-    # === HALF TIME-FULL TIME ===
-    idx = metin.find("Half Time-Full Time")
-    if idx != -1:
         blok = metin[idx:idx+1200]
 
-        def _cift(etiket):
-            m = re.search(re.escape(etiket) + r'\s+([\d.,]+)%\s+([\d.,]+)%', blok, re.IGNORECASE)
-            if m:
-                try: return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
-                except ValueError: pass
-            return None, None
+        # Spesifik önce
+        v1, v2 = _cift_tab("Over 0.5 goals at half-time", blok)
+        if v1 is not None: veri["ht_ust05_ev"] = v1; veri["ht_ust05_dep"] = v2
 
-        v1, v2 = _cift("Win HT - Win FT")
-        if v1 is not None: veri["wht_wft_ev"] = v1; veri["wht_wft_dep"] = v2
-        v1, v2 = _cift("Win HT - Draw FT")
-        if v1 is not None: veri["wht_dft_ev"] = v1; veri["wht_dft_dep"] = v2
-        v1, v2 = _cift("Win HT - Lose FT")
-        if v1 is not None: veri["wht_lft_ev"] = v1; veri["wht_lft_dep"] = v2
-        v1, v2 = _cift("Draw HT - Win FT")
-        if v1 is not None: veri["dht_wft_ev"] = v1; veri["dht_wft_dep"] = v2
-        v1, v2 = _cift("Draw HT - Draw FT")
-        if v1 is not None: veri["dht_dft_ev"] = v1; veri["dht_dft_dep"] = v2
-        v1, v2 = _cift("Draw HT - Lose FT")
-        if v1 is not None: veri["dht_lft_ev"] = v1; veri["dht_lft_dep"] = v2
-        v1, v2 = _cift("Lose HT - Win FT")
-        if v1 is not None: veri["lht_wft_ev"] = v1; veri["lht_wft_dep"] = v2
-        v1, v2 = _cift("Lose HT - Draw FT")
-        if v1 is not None: veri["lht_dft_ev"] = v1; veri["lht_dft_dep"] = v2
-        v1, v2 = _cift("Lose HT - Lose FT")
-        if v1 is not None: veri["lht_lft_ev"] = v1; veri["lht_lft_dep"] = v2
+        v1, v2 = _cift_tab("Over 1.5 goals at half-time", blok)
+        if v1 is not None: veri["ht_ust15_ev"] = v1; veri["ht_ust15_dep"] = v2
+
+        v1, v2 = _cift_tab("Over 2.5 goals at half-time", blok)
+        if v1 is not None: veri["ht_ust25_ev"] = v1; veri["ht_ust25_dep"] = v2
+
+        v1, v2 = _cift_tab("Over 1.5 goals", blok)
+        if v1 is not None: veri["ust15_ev"] = v1; veri["ust15_dep"] = v2
+
+        v1, v2 = _cift_tab("Over 2.5 goals", blok)
+        if v1 is not None: veri["ust25_ev"] = v1; veri["ust25_dep"] = v2
+
+        v1, v2 = _cift_tab("Over 3.5 goals", blok)
+        if v1 is not None: veri["ust35_ev"] = v1; veri["ust35_dep"] = v2
+
+    # === HALF TIME - FULL TIME ===
+    idx = metin.find("Half Time-Full Time")
+    if idx != -1:
+        blok = metin[idx:idx+1500]
+
+        for etiket, key in [
+            ("Win HT - Win FT", "wht_wft"),
+            ("Win HT - Draw FT", "wht_dft"),
+            ("Win HT - Lose FT", "wht_lft"),
+            ("Draw HT - Win FT", "dht_wft"),
+            ("Draw HT - Draw FT", "dht_dft"),
+            ("Draw HT - Lose FT", "dht_lft"),
+            ("Lose HT - Win FT", "lht_wft"),
+            ("Lose HT - Draw FT", "lht_dft"),
+            ("Lose HT - Lose FT", "lht_lft"),
+        ]:
+            v1, v2 = _cift_tab(etiket, blok)
+            if v1 is not None:
+                veri[key + "_ev"] = v1
+                veri[key + "_dep"] = v2
 
     # === STANDINGS ===
-    idx = metin.find("Standings")
-    if idx != -1:
-        blok = metin[idx:idx+3000]
-        # Tablodan takım satırlarını ara
-        # Format: "#\tName\tP\tW\tD\tL\tGoals\tLast 5\tPts"
-        def _sira_bul(takim_adi):
-            # Takım adı geçen satırın başındaki sıra numarasını bul
-            pattern = r'(\d{1,2})\s*\n\s*' + re.escape(takim_adi) + r'\b'
-            m = re.search(pattern, blok, re.IGNORECASE)
+    if takim_ev and takim_dep:
+        # Tablo formatı: "\n5\n\nLeeds\nLeeds\n5\t2\t..."
+        for takim, key_sira, key_puan in [(takim_ev, "siralama_ev", "puan_ev"),
+                                          (takim_dep, "siralama_dep", "puan_dep")]:
+            pattern = r'\n(\d{1,2})\s*\n\s*\n' + re.escape(takim) + r'\s*\n' + re.escape(takim) + r'\s*\n'
+            m = re.search(pattern, metin)
             if m:
-                try: return int(m.group(1))
-                except ValueError: pass
-            return None
+                try:
+                    s = int(m.group(1))
+                    if 1 <= s <= 30:
+                        veri[key_sira] = s
+                except ValueError:
+                    pass
 
-        def _puan_bul(takim_adi):
-            # Satır sonundaki puan sayısı
-            pattern = re.escape(takim_adi) + r'[\s\S]{0,200}?\n\s*(\d{1,2})\s*\n'
-            m = re.search(pattern, blok, re.IGNORECASE)
+            # Puan — tablo sonu
+            pattern2 = r'\n' + re.escape(takim) + r'\s*\n\d+\t\d+\t\d+\t\d+\t\d+:\d+\t\s*\n(\d{1,2})\s*\n'
+            m = re.search(pattern2, metin)
             if m:
-                try: return int(m.group(1))
+                try: veri[key_puan] = int(m.group(1))
                 except ValueError: pass
-            return None
 
-        if takim_ev:
-            s = _sira_bul(takim_ev)
-            if s and 1 <= s <= 30:
-                veri["siralama_ev"] = s
-            p = _puan_bul(takim_ev)
-            if p is not None:
-                veri["puan_ev"] = p
+    if veri.get("siralama_ev", 0) == 0 or veri.get("siralama_dep", 0) == 0:
+        okunamayanlar.append("Sıralama")
 
-        if takim_dep:
-            s = _sira_bul(takim_dep)
-            if s and 1 <= s <= 30:
-                veri["siralama_dep"] = s
-            p = _puan_bul(takim_dep)
-            if p is not None:
-                veri["puan_dep"] = p
-
-        if veri.get("siralama_ev", 0) == 0 or veri.get("siralama_dep", 0) == 0:
-            okunamayanlar.append("Sıralama")
-
-    # === FORM (ana stat bloğunda "L W D W D Form" satırı) ===
-    m = re.search(r'([WL D]+)\s*\n?\s*Form\s*\n?\s*([WL D]+)', metin)
+    # === FORM ===
+    # Kalıp: "D\nW\nL\nD\nD\nForm\t\nD\nW\nL\nW\nW"
+    m = re.search(r'\n([WDL])\s*\n([WDL])\s*\n([WDL])\s*\n([WDL])\s*\n([WDL])\s*\nForm\s*\t?\s*\n([WDL])\s*\n([WDL])\s*\n([WDL])\s*\n([WDL])\s*\n([WDL])', metin)
     if m:
-        veri["form_str_ev"] = m.group(1).strip().replace(" ", "")
-        veri["form_str_dep"] = m.group(2).strip().replace(" ", "")
-        # Form puanı: W=3, D=1, L=0
+        form_ev = m.group(1) + m.group(2) + m.group(3) + m.group(4) + m.group(5)
+        form_dep = m.group(6) + m.group(7) + m.group(8) + m.group(9) + m.group(10)
+        veri["form_str_ev"] = form_ev
+        veri["form_str_dep"] = form_dep
         def _form_puan(s):
-            return sum(3 if c == "W" else 1 if c == "D" else 0 for c in s) / max(len(s), 1)
-        veri["form_puan_ev"] = _form_puan(veri["form_str_ev"]) * 3
-        veri["form_puan_dep"] = _form_puan(veri["form_str_dep"]) * 3
+            return sum(3 if c == "W" else 1 if c == "D" else 0 for c in s) / max(len(s), 1) * 3
+        veri["form_puan_ev"] = _form_puan(form_ev)
+        veri["form_puan_dep"] = _form_puan(form_dep)
 
-    # === LİG VERİSİ (SportyTrader lig ortalaması yok, takımlardan türet) ===
+    # === TÜRETİLMİŞ DEĞERLER ===
     if veri.get("atilan_ev", 0) > 0 and veri.get("yenen_ev", 0) > 0:
-        # İki takımın lig ortalaması tahmini
-        lig_ort_tahmin = (veri.get("atilan_ev", 0) + veri.get("atilan_dep", 0) +
-                          veri.get("yenen_ev", 0) + veri.get("yenen_dep", 0)) / 2
-        veri["lig_ort_toplam"] = lig_ort_tahmin
+        veri["lig_ort_toplam"] = (veri.get("atilan_ev", 0) + veri.get("atilan_dep", 0) +
+                                  veri.get("yenen_ev", 0) + veri.get("yenen_dep", 0)) / 2
         veri["lig_ort_ev"] = veri.get("atilan_ev", 0)
         veri["lig_ort_dep"] = veri.get("atilan_dep", 0)
 
@@ -685,52 +595,26 @@ def sportytrader_veri_cikar(metin):
     if veri.get("kg_siklik_ev", 0) > 0 and veri.get("kg_siklik_dep", 0) > 0:
         veri["lig_kg"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
 
-    # === xG TAHMİNİ (metinde yoksa atilan'dan üret) ===
     if veri.get("xg_ev", 0) == 0 and veri.get("atilan_ev", 0) > 0:
         veri["xg_ev"] = veri["atilan_ev"] * 0.95
     if veri.get("xg_dep", 0) == 0 and veri.get("atilan_dep", 0) > 0:
         veri["xg_dep"] = veri["atilan_dep"] * 0.95
 
-    # === SS TAHMİNİ (atilan ve yenen farkından) ===
     if veri.get("atilan_ev", 0) > 0 and veri.get("yenen_ev", 0) > 0:
-        fark_ev = abs(veri["atilan_ev"] - veri["yenen_ev"])
-        veri["ss_ev"] = clamp(fark_ev * 0.5 + 0.7, 0.5, 2.5)
+        veri["ss_ev"] = clamp(abs(veri["atilan_ev"] - veri["yenen_ev"]) * 0.5 + 0.7, 0.5, 2.5)
     if veri.get("atilan_dep", 0) > 0 and veri.get("yenen_dep", 0) > 0:
-        fark_dep = abs(veri["atilan_dep"] - veri["yenen_dep"])
-        veri["ss_dep"] = clamp(fark_dep * 0.5 + 0.7, 0.5, 2.5)
+        veri["ss_dep"] = clamp(abs(veri["atilan_dep"] - veri["yenen_dep"]) * 0.5 + 0.7, 0.5, 2.5)
 
-    # === İLK GOL ATAR TAHMİNİ ===
     if veri.get("win_1h_ev", 0) > 0 and veri.get("win_1h_dep", 0) > 0:
-        toplam_1h = veri["win_1h_ev"] + veri["win_1h_dep"] + 30  # draw yaklaşık %30
-        if toplam_1h > 0:
-            veri["ilk_gol_atar_ev"] = clamp(veri["win_1h_ev"] / toplam_1h * 100, 20, 80)
-            veri["ilk_gol_atar_dep"] = clamp(veri["win_1h_dep"] / toplam_1h * 100, 20, 80)
+        toplam_1h = veri["win_1h_ev"] + veri["win_1h_dep"] + 30
+        veri["ilk_gol_atar_ev"] = clamp(veri["win_1h_ev"] / toplam_1h * 100, 20, 80)
+        veri["ilk_gol_atar_dep"] = clamp(veri["win_1h_dep"] / toplam_1h * 100, 20, 80)
 
-    # === LEHİNE GOL TAHMİNİ (tg dağılımından) ===
-    if veri.get("tg_23_ev", 0) > 0 or veri.get("tg_4p_ev", 0) > 0:
-        # Toplam gol ortalaması ≈ 2*P(2) + 3*P(3) + 4*P(4+) + ...
-        # Yaklaşık: 1*P(1) + 2*P(2) + 3*P(3) + 4*P(4+)
-        def _tahmin_tg(p1, p2, p23, p4p):
-            return (p1 * 1 + p2 * 2 + p23 * 2.5 + p4p * 4.5) / 100
-        tg_ev = _tahmin_tg(veri.get("tg_1_ev", 0), veri.get("tg_2_ev", 0),
-                           veri.get("tg_23_ev", 0), veri.get("tg_4p_ev", 0))
-        tg_dep = _tahmin_tg(veri.get("tg_1_dep", 0), veri.get("tg_2_dep", 0),
-                            veri.get("tg_23_dep", 0), veri.get("tg_4p_dep", 0))
-        # Bu toplam maç ortalaması, takım başına yaklaşık yarısı
-        if tg_ev > 0:
-            veri["toplam_mac_ort_ev"] = tg_ev
-            veri["lehine_mac_ev"] = tg_ev / 2
-        if tg_dep > 0:
-            veri["toplam_mac_ort_dep"] = tg_dep
-            veri["lehine_mac_dep"] = tg_dep / 2
-
-    # === YENİLMEZLİK (W+D) ===
     if veri.get("galibiyet_ev", 0) > 0 and veri.get("beraberlik_ev", 0) > 0:
         veri["yenilmezlik_ev"] = veri["galibiyet_ev"] + veri["beraberlik_ev"]
     if veri.get("galibiyet_dep", 0) > 0 and veri.get("beraberlik_dep", 0) > 0:
         veri["yenilmezlik_dep"] = veri["galibiyet_dep"] + veri["beraberlik_dep"]
 
-    # === PPG/MPG TAHMİNİ (form_puan varsa) ===
     if veri.get("form_puan_ev", 0) > 0:
         veri["ppg_ev"] = veri["form_puan_ev"]
     if veri.get("form_puan_dep", 0) > 0:
@@ -740,29 +624,21 @@ def sportytrader_veri_cikar(metin):
     return veri, okunamayanlar
 
 
+# ==========================================
+# SERIE A FORMAT ÇIKARICI (eski)
+# ==========================================
 def seri_a_veri_cikar(metin):
-    """Serie A / lig istatistiği formatı — eski sistem."""
     veri = {}; okunamayanlar = []
-
-    # Takımları çıkar
     takim_ev, takim_dep, skor_ev, skor_dep, skor_belli = takimlari_cikar_genel(metin)
     veri["takim_ev"] = takim_ev; veri["takim_dep"] = takim_dep
     veri["skor_ev"] = skor_ev; veri["skor_dep"] = skor_dep; veri["skor_belli"] = skor_belli
-
-    # Lig verileri
     lig = lig_verilerini_cikar(metin)
     veri.update(lig)
-
-    # Diğer kalıplar (eski kodun aynısı)
-    # ... burada uzun eski çıkarım kodları var ama özet geçiyorum
-    # Ana istatistikleri de yakala
-
     veri["format"] = "seria_a"
     return veri, okunamayanlar
 
 
 def takimlari_cikar_genel(metin):
-    """Genel takım + skor çıkarımı."""
     takim_ev = ""; takim_dep = ""
     m = re.search(r'([A-ZÇĞİÖŞÜ][\w\s\.]+?)\n\1\n\d{1,2}:\d{2}\nFT\n(\d+)\n:\n(\d+)\n([A-ZÇĞİÖŞÜ][\w\s\.]+?)\n\4', metin)
     if m: return m.group(1).strip(), m.group(4).strip(), int(m.group(2)), int(m.group(3)), True
@@ -776,7 +652,6 @@ def takimlari_cikar_genel(metin):
 
 
 def lig_verilerini_cikar(metin):
-    """Serie A formatı için lig verileri."""
     lig = {}
     m = re.search(r'Médias de Gols.*?Casa\s*\n\s*([\d.,]+).*?Fora\s*\n\s*([\d.,]+).*?Total\s*\n\s*([\d.,]+)', metin, re.DOTALL | re.IGNORECASE)
     if not m:
@@ -819,24 +694,22 @@ def lig_verilerini_cikar(metin):
 
 
 def metinden_veri_cikar(metin):
-    """Ana giriş — iki formatı da destekler."""
     metin_ori = metin
     metin = metin.replace(",", ".")
 
     # SportyTrader formatı mı?
     if "Main Stats" in metin and "Goals scored per game" in metin:
         veri, okunamayanlar = sportytrader_veri_cikar(metin)
-        # Takım isimleri veya sıralama okunamadıysa manuel ekle
         if not veri.get("takim_ev"): okunamayanlar.append("Takım isimleri (Ev)")
         if not veri.get("takim_dep"): okunamayanlar.append("Takım isimleri (Dep)")
         return veri, okunamayanlar
 
-    # Eski Serie A formatı
+    # Serie A formatı
     if "Médias de Gols" in metin_ori or "Ambos Marcam" in metin_ori:
         veri, okunamayanlar = seri_a_veri_cikar(metin)
         return veri, okunamayanlar
 
-    # Fallback: genel takım/skor
+    # Fallback
     veri = {}; okunamayanlar = []
     takim_ev, takim_dep, skor_ev, skor_dep, skor_belli = takimlari_cikar_genel(metin)
     veri["takim_ev"] = takim_ev; veri["takim_dep"] = takim_dep
@@ -871,7 +744,6 @@ def hesapla_lambda(v):
     hucum_ev = v["xg_ev"] * 0.6 + v["atilan_ev"] * 0.4
     hucum_dep = v["xg_dep"] * 0.6 + v["atilan_dep"] * 0.4
 
-    # ESKİ ÇARPANLAR (clamp'li)
     carpanlar_ev = [
         clamp(1 + (v.get("isabet_ev", 40) - 40) / 500, 0.85, 1.15),
         clamp(1 + (v.get("hucum_hakimiyeti_ev", 50) - 50) / 500, 0.90, 1.10),
@@ -893,17 +765,13 @@ def hesapla_lambda(v):
         clamp(1 + (v.get("lehine_mac_dep", 1.5) - 1.5) / 30, 0.92, 1.08),
     ]
 
-    # === YENİ ÇARPANLAR (SportyTrader verileri) ===
-    # Clean sheets → savunma gücü (yüksek CS = iyi savunma = rakip daha az gol atar, bizim hücumumuz etkilenmez)
-    # Ama karşı takımın savunması için:
+    # SportyTrader ek çarpanlar
     cs_ev = v.get("clean_sheets_ev", 0)
     cs_dep = v.get("clean_sheets_dep", 0)
     if cs_ev > 0 or cs_dep > 0:
-        # Rakip savunmasının ne kadar sağlam olduğu — clean sheets yüksekse hücum zorlanır
-        carpanlar_dep.append(clamp(1 - (cs_ev - 20) / 400, 0.90, 1.10))  # ev CS yüksekse dep zorlanır
-        carpanlar_ev.append(clamp(1 - (cs_dep - 20) / 400, 0.90, 1.10))  # dep CS yüksekse ev zorlanır
+        carpanlar_dep.append(clamp(1 - (cs_ev - 20) / 400, 0.90, 1.10))
+        carpanlar_ev.append(clamp(1 - (cs_dep - 20) / 400, 0.90, 1.10))
 
-    # Team scored → hücum istikrarı
     ts_ev = v.get("team_scored_ev", 0)
     ts_dep = v.get("team_scored_dep", 0)
     if ts_ev > 0:
@@ -911,7 +779,6 @@ def hesapla_lambda(v):
     if ts_dep > 0:
         carpanlar_dep.append(clamp(1 + (ts_dep - 60) / 400, 0.90, 1.10))
 
-    # Form puanı (son 10 maç W/D/L)
     fp_ev = v.get("form_puan_ev", 0)
     fp_dep = v.get("form_puan_dep", 0)
     if fp_ev > 0:
@@ -919,7 +786,6 @@ def hesapla_lambda(v):
     if fp_dep > 0:
         carpanlar_dep.append(clamp(1 + (fp_dep - 1.5) / 10, 0.90, 1.10))
 
-    # İlk yarı galibiyet → ilk gol şansı
     w1h_ev = v.get("win_1h_ev", 0)
     w1h_dep = v.get("win_1h_dep", 0)
     if w1h_ev > 0 and w1h_dep > 0:
@@ -956,14 +822,19 @@ def hesapla_lambda(v):
     lam_ev = max(lam_ev, 0.1)
     lam_dep = max(lam_dep, 0.1)
 
+    # Sağlık kontrolü: lig_toplam gerçekçi değilse atla
     lig_toplam = v.get("lig_ort_toplam", 0.0)
-    if lig_toplam > 0:
+    if 1.0 <= lig_toplam <= 6.0:
         mevcut_ort = lam_ev + lam_dep
         if mevcut_ort > 0:
             olcek = lig_toplam / mevcut_ort
             olcek = clamp(olcek, 0.85, 1.15)
             lam_ev *= olcek
             lam_dep *= olcek
+
+    # Son sağlık kontrolü
+    lam_ev = clamp(lam_ev, 0.1, 5.0)
+    lam_dep = clamp(lam_dep, 0.1, 5.0)
 
     return lam_ev, lam_dep, (guven_ev + guven_dep) / 2
 
@@ -1288,17 +1159,15 @@ def kayit_olustur(v, a):
 
 
 # ==========================================
-# OKUNAN VERİLER PANELİ (helper)
+# OKUNAN VERİLER PANELİ
 # ==========================================
 def okunan_veriler_paneli(v):
-    """Okunan tüm verileri gösterir."""
     format_tip = v.get("format", "bilinmiyor")
 
     if format_tip == "sportytrader":
-        st.markdown("**📊 Ana İstatistikler**")
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown(f"**{v.get('takim_ev', 'Ev')}** (son 10 ev)")
+            st.markdown(f"**{v.get('takim_ev', 'Ev')}**")
             st.markdown(f"- Atılan: **{v.get('atilan_ev', 0):.2f}**")
             st.markdown(f"- Yenen: **{v.get('yenen_ev', 0):.2f}**")
             st.markdown(f"- Clean sheets: **{v.get('clean_sheets_ev', 0):.1f}%**")
@@ -1309,8 +1178,10 @@ def okunan_veriler_paneli(v):
             st.markdown(f"- KG Var: **{v.get('kg_siklik_ev', 0):.1f}%**")
             st.markdown(f"- Üst 2.5: **{v.get('ust25_ev', 0):.1f}%**")
             st.markdown(f"- Form: **{v.get('form_str_ev', '')}**")
+            st.markdown(f"- Sıralama: **{v.get('siralama_ev', 0)}**")
+            st.markdown(f"- Puan: **{v.get('puan_ev', 0)}**")
         with c2:
-            st.markdown(f"**{v.get('takim_dep', 'Dep')}** (son 10 dep)")
+            st.markdown(f"**{v.get('takim_dep', 'Dep')}**")
             st.markdown(f"- Atılan: **{v.get('atilan_dep', 0):.2f}**")
             st.markdown(f"- Yenen: **{v.get('yenen_dep', 0):.2f}**")
             st.markdown(f"- Clean sheets: **{v.get('clean_sheets_dep', 0):.1f}%**")
@@ -1321,10 +1192,12 @@ def okunan_veriler_paneli(v):
             st.markdown(f"- KG Var: **{v.get('kg_siklik_dep', 0):.1f}%**")
             st.markdown(f"- Üst 2.5: **{v.get('ust25_dep', 0):.1f}%**")
             st.markdown(f"- Form: **{v.get('form_str_dep', '')}**")
+            st.markdown(f"- Sıralama: **{v.get('siralama_dep', 0)}**")
+            st.markdown(f"- Puan: **{v.get('puan_dep', 0)}**")
 
         st.divider()
-        st.markdown("**🔬 Detay İstatistikler**")
-        with st.expander("BTTS Detay"):
+        with st.expander("🔬 Detay (BTTS / Gol Dağılımı / İY-MS)"):
+            st.markdown("**BTTS Detay**")
             st.markdown(f"BTTS 1Y: Ev %{v.get('btts_1h_ev', 0):.1f} / Dep %{v.get('btts_1h_dep', 0):.1f}")
             st.markdown(f"BTTS 2Y: Ev %{v.get('btts_2h_ev', 0):.1f} / Dep %{v.get('btts_2h_dep', 0):.1f}")
             st.markdown(f"BTTS + Üst 1.5: Ev %{v.get('btts_over15_ev', 0):.1f} / Dep %{v.get('btts_over15_dep', 0):.1f}")
@@ -1333,29 +1206,26 @@ def okunan_veriler_paneli(v):
             st.markdown(f"Draw + BTTS: Ev %{v.get('draw_btts_ev', 0):.1f} / Dep %{v.get('draw_btts_dep', 0):.1f}")
             st.markdown(f"Lose + BTTS: Ev %{v.get('lose_btts_ev', 0):.1f} / Dep %{v.get('lose_btts_dep', 0):.1f}")
 
-        with st.expander("Toplam Gol Dağılımı"):
+            st.markdown("**Toplam Gol Dağılımı**")
             st.markdown(f"0 gol: Ev %{v.get('tg_0_ev', 0):.1f} / Dep %{v.get('tg_0_dep', 0):.1f}")
             st.markdown(f"1 gol: Ev %{v.get('tg_1_ev', 0):.1f} / Dep %{v.get('tg_1_dep', 0):.1f}")
             st.markdown(f"2 gol: Ev %{v.get('tg_2_ev', 0):.1f} / Dep %{v.get('tg_2_dep', 0):.1f}")
             st.markdown(f"3 gol: Ev %{v.get('tg_3_ev', 0):.1f} / Dep %{v.get('tg_3_dep', 0):.1f}")
             st.markdown(f"4+ gol: Ev %{v.get('tg_4p_ev', 0):.1f} / Dep %{v.get('tg_4p_dep', 0):.1f}")
-            st.markdown(f"0-1 gol: Ev %{v.get('tg_01_ev', 0):.1f} / Dep %{v.get('tg_01_dep', 0):.1f}")
-            st.markdown(f"2-3 gol: Ev %{v.get('tg_23_ev', 0):.1f} / Dep %{v.get('tg_23_dep', 0):.1f}")
 
-        with st.expander("İlk Yarı"):
+            st.markdown("**İlk Yarı**")
             st.markdown(f"Üst 0.5 1Y: Ev %{v.get('ht_ust05_ev', 0):.1f} / Dep %{v.get('ht_ust05_dep', 0):.1f}")
             st.markdown(f"Üst 1.5 1Y: Ev %{v.get('ht_ust15_ev', 0):.1f} / Dep %{v.get('ht_ust15_dep', 0):.1f}")
-            st.markdown(f"Üst 2.5 1Y: Ev %{v.get('ht_ust25_ev', 0):.1f} / Dep %{v.get('ht_ust25_dep', 0):.1f}")
             st.markdown(f"Win 1Y: Ev %{v.get('win_1h_ev', 0):.1f} / Dep %{v.get('win_1h_dep', 0):.1f}")
 
-        with st.expander("İY/MS Kombinasyonları"):
+            st.markdown("**İY/MS**")
             st.markdown(f"W HT → W FT: Ev %{v.get('wht_wft_ev', 0):.1f} / Dep %{v.get('wht_wft_dep', 0):.1f}")
             st.markdown(f"D HT → W FT: Ev %{v.get('dht_wft_ev', 0):.1f} / Dep %{v.get('dht_wft_dep', 0):.1f}")
             st.markdown(f"D HT → D FT: Ev %{v.get('dht_dft_ev', 0):.1f} / Dep %{v.get('dht_dft_dep', 0):.1f}")
             st.markdown(f"L HT → L FT: Ev %{v.get('lht_lft_ev', 0):.1f} / Dep %{v.get('lht_lft_dep', 0):.1f}")
 
     elif format_tip == "seria_a":
-        st.markdown("**📊 Lig Verileri (Serie A formatı)**")
+        st.markdown("**📊 Lig Verileri**")
         st.markdown(f"- Ev gol ort: **{v.get('lig_ort_ev', 0):.2f}**")
         st.markdown(f"- Dep gol ort: **{v.get('lig_ort_dep', 0):.2f}**")
         st.markdown(f"- Toplam: **{v.get('lig_ort_toplam', 0):.2f}**")
@@ -1670,7 +1540,7 @@ elif st.session_state.sayfa == "sonuc":
     st.markdown(f"<h1>🎯 {takim_ev} vs {takim_dep}</h1>", unsafe_allow_html=True)
 
     lig_toplam = v.get("lig_ort_toplam", 0.0)
-    if lig_toplam > 0:
+    if 1.0 <= lig_toplam <= 6.0:
         st.markdown(
             f"<p style='text-align:center; color:gray; font-size:0.75rem;'>"
             f"📊 Lig ort: <b>{lig_toplam:.2f}</b> gol/maç "
@@ -1683,7 +1553,6 @@ elif st.session_state.sayfa == "sonuc":
     if skor_belli:
         st.markdown(f"<p style='text-align:center;'><b>Sonuç: {skor_ev} - {skor_dep}</b></p>", unsafe_allow_html=True)
 
-    # OKUNAN VERİLER
     with st.expander("📋 Okunan Tüm Veriler", expanded=False):
         okunan_veriler_paneli(v)
 
@@ -1720,7 +1589,7 @@ elif st.session_state.sayfa == "sonuc":
             st.markdown(f"**{baslik}**"); st.markdown(metin); st.markdown("")
 
     with st.expander("🎲 Monte Carlo", expanded=False):
-        st.markdown(f"**{a['mc_n']} deneme** • Belirsizlik ±%{BELIRSIZLIK*100:.0f} • Kırmızı kart şoku dahil")
+        st.markdown(f"**{a['mc_n']} deneme** • Belirsizlik ±%{BELIRSIZLIK*100:.0f}")
         c1, c2, c3 = st.columns(3)
         c1.metric("1", f"%{a['p1_mc']:.1f}")
         c2.metric("X", f"%{a['px_mc']:.1f}")
