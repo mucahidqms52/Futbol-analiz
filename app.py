@@ -156,7 +156,7 @@ if "tek_silme_gelecek" not in st.session_state: st.session_state.tek_silme_gelec
 
 
 # ==========================================
-# YARDIMCI
+# YARDIMCI FONKSİYONLAR
 # ==========================================
 def guven_seviyesi_bul(olasilik):
     if olasilik >= ESIK_YUKSEK: return ("yuksek", "🟢", "success", "Yüksek")
@@ -165,16 +165,62 @@ def guven_seviyesi_bul(olasilik):
     return ("cok_dusuk", "⚫", "error", "Düşük")
 
 
-def dogru_mu(tahmin_str, gercek_bool):
-    """Tahmin string ile gerçek bool karşılaştır."""
-    t = str(tahmin_str).lower()
-    if "üst" in t or "ust" in t: return gercek_bool is True
-    if "alt" in t: return gercek_bool is False
-    if "var" in t: return gercek_bool is True
-    if "yok" in t: return gercek_bool is False
-    if t in ["1", "x", "2"] or "ev" in t or "beraber" in t or "dep" in t:
-        return None  # özel işlem
-    return None
+def kayit_yeni_format_mi(g):
+    """Bu kayıt yeni doğruluk formatında mı kontrol eder."""
+    if "dogruluk" not in g or not g["dogruluk"]:
+        return False
+    d = g["dogruluk"]
+    if "genel_1x2" not in d:
+        return False
+    if not isinstance(d.get("genel_1x2"), dict):
+        return False
+    if "tuttu" not in d["genel_1x2"]:
+        return False
+    return True
+
+
+def genel_istatistik(gecmis):
+    """Tüm maçlardan genel doğruluk istatistikleri. (Eski kayıtları atlar.)"""
+    ist = {
+        "1x2": {"dogru": 0, "yanlis": 0},
+        "cifte": {"dogru": 0, "yanlis": 0},
+        "gol": {"dogru": 0, "yanlis": 0},
+        "kg": {"dogru": 0, "yanlis": 0},
+    }
+    for g in gecmis:
+        if not kayit_yeni_format_mi(g):
+            continue
+        d = g["dogruluk"]
+        for key in ["genel_1x2", "genel_cifte", "genel_gol", "genel_kg"]:
+            kisa = key.replace("genel_", "")
+            try:
+                if d[key]["tuttu"] is True: ist[kisa]["dogru"] += 1
+                elif d[key]["tuttu"] is False: ist[kisa]["yanlis"] += 1
+            except (KeyError, TypeError):
+                continue
+    return ist
+
+
+def oneri_istatistik(gecmis):
+    """Sadece önerilerden (%55+) doğruluk istatistikleri. (Eski kayıtları atlar.)"""
+    ist = {
+        "1x2": {"dogru": 0, "yanlis": 0},
+        "cifte": {"dogru": 0, "yanlis": 0},
+        "gol": {"dogru": 0, "yanlis": 0},
+        "kg": {"dogru": 0, "yanlis": 0},
+    }
+    for g in gecmis:
+        if not kayit_yeni_format_mi(g):
+            continue
+        d = g["dogruluk"]
+        for key in ["oneri_1x2", "oneri_cifte", "oneri_gol", "oneri_kg"]:
+            kisa = key.replace("oneri_", "")
+            try:
+                if d[key]["tuttu"] is True: ist[kisa]["dogru"] += 1
+                elif d[key]["tuttu"] is False: ist[kisa]["yanlis"] += 1
+            except (KeyError, TypeError):
+                continue
+    return ist
 
 
 # ==========================================
@@ -204,7 +250,6 @@ MANUEL_ALANLAR = {
 # ==========================================
 def takimlari_cikar(metin):
     takim_ev = ""; takim_dep = ""
-
     m = re.search(r'([A-ZÇĞİÖŞÜ][\w\s\.]+?)\n\1\n\d{1,2}:\d{2}\nFT\n(\d+)\n:\n(\d+)\n([A-ZÇĞİÖŞÜ][\w\s\.]+?)\n\4', metin)
     if m: return m.group(1).strip(), m.group(4).strip(), int(m.group(2)), int(m.group(3)), True
 
@@ -300,7 +345,7 @@ def metinden_veri_cikar(metin):
                 veri["ilk_gol_yer_dep"] = float(m_yer.group(2))
     else: okunamayanlar.append("Form bloğu (PPG/MPG)")
 
-    # Sıralama (3 yöntem)
+    # Sıralama
     idx = metin.find("Tablo Pozisyonu")
     if idx != -1:
         blok = metin[idx:idx+800]
@@ -575,14 +620,12 @@ def takim_form_yorumu(deger):
 
 def monte_carlo_simulasyon(lam_ev_base, lam_dep_base, n=MONTE_CARLO_N):
     sonuclar = {"1": [], "X": [], "2": [], "ust25": [], "kg_var": []}
-
     for _ in range(n):
         sapma_ev = random.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
         sapma_dep = random.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
         lam_ev = lam_ev_base * sapma_ev; lam_dep = lam_dep_base * sapma_dep
         ev_gol = min(MAX_GOL - 1, poisson_random(lam_ev))
         dep_gol = min(MAX_GOL - 1, poisson_random(lam_dep))
-
         if ev_gol > dep_gol: sonuclar["1"].append(1)
         elif ev_gol == dep_gol: sonuclar["X"].append(1)
         else: sonuclar["2"].append(1)
@@ -611,138 +654,66 @@ def risk_seviyesi(genislik):
 
 
 # ==========================================
-# DOĞRULUK HESAPLAMA — İKİ AYRI SİSTEM
+# DOĞRULUK HESAPLAMA — İKİ SİSTEM
 # ==========================================
 def sonuc_hesapla(kayit):
-    """
-    Kayıt için 8 doğruluk sonucu döner:
-    - Genel: genel_1x2, genel_cifte, genel_gol, genel_kg
-    - Öneri: oneri_1x2, oneri_cifte, oneri_gol, oneri_kg
-    
-    Her bir sonuç: True (tuttu), False (tutmadı), None (sayılmaz)
-    """
     v = kayit["veri"]
     analiz = kayit.get("analiz", {})
+    if not v.get("skor_belli", False): return None
 
-    if not v.get("skor_belli", False):
-        return None
+    skor_ev = v.get("skor_ev", 0); skor_dep = v.get("skor_dep", 0)
 
-    skor_ev = v.get("skor_ev", 0)
-    skor_dep = v.get("skor_dep", 0)
-
-    # Gerçek sonuçlar
     if skor_ev > skor_dep: gercek_1x2 = "1"
     elif skor_ev == skor_dep: gercek_1x2 = "X"
     else: gercek_1x2 = "2"
 
     toplam_gol = skor_ev + skor_dep
-    gercek_ust = toplam_gol > 2.5  # True = Üst, False = Alt
+    gercek_ust = toplam_gol > 2.5
+    gercek_kg_var = (skor_ev > 0 and skor_dep > 0)
 
-    gercek_kg_var = (skor_ev > 0 and skor_dep > 0)  # True = Var, False = Yok
-
-    # Analiz verileri
     p1 = analiz.get("p1", 0); px = analiz.get("px", 0); p2 = analiz.get("p2", 0)
     cifte_1x = p1 + px; cifte_x2 = p2 + px; cifte_12 = p1 + p2
     ust_25 = analiz.get("ust_25", 50); alt_25 = 100 - ust_25
     kg_var = analiz.get("kg_var_model", 50); kg_yok = 100 - kg_var
 
-    # GENEL TAHMİNLER (her zaman en yüksek)
+    # GENEL
     genel_1x2 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])[0]
     genel_cifte = max([("1X", cifte_1x), ("X2", cifte_x2), ("12", cifte_12)], key=lambda x: x[1])[0]
     genel_gol = "Üst" if ust_25 > alt_25 else "Alt"
     genel_kg = "Var" if kg_var > kg_yok else "Yok"
 
-    # Genel doğruluk
-    genel_1x2_tuttu = (gercek_1x2 == genel_1x2)
-    genel_cifte_tuttu = (gercek_1x2 in genel_cifte)
-    genel_gol_tuttu = (gercek_ust == (genel_gol == "Üst"))
-    genel_kg_tuttu = (gercek_kg_var == (genel_kg == "Var"))
-
-    # ÖNERİ TAHMİNLERİ (sadece %55+)
-    # 1X2
+    # ÖNERİ (sadece %55+)
     oneri_1x2 = None
     if p1 >= ESIK_ORTA and p1 >= max(px, p2): oneri_1x2 = "1"
     elif px >= ESIK_ORTA and px >= max(p1, p2): oneri_1x2 = "X"
     elif p2 >= ESIK_ORTA and p2 >= max(p1, px): oneri_1x2 = "2"
 
-    # Çifte Şans
     oneri_cifte = None
     if cifte_1x >= ESIK_ORTA and cifte_1x >= max(cifte_x2, cifte_12): oneri_cifte = "1X"
     elif cifte_x2 >= ESIK_ORTA and cifte_x2 >= max(cifte_1x, cifte_12): oneri_cifte = "X2"
     elif cifte_12 >= ESIK_ORTA and cifte_12 >= max(cifte_1x, cifte_x2): oneri_cifte = "12"
 
-    # Gol
     oneri_gol = None
     if ust_25 >= ESIK_ORTA and ust_25 >= alt_25: oneri_gol = "Üst"
     elif alt_25 >= ESIK_ORTA and alt_25 >= ust_25: oneri_gol = "Alt"
 
-    # KG
     oneri_kg = None
     if kg_var >= ESIK_ORTA and kg_var >= kg_yok: oneri_kg = "Var"
     elif kg_yok >= ESIK_ORTA and kg_yok >= kg_var: oneri_kg = "Yok"
 
-    # Öneri doğruluk (None = sayılmaz)
-    oneri_1x2_tuttu = None if oneri_1x2 is None else (gercek_1x2 == oneri_1x2)
-    oneri_cifte_tuttu = None if oneri_cifte is None else (gercek_1x2 in oneri_cifte)
-    oneri_gol_tuttu = None if oneri_gol is None else (gercek_ust == (oneri_gol == "Üst"))
-    oneri_kg_tuttu = None if oneri_kg is None else (gercek_kg_var == (oneri_kg == "Var"))
-
     return {
-        # Genel
-        "genel_1x2": {"tahmin": genel_1x2, "tuttu": genel_1x2_tuttu},
-        "genel_cifte": {"tahmin": genel_cifte, "tuttu": genel_cifte_tuttu},
-        "genel_gol": {"tahmin": genel_gol, "tuttu": genel_gol_tuttu},
-        "genel_kg": {"tahmin": genel_kg, "tuttu": genel_kg_tuttu},
-        # Öneri (None varsa sayılmaz)
-        "oneri_1x2": {"tahmin": oneri_1x2, "tuttu": oneri_1x2_tuttu},
-        "oneri_cifte": {"tahmin": oneri_cifte, "tuttu": oneri_cifte_tuttu},
-        "oneri_gol": {"tahmin": oneri_gol, "tuttu": oneri_gol_tuttu},
-        "oneri_kg": {"tahmin": oneri_kg, "tuttu": oneri_kg_tuttu},
-        # Gerçek sonuç
+        "genel_1x2": {"tahmin": genel_1x2, "tuttu": gercek_1x2 == genel_1x2},
+        "genel_cifte": {"tahmin": genel_cifte, "tuttu": gercek_1x2 in genel_cifte},
+        "genel_gol": {"tahmin": genel_gol, "tuttu": gercek_ust == (genel_gol == "Üst")},
+        "genel_kg": {"tahmin": genel_kg, "tuttu": gercek_kg_var == (genel_kg == "Var")},
+        "oneri_1x2": {"tahmin": oneri_1x2, "tuttu": None if oneri_1x2 is None else (gercek_1x2 == oneri_1x2)},
+        "oneri_cifte": {"tahmin": oneri_cifte, "tuttu": None if oneri_cifte is None else (gercek_1x2 in oneri_cifte)},
+        "oneri_gol": {"tahmin": oneri_gol, "tuttu": None if oneri_gol is None else (gercek_ust == (oneri_gol == "Üst"))},
+        "oneri_kg": {"tahmin": oneri_kg, "tuttu": None if oneri_kg is None else (gercek_kg_var == (oneri_kg == "Var"))},
         "gercek_1x2": gercek_1x2,
         "gercek_gol": "Üst" if gercek_ust else "Alt",
         "gercek_kg": "Var" if gercek_kg_var else "Yok",
     }
-
-
-def genel_istatistik(gecmis):
-    """Tüm maçlardan genel doğruluk istatistikleri."""
-    ist = {
-        "1x2": {"dogru": 0, "yanlis": 0},
-        "cifte": {"dogru": 0, "yanlis": 0},
-        "gol": {"dogru": 0, "yanlis": 0},
-        "kg": {"dogru": 0, "yanlis": 0},
-    }
-    for g in gecmis:
-        if "dogruluk" not in g or not g["dogruluk"]:
-            continue
-        d = g["dogruluk"]
-        for key in ["genel_1x2", "genel_cifte", "genel_gol", "genel_kg"]:
-            kisa = key.replace("genel_", "")
-            if kisa == "cifte": kisa = "cifte"
-            if d[key]["tuttu"] is True: ist[kisa]["dogru"] += 1
-            elif d[key]["tuttu"] is False: ist[kisa]["yanlis"] += 1
-    return ist
-
-
-def oneri_istatistik(gecmis):
-    """Sadece önerilerden (%55+) doğruluk istatistikleri."""
-    ist = {
-        "1x2": {"dogru": 0, "yanlis": 0},
-        "cifte": {"dogru": 0, "yanlis": 0},
-        "gol": {"dogru": 0, "yanlis": 0},
-        "kg": {"dogru": 0, "yanlis": 0},
-    }
-    for g in gecmis:
-        if "dogruluk" not in g or not g["dogruluk"]:
-            continue
-        d = g["dogruluk"]
-        for key in ["oneri_1x2", "oneri_cifte", "oneri_gol", "oneri_kg"]:
-            kisa = key.replace("oneri_", "")
-            if kisa == "cifte": kisa = "cifte"
-            if d[key]["tuttu"] is True: ist[kisa]["dogru"] += 1
-            elif d[key]["tuttu"] is False: ist[kisa]["yanlis"] += 1
-    return ist
 
 
 # ==========================================
@@ -814,24 +785,17 @@ def analiz_hesapla(v):
     lam_ev, lam_dep, guven = hesapla_lambda(v)
     matris = poisson_matris(lam_ev, lam_dep, MAX_GOL)
     olas = matristen_olasilik(matris, MAX_GOL)
-
     toplam = olas["toplam"] or 1
-    p1 = olas["1"] / toplam * 100
-    px = olas["X"] / toplam * 100
-    p2 = olas["2"] / toplam * 100
+    p1 = olas["1"] / toplam * 100; px = olas["X"] / toplam * 100; p2 = olas["2"] / toplam * 100
     cifte_1x = p1 + px; cifte_x2 = p2 + px; cifte_12 = p1 + p2
     tahmini_gol = lam_ev + lam_dep
-    ust_25 = olas["ust_25"] / toplam * 100
-    alt_25 = 100 - ust_25
-    kg_var_model = olas["kg_var"] / toplam * 100
-    kg_yok_model = 100 - kg_var_model
+    ust_25 = olas["ust_25"] / toplam * 100; alt_25 = 100 - ust_25
+    kg_var_model = olas["kg_var"] / toplam * 100; kg_yok_model = 100 - kg_var_model
     kg_ort = (kg_var_model + v["kg_oran"]) / 2
-
     en_olasi = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
     en_guvenli = max([("1X", cifte_1x), ("X2", cifte_x2), ("12", cifte_12)], key=lambda x: x[1])
     en_olasi_gol = "Üst" if ust_25 > alt_25 else "Alt"
     en_olasi_kg = "Var" if kg_var_model > kg_yok_model else "Yok"
-
     return {"lam_ev": lam_ev, "lam_dep": lam_dep, "guven": guven, "matris": matris, "olas": olas,
             "p1": p1, "px": px, "p2": p2, "cifte_1x": cifte_1x, "cifte_x2": cifte_x2, "cifte_12": cifte_12,
             "tahmini_gol": tahmini_gol, "ust_25": ust_25, "alt_25": alt_25,
@@ -841,15 +805,11 @@ def analiz_hesapla(v):
 
 
 def kayit_olustur(v, a):
-    return {
-        "veri": copy.deepcopy(v),
-        "analiz": {
-            "p1": a["p1"], "px": a["px"], "p2": a["p2"],
-            "tahmini_gol": a["tahmini_gol"], "kg_var_model": a["kg_var_model"], "ust_25": a["ust_25"],
-            "en_olasi_1x2": a["en_olasi"][0], "en_guvenli_cifte": a["en_guvenli"][0],
-            "en_olasi_gol": a["en_olasi_gol"], "en_olasi_kg": a["en_olasi_kg"],
-        },
-    }
+    return {"veri": copy.deepcopy(v), "analiz": {
+        "p1": a["p1"], "px": a["px"], "p2": a["p2"],
+        "tahmini_gol": a["tahmini_gol"], "kg_var_model": a["kg_var_model"], "ust_25": a["ust_25"],
+        "en_olasi_1x2": a["en_olasi"][0], "en_guvenli_cifte": a["en_guvenli"][0],
+        "en_olasi_gol": a["en_olasi_gol"], "en_olasi_kg": a["en_olasi_kg"]}}
 
 
 # ==========================================
@@ -928,7 +888,6 @@ if st.session_state.sayfa == "giris":
 elif st.session_state.sayfa == "manuel_giris":
     st.markdown("<h1>📝 Eksik Alanları Doldur</h1>", unsafe_allow_html=True)
     st.warning(f"Aşağıdaki **{len(st.session_state.manuel_bekleyen)}** alan metinden çıkarılamadı:")
-
     v = st.session_state.form_verileri
 
     with st.form("manuel_form"):
@@ -971,45 +930,50 @@ elif st.session_state.sayfa == "manuel_giris":
 # ==========================================
 elif st.session_state.sayfa == "gecmis":
     st.markdown("<h1>📊 Geçmiş Maçlar</h1>", unsafe_allow_html=True)
-
     gecmis = st.session_state.gecmis_analizler
-    skorlu = [g for g in gecmis if g["veri"].get("skor_belli", False) and g.get("dogruluk")]
 
-    if not skorlu:
-        st.info("ℹ️ Henüz skoru belli maç yok.")
+    # Yeni format istatistikleri
+    oneri_ist = oneri_istatistik(gecmis)
+    genel_ist = genel_istatistik(gecmis)
+
+    # Kayıt sayıları
+    toplam = len(gecmis)
+    yeni_fmt = sum(1 for g in gecmis if kayit_yeni_format_mi(g))
+    eski_fmt = toplam - yeni_fmt
+
+    if toplam == 0:
+        st.info("ℹ️ Henüz kayıtlı maç yok.")
     else:
+        if eski_fmt > 0:
+            st.warning(f"⚠️ **{eski_fmt} eski formatta kayıt** var. İstatistiğe katılmıyor. Temizlemek istersen aşağıdaki 'Tüm Geçmişi Temizle' butonunu kullan.")
+
         # ÖNERİ İSTATİSTİKLERİ
         st.markdown("### 🎯 ÖNERİ İSTATİSTİKLERİ")
-        st.caption(f"Sadece %{ESIK_ORTA:.0f}+ önerilerin doğruluğu")
+        st.caption(f"Sadece %{ESIK_ORTA:.0f}+ önerilerin doğruluğu — {yeni_fmt} maç sayılıyor")
 
-        oneri_ist = oneri_istatistik(gecmis)
         toplam_o_dogru = 0; toplam_o_yanlis = 0
 
         col_1, col_2 = st.columns(2)
         with col_1:
             st.markdown("**1X2**")
-            d = oneri_ist["1x2"]["dogru"]; y = oneri_ist["1x2"]["yanlis"]
-            t = d + y
-            st.markdown(f"✅ {d} / ❌ {y}" + (f" → **%{d/t*100:.0f}**" if t > 0 else ""))
+            d = oneri_ist["1x2"]["dogru"]; y = oneri_ist["1x2"]["yanlis"]; t = d + y
+            st.markdown(f"✅ {d} / ❌ {y}" + (f" → **%{d/t*100:.0f}**" if t > 0 else " — öneri yok"))
             toplam_o_dogru += d; toplam_o_yanlis += y
 
             st.markdown("**Çifte Şans**")
-            d = oneri_ist["cifte"]["dogru"]; y = oneri_ist["cifte"]["yanlis"]
-            t = d + y
-            st.markdown(f"✅ {d} / ❌ {y}" + (f" → **%{d/t*100:.0f}**" if t > 0 else ""))
+            d = oneri_ist["cifte"]["dogru"]; y = oneri_ist["cifte"]["yanlis"]; t = d + y
+            st.markdown(f"✅ {d} / ❌ {y}" + (f" → **%{d/t*100:.0f}**" if t > 0 else " — öneri yok"))
             toplam_o_dogru += d; toplam_o_yanlis += y
 
         with col_2:
             st.markdown("**Üst / Alt 2.5**")
-            d = oneri_ist["gol"]["dogru"]; y = oneri_ist["gol"]["yanlis"]
-            t = d + y
-            st.markdown(f"✅ {d} / ❌ {y}" + (f" → **%{d/t*100:.0f}**" if t > 0 else ""))
+            d = oneri_ist["gol"]["dogru"]; y = oneri_ist["gol"]["yanlis"]; t = d + y
+            st.markdown(f"✅ {d} / ❌ {y}" + (f" → **%{d/t*100:.0f}**" if t > 0 else " — öneri yok"))
             toplam_o_dogru += d; toplam_o_yanlis += y
 
             st.markdown("**KG (Var / Yok)**")
-            d = oneri_ist["kg"]["dogru"]; y = oneri_ist["kg"]["yanlis"]
-            t = d + y
-            st.markdown(f"✅ {d} / ❌ {y}" + (f" → **%{d/t*100:.0f}**" if t > 0 else ""))
+            d = oneri_ist["kg"]["dogru"]; y = oneri_ist["kg"]["yanlis"]; t = d + y
+            st.markdown(f"✅ {d} / ❌ {y}" + (f" → **%{d/t*100:.0f}**" if t > 0 else " — öneri yok"))
             toplam_o_dogru += d; toplam_o_yanlis += y
 
         st.divider()
@@ -1023,33 +987,28 @@ elif st.session_state.sayfa == "gecmis":
         st.markdown("### 📊 GENEL İSTATİSTİKLER")
         st.caption("Tüm tahminlerin doğruluğu (eşik üstü + altı)")
 
-        genel_ist = genel_istatistik(gecmis)
         toplam_g_dogru = 0; toplam_g_yanlis = 0
 
         col_3, col_4 = st.columns(2)
         with col_3:
             st.markdown("**1X2**")
-            d = genel_ist["1x2"]["dogru"]; y = genel_ist["1x2"]["yanlis"]
-            t = d + y
+            d = genel_ist["1x2"]["dogru"]; y = genel_ist["1x2"]["yanlis"]; t = d + y
             st.markdown(f"✅ {d} / ❌ {y}" + (f" → **%{d/t*100:.0f}**" if t > 0 else ""))
             toplam_g_dogru += d; toplam_g_yanlis += y
 
             st.markdown("**Çifte Şans**")
-            d = genel_ist["cifte"]["dogru"]; y = genel_ist["cifte"]["yanlis"]
-            t = d + y
+            d = genel_ist["cifte"]["dogru"]; y = genel_ist["cifte"]["yanlis"]; t = d + y
             st.markdown(f"✅ {d} / ❌ {y}" + (f" → **%{d/t*100:.0f}**" if t > 0 else ""))
             toplam_g_dogru += d; toplam_g_yanlis += y
 
         with col_4:
             st.markdown("**Üst / Alt 2.5**")
-            d = genel_ist["gol"]["dogru"]; y = genel_ist["gol"]["yanlis"]
-            t = d + y
+            d = genel_ist["gol"]["dogru"]; y = genel_ist["gol"]["yanlis"]; t = d + y
             st.markdown(f"✅ {d} / ❌ {y}" + (f" → **%{d/t*100:.0f}**" if t > 0 else ""))
             toplam_g_dogru += d; toplam_g_yanlis += y
 
             st.markdown("**KG (Var / Yok)**")
-            d = genel_ist["kg"]["dogru"]; y = genel_ist["kg"]["yanlis"]
-            t = d + y
+            d = genel_ist["kg"]["dogru"]; y = genel_ist["kg"]["yanlis"]; t = d + y
             st.markdown(f"✅ {d} / ❌ {y}" + (f" → **%{d/t*100:.0f}**" if t > 0 else ""))
             toplam_g_dogru += d; toplam_g_yanlis += y
 
@@ -1058,23 +1017,22 @@ elif st.session_state.sayfa == "gecmis":
         if toplam_g > 0:
             st.info(f"📊 **TOPLAM GENEL:** ✅ {toplam_g_dogru} / ❌ {toplam_g_yanlis} → **%{toplam_g_dogru/toplam_g*100:.0f}** (toplam {toplam_g} tahmin)")
 
-        st.divider()
-
         # KARŞILAŞTIRMA
         if toplam_o > 0 and toplam_g > 0:
+            st.divider()
             fark = (toplam_o_dogru/toplam_o*100) - (toplam_g_dogru/toplam_g*100)
-            if fark > 0:
+            if fark > 5:
                 st.success(f"💡 **Öneriler genelden %{fark:.1f} daha başarılı!** Eşik sistemi işe yarıyor.")
             elif fark < -5:
                 st.warning(f"⚠️ **Öneriler genelden %{abs(fark):.1f} daha düşük.** Eşik değeri gözden geçirilebilir.")
+            else:
+                st.info(f"⚖️ Öneriler genel ile benzer performansta (fark: %{fark:+.1f}).")
 
     st.divider()
+    st.markdown(f"### ⚽ Skoru Belli Maçlar ({toplam})")
 
-    # MAÇ LİSTESİ
-    st.markdown(f"### ⚽ Skoru Belli Maçlar ({len(gecmis)})")
-
-    if not gecmis:
-        st.info("ℹ️ Henüz kayıtlı maç yok.")
+    if toplam == 0:
+        st.info("ℹ️ Kayıtlı maç yok.")
     else:
         for i, g in enumerate(reversed(gecmis)):
             idx_gercek = len(gecmis) - 1 - i
@@ -1083,14 +1041,13 @@ elif st.session_state.sayfa == "gecmis":
             takim_dep = v_g.get("takim_dep", "Dep") or "Dep"
             skor_ev = v_g.get("skor_ev", 0); skor_dep = v_g.get("skor_dep", 0)
 
-            # Kaç öneri tuttu?
             d = g.get("dogruluk")
-            if d:
+            if kayit_yeni_format_mi(g):
                 oneri_say = sum(1 for k in ["oneri_1x2", "oneri_cifte", "oneri_gol", "oneri_kg"] if d[k]["tuttu"] is not None)
                 oneri_tutan = sum(1 for k in ["oneri_1x2", "oneri_cifte", "oneri_gol", "oneri_kg"] if d[k]["tuttu"] is True)
                 baslik = f"⚽ {takim_ev} {skor_ev}-{skor_dep} {takim_dep} — Öneri: {oneri_tutan}/{oneri_say}"
             else:
-                baslik = f"⚽ {takim_ev} {skor_ev}-{skor_dep} {takim_dep}"
+                baslik = f"⚽ {takim_ev} {skor_ev}-{skor_dep} {takim_dep} (eski format)"
 
             col_maç, col_sil = st.columns([5, 1])
             with col_maç:
@@ -1155,7 +1112,6 @@ elif st.session_state.sayfa == "gecmis":
 elif st.session_state.sayfa == "gelecek":
     st.markdown("<h1>🔮 Gelecek Maçlar</h1>", unsafe_allow_html=True)
     st.caption("Skor belli olmayan maçlar. Skor gir → Geçmiş'e Taşı.")
-
     gelecek = st.session_state.gelecek_analizler
 
     if not gelecek:
@@ -1225,7 +1181,6 @@ elif st.session_state.sayfa == "sonuc":
     tahmini_gol = a["tahmini_gol"]
     ust_25 = a["ust_25"]; alt_25 = a["alt_25"]
     kg_var_model = a["kg_var_model"]; kg_yok_model = a["kg_yok_model"]
-    en_olasi = a["en_olasi"]; en_guvenli = a["en_guvenli"]
 
     takim_ev = v.get("takim_ev", "") or "Ev Sahibi"
     takim_dep = v.get("takim_dep", "") or "Deplasman"
@@ -1242,38 +1197,23 @@ elif st.session_state.sayfa == "sonuc":
         with st.expander("✅ Tahmin Doğruluğu", expanded=True):
             st.markdown("**🎯 Öneri Tahminleri (%55+)**")
             c1, c2, c3, c4 = st.columns(4)
-            with c1:
-                o = d["oneri_1x2"]
-                if o["tuttu"] is None: st.markdown("⚫ **1X2**"); st.markdown("Öneri yok")
-                else: st.markdown(f"{'✅' if o['tuttu'] else '❌'} **1X2**"); st.markdown(f"{o['tahmin']}")
-            with c2:
-                o = d["oneri_cifte"]
-                if o["tuttu"] is None: st.markdown("⚫ **Çifte**"); st.markdown("Öneri yok")
-                else: st.markdown(f"{'✅' if o['tuttu'] else '❌'} **Çifte**"); st.markdown(f"{o['tahmin']}")
-            with c3:
-                o = d["oneri_gol"]
-                if o["tuttu"] is None: st.markdown("⚫ **Gol**"); st.markdown("Öneri yok")
-                else: st.markdown(f"{'✅' if o['tuttu'] else '❌'} **Gol**"); st.markdown(f"{o['tahmin']}")
-            with c4:
-                o = d["oneri_kg"]
-                if o["tuttu"] is None: st.markdown("⚫ **KG**"); st.markdown("Öneri yok")
-                else: st.markdown(f"{'✅' if o['tuttu'] else '❌'} **KG**"); st.markdown(f"{o['tahmin']}")
+            for col, key in zip([c1, c2, c3, c4], ["oneri_1x2", "oneri_cifte", "oneri_gol", "oneri_kg"]):
+                o = d[key]
+                etiket = {"oneri_1x2": "1X2", "oneri_cifte": "Çifte", "oneri_gol": "Gol", "oneri_kg": "KG"}[key]
+                with col:
+                    if o["tuttu"] is None:
+                        st.markdown(f"⚫ **{etiket}**"); st.markdown("Öneri yok")
+                    else:
+                        st.markdown(f"{'✅' if o['tuttu'] else '❌'} **{etiket}**"); st.markdown(f"{o['tahmin']}")
 
             st.divider()
-            st.markdown("**📊 Genel Tahminler (Tüm)**")
+            st.markdown("**📊 Genel Tahminler**")
             c1, c2, c3, c4 = st.columns(4)
-            with c1:
-                o = d["genel_1x2"]
-                st.markdown(f"{'✅' if o['tuttu'] else '❌'} **1X2**"); st.markdown(f"{o['tahmin']}")
-            with c2:
-                o = d["genel_cifte"]
-                st.markdown(f"{'✅' if o['tuttu'] else '❌'} **Çifte**"); st.markdown(f"{o['tahmin']}")
-            with c3:
-                o = d["genel_gol"]
-                st.markdown(f"{'✅' if o['tuttu'] else '❌'} **Gol**"); st.markdown(f"{o['tahmin']}")
-            with c4:
-                o = d["genel_kg"]
-                st.markdown(f"{'✅' if o['tuttu'] else '❌'} **KG**"); st.markdown(f"{o['tahmin']}")
+            for col, key in zip([c1, c2, c3, c4], ["genel_1x2", "genel_cifte", "genel_gol", "genel_kg"]):
+                o = d[key]
+                etiket = {"genel_1x2": "1X2", "genel_cifte": "Çifte", "genel_gol": "Gol", "genel_kg": "KG"}[key]
+                with col:
+                    st.markdown(f"{'✅' if o['tuttu'] else '❌'} **{etiket}**"); st.markdown(f"{o['tahmin']}")
     else:
         d = None
 
@@ -1317,12 +1257,10 @@ elif st.session_state.sayfa == "sonuc":
     else: st.error(f"{e} **KG {en_kg[0]}** → %{en_kg[1]:.1f} — {m}")
     st.markdown(f"<small>Var: %{kg_var_model:.1f} {guven_seviyesi_bul(kg_var_model)[1]} • Yok: %{kg_yok_model:.1f} {guven_seviyesi_bul(kg_yok_model)[1]}</small>", unsafe_allow_html=True)
 
-    # KAYIT
     if not st.session_state.kayit_yapildi:
         yeni_kayit = kayit_olustur(v, a)
         if d is not None:
             yeni_kayit["dogruluk"] = d
-
         if skor_belli:
             st.session_state.gecmis_analizler.append(yeni_kayit)
             st.session_state.gecmis_analizler = st.session_state.gecmis_analizler[-200:]
@@ -1333,11 +1271,9 @@ elif st.session_state.sayfa == "sonuc":
             st.session_state.gelecek_analizler = st.session_state.gelecek_analizler[-200:]
             gelecek_kaydet(st.session_state.gelecek_analizler)
             st.info("🔮 Gelecek Maçlar'a kaydedildi.")
-
         st.session_state.kayit_yapildi = True
 
     st.divider()
-
     if st.session_state.gecmisten_gelindi:
         if st.button("⬅️ Geçmişe Dön", use_container_width=True):
             st.session_state.sayfa = "gecmis"
