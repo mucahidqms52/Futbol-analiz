@@ -5,6 +5,7 @@ import re
 import random
 import json
 import os
+import time
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
@@ -89,7 +90,7 @@ ESIK_BELIRSIZ = 50.0
 # ==========================================
 VARSAYILAN_VERI = {
     "ppg_ev": 0.0, "mpg_dep": 0.0,
-    "siralama_ev": 1, "siralama_dep": 1,
+    "siralama_ev": 0, "siralama_dep": 0,
     "reaksiyon_ev": 50.0, "reaksiyon_dep": 50.0,
     "xg_ev": 0.0, "xg_dep": 0.0,
     "atilan_ev": 0.0, "atilan_dep": 0.0,
@@ -166,7 +167,6 @@ def guven_seviyesi_bul(olasilik):
 
 
 def kayit_yeni_format_mi(g):
-    """Bu kayıt yeni doğruluk formatında mı kontrol eder."""
     if "dogruluk" not in g or not g["dogruluk"]:
         return False
     d = g["dogruluk"]
@@ -180,7 +180,6 @@ def kayit_yeni_format_mi(g):
 
 
 def genel_istatistik(gecmis):
-    """Tüm maçlardan genel doğruluk istatistikleri. (Eski kayıtları atlar.)"""
     ist = {
         "1x2": {"dogru": 0, "yanlis": 0},
         "cifte": {"dogru": 0, "yanlis": 0},
@@ -202,7 +201,6 @@ def genel_istatistik(gecmis):
 
 
 def oneri_istatistik(gecmis):
-    """Sadece önerilerden (%55+) doğruluk istatistikleri. (Eski kayıtları atlar.)"""
     ist = {
         "1x2": {"dogru": 0, "yanlis": 0},
         "cifte": {"dogru": 0, "yanlis": 0},
@@ -352,7 +350,6 @@ def metinden_veri_cikar(metin):
         blok = metin[idx:idx+800]
         bulundu = False
 
-        # Kalıp 1: "TakımAdı\nSayı" (isim üstte, sayı altta)
         if takim_ev and takim_dep:
             m = re.search(
                 re.escape(takim_ev) + r'\s*\n\s*(\d{1,2})\b' +
@@ -367,7 +364,6 @@ def metinden_veri_cikar(metin):
                     veri["siralama_dep"] = s_dep
                     bulundu = True
 
-        # Kalıp 2: "Sayı\nTakımAdı" (sayı üstte, isim altta)
         if not bulundu and takim_ev and takim_dep:
             m = re.search(
                 r'(\d{1,2})\s*\n\s*' + re.escape(takim_ev) + r'\b' +
@@ -382,7 +378,6 @@ def metinden_veri_cikar(metin):
                     veri["siralama_dep"] = s_dep
                     bulundu = True
 
-        # Kalıp 3: "TakımAdı VS TakımAdı" sonrası iki sayı
         if not bulundu and takim_ev and takim_dep:
             m = re.search(
                 re.escape(takim_ev) + r'\s*\n\s*VS\s*\n\s*' + re.escape(takim_dep) +
@@ -396,7 +391,6 @@ def metinden_veri_cikar(metin):
                     veri["siralama_dep"] = s_dep
                     bulundu = True
 
-        # Kalıp 4: İsim bulunamadıysa ama net "VS" varsa
         if not bulundu:
             m = re.search(
                 r'(\d{1,2})\s*\n\s*[^\n]+\n\s*VS\s*\n\s*[^\n]+\n\s*(\d{1,2})',
@@ -619,8 +613,10 @@ def hesapla_lambda(v):
     form_dep = 1 + (v["mpg_dep"] - 1.5) / 12
     moral_ev = 1 + (v["reaksiyon_ev"] - 50) / 500
     moral_dep = 1 + (v["reaksiyon_dep"] - 50) / 500
-    sira_ev = 1 + (10 - v["siralama_ev"]) / 150
-    sira_dep = 1 + (10 - v["siralama_dep"]) / 150
+
+    s_ev = v.get("siralama_ev", 0); s_dep = v.get("siralama_dep", 0)
+    sira_ev = 1 + (10 - s_ev) / 150 if s_ev > 0 else 1.0
+    sira_dep = 1 + (10 - s_dep) / 150 if s_dep > 0 else 1.0
 
     lam_ev_ham = ((hucum_ev + sav_dep) / 2) * EV_AVANTAJ * form_ev * moral_ev * sira_ev
     lam_dep_ham = ((hucum_dep + sav_ev) / 2) * DEP_DEZAVANTAJ * form_dep * moral_dep * sira_dep
@@ -727,13 +723,11 @@ def sonuc_hesapla(kayit):
     ust_25 = analiz.get("ust_25", 50); alt_25 = 100 - ust_25
     kg_var = analiz.get("kg_var_model", 50); kg_yok = 100 - kg_var
 
-    # GENEL
     genel_1x2 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])[0]
     genel_cifte = max([("1X", cifte_1x), ("X2", cifte_x2), ("12", cifte_12)], key=lambda x: x[1])[0]
     genel_gol = "Üst" if ust_25 > alt_25 else "Alt"
     genel_kg = "Var" if kg_var > kg_yok else "Yok"
 
-    # ÖNERİ (sadece %55+)
     oneri_1x2 = None
     if p1 >= ESIK_ORTA and p1 >= max(px, p2): oneri_1x2 = "1"
     elif px >= ESIK_ORTA and px >= max(p1, p2): oneri_1x2 = "X"
@@ -785,13 +779,14 @@ def detayli_analiz_yorumu(v):
     yorumlar.append(("📈 FORM", txt))
 
     s_ev, s_dep = v["siralama_ev"], v["siralama_dep"]
-    fark_sira = s_dep - s_ev
-    if fark_sira >= 8: txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. **{fark_sira} basamak** ciddi fark."
-    elif fark_sira >= 3: txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. Ev sahibi üstün."
-    elif fark_sira <= -8: txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman **{abs(fark_sira)} basamak** yukarıda."
-    elif fark_sira <= -3: txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman biraz üstün."
-    else: txt = f"Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**)."
-    yorumlar.append(("🏆 SIRALAMA", txt))
+    if s_ev > 0 and s_dep > 0:
+        fark_sira = s_dep - s_ev
+        if fark_sira >= 8: txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. **{fark_sira} basamak** ciddi fark."
+        elif fark_sira >= 3: txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. Ev sahibi üstün."
+        elif fark_sira <= -8: txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman **{abs(fark_sira)} basamak** yukarıda."
+        elif fark_sira <= -3: txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman biraz üstün."
+        else: txt = f"Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**)."
+        yorumlar.append(("🏆 SIRALAMA", txt))
 
     xg_ev, xg_dep = v["xg_ev"], v["xg_dep"]
     if xg_ev - xg_dep >= 0.6: txt = f"Ev sahibi hücumda üretken (**xG {xg_ev:.2f}** vs **{xg_dep:.2f}**)."
@@ -861,6 +856,219 @@ def kayit_olustur(v, a):
         "tahmini_gol": a["tahmini_gol"], "kg_var_model": a["kg_var_model"], "ust_25": a["ust_25"],
         "en_olasi_1x2": a["en_olasi"][0], "en_guvenli_cifte": a["en_guvenli"][0],
         "en_olasi_gol": a["en_olasi_gol"], "en_olasi_kg": a["en_olasi_kg"]}}
+
+
+# ==========================================
+# MAÇ SİMÜLASYONU (2D)
+# ==========================================
+def takim_guc_puani(v):
+    """Verilerden takım güç puanı üretir (0-100 arası)."""
+    def tek_takim(xg, atilan, yenen, form, isabet, hakimiyet, reaksiyon, sira, ss):
+        hucum = xg * 22 + atilan * 18
+        savunma = max(0, 40 - yenen * 18)
+        form_p = form * 12
+        isabet_p = (isabet - 30) * 0.8
+        hak_p = (hakimiyet - 50) * 0.5
+        reak_p = (reaksiyon - 50) * 0.25
+        sira_p = max(-15, (15 - sira) * 1.2) if sira > 0 else 0
+        ss_p = max(-8, (1.5 - ss) * 6)
+        return hucum + savunma + form_p + isabet_p + hak_p + reak_p + sira_p + ss_p
+
+    ev = tek_takim(v["xg_ev"], v["atilan_ev"], v["yenen_ev"], v["ppg_ev"],
+                  v["isabet_ev"], v["hucum_hakimiyeti_ev"], v["reaksiyon_ev"],
+                  v["siralama_ev"], v["ss_ev"])
+    dep = tek_takim(v["xg_dep"], v["atilan_dep"], v["yenen_dep"], v["mpg_dep"],
+                    v["isabet_dep"], v["hucum_hakimiyeti_dep"], v["reaksiyon_dep"],
+                    v["siralama_dep"], v["ss_dep"])
+
+    ev = max(15, min(95, ev))
+    dep = max(15, min(95, dep))
+    return ev, dep
+
+
+def saha_html(top_x, top_y, ev_puan, dep_puan, skor_ev, skor_dep, dakika, olay_metni=""):
+    """Yeşil saha + top + takım güç göstergesi HTML'i üretir."""
+    top_x_pct = top_x * 100
+    top_y_pct = top_y * 100
+
+    return f"""
+    <div style="background: linear-gradient(90deg, #2d7a3e 0%, #3a8f4d 50%, #2d7a3e 100%);
+                border-radius: 8px; padding: 12px; margin: 8px 0;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        <div style="display:flex; justify-content:space-between; color:white; font-weight:bold;
+                    font-size:1rem; margin-bottom:8px; text-shadow:1px 1px 2px rgba(0,0,0,0.5);">
+            <div>🔵 EV ({ev_puan:.0f})</div>
+            <div style="font-size:1.3rem;">{skor_ev} - {skor_dep} &nbsp; | &nbsp; {dakika}'</div>
+            <div>({dep_puan:.0f}) DEP 🔴</div>
+        </div>
+        <div style="position:relative; width:100%; padding-bottom:58%;
+                    background: repeating-linear-gradient(90deg, #388e3c 0%, #388e3c 10%, #43a047 10%, #43a047 20%);
+                    border:3px solid white; border-radius:4px; overflow:hidden;">
+            <div style="position:absolute; left:50%; top:0; bottom:0; width:2px; background:white; transform:translateX(-50%);"></div>
+            <div style="position:absolute; left:50%; top:50%; width:18%; padding-bottom:18%;
+                        border:2px solid white; border-radius:50%; transform:translate(-50%,-50%);"></div>
+            <div style="position:absolute; left:0; top:20%; bottom:20%; width:12%; border:2px solid white; border-left:none; border-radius:0 4px 4px 0;"></div>
+            <div style="position:absolute; right:0; top:20%; bottom:20%; width:12%; border:2px solid white; border-right:none; border-radius:4px 0 0 4px;"></div>
+            <div style="position:absolute; left:{top_x_pct}%; top:{top_y_pct}%;
+                        width:14px; height:14px; background:white; border-radius:50%;
+                        transform:translate(-50%,-50%); box-shadow:0 0 8px rgba(255,255,255,0.9);
+                        transition: all 0.5s ease-out;"></div>
+        </div>
+        <div style="color:white; text-align:center; margin-top:8px; font-size:0.85rem;
+                    min-height:1.2rem; text-shadow:1px 1px 2px rgba(0,0,0,0.5);">
+            {olay_metni if olay_metni else "⚽ Maç devam ediyor..."}
+        </div>
+    </div>
+    """
+
+
+def mac_simule_et(v, yer, toplam_sure=60.0):
+    """1 dakikalık 2D maç simülasyonu."""
+    lam_ev, lam_dep, _ = hesapla_lambda(v)
+    ev_puan, dep_puan = takim_guc_puani(v)
+    toplam_puan = ev_puan + dep_puan
+
+    takim_ev = v.get("takim_ev", "") or "Ev Sahibi"
+    takim_dep = v.get("takim_dep", "") or "Deplasman"
+
+    # Topa sahip olma olasılığı güç puanına göre
+    ev_top_olasilik = ev_puan / toplam_puan
+
+    # 90 dakika boyunca gol beklentisi
+    ev_gol_hedef = lam_ev
+    dep_gol_hedef = lam_dep
+
+    # Her karede gol olasılığı (90 dk boyunca toplam lam_ev kadar)
+    # Simülasyon KARE sayısı (60 sn * ~4 kare/sn = 240 kare)
+    kare_sayisi = 60
+    ev_gol_kar = ev_gol_hedef / kare_sayisi
+    dep_gol_kar = dep_gol_hedef / kare_sayisi
+
+    skor_ev = 0
+    skor_dep = 0
+    olaylar = []
+    sut_ev = 0
+    sut_dep = 0
+    korner_ev = 0
+    korner_dep = 0
+
+    # Rastgele başlangıç
+    top_x = 0.5; top_y = 0.5
+    top_ev_tarafinda = random.random() < ev_top_olasilik
+
+    baslangic = time.time()
+
+    for kare in range(kare_sayisi + 1):
+        gecen = time.time() - baslangic
+        hedef_gecen = (kare / kare_sayisi) * toplam_sure
+        if gecen < hedef_gecen:
+            time.sleep(hedef_gecen - gecen)
+
+        dakika = int((kare / kare_sayisi) * 90)
+        if dakika == 0: dakika = 1
+        if dakika > 90: dakika = 90
+
+        # Top pozisyonu — takım gücüne göre ev/dep tarafına kayar
+        if top_ev_tarafinda:
+            # Ev sahibi hücumda — top dep kalesine yakın (x: 0.5-0.95)
+            hedef_x = random.uniform(0.5, 0.95)
+        else:
+            # Dep hücumda — top ev kalesine yakın (x: 0.05-0.5)
+            hedef_x = random.uniform(0.05, 0.5)
+        hedef_y = random.uniform(0.15, 0.85)
+
+        # Yumuşak geçiş
+        top_x = top_x * 0.4 + hedef_x * 0.6
+        top_y = top_y * 0.4 + hedef_y * 0.6
+
+        # Taraf değişimi — güçlü takım daha uzun süre topla oynar
+        degisim_olasilik = 0.25 + abs(ev_top_olasilik - 0.5) * 0.1
+        if random.random() < degisim_olasilik * 0.5:
+            top_ev_tarafinda = not top_ev_tarafinda
+
+        olay_metni = ""
+        yeni_olay = None
+
+        # Şut olayı — pozisyona göre
+        if top_ev_tarafinda and top_x > 0.75:
+            sut_olasilik = 0.10 + (ev_puan / 100) * 0.10
+            if random.random() < sut_olasilik:
+                sut_ev += 1
+                if random.random() < 0.35:
+                    korner_ev += 1
+                    yeni_olay = f"{dakika}' ⚑ Korner ({takim_ev})"
+        elif not top_ev_tarafinda and top_x < 0.25:
+            sut_olasilik = 0.10 + (dep_puan / 100) * 0.10
+            if random.random() < sut_olasilik:
+                sut_dep += 1
+                if random.random() < 0.35:
+                    korner_dep += 1
+                    yeni_olay = f"{dakika}' ⚑ Korner ({takim_dep})"
+
+        # Gol olayı
+        if top_ev_tarafinda and top_x > 0.80:
+            gol_olasilik = ev_gol_kar * 1.5
+            if random.random() < gol_olasilik:
+                skor_ev += 1
+                yeni_olay = f"{dakika}' ⚽ GOL! {takim_ev} — {skor_ev}-{skor_dep}"
+        elif not top_ev_tarafinda and top_x < 0.20:
+            gol_olasilik = dep_gol_kar * 1.5
+            if random.random() < gol_olasilik:
+                skor_dep += 1
+                yeni_olay = f"{dakika}' ⚽ GOL! {takim_dep} — {skor_ev}-{skor_dep}"
+
+        # Kart olayı (nadir)
+        if not yeni_olay and random.random() < 0.02:
+            kart_takim = takim_ev if random.random() < 0.5 else takim_dep
+            yeni_olay = f"{dakika}' 🟨 Sarı kart ({kart_takim})"
+
+        if yeni_olay:
+            olaylar.append(yeni_olay)
+            olay_metni = yeni_olay
+        elif olaylar:
+            # Son 3 olayı göster
+            olay_metni = " • ".join(olaylar[-2:])
+
+        # Ekrana yaz
+        html = saha_html(top_x, top_y, ev_puan, dep_puan, skor_ev, skor_dep, dakika, olay_metni)
+        yer.markdown(html, unsafe_allow_html=True)
+
+    # Maç bitti — özet
+    time.sleep(0.5)
+
+    ozet = f"""
+    <div style="background:#1a1a2e; padding:14px; border-radius:8px; color:white; margin-top:10px;">
+        <div style="text-align:center; font-size:1.2rem; font-weight:bold; margin-bottom:10px;">
+            🏁 MAÇ SONU — {takim_ev} {skor_ev} - {skor_dep} {takim_dep}
+        </div>
+        <div style="display:flex; justify-content:space-around; font-size:0.9rem; margin-top:8px;">
+            <div style="text-align:center;">
+                <div style="color:#64b5f6; font-weight:bold;">{takim_ev}</div>
+                <div>Şut: {sut_ev}</div>
+                <div>Korner: {korner_ev}</div>
+                <div>Güç: {ev_puan:.0f}</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="color:#ef5350; font-weight:bold;">{takim_dep}</div>
+                <div>Şut: {sut_dep}</div>
+                <div>Korner: {korner_dep}</div>
+                <div>Güç: {dep_puan:.0f}</div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:12px; font-size:0.8rem; color:#aaa;">
+            Toplam şut: {sut_ev + sut_dep} • Toplam korner: {korner_ev + korner_dep}
+        </div>
+    </div>
+    """
+    yer.markdown(ozet, unsafe_allow_html=True)
+
+    return {
+        "skor_ev": skor_ev, "skor_dep": skor_dep,
+        "sut_ev": sut_ev, "sut_dep": sut_dep,
+        "korner_ev": korner_ev, "korner_dep": korner_dep,
+        "ev_puan": ev_puan, "dep_puan": dep_puan,
+        "olaylar": olaylar,
+    }
 
 
 # ==========================================
@@ -983,11 +1191,9 @@ elif st.session_state.sayfa == "gecmis":
     st.markdown("<h1>📊 Geçmiş Maçlar</h1>", unsafe_allow_html=True)
     gecmis = st.session_state.gecmis_analizler
 
-    # Yeni format istatistikleri
     oneri_ist = oneri_istatistik(gecmis)
     genel_ist = genel_istatistik(gecmis)
 
-    # Kayıt sayıları
     toplam = len(gecmis)
     yeni_fmt = sum(1 for g in gecmis if kayit_yeni_format_mi(g))
     eski_fmt = toplam - yeni_fmt
@@ -996,9 +1202,8 @@ elif st.session_state.sayfa == "gecmis":
         st.info("ℹ️ Henüz kayıtlı maç yok.")
     else:
         if eski_fmt > 0:
-            st.warning(f"⚠️ **{eski_fmt} eski formatta kayıt** var. İstatistiğe katılmıyor. Temizlemek istersen aşağıdaki 'Tüm Geçmişi Temizle' butonunu kullan.")
+            st.warning(f"⚠️ **{eski_fmt} eski formatta kayıt** var. İstatistiğe katılmıyor.")
 
-        # ÖNERİ İSTATİSTİKLERİ
         st.markdown("### 🎯 ÖNERİ İSTATİSTİKLERİ")
         st.caption(f"Sadece %{ESIK_ORTA:.0f}+ önerilerin doğruluğu — {yeni_fmt} maç sayılıyor")
 
@@ -1034,7 +1239,6 @@ elif st.session_state.sayfa == "gecmis":
 
         st.divider()
 
-        # GENEL İSTATİSTİKLER
         st.markdown("### 📊 GENEL İSTATİSTİKLER")
         st.caption("Tüm tahminlerin doğruluğu (eşik üstü + altı)")
 
@@ -1068,14 +1272,13 @@ elif st.session_state.sayfa == "gecmis":
         if toplam_g > 0:
             st.info(f"📊 **TOPLAM GENEL:** ✅ {toplam_g_dogru} / ❌ {toplam_g_yanlis} → **%{toplam_g_dogru/toplam_g*100:.0f}** (toplam {toplam_g} tahmin)")
 
-        # KARŞILAŞTIRMA
         if toplam_o > 0 and toplam_g > 0:
             st.divider()
             fark = (toplam_o_dogru/toplam_o*100) - (toplam_g_dogru/toplam_g*100)
             if fark > 5:
                 st.success(f"💡 **Öneriler genelden %{fark:.1f} daha başarılı!** Eşik sistemi işe yarıyor.")
             elif fark < -5:
-                st.warning(f"⚠️ **Öneriler genelden %{abs(fark):.1f} daha düşük.** Eşik değeri gözden geçirilebilir.")
+                st.warning(f"⚠️ **Öneriler genelden %{abs(fark):.1f} daha düşük.**")
             else:
                 st.info(f"⚖️ Öneriler genel ile benzer performansta (fark: %{fark:+.1f}).")
 
@@ -1096,7 +1299,7 @@ elif st.session_state.sayfa == "gecmis":
             if kayit_yeni_format_mi(g):
                 oneri_say = sum(1 for k in ["oneri_1x2", "oneri_cifte", "oneri_gol", "oneri_kg"] if d[k]["tuttu"] is not None)
                 oneri_tutan = sum(1 for k in ["oneri_1x2", "oneri_cifte", "oneri_gol", "oneri_kg"] if d[k]["tuttu"] is True)
-                baslik = f"⚽ {takim_ev} {skor_ev}-{skor_dep} {takim_dep} — Öneri: {oneri_tutan}/{oneri_sayi if False else oneri_say}"
+                baslik = f"⚽ {takim_ev} {skor_ev}-{skor_dep} {takim_dep} — Öneri: {oneri_tutan}/{oneri_say}"
             else:
                 baslik = f"⚽ {takim_ev} {skor_ev}-{skor_dep} {takim_dep} (eski format)"
 
@@ -1306,6 +1509,26 @@ elif st.session_state.sayfa == "sonuc":
     if s in ["yuksek", "orta"]: st.success(f"{e} **KG {en_kg[0]}** → %{en_kg[1]:.1f} — {m}")
     else: st.error(f"{e} **KG {en_kg[0]}** → %{en_kg[1]:.1f} — {m}")
     st.markdown(f"<small>Var: %{kg_var_model:.1f} {guven_seviyesi_bul(kg_var_model)[1]} • Yok: %{kg_yok_model:.1f} {guven_seviyesi_bul(kg_yok_model)[1]}</small>", unsafe_allow_html=True)
+
+    # ==========================================
+    # MAÇ SİMÜLASYONU BUTONU
+    # ==========================================
+    st.divider()
+    st.markdown("## 🎬 Canlı Maç Simülasyonu")
+    st.caption("Girdiğin verilere göre 1 dakikalık 2D maç simülasyonu.")
+
+    sim_col1, sim_col2 = st.columns([3, 1])
+    with sim_col1:
+        simulasyon_btn = st.button("🎬 Maçı İzle (1 dk)", use_container_width=True, type="primary")
+    with sim_col2:
+        st.markdown(f"<div style='text-align:center; padding-top:6px; font-size:0.75rem; color:gray;'>~60 saniye</div>", unsafe_allow_html=True)
+
+    if simulasyon_btn:
+        yer = st.empty()
+        with st.spinner("Maç başlıyor..."):
+            time.sleep(0.5)
+        mac_simule_et(v, yer, toplam_sure=60.0)
+        st.success("✅ Maç tamamlandı!")
 
     if not st.session_state.kayit_yapildi:
         yeni_kayit = kayit_olustur(v, a)
