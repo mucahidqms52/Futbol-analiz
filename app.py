@@ -84,8 +84,13 @@ ESIK_YUKSEK = 65.0
 ESIK_ORTA = 55.0
 ESIK_BELIRSIZ = 50.0
 
-HARMAN_MODEL = 0.40
-HARMAN_LIG = 0.60
+# HARMAN AĞIRLIKLARI (toplam = 1.0)
+HARMAN_POISSON = 0.30
+HARMAN_LIG = 0.40
+HARMAN_MC = 0.30
+
+# MC deneme sayısı
+MONTE_CARLO_N = 10000
 
 # ==========================================
 # VARSAYILAN VERİ
@@ -143,7 +148,6 @@ SAVUNMA_MAP = {
 EV_AVANTAJ = 1.06
 DEP_DEZAVANTAJ = 0.97
 MAX_GOL = 8
-MONTE_CARLO_N = 5000
 BELIRSIZLIK = 0.25
 
 # ==========================================
@@ -180,10 +184,17 @@ def geo_ort(carpanlar):
     return carpim ** (1.0 / len(carpanlar))
 
 
-def harmanla(model_deger, lig_deger, model_agirlik=HARMAN_MODEL):
-    if lig_deger <= 0:
-        return model_deger
-    return model_deger * model_agirlik + lig_deger * (1 - model_agirlik)
+def uc_har_man(p_m, p_l, p_mc):
+    """Poisson × Lig × Monte Carlo üçlü harmanı. Değeri 0 olan atlanır."""
+    parcalar = [(p_m, HARMAN_POISSON)]
+    if p_l > 0:
+        parcalar.append((p_l, HARMAN_LIG))
+    if p_mc > 0:
+        parcalar.append((p_mc, HARMAN_MC))
+    toplam_agirlik = sum(w for _, w in parcalar)
+    if toplam_agirlik <= 0:
+        return p_m
+    return sum(v * w for v, w in parcalar) / toplam_agirlik
 
 
 def guven_seviyesi_bul(olasilik):
@@ -782,7 +793,8 @@ def mac_ici_sok(lam_ev, lam_dep):
 
 
 def monte_carlo_simulasyon(lam_ev_base, lam_dep_base, n=MONTE_CARLO_N):
-    sonuclar = {"1": [], "X": [], "2": [], "ust25": [], "kg_var": []}
+    """Monte Carlo: 1X2 + Üst/Alt + KG hepsi için olasılık üretir."""
+    sayac = {"1": 0, "X": 0, "2": 0, "ust25": 0, "kg_var": 0}
     for _ in range(n):
         sapma_ev = random.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
         sapma_dep = random.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
@@ -792,25 +804,25 @@ def monte_carlo_simulasyon(lam_ev_base, lam_dep_base, n=MONTE_CARLO_N):
 
         ev_gol = min(MAX_GOL - 1, poisson_random(lam_ev))
         dep_gol = min(MAX_GOL - 1, poisson_random(lam_dep))
-        if ev_gol > dep_gol: sonuclar["1"].append(1)
-        elif ev_gol == dep_gol: sonuclar["X"].append(1)
-        else: sonuclar["2"].append(1)
-        if ev_gol + dep_gol > 2.5: sonuclar["ust25"].append(1)
-        if ev_gol > 0 and dep_gol > 0: sonuclar["kg_var"].append(1)
+        if ev_gol > dep_gol: sayac["1"] += 1
+        elif ev_gol == dep_gol: sayac["X"] += 1
+        else: sayac["2"] += 1
+        if ev_gol + dep_gol > 2.5: sayac["ust25"] += 1
+        if ev_gol > 0 and dep_gol > 0: sayac["kg_var"] += 1
 
-    def hesapla_ci(veri, n):
-        if not veri: return 0, 0, 0, 0
-        basari = len(veri); oran = basari / n * 100
-        z = 1.645; p = basari / n
-        alt = (p + z*z/(2*n) - z * math.sqrt(p*(1-p)/n + z*z/(4*n*n))) / (1 + z*z/n) * 100
-        ust = (p + z*z/(2*n) + z * math.sqrt(p*(1-p)/n + z*z/(4*n*n))) / (1 + z*z/n) * 100
-        return oran, alt, ust, ust - alt
+    def yuzde(s):
+        return s / n * 100 if n > 0 else 0
 
-    sonuc_ci = {}
-    for k in sonuclar:
-        oran, alt, ust, gen = hesapla_ci(sonuclar[k], n)
-        sonuc_ci[k] = {"oran": oran, "alt": alt, "ust": ust, "genislik": gen}
-    return sonuc_ci
+    return {
+        "p1": yuzde(sayac["1"]),
+        "px": yuzde(sayac["X"]),
+        "p2": yuzde(sayac["2"]),
+        "ust25": yuzde(sayac["ust25"]),
+        "alt25": 100 - yuzde(sayac["ust25"]),
+        "kg_var": yuzde(sayac["kg_var"]),
+        "kg_yok": 100 - yuzde(sayac["kg_var"]),
+        "n": n,
+    }
 
 
 # ==========================================
@@ -960,7 +972,7 @@ def sonuc_hesapla(kayit):
 
 
 # ==========================================
-# YORUM (EKLENDİ)
+# YORUM
 # ==========================================
 def detayli_analiz_yorumu(v):
     yorumlar = []
@@ -1026,7 +1038,7 @@ def detayli_analiz_yorumu(v):
 
 
 # ==========================================
-# ANALİZ (B HARMAN)
+# ANALİZ (3'LÜ HARMAN: POISSON + LİG + MC)
 # ==========================================
 def analiz_hesapla(v):
     lam_ev, lam_dep, guven = hesapla_lambda(v)
@@ -1034,38 +1046,59 @@ def analiz_hesapla(v):
     olas = matristen_olasilik(matris, MAX_GOL)
     toplam = olas["toplam"] or 1
 
-    p1_m = olas["1"] / toplam * 100
-    px_m = olas["X"] / toplam * 100
-    p2_m = olas["2"] / toplam * 100
-    ust25_m = olas["ust_25"] / toplam * 100
-    kg_var_m = olas["kg_var"] / toplam * 100
+    # 1) POISSON
+    p1_po = olas["1"] / toplam * 100
+    px_po = olas["X"] / toplam * 100
+    p2_po = olas["2"] / toplam * 100
+    ust25_po = olas["ust_25"] / toplam * 100
+    kg_var_po = olas["kg_var"] / toplam * 100
 
+    # 2) LİG
     lig_kg = v.get("lig_kg", 0.0)
     lig_ust25 = v.get("lig_ust25", 0.0)
     lig_ilk_gol_ev = v.get("lig_ilk_gol_ev", 0.0)
     lig_ilk_gol_dep = v.get("lig_ilk_gol_dep", 0.0)
 
+    # Lig 1X2 — ilk gol verisinden türetilmiş hafif etki (lig 1X2 direkt vermiyor)
     if lig_ilk_gol_ev > 0 and lig_ilk_gol_dep > 0:
-        lig_toplam = lig_ilk_gol_ev + lig_ilk_gol_dep
-        oran_ev = lig_ilk_gol_ev / lig_toplam
-        oran_dep = lig_ilk_gol_dep / lig_toplam
-        p1_lig_etki = p1_m * (1 + (oran_ev - 0.5) * 0.10)
-        p2_lig_etki = p2_m * (1 + (oran_dep - 0.5) * 0.10)
-        px_lig_etki = px_m
-        toplam_etki = p1_lig_etki + px_lig_etki + p2_lig_etki
-        if toplam_etki > 0:
-            p1 = p1_lig_etki / toplam_etki * 100
-            px = px_lig_etki / toplam_etki * 100
-            p2 = p2_lig_etki / toplam_etki * 100
+        lig_top = lig_ilk_gol_ev + lig_ilk_gol_dep
+        oran_ev = lig_ilk_gol_ev / lig_top
+        oran_dep = lig_ilk_gol_dep / lig_top
+        # İlk gol → kazanma olasılığı hafif bağlantı
+        p1_lig = p1_po * (1 + (oran_ev - 0.5) * 0.15)
+        p2_lig = p2_po * (1 + (oran_dep - 0.5) * 0.15)
+        px_lig = px_po
+        t = p1_lig + px_lig + p2_lig
+        if t > 0:
+            p1_lig = p1_lig / t * 100
+            px_lig = px_lig / t * 100
+            p2_lig = p2_lig / t * 100
         else:
-            p1, px, p2 = p1_m, px_m, p2_m
+            p1_lig, px_lig, p2_lig = 0, 0, 0
     else:
-        p1, px, p2 = p1_m, px_m, p2_m
+        p1_lig = px_lig = p2_lig = 0
 
-    ust_25 = harmanla(ust25_m, lig_ust25)
+    # 3) MONTE CARLO
+    mc = monte_carlo_simulasyon(lam_ev, lam_dep, MONTE_CARLO_N)
+    p1_mc = mc["p1"]; px_mc = mc["px"]; p2_mc = mc["p2"]
+    ust25_mc = mc["ust25"]; kg_var_mc = mc["kg_var"]
+
+    # 1X2 ÜÇLÜ HARMAN (MC + Lig varsa)
+    p1 = uc_har_man(p1_po, p1_lig, p1_mc)
+    px = uc_har_man(px_po, px_lig, px_mc)
+    p2 = uc_har_man(p2_po, p2_lig, p2_mc)
+    t = p1 + px + p2
+    if t > 0:
+        p1 = p1 / t * 100
+        px = px / t * 100
+        p2 = p2 / t * 100
+
+    # ÜST 2.5 ÜÇLÜ HARMAN
+    ust_25 = uc_har_man(ust25_po, lig_ust25, ust25_mc)
     alt_25 = 100 - ust_25
 
-    kg_var_model = harmanla(kg_var_m, lig_kg)
+    # KG ÜÇLÜ HARMAN
+    kg_var_model = uc_har_man(kg_var_po, lig_kg, kg_var_mc)
     kg_yok_model = 100 - kg_var_model
 
     cifte_1x = p1 + px; cifte_x2 = p2 + px; cifte_12 = p1 + p2
@@ -1083,8 +1116,14 @@ def analiz_hesapla(v):
             "kg_var_model": kg_var_model, "kg_yok_model": kg_yok_model, "kg_ort": kg_ort,
             "en_olasi": en_olasi, "en_guvenli": en_guvenli,
             "en_olasi_gol": en_olasi_gol, "en_olasi_kg": en_olasi_kg,
-            "p1_m": p1_m, "px_m": px_m, "p2_m": p2_m,
-            "ust25_m": ust25_m, "kg_var_m": kg_var_m}
+            # KARŞILAŞTIRMA İÇİN 3 KAYNAK
+            "p1_po": p1_po, "px_po": px_po, "p2_po": p2_po,
+            "ust25_po": ust25_po, "kg_var_po": kg_var_po,
+            "p1_lig": p1_lig, "px_lig": px_lig, "p2_lig": p2_lig,
+            "ust25_lig": lig_ust25, "kg_var_lig": lig_kg,
+            "p1_mc": p1_mc, "px_mc": px_mc, "p2_mc": p2_mc,
+            "ust25_mc": ust25_mc, "kg_var_mc": kg_var_mc,
+            "mc_n": mc["n"]}
 
 
 def kayit_olustur(v, a):
@@ -1500,7 +1539,7 @@ elif st.session_state.sayfa == "sonuc":
             st.markdown(f"**{baslik}**"); st.markdown(metin); st.markdown("")
 
         st.divider()
-        st.markdown("**📊 Lig Verisi (Harman)**")
+        st.markdown("**📊 Lig Verisi**")
         lig_toplam = v.get("lig_ort_toplam", 0.0)
         if lig_toplam > 0:
             st.markdown(f"- **Gol ortalaması:** {lig_toplam:.2f} (Ev {v.get('lig_ort_ev', 0):.2f} / Dep {v.get('lig_ort_dep', 0):.2f})")
@@ -1510,47 +1549,60 @@ elif st.session_state.sayfa == "sonuc":
                 st.markdown(f"- **KG Var:** %{v.get('lig_kg', 0):.1f} • **KG Yok:** %{v.get('lig_kg_yok', 0):.1f}")
             if v.get('lig_ilk_gol_ev', 0) > 0:
                 st.markdown(f"- **İlk golü ev atar:** %{v.get('lig_ilk_gol_ev', 0):.1f} • **İlk golü dep atar:** %{v.get('lig_ilk_gol_dep', 0):.1f}")
-            st.caption(f"Harman: Model %{HARMAN_MODEL*100:.0f} + Lig %{HARMAN_LIG*100:.0f}")
 
     with st.expander("🎲 Monte Carlo", expanded=False):
-        mc = monte_carlo_simulasyon(a["lam_ev"], a["lam_dep"], MONTE_CARLO_N)
+        st.markdown(f"**{a['mc_n']} deneme** • Belirsizlik ±%{BELIRSIZLIK*100:.0f} • Kırmızı kart şoku dahil")
+        st.markdown("")
         c1, c2, c3 = st.columns(3)
-        c1.metric("1", f"%{mc['1']['oran']:.1f}")
-        c2.metric("X", f"%{mc['X']['oran']:.1f}")
-        c3.metric("2", f"%{mc['2']['oran']:.1f}")
-        st.caption(f"Belirsizlik: ±%{BELIRSIZLIK*100:.0f} • Kırmızı kart şoku dahil")
+        c1.metric("1", f"%{a['p1_mc']:.1f}")
+        c2.metric("X", f"%{a['px_mc']:.1f}")
+        c3.metric("2", f"%{a['p2_mc']:.1f}")
+        c4, c5 = st.columns(2)
+        c4.metric("Üst 2.5", f"%{a['ust25_mc']:.1f}")
+        c5.metric("Alt 2.5", f"%{100 - a['ust25_mc']:.1f}")
+        c6, c7 = st.columns(2)
+        c6.metric("KG Var", f"%{a['kg_var_mc']:.1f}")
+        c7.metric("KG Yok", f"%{100 - a['kg_var_mc']:.1f}")
 
     st.divider()
     st.markdown("## 🏆 FİNAL ÖNERİ")
 
-    if lig_toplam > 0 or v.get("lig_ust25", 0) > 0:
-        with st.expander("🔬 Model vs Lig Karşılaştırması", expanded=False):
-            col_m, col_l, col_f = st.columns(3)
-            with col_m:
-                st.markdown("**🤖 Model**")
-                st.markdown(f"1: %{a['p1_m']:.1f}")
-                st.markdown(f"X: %{a['px_m']:.1f}")
-                st.markdown(f"2: %{a['p2_m']:.1f}")
-                st.markdown(f"Üst 2.5: %{a['ust25_m']:.1f}")
-                st.markdown(f"KG Var: %{a['kg_var_m']:.1f}")
-            with col_l:
-                st.markdown("**📊 Lig**")
-                if v.get('lig_ilk_gol_ev', 0) > 0:
-                    st.markdown(f"İlk gol Ev: %{v.get('lig_ilk_gol_ev', 0):.1f}")
-                    st.markdown(f"İlk gol Dep: %{v.get('lig_ilk_gol_dep', 0):.1f}")
-                else:
-                    st.markdown("— veri yok")
-                if v.get('lig_ust25', 0) > 0:
-                    st.markdown(f"Üst 2.5: %{v.get('lig_ust25', 0):.1f}")
-                if v.get('lig_kg', 0) > 0:
-                    st.markdown(f"KG Var: %{v.get('lig_kg', 0):.1f}")
-            with col_f:
-                st.markdown("**🎯 Final**")
-                st.markdown(f"1: %{p1:.1f}")
-                st.markdown(f"X: %{px:.1f}")
-                st.markdown(f"2: %{p2:.1f}")
-                st.markdown(f"Üst 2.5: %{ust_25:.1f}")
-                st.markdown(f"KG Var: %{kg_var_model:.1f}")
+    # 4 SÜTUNLU KARŞILAŞTIRMA
+    with st.expander("🔬 Kaynak Karşılaştırması (Poisson / Lig / Monte Carlo / Final)", expanded=False):
+        c_po, c_lg, c_mc, c_fin = st.columns(4)
+        with c_po:
+            st.markdown("**🤖 Poisson**")
+            st.markdown(f"1: %{a['p1_po']:.1f}")
+            st.markdown(f"X: %{a['px_po']:.1f}")
+            st.markdown(f"2: %{a['p2_po']:.1f}")
+            st.markdown(f"Üst: %{a['ust25_po']:.1f}")
+            st.markdown(f"KG Var: %{a['kg_var_po']:.1f}")
+        with c_lg:
+            st.markdown("**📊 Lig**")
+            if a['p1_lig'] > 0:
+                st.markdown(f"1: %{a['p1_lig']:.1f}")
+                st.markdown(f"X: %{a['px_lig']:.1f}")
+                st.markdown(f"2: %{a['p2_lig']:.1f}")
+            else:
+                st.markdown("1X2: —")
+            st.markdown(f"Üst: %{a['ust25_lig']:.1f}" if a['ust25_lig'] > 0 else "Üst: —")
+            st.markdown(f"KG Var: %{a['kg_var_lig']:.1f}" if a['kg_var_lig'] > 0 else "KG Var: —")
+        with c_mc:
+            st.markdown("**🎲 Monte Carlo**")
+            st.markdown(f"1: %{a['p1_mc']:.1f}")
+            st.markdown(f"X: %{a['px_mc']:.1f}")
+            st.markdown(f"2: %{a['p2_mc']:.1f}")
+            st.markdown(f"Üst: %{a['ust25_mc']:.1f}")
+            st.markdown(f"KG Var: %{a['kg_var_mc']:.1f}")
+        with c_fin:
+            st.markdown("**🎯 FİNAL**")
+            st.markdown(f"1: %{p1:.1f}")
+            st.markdown(f"X: %{px:.1f}")
+            st.markdown(f"2: %{p2:.1f}")
+            st.markdown(f"Üst: %{ust_25:.1f}")
+            st.markdown(f"KG Var: %{kg_var_model:.1f}")
+
+        st.caption(f"Ağırlıklar: Poisson %{HARMAN_POISSON*100:.0f} + Lig %{HARMAN_LIG*100:.0f} + MC %{HARMAN_MC*100:.0f} (veri yoksa atlanır)")
 
     st.markdown("### 📊 1X2")
     en_t = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
