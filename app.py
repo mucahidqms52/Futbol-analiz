@@ -241,7 +241,6 @@ MANUEL_ALANLAR = {
     "Atılan Gol": [("atilan_ev", "Atılan Gol (Ev)", "float", 0.0), ("atilan_dep", "Atılan Gol (Dep)", "float", 0.0)],
     "Yenen Gol": [("yenen_ev", "Yenen Gol (Ev)", "float", 0.0), ("yenen_dep", "Yenen Gol (Dep)", "float", 0.0)],
     "Standart Sapma (SS)": [("ss_ev", "Standart Sapma (Ev)", "float", 1.0), ("ss_dep", "Standart Sapma (Dep)", "float", 1.0)],
-    "Form bloğu (PPG/MPG)": [("ppg_ev", "PPG (Ev)", "float", 0.0), ("mpg_dep", "MPG (Dep)", "float", 0.0)],
 }
 
 
@@ -345,23 +344,75 @@ def metinden_veri_cikar(metin):
                 veri["ilk_gol_yer_dep"] = float(m_yer.group(2))
     else: okunamayanlar.append("Form bloğu (PPG/MPG)")
 
-    # Sıralama
+    # ==========================================
+    # SIRALAMA — sadece net kalıplar, rastgele fallback YOK
+    # ==========================================
     idx = metin.find("Tablo Pozisyonu")
     if idx != -1:
         blok = metin[idx:idx+800]
-        m = re.search(r'(\d{1,2})\s*\n\s*[A-ZÇĞİÖŞÜ][\w\s\.]+\n\s*VS\s*\n\s*[A-ZÇĞİÖŞÜ][\w\s\.]+\n\s*(\d{1,2})', blok)
-        if m:
-            veri["siralama_ev"] = int(m.group(1)); veri["siralama_dep"] = int(m.group(2))
-        else:
-            m = re.search(r'\n[A-ZÇĞİÖŞÜ][\w\s\.]+\n(\d{1,2})\n[A-ZÇĞİÖŞÜ][\w\s\.]+\nVS\n[A-ZÇĞİÖŞÜ][\w\s\.]+\n(\d{1,2})\n', blok)
+        bulundu = False
+
+        # Kalıp 1: "TakımAdı\nSayı" (isim üstte, sayı altta)
+        if takim_ev and takim_dep:
+            m = re.search(
+                re.escape(takim_ev) + r'\s*\n\s*(\d{1,2})\b' +
+                r'.*?' +
+                re.escape(takim_dep) + r'\s*\n\s*(\d{1,2})\b',
+                blok, re.DOTALL
+            )
             if m:
-                veri["siralama_ev"] = int(m.group(1)); veri["siralama_dep"] = int(m.group(2))
-            else:
-                sayilar = re.findall(r'\n(\d{1,2})\n', blok)
-                if len(sayilar) >= 2:
-                    veri["siralama_ev"] = int(sayilar[0]); veri["siralama_dep"] = int(sayilar[1])
-                else: okunamayanlar.append("Sıralama")
-    else: okunamayanlar.append("Sıralama")
+                s_ev = int(m.group(1)); s_dep = int(m.group(2))
+                if 1 <= s_ev <= 30 and 1 <= s_dep <= 30:
+                    veri["siralama_ev"] = s_ev
+                    veri["siralama_dep"] = s_dep
+                    bulundu = True
+
+        # Kalıp 2: "Sayı\nTakımAdı" (sayı üstte, isim altta)
+        if not bulundu and takim_ev and takim_dep:
+            m = re.search(
+                r'(\d{1,2})\s*\n\s*' + re.escape(takim_ev) + r'\b' +
+                r'.*?' +
+                r'(\d{1,2})\s*\n\s*' + re.escape(takim_dep) + r'\b',
+                blok, re.DOTALL
+            )
+            if m:
+                s_ev = int(m.group(1)); s_dep = int(m.group(2))
+                if 1 <= s_ev <= 30 and 1 <= s_dep <= 30:
+                    veri["siralama_ev"] = s_ev
+                    veri["siralama_dep"] = s_dep
+                    bulundu = True
+
+        # Kalıp 3: "TakımAdı VS TakımAdı" sonrası iki sayı
+        if not bulundu and takim_ev and takim_dep:
+            m = re.search(
+                re.escape(takim_ev) + r'\s*\n\s*VS\s*\n\s*' + re.escape(takim_dep) +
+                r'\s*\n\s*(\d{1,2})\s*\n\s*(\d{1,2})',
+                blok, re.DOTALL
+            )
+            if m:
+                s_ev = int(m.group(1)); s_dep = int(m.group(2))
+                if 1 <= s_ev <= 30 and 1 <= s_dep <= 30:
+                    veri["siralama_ev"] = s_ev
+                    veri["siralama_dep"] = s_dep
+                    bulundu = True
+
+        # Kalıp 4: İsim bulunamadıysa ama net "VS" varsa
+        if not bulundu:
+            m = re.search(
+                r'(\d{1,2})\s*\n\s*[^\n]+\n\s*VS\s*\n\s*[^\n]+\n\s*(\d{1,2})',
+                blok
+            )
+            if m:
+                s_ev = int(m.group(1)); s_dep = int(m.group(2))
+                if 1 <= s_ev <= 30 and 1 <= s_dep <= 30:
+                    veri["siralama_ev"] = s_ev
+                    veri["siralama_dep"] = s_dep
+                    bulundu = True
+
+        if not bulundu:
+            okunamayanlar.append("Sıralama")
+    else:
+        okunamayanlar.append("Sıralama")
 
     idx = metin.find("Hücum Hakimiyeti")
     if idx != -1:
@@ -1045,7 +1096,7 @@ elif st.session_state.sayfa == "gecmis":
             if kayit_yeni_format_mi(g):
                 oneri_say = sum(1 for k in ["oneri_1x2", "oneri_cifte", "oneri_gol", "oneri_kg"] if d[k]["tuttu"] is not None)
                 oneri_tutan = sum(1 for k in ["oneri_1x2", "oneri_cifte", "oneri_gol", "oneri_kg"] if d[k]["tuttu"] is True)
-                baslik = f"⚽ {takim_ev} {skor_ev}-{skor_dep} {takim_dep} — Öneri: {oneri_tutan}/{oneri_say}"
+                baslik = f"⚽ {takim_ev} {skor_ev}-{skor_dep} {takim_dep} — Öneri: {oneri_tutan}/{oneri_sayi if False else oneri_say}"
             else:
                 baslik = f"⚽ {takim_ev} {skor_ev}-{skor_dep} {takim_dep} (eski format)"
 
@@ -1141,7 +1192,6 @@ elif st.session_state.sayfa == "gelecek":
                     gelecek.pop(idx_gercek)
                     gecmis_kaydet(st.session_state.gecmis_analizler)
                     gelecek_kaydet(st.session_state.gelecek_analizler)
-                    st.success("✅ Geçmişe taşındı!")
                     st.rerun()
             with sc4:
                 st.markdown(""); st.markdown("")
