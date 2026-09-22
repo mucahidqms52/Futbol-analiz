@@ -9,12 +9,12 @@ import os
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
 # ==========================================
-# KOMPAKT CSS
+# KOMPAKT CSS (BAŞLIK AŞAĞI ALINDI)
 # ==========================================
 st.markdown("""
 <style>
     .block-container {
-        padding-top: 0.5rem !important;
+        padding-top: 2rem !important;
         padding-bottom: 0.5rem !important;
         padding-left: 0.7rem !important;
         padding-right: 0.7rem !important;
@@ -26,9 +26,28 @@ st.markdown("""
     p { font-size: 0.85rem !important; margin: 0.2rem 0 !important; }
     hr { margin: 0.3rem 0 !important; }
 
+    div[data-testid="stNumberInput"] label p {
+        font-size: 0.75rem !important;
+        margin: 0 !important;
+    }
+    div[data-testid="stNumberInput"] input {
+        font-size: 0.85rem !important;
+        padding: 0.15rem 0.3rem !important;
+        height: 1.8rem !important;
+    }
+    div[data-testid="stNumberInput"] button {
+        height: 1.8rem !important;
+        padding: 0 !important;
+        width: 1.5rem !important;
+    }
+    div[data-testid="stNumberInput"] > div {
+        margin-bottom: 0.2rem !important;
+    }
+
     div[data-testid="stMetric"] { padding: 0.2rem !important; }
     div[data-testid="stMetricValue"] { font-size: 1rem !important; }
     div[data-testid="stMetricLabel"] { font-size: 0.7rem !important; }
+    div[data-testid="stMetricDelta"] { font-size: 0.65rem !important; }
 
     .stButton button {
         padding: 0.4rem 0.6rem !important;
@@ -1192,7 +1211,7 @@ elif st.session_state.sayfa == "gecmis":
 
 
 # ==========================================
-# SAYFA 2: ANALİZ — TÜM SEÇENEKLER GÖRÜNÜR
+# SAYFA 2: ANALİZ — TÜM SEÇENEKLER
 # ==========================================
 elif st.session_state.sayfa == "sonuc":
     v = st.session_state.form_verileri
@@ -1225,7 +1244,6 @@ elif st.session_state.sayfa == "sonuc":
     elif fark < -10:    senaryo = "Deplasman hafif favori."
     else:               senaryo = "Maç oldukça dengeli, beraberlik riski yüksek."
 
-    # Skor girişi
     if not skor_belli:
         with st.expander("📝 Maç Sonucu Gir", expanded=False):
             sc1, sc2, sc3 = st.columns([1, 1, 2])
@@ -1255,7 +1273,6 @@ elif st.session_state.sayfa == "sonuc":
                     st.success("✅ Skor kaydedildi!")
                     st.rerun()
 
-    # Doğruluk
     if skor_belli:
         tahminler = {
             "1x2_tahmin": en_olasi[0],
@@ -1335,16 +1352,13 @@ elif st.session_state.sayfa == "sonuc":
         st.markdown("### 🤝 KG Var")
         st.markdown(f"**KG Var** — %{mc['kg_var']['oran']:.1f}")
 
-    # ==========================================
-    # 🏆 FİNAL ÖNERİ — HER MARKET İÇİN TÜM SEÇENEKLER
-    # ==========================================
+    # FİNAL ÖNERİ
     st.divider()
     st.markdown("## 🏆 FİNAL ÖNERİ")
     st.caption(f"📊 Eşik: ≥%{ESIK_ORTA:.0f} önerilir | %{ESIK_BELIRSIZ:.0f}-{ESIK_ORTA:.0f} belirsiz | <%{ESIK_BELIRSIZ:.0f} gizli")
 
-    # ---- 1X2 TEK SONUÇ ----
+    # 1X2 TEK SONUÇ
     st.markdown("### 📊 1X2 (Tek Sonuç)")
-
     tek_secimler = [("1", p1), ("X", px), ("2", p2)]
     en_yuksek_tek = max(tek_secimler, key=lambda x: x[1])
     seviye_t, emoji_t, kutu_t, mesaj_t = guven_seviyesi_bul(en_yuksek_tek[1])
@@ -1359,7 +1373,6 @@ elif st.session_state.sayfa == "sonuc":
     else:
         st.error(f"⚫ 1X2 için yeterli veri yok")
 
-    # Tüm tek sonuçlar
     st.markdown(f"""
     <small>
     1: %{p1:.1f} {guven_seviyesi_bul(p1)[1]} •
@@ -1368,9 +1381,8 @@ elif st.session_state.sayfa == "sonuc":
     </small>
     """, unsafe_allow_html=True)
 
-    # ---- ÇİFTE ŞANS ----
+    # ÇİFTE ŞANS
     st.markdown("### 🛡️ Çifte Şans")
-
     cift_secimler = [("1X", cifte_1x), ("X2", cifte_x2), ("12", cifte_12)]
     en_yuksek_cift = max(cift_secimler, key=lambda x: x[1])
     seviye_c, emoji_c, kutu_c, mesaj_c = guven_seviyesi_bul(en_yuksek_cift[1])
@@ -1393,18 +1405,15 @@ elif st.session_state.sayfa == "sonuc":
     </small>
     """, unsafe_allow_html=True)
 
-    # ---- GOL (ÜST/ALT 2.5) ----
+    # GOL
     st.markdown("### ⚽ Gol (Üst / Alt 2.5)")
-
-    # Üst ve Alt birlikte göster
-    seviye_u, emoji_u, kutu_u, mesaj_u = guven_seviyesi_bul(ust_25)
-    seviye_a, emoji_a, kutu_a, mesaj_a = guven_seviyesi_bul(alt_25)
+    seviye_u, emoji_u, _, mesaj_u = guven_seviyesi_bul(ust_25)
+    seviye_a, emoji_a, _, mesaj_a = guven_seviyesi_bul(alt_25)
 
     gol_secimler = [("Üst 2.5", ust_25), ("Alt 2.5", alt_25)]
     en_yuksek_gol = max(gol_secimler, key=lambda x: x[1])
     seviye_g, emoji_g, kutu_g, mesaj_g = guven_seviyesi_bul(en_yuksek_gol[1])
 
-    # Ana öneri
     if seviye_g in ["yuksek", "orta"]:
         if kutu_g == "success":
             st.success(f"{emoji_g} **{en_yuksek_gol[0]}** → %{en_yuksek_gol[1]:.1f} — {mesaj_g}")
@@ -1416,7 +1425,6 @@ elif st.session_state.sayfa == "sonuc":
     else:
         st.error(f"⚫ Gol için yeterli veri yok")
 
-    # İki seçenek yan yana
     col_u, col_a = st.columns(2)
     with col_u:
         st.markdown(f"{emoji_u} **Üst 2.5**")
@@ -1425,17 +1433,15 @@ elif st.session_state.sayfa == "sonuc":
         st.markdown(f"{emoji_a} **Alt 2.5**")
         st.markdown(f"**%{alt_25:.1f}** — {mesaj_a}")
 
-    # ---- KG (VAR/YOK) ----
+    # KG
     st.markdown("### 🤝 KG (Karşılıklı Gol)")
-
-    seviye_kv, emoji_kv, kutu_kv, mesaj_kv = guven_seviyesi_bul(kg_var_model)
-    seviye_ky, emoji_ky, kutu_ky, mesaj_ky = guven_seviyesi_bul(kg_yok_model)
+    seviye_kv, emoji_kv, _, mesaj_kv = guven_seviyesi_bul(kg_var_model)
+    seviye_ky, emoji_ky, _, mesaj_ky = guven_seviyesi_bul(kg_yok_model)
 
     kg_secimler = [("KG Var", kg_var_model), ("KG Yok", kg_yok_model)]
     en_yuksek_kg = max(kg_secimler, key=lambda x: x[1])
     seviye_kg, emoji_kg, kutu_kg, mesaj_kg = guven_seviyesi_bul(en_yuksek_kg[1])
 
-    # Ana öneri
     if seviye_kg in ["yuksek", "orta"]:
         if kutu_kg == "success":
             st.success(f"{emoji_kg} **{en_yuksek_kg[0]}** → %{en_yuksek_kg[1]:.1f} — {mesaj_kg}")
@@ -1446,7 +1452,6 @@ elif st.session_state.sayfa == "sonuc":
     else:
         st.error(f"⚫ KG için yeterli veri yok")
 
-    # İki seçenek yan yana
     col_kv, col_ky = st.columns(2)
     with col_kv:
         st.markdown(f"{emoji_kv} **KG Var**")
@@ -1455,25 +1460,17 @@ elif st.session_state.sayfa == "sonuc":
         st.markdown(f"{emoji_ky} **KG Yok**")
         st.markdown(f"**%{kg_yok_model:.1f}** — {mesaj_ky}")
 
-    # ---- ÖZET ----
+    # ÖZET
     st.divider()
     st.markdown("### 📊 ÖZET — Güvenilir Öneriler")
 
     oneriler = []
-
-    # 1X2 tek
     if en_yuksek_tek[1] >= ESIK_ORTA:
         oneriler.append(f"✅ **1X2:** {en_yuksek_tek[0]} (%{en_yuksek_tek[1]:.1f})")
-
-    # Çifte şans
     if en_yuksek_cift[1] >= ESIK_ORTA:
         oneriler.append(f"✅ **Çifte Şans:** {en_yuksek_cift[0]} (%{en_yuksek_cift[1]:.1f})")
-
-    # Gol
     if en_yuksek_gol[1] >= ESIK_ORTA:
         oneriler.append(f"✅ **Gol:** {en_yuksek_gol[0]} (%{en_yuksek_gol[1]:.1f})")
-
-    # KG
     if en_yuksek_kg[1] >= ESIK_ORTA:
         oneriler.append(f"✅ **KG:** {en_yuksek_kg[0]} (%{en_yuksek_kg[1]:.1f})")
 
@@ -1482,9 +1479,9 @@ elif st.session_state.sayfa == "sonuc":
             st.markdown(o)
         st.success(f"✅ **{len(oneriler)} güvenilir öneri** bulundu.")
     else:
-        st.warning("⚠️ **Bu maçta güvenilir öneri yok.** Belirsiz maç, oynamamanız önerilir.")
+        st.warning("⚠️ **Bu maçta güvenilir öneri yok.**")
 
-    # Kayıt
+    # KAYIT
     if not st.session_state.kayit_yapildi:
         yeni_kayit = {
             "veri": copy.deepcopy(v),
