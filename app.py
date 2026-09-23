@@ -42,6 +42,7 @@ st.markdown("""
 # ==========================================
 GECMIS_DOSYA = "gecmis.json"
 GELECEK_DOSYA = "gelecek.json"
+AYARLAR_DOSYA = "ayarlar.json"
 ADMIN_SIFRE = "Mg153759"
 
 
@@ -69,18 +70,32 @@ def gelecek_yukle(): return _yukle(GELECEK_DOSYA)
 def gelecek_kaydet(v): _kaydet(GELECEK_DOSYA, v)
 
 
+def ayarlar_yukle():
+    varsayilan = {"ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0}
+    try:
+        if os.path.exists(AYARLAR_DOSYA):
+            with open(AYARLAR_DOSYA, "r", encoding="utf-8") as f:
+                yuklenen = json.load(f)
+                varsayilan.update(yuklenen)
+    except Exception:
+        pass
+    return varsayilan
+
+
+def ayarlar_kaydet(esikler):
+    try:
+        with open(AYARLAR_DOSYA, "w", encoding="utf-8") as f:
+            json.dump(esikler, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
 # ==========================================
-# EŞİKLER (ANA KOD İÇİN SABİT)
+# EŞİKLER (SABİT — GÜVEN SEVİYESİ İÇİN)
 # ==========================================
 ESIK_YUKSEK = 65.0
 ESIK_ORTA = 55.0
 ESIK_BELIRSIZ = 50.0
-
-ESIK_GOL_UST = 65.0
-ESIK_GOL_ALT = 55.0
-
-ESIK_KG_VAR = 57.0
-ESIK_KG_YOK = 72.0
 
 MONTE_CARLO_N = 10000
 
@@ -192,18 +207,20 @@ if "tek_silme_gelecek" not in st.session_state: st.session_state.tek_silme_gelec
 if "giris_yapildi" not in st.session_state: st.session_state.giris_yapildi = False
 if "rol" not in st.session_state: st.session_state.rol = None
 
+# EŞİKLER (DİNAMİK — AYARLARDAN YÜKLENİR)
+if "esikler" not in st.session_state:
+    st.session_state.esikler = ayarlar_yukle()
+
 # BACKTEST EŞİKLERİ (varsayılan)
 if "bt_esikler" not in st.session_state:
     st.session_state.bt_esikler = {
-        "ust": 65.0, "alt": 55.0,
-        "kg_var": 57.0, "kg_yok": 72.0,
-        "x1": 50.0, "xx": 30.0, "x2": 30.0
+        "ust": 70.0, "alt": 70.0,
+        "kg_var": 70.0, "kg_yok": 70.0
     }
 
 # BACKTEST
 if "backtest_secenekler" not in st.session_state:
     st.session_state.backtest_secenekler = {
-        "x1": False, "xx": False, "x2": False,
         "kg_var": False, "kg_yok": False,
         "ust": False, "alt": False
     }
@@ -215,6 +232,10 @@ if "backtest_detaylar" not in st.session_state:
 
 def admin_mi():
     return st.session_state.get("rol") == "admin"
+
+
+def esik_al(key):
+    return st.session_state.esikler.get(key, 50.0)
 
 
 # ==========================================
@@ -267,13 +288,10 @@ def ist_skor_metni(ist_kayit):
 
 
 # ==========================================
-# BACKTEST FONKSİYONU (EŞİK PARAMETRELİ)
+# BACKTEST FONKSİYONU (SADECE KG ve GOL)
 # ==========================================
 def backtest_hesapla(gecmis, secenekler, esikler):
     sonuc = {
-        "x1": {"dogru": 0, "yanlis": 0},
-        "xx": {"dogru": 0, "yanlis": 0},
-        "x2": {"dogru": 0, "yanlis": 0},
         "kg_var": {"dogru": 0, "yanlis": 0},
         "kg_yok": {"dogru": 0, "yanlis": 0},
         "ust": {"dogru": 0, "yanlis": 0},
@@ -294,16 +312,6 @@ def backtest_hesapla(gecmis, secenekler, esikler):
             gercek_kg_var = (skor_ev > 0 and skor_dep > 0)
             gercek_ust = toplam_gol > 2.5
 
-            if skor_ev > skor_dep:
-                gercek_1x2 = "1"
-            elif skor_ev == skor_dep:
-                gercek_1x2 = "X"
-            else:
-                gercek_1x2 = "2"
-
-            p1 = analiz.get("p1", 33)
-            px = analiz.get("px", 33)
-            p2 = analiz.get("p2", 33)
             ust_25 = analiz.get("ust_25", 50)
             alt_25 = 100 - ust_25
             kg_var = analiz.get("kg_var_model", 50)
@@ -313,43 +321,11 @@ def backtest_hesapla(gecmis, secenekler, esikler):
                 "takim_ev": v.get("takim_ev", "Ev"),
                 "takim_dep": v.get("takim_dep", "Dep"),
                 "skor": f"{skor_ev}-{skor_dep}",
-                "gercek_1x2": gercek_1x2,
                 "gercek_kg": "Var" if gercek_kg_var else "Yok",
                 "gercek_gol": "Üst" if gercek_ust else "Alt",
                 "detaylar": []
             }
 
-            # 1X2 - "1" (Ev Sahibi)
-            if secenekler.get("x1", False):
-                if p1 >= esikler["x1"] and p1 >= px and p1 >= p2:
-                    if gercek_1x2 == "1":
-                        sonuc["x1"]["dogru"] += 1
-                        mac_kayit["detaylar"].append(f"1X2-1 ✅ (p1 %{p1:.0f})")
-                    else:
-                        sonuc["x1"]["yanlis"] += 1
-                        mac_kayit["detaylar"].append(f"1X2-1 ❌ (p1 %{p1:.0f}, gerçek {gercek_1x2})")
-
-            # 1X2 - "X" (Beraberlik)
-            if secenekler.get("xx", False):
-                if px >= esikler["xx"] and px >= p1 and px >= p2:
-                    if gercek_1x2 == "X":
-                        sonuc["xx"]["dogru"] += 1
-                        mac_kayit["detaylar"].append(f"1X2-X ✅ (px %{px:.0f})")
-                    else:
-                        sonuc["xx"]["yanlis"] += 1
-                        mac_kayit["detaylar"].append(f"1X2-X ❌ (px %{px:.0f}, gerçek {gercek_1x2})")
-
-            # 1X2 - "2" (Deplasman)
-            if secenekler.get("x2", False):
-                if p2 >= esikler["x2"] and p2 >= p1 and p2 >= px:
-                    if gercek_1x2 == "2":
-                        sonuc["x2"]["dogru"] += 1
-                        mac_kayit["detaylar"].append(f"1X2-2 ✅ (p2 %{p2:.0f})")
-                    else:
-                        sonuc["x2"]["yanlis"] += 1
-                        mac_kayit["detaylar"].append(f"1X2-2 ❌ (p2 %{p2:.0f}, gerçek {gercek_1x2})")
-
-            # KG VAR
             if secenekler.get("kg_var", False):
                 if kg_var >= esikler["kg_var"] and kg_var >= kg_yok:
                     if gercek_kg_var:
@@ -359,7 +335,6 @@ def backtest_hesapla(gecmis, secenekler, esikler):
                         sonuc["kg_var"]["yanlis"] += 1
                         mac_kayit["detaylar"].append("KG Var ❌")
 
-            # KG YOK
             if secenekler.get("kg_yok", False):
                 if kg_yok >= esikler["kg_yok"] and kg_yok >= kg_var:
                     if not gercek_kg_var:
@@ -369,7 +344,6 @@ def backtest_hesapla(gecmis, secenekler, esikler):
                         sonuc["kg_yok"]["yanlis"] += 1
                         mac_kayit["detaylar"].append("KG Yok ❌")
 
-            # ÜST 2.5
             if secenekler.get("ust", False):
                 if ust_25 >= esikler["ust"] and ust_25 >= alt_25:
                     if gercek_ust:
@@ -379,7 +353,6 @@ def backtest_hesapla(gecmis, secenekler, esikler):
                         sonuc["ust"]["yanlis"] += 1
                         mac_kayit["detaylar"].append("Üst ❌")
 
-            # ALT 2.5
             if secenekler.get("alt", False):
                 if alt_25 >= esikler["alt"] and alt_25 >= ust_25:
                     if not gercek_ust:
@@ -673,9 +646,7 @@ def metinden_veri_cikar(metin):
     veri = {}; okunamayanlar = []
     veri["format"] = "genel"
     return veri, okunamayanlar
-
-
-# ==========================================
+    # ==========================================
 # POISSON & LAMBDA
 # ==========================================
 def poisson_pmf(k, lam):
@@ -902,7 +873,7 @@ def kayit_olustur(v, a):
 
 
 # ==========================================
-# DOĞRULUK — SADECE ÖNERİ
+# DOĞRULUK — SADECE ÖNERİ (DİNAMİK EŞİKLER)
 # ==========================================
 def sonuc_hesapla(kayit):
     v = kayit["veri"]; analiz = kayit.get("analiz", {})
@@ -917,12 +888,12 @@ def sonuc_hesapla(kayit):
     kg_var = analiz.get("kg_var_model", 50); kg_yok = 100 - kg_var
 
     oneri_gol = None
-    if ust_25 >= ESIK_GOL_UST and ust_25 >= alt_25: oneri_gol = "Üst"
-    elif alt_25 >= ESIK_GOL_ALT and alt_25 >= ust_25: oneri_gol = "Alt"
+    if ust_25 >= esik_al("ust") and ust_25 >= alt_25: oneri_gol = "Üst"
+    elif alt_25 >= esik_al("alt") and alt_25 >= ust_25: oneri_gol = "Alt"
 
     oneri_kg = None
-    if kg_var >= ESIK_KG_VAR and kg_var >= kg_yok: oneri_kg = "Var"
-    elif kg_yok >= ESIK_KG_YOK and kg_yok >= kg_var: oneri_kg = "Yok"
+    if kg_var >= esik_al("kg_var") and kg_var >= kg_yok: oneri_kg = "Var"
+    elif kg_yok >= esik_al("kg_yok") and kg_yok >= kg_var: oneri_kg = "Yok"
 
     if oneri_gol is None: d_og = None
     else:
@@ -995,7 +966,7 @@ def gol_detayli_aciklama(v, a):
 
     yorumlar = []
 
-    if ust_25 >= ESIK_GOL_UST:
+    if ust_25 >= esik_al("ust"):
         yorumlar.append(f"🎯 **ÜST 2.5 NEDEN POZİTİF? (%{ust_25:.1f})**")
         yorumlar.append(f"- Toplam beklenen gol: **{toplam_lambda:.2f}**")
         yorumlar.append(f"- Ev sahibi atak gücü: **{at_ev:.2f}** gol/maç")
@@ -1012,7 +983,7 @@ def gol_detayli_aciklama(v, a):
             yorumlar.append(f"- ✅ Savunma zaafiyeti var")
         yorumlar.append(f"- **Sonuç:** Toplam gol beklentisi **2.5 üstü** → Üst 2.5 mantıklı")
 
-    elif alt_25 >= ESIK_GOL_ALT:
+    elif alt_25 >= esik_al("alt"):
         yorumlar.append(f"🎯 **ALT 2.5 NEDEN POZİTİF? (%{alt_25:.1f})**")
         yorumlar.append(f"- Toplam beklenen gol: **{toplam_lambda:.2f}**")
         yorumlar.append(f"- Ev sahibi atak gücü: **{at_ev:.2f}** gol/maç")
@@ -1047,7 +1018,7 @@ def kg_detayli_aciklama(v, a):
 
     yorumlar = []
 
-    if kg_var >= ESIK_KG_VAR:
+    if kg_var >= esik_al("kg_var"):
         yorumlar.append(f"🤝 **KG VAR NEDEN POZİTİF? (%{kg_var:.1f})**")
         if kg_ev > 0:
             yorumlar.append(f"- Ev sahibi KG Var oranı: **%{kg_ev:.1f}**")
@@ -1063,7 +1034,7 @@ def kg_detayli_aciklama(v, a):
             yorumlar.append(f"- ✅ İki takım da gol atma beklentisi içinde")
         yorumlar.append(f"- **Sonuç:** Her iki takımın da gol atma ihtimali yüksek → KG Var mantıklı")
 
-    elif kg_yok >= ESIK_KG_YOK:
+    elif kg_yok >= esik_al("kg_yok"):
         yorumlar.append(f"🤝 **KG YOK NEDEN POZİTİF? (%{kg_yok:.1f})**")
         if kg_ev > 0:
             yorumlar.append(f"- Ev sahibi KG Var oranı: **%{kg_ev:.1f}** (düşük)")
@@ -1179,7 +1150,7 @@ ust_bar()
 
 
 # ==========================================
-# SAYFA 1: GİRİŞ (ANA SAYFA)
+# SAYFA: ANA SAYFA
 # ==========================================
 if st.session_state.sayfa == "giris":
     st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
@@ -1191,7 +1162,7 @@ if st.session_state.sayfa == "giris":
         yapistir_metni = st.text_area("Yapıştırma alanı", height=280, key="yapistir_input", label_visibility="collapsed", placeholder="İstatistik metnini buraya yapıştır.")
         st.divider()
 
-        col_bt1, col_bt2, col_bt3, col_bt4 = st.columns([2, 1, 1, 1])
+        col_bt1, col_bt2, col_bt3, col_bt4, col_bt5 = st.columns([2, 1, 1, 1, 1])
         with col_bt1:
             analiz_btn = st.button("🚀 ANALİZ ET", use_container_width=True, type="primary")
         with col_bt2:
@@ -1200,6 +1171,8 @@ if st.session_state.sayfa == "giris":
             gelecek_btn = st.button("🔮 Gelecek", use_container_width=True)
         with col_bt4:
             backtest_btn = st.button("🔬 Backtest", use_container_width=True)
+        with col_bt5:
+            ayarlar_btn = st.button("⚙️ Ayarlar", use_container_width=True)
 
         if analiz_btn:
             if not yapistir_metni.strip():
@@ -1258,6 +1231,10 @@ if st.session_state.sayfa == "giris":
             st.session_state.sayfa = "backtest"
             st.session_state.backtest_sonuc = None
             st.session_state.backtest_detaylar = []
+            st.rerun()
+
+        if ayarlar_btn:
+            st.session_state.sayfa = "ayarlar"
             st.rerun()
     else:
         st.markdown("<p style='text-align:center; color:gray;'>Analizleri görüntülemek için aşağıdaki butonları kullan.</p>", unsafe_allow_html=True)
@@ -1352,11 +1329,11 @@ elif st.session_state.sayfa == "gecmis":
         col_1, col_2 = st.columns(2)
         with col_1:
             st.markdown("**Üst / Alt 2.5**")
-            st.caption(f"Eşikler: Üst %{ESIK_GOL_UST:.0f} • Alt %{ESIK_GOL_ALT:.0f}")
+            st.caption(f"Eşikler: Üst %{esik_al('ust'):.0f} • Alt %{esik_al('alt'):.0f}")
             st.markdown(ist_skor_metni(oneri_ist["gol"]))
         with col_2:
             st.markdown("**KG (Var / Yok)**")
-            st.caption(f"Eşikler: Var %{ESIK_KG_VAR:.0f} • Yok %{ESIK_KG_YOK:.0f}")
+            st.caption(f"Eşikler: Var %{esik_al('kg_var'):.0f} • Yok %{esik_al('kg_yok'):.0f}")
             st.markdown(ist_skor_metni(oneri_ist["kg"]))
 
     st.divider()
@@ -1527,7 +1504,7 @@ elif st.session_state.sayfa == "gelecek":
 
 
 # ==========================================
-# BACKTEST (SADECE ADMIN)
+# BACKTEST (SADECE ADMIN) — 1X2 KALDIRILDI
 # ==========================================
 elif st.session_state.sayfa == "backtest":
     if not admin_mi():
@@ -1545,14 +1522,6 @@ elif st.session_state.sayfa == "backtest":
 
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown("**🏆 1X2**")
-        sec_x1 = st.checkbox("1 (Ev Sahibi)", value=st.session_state.backtest_secenekler["x1"], key="bt_x1")
-        esik_x1 = st.slider("1 eşiği (%)", 0, 100, int(st.session_state.bt_esikler["x1"]), 1, key="sl_x1", disabled=not sec_x1)
-        sec_xx = st.checkbox("X (Beraberlik)", value=st.session_state.backtest_secenekler["xx"], key="bt_xx")
-        esik_xx = st.slider("X eşiği (%)", 0, 100, int(st.session_state.bt_esikler["xx"]), 1, key="sl_xx", disabled=not sec_xx)
-        sec_x2 = st.checkbox("2 (Deplasman)", value=st.session_state.backtest_secenekler["x2"], key="bt_x2")
-        esik_x2 = st.slider("2 eşiği (%)", 0, 100, int(st.session_state.bt_esikler["x2"]), 1, key="sl_x2", disabled=not sec_x2)
-        st.markdown("")
         st.markdown("**🤝 KG**")
         sec_kg_var = st.checkbox("KG Var", value=st.session_state.backtest_secenekler["kg_var"], key="bt_kg_var")
         esik_kg_var = st.slider("KG Var eşiği (%)", 0, 100, int(st.session_state.bt_esikler["kg_var"]), 1, key="sl_kg_var", disabled=not sec_kg_var)
@@ -1566,12 +1535,10 @@ elif st.session_state.sayfa == "backtest":
         esik_alt = st.slider("Alt 2.5 eşiği (%)", 0, 100, int(st.session_state.bt_esikler["alt"]), 1, key="sl_alt", disabled=not sec_alt)
 
     secenekler = {
-        "x1": sec_x1, "xx": sec_xx, "x2": sec_x2,
         "kg_var": sec_kg_var, "kg_yok": sec_kg_yok,
         "ust": sec_ust, "alt": sec_alt
     }
     esikler = {
-        "x1": float(esik_x1), "xx": float(esik_xx), "x2": float(esik_x2),
         "kg_var": float(esik_kg_var), "kg_yok": float(esik_kg_yok),
         "ust": float(esik_ust), "alt": float(esik_alt)
     }
@@ -1596,9 +1563,6 @@ elif st.session_state.sayfa == "backtest":
         st.markdown("## 📊 BACKTEST SONUCU")
 
         for key, baslik in [
-            ("x1", "🏆 1X2 → 1 (Ev Sahibi)"),
-            ("xx", "🏆 1X2 → X (Beraberlik)"),
-            ("x2", "🏆 1X2 → 2 (Deplasman)"),
             ("kg_var", "🤝 KG Var"),
             ("kg_yok", "🤝 KG Yok"),
             ("ust", "⚽ Üst 2.5"),
@@ -1623,7 +1587,7 @@ elif st.session_state.sayfa == "backtest":
         with st.expander(f"📋 Maç Detayları ({len(st.session_state.backtest_detaylar)} maç)"):
             for m in st.session_state.backtest_detaylar:
                 st.markdown(f"**{m['takim_ev']} {m['skor']} {m['takim_dep']}**")
-                st.caption(f"Gerçek: 1X2={m['gercek_1x2']} / Gol={m['gercek_gol']} / KG={m['gercek_kg']}")
+                st.caption(f"Gerçek: Gol={m['gercek_gol']} / KG={m['gercek_kg']}")
                 for d in m["detaylar"]:
                     st.markdown(f"  • {d}")
                 st.markdown("")
@@ -1632,6 +1596,80 @@ elif st.session_state.sayfa == "backtest":
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="bt_geri"):
         st.session_state.sayfa = "giris"
         st.rerun()
+
+
+# ==========================================
+# AYARLAR (SADECE ADMIN)
+# ==========================================
+elif st.session_state.sayfa == "ayarlar":
+    if not admin_mi():
+        st.error("❌ Bu sayfa sadece admin içindir.")
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary"):
+            st.session_state.sayfa = "giris"
+            st.rerun()
+        st.stop()
+
+    st.markdown("<h1>⚙️ Eşik Ayarları</h1>", unsafe_allow_html=True)
+    st.caption("Ana analiz için eşikleri buradan değiştirebilirsin. Kaydedilen eşikler yeni analizlerde kullanılır.")
+    st.divider()
+
+    mevcut = st.session_state.esikler.copy()
+
+    st.markdown("### ⚽ Gol Eşikleri")
+    c1, c2 = st.columns(2)
+    with c1:
+        yeni_ust = st.slider("Üst 2.5 eşiği (%)", 0, 100, int(mevcut["ust"]), 1, key="ay_ust")
+    with c2:
+        yeni_alt = st.slider("Alt 2.5 eşiği (%)", 0, 100, int(mevcut["alt"]), 1, key="ay_alt")
+
+    st.markdown("### 🤝 KG Eşikleri")
+    c3, c4 = st.columns(2)
+    with c3:
+        yeni_kg_var = st.slider("KG Var eşiği (%)", 0, 100, int(mevcut["kg_var"]), 1, key="ay_kg_var")
+    with c4:
+        yeni_kg_yok = st.slider("KG Yok eşiği (%)", 0, 100, int(mevcut["kg_yok"]), 1, key="ay_kg_yok")
+
+    st.divider()
+
+    c_kaydet, c_sifirla, c_geri = st.columns(3)
+    with c_kaydet:
+        if st.button("💾 Kaydet", use_container_width=True, type="primary"):
+            yeni_esikler = {
+                "ust": float(yeni_ust),
+                "alt": float(yeni_alt),
+                "kg_var": float(yeni_kg_var),
+                "kg_yok": float(yeni_kg_yok),
+            }
+            st.session_state.esikler = yeni_esikler
+            ayarlar_kaydet(yeni_esikler)
+            st.success("✅ Eşikler kaydedildi! Yeni analizlerde kullanılacak.")
+            st.markdown(f"""
+            **Kaydedilen eşikler:**
+            - Üst 2.5: **%{yeni_ust}**
+            - Alt 2.5: **%{yeni_alt}**
+            - KG Var: **%{yeni_kg_var}**
+            - KG Yok: **%{yeni_kg_yok}**
+            """)
+    with c_sifirla:
+        if st.button("🔄 Sıfırla", use_container_width=True):
+            varsayilan = {"ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0}
+            st.session_state.esikler = varsayilan
+            ayarlar_kaydet(varsayilan)
+            st.success("✅ Varsayılan eşiklere dönüldü!")
+            st.rerun()
+    with c_geri:
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, key="ay_geri"):
+            st.session_state.sayfa = "giris"
+            st.rerun()
+
+    st.divider()
+    st.info(f"""
+    **Şu anki aktif eşikler:**
+    - Üst 2.5: **%{st.session_state.esikler['ust']:.0f}**
+    - Alt 2.5: **%{st.session_state.esikler['alt']:.0f}**
+    - KG Var: **%{st.session_state.esikler['kg_var']:.0f}**
+    - KG Yok: **%{st.session_state.esikler['kg_yok']:.0f}**
+    """)
 
 
 # ==========================================
@@ -1661,7 +1699,7 @@ elif st.session_state.sayfa == "sonuc":
         d = sonuc_hesapla({"veri": v, "analiz": a})
         with st.expander("✅ Tahmin Doğruluğu", expanded=True):
             st.markdown("**🎯 Öneri Tahminleri**")
-            st.caption(f"Üst: %{ESIK_GOL_UST:.0f} • Alt: %{ESIK_GOL_ALT:.0f} • KG Var: %{ESIK_KG_VAR:.0f} • KG Yok: %{ESIK_KG_YOK:.0f}")
+            st.caption(f"Üst: %{esik_al('ust'):.0f} • Alt: %{esik_al('alt'):.0f} • KG Var: %{esik_al('kg_var'):.0f} • KG Yok: %{esik_al('kg_yok'):.0f}")
             c1, c2 = st.columns(2)
             for col, key in zip([c1, c2], ["oneri_gol", "oneri_kg"]):
                 o = d[key]
@@ -1706,44 +1744,44 @@ elif st.session_state.sayfa == "sonuc":
     st.markdown("## 🏆 FİNAL ÖNERİ")
 
     st.markdown("### ⚽ Gol")
-    st.caption(f"Üst eşiği: %{ESIK_GOL_UST:.0f} • Alt eşiği: %{ESIK_GOL_ALT:.0f}")
+    st.caption(f"Üst eşiği: %{esik_al('ust'):.0f} • Alt eşiği: %{esik_al('alt'):.0f}")
 
     gol_poz = False
     if ust_25 >= alt_25:
-        if ust_25 >= ESIK_GOL_UST:
+        if ust_25 >= esik_al("ust"):
             s, e, k, m = guven_seviyesi_bul(ust_25)
             st.success(f"{e} **Üst 2.5** → %{ust_25:.1f} — {m}")
             gol_poz = True
         else:
-            st.error(f"❌ **Üst 2.5** → %{ust_25:.1f} — **Eşik altı** (%{ESIK_GOL_UST:.0f} gerekli)")
+            st.error(f"❌ **Üst 2.5** → %{ust_25:.1f} — **Eşik altı** (%{esik_al('ust'):.0f} gerekli)")
     else:
-        if alt_25 >= ESIK_GOL_ALT:
+        if alt_25 >= esik_al("alt"):
             s, e, k, m = guven_seviyesi_bul(alt_25)
             st.success(f"{e} **Alt 2.5** → %{alt_25:.1f} — {m}")
             gol_poz = True
         else:
-            st.error(f"❌ **Alt 2.5** → %{alt_25:.1f} — **Eşik altı** (%{ESIK_GOL_ALT:.0f} gerekli)")
+            st.error(f"❌ **Alt 2.5** → %{alt_25:.1f} — **Eşik altı** (%{esik_al('alt'):.0f} gerekli)")
 
     st.markdown(f"<small>Üst: %{ust_25:.1f} • Alt: %{alt_25:.1f}</small>", unsafe_allow_html=True)
 
     st.markdown("### 🤝 KG")
-    st.caption(f"Var eşiği: %{ESIK_KG_VAR:.0f} • Yok eşiği: %{ESIK_KG_YOK:.0f}")
+    st.caption(f"Var eşiği: %{esik_al('kg_var'):.0f} • Yok eşiği: %{esik_al('kg_yok'):.0f}")
 
     kg_poz = False
     if kg_var_model >= kg_yok_model:
-        if kg_var_model >= ESIK_KG_VAR:
+        if kg_var_model >= esik_al("kg_var"):
             s, e, k, m = guven_seviyesi_bul(kg_var_model)
             st.success(f"{e} **KG Var** → %{kg_var_model:.1f} — {m}")
             kg_poz = True
         else:
-            st.error(f"❌ **KG Var** → %{kg_var_model:.1f} — **Eşik altı** (%{ESIK_KG_VAR:.0f} gerekli)")
+            st.error(f"❌ **KG Var** → %{kg_var_model:.1f} — **Eşik altı** (%{esik_al('kg_var'):.0f} gerekli)")
     else:
-        if kg_yok_model >= ESIK_KG_YOK:
+        if kg_yok_model >= esik_al("kg_yok"):
             s, e, k, m = guven_seviyesi_bul(kg_yok_model)
             st.success(f"{e} **KG Yok** → %{kg_yok_model:.1f} — {m}")
             kg_poz = True
         else:
-            st.error(f"❌ **KG Yok** → %{kg_yok_model:.1f} — **Eşik altı** (%{ESIK_KG_YOK:.0f} gerekli)")
+            st.error(f"❌ **KG Yok** → %{kg_yok_model:.1f} — **Eşik altı** (%{esik_al('kg_yok'):.0f} gerekli)")
 
     st.markdown(f"<small>Var: %{kg_var_model:.1f} • Yok: %{kg_yok_model:.1f}</small>", unsafe_allow_html=True)
 
