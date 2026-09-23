@@ -583,6 +583,27 @@ MANUEL_ALANLAR = {
     "Atılan Gol": [("atilan_ev", "Atılan Gol (Ev)", "float", 0.0), ("atilan_dep", "Atılan Gol (Dep)", "float", 0.0)],
     "Yenen Gol": [("yenen_ev", "Yenen Gol (Ev)", "float", 0.0), ("yenen_dep", "Yenen Gol (Dep)", "float", 0.0)],
     }
+_cift_tab()
+_sira_bul()
+sportytrader_veri_cikar()
+metinden_veri_cikar()
+poisson_pmf()
+poisson_random()
+poisson_matris()
+hesapla_lambda()
+matristen_olasilik()
+veri_yeterli_mi()
+mac_ici_sok()
+monte_carlo_simulasyon()
+analiz_hesapla()
+kayit_olustur()
+sonuc_hesapla()
+detayli_analiz_yorumu()
+gol_detayli_aciklama()
+kg_detayli_aciklama()
+okunan_veriler_paneli()
+giris_ekrani()
+ust_bar()
 # ==========================================
 # UYGULAMA BAŞLANGIÇ
 # ==========================================
