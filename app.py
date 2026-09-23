@@ -1,3 +1,4 @@
+
 import streamlit as st
 import math
 import copy
@@ -554,37 +555,36 @@ def poisson_matris(lam_ev, lam_dep, max_gol=MAX_GOL):
 
 
 def hesapla_lambda(v):
-    """
-    YENİ MODEL — SADECE GOL MARKETİ İÇİN GEREKLİ VERİLER
-    Kullanılan: atilan_ev/dep, yenen_ev/dep, clean_sheets_ev/dep,
-                ust25_ev/dep, tg_23_ev/dep, form_puan_ev/dep
-    """
     atilan_e = v.get("atilan_ev", 0.0)
     yenen_e = v.get("yenen_ev", 0.0)
     atilan_d = v.get("atilan_dep", 0.0)
     yenen_d = v.get("yenen_dep", 0.0)
 
-    # Baz hücum gücü
-    hucum_ev_baz = atilan_e if atilan_e > 0 else 1.2
-    hucum_dep_baz = atilan_d if atilan_d > 0 else 1.0
+    xg_e = v.get("xg_ev", 0.0)
+    xg_d = v.get("xg_dep", 0.0)
 
-    # Savunma zaafı
+    if xg_e > 0:
+        hucum_ev_baz = (xg_e * 0.70) + (atilan_e * 0.30)
+    else:
+        hucum_ev_baz = atilan_e if atilan_e > 0 else 1.2
+
+    if xg_d > 0:
+        hucum_dep_baz = (xg_d * 0.70) + (atilan_d * 0.30)
+    else:
+        hucum_dep_baz = atilan_d if atilan_d > 0 else 1.0
+
     savunma_dep_zaaf = yenen_d if yenen_d > 0 else 1.2
     savunma_ev_zaaf = yenen_e if yenen_e > 0 else 1.0
 
-    # Lambda baz
     lam_ev_ham = (hucum_ev_baz * 0.60) + (savunma_dep_zaaf * 0.40)
     lam_dep_ham = (hucum_dep_baz * 0.60) + (savunma_ev_zaaf * 0.40)
 
-    # Ev avantajı
     EV_ETKISI = 1.05
     DEP_ETKISI = 0.95
 
-    # === FORM ===
     form_ev = clamp(1 + (v.get("ppg_ev", 1.5) - 1.5) / 15, 0.85, 1.15)
     form_dep = clamp(1 + (v.get("mpg_dep", 1.5) - 1.5) / 15, 0.85, 1.15)
 
-    # === CLEAN SHEET FRENİ ===
     cs_ev = v.get("clean_sheets_ev", 0.0)
     cs_dep = v.get("clean_sheets_dep", 0.0)
 
@@ -596,21 +596,15 @@ def hesapla_lambda(v):
     dep_freni = clean_sheet_freni(cs_ev)
     ev_freni = clean_sheet_freni(cs_dep)
 
-    # === TG_23 ETKİSİ (YENİ) ===
-    # Toplam gol 2-3 çıkma oranı yüksekse → maç orta gollü
-    tg_23_ev = v.get("tg_23_ev", 0.0)
-    tg_23_dep = v.get("tg_23_dep", 0.0)
-    tg_etki = 1.0
-    if tg_23_ev > 0 and tg_23_dep > 0:
-        tg_ort = (tg_23_ev + tg_23_dep) / 2
-        # %50'nin üzerindeyse hafif lambda artışı
-        tg_etki = clamp(1 + (tg_ort - 50) / 300, 0.95, 1.08)
+    sira_e = v.get("siralama_ev", 10)
+    sira_d = v.get("siralama_dep", 10)
+    dominasyon_bonus_ev = 1.0
+    if 1 <= sira_e <= 5 and sira_d >= 10:
+        dominasyon_bonus_ev = 1.25
 
-    # Lambda hesabı
-    lam_ev = lam_ev_ham * EV_ETKISI * form_ev * ev_freni * tg_etki
-    lam_dep = lam_dep_ham * DEP_ETKISI * form_dep * dep_freni * tg_etki
+    lam_ev = lam_ev_ham * EV_ETKISI * form_ev * ev_freni * dominasyon_bonus_ev
+    lam_dep = lam_dep_ham * DEP_ETKISI * form_dep * dep_freni
 
-    # Cap
     if lam_ev > 2.50: lam_ev = 2.50 + (lam_ev - 2.50) * 0.5
     if lam_dep > 2.50: lam_dep = 2.50 + (lam_dep - 2.50) * 0.5
 
@@ -677,20 +671,14 @@ def monte_carlo_simulasyon(lam_ev_base, lam_dep_base, n=MONTE_CARLO_N):
 
 
 # ==========================================
-# ANALİZ HESAPLA — YENİ MODEL
+# ANALİZ HESAPLA
 # ==========================================
 def analiz_hesapla(v):
-    """
-    GOL: 12 veri kullanır
-    KG: 12 veri kullanır
-    Ortak: 6 veri
-    """
     lam_ev, lam_dep, guven = hesapla_lambda(v)
     matris = poisson_matris(lam_ev, lam_dep, MAX_GOL)
     olas = matristen_olasilik(matris, MAX_GOL)
     toplam = olas["toplam"] or 1
 
-    # === GOL HESABI (12 veri) ===
     p1_po = olas["1"] / toplam * 100
     px_po = olas["X"] / toplam * 100
     p2_po = olas["2"] / toplam * 100
@@ -710,32 +698,16 @@ def analiz_hesapla(v):
     t = p1 + px + p2
     if t > 0: p1, px, p2 = (p1 / t) * 100, (px / t) * 100, (p2 / t) * 100
 
-    # === ÜST 2.5 HARMAN ===
-    # Kaynaklar: Poisson + Lig (ust25) + MC
-    # tg_23 etkisi zaten lambda'da
     if lig_ust25 > 0:
         ust_25 = (ust25_po * 0.65) + (lig_ust25 * 0.05) + (ust25_mc * 0.30)
     else:
         ust_25 = (ust25_po * 0.65) + (ust25_mc * 0.35)
 
-    # === KG HARMAN (12 veri) ===
-    # Kaynaklar: Poisson + Lig (kg_siklik) + MC + btts_over25 (YENİ)
-    btts_over25_ev = v.get("btts_over25_ev", 0.0)
-    btts_over25_dep = v.get("btts_over25_dep", 0.0)
-
-    # Lig KG harmanı
     if lig_kg > 0:
         kg_var_model = (kg_var_po * 0.40) + (lig_kg * 0.35) + (kg_var_mc * 0.25)
     else:
         kg_var_model = (kg_var_po * 0.60) + (kg_var_mc * 0.40)
 
-    # btts_over25 etkisi (YENİ)
-    if btts_over25_ev > 0 and btts_over25_dep > 0:
-        btts_ort = (btts_over25_ev + btts_over25_dep) / 2
-        # Harmanla
-        kg_var_model = (kg_var_model * 0.75) + (btts_ort * 0.25)
-
-    # Toplam gol düşükse baskı
     toplam_beklenen_gol = lam_ev + lam_dep
 
     if toplam_beklenen_gol < 1.80:
@@ -890,8 +862,6 @@ def gol_detayli_aciklama(v, a):
     y_ev = v.get("yenen_ev", 0)
     y_dep = v.get("yenen_dep", 0)
     lig_ort = v.get("lig_ort_toplam", 0)
-    tg_23_ev = v.get("tg_23_ev", 0)
-    tg_23_dep = v.get("tg_23_dep", 0)
 
     yorumlar = []
 
@@ -902,10 +872,6 @@ def gol_detayli_aciklama(v, a):
         yorumlar.append(f"- Deplasman atak gücü: **{at_dep:.2f}** gol/maç")
         yorumlar.append(f"- Ev sahibi yenen: **{y_ev:.2f}** gol/maç")
         yorumlar.append(f"- Deplasman yenen: **{y_dep:.2f}** gol/maç")
-        if tg_23_ev > 0:
-            yorumlar.append(f"- 2-3 gol dağılımı (Ev): **%{tg_23_ev:.1f}**")
-        if tg_23_dep > 0:
-            yorumlar.append(f"- 2-3 gol dağılımı (Dep): **%{tg_23_dep:.1f}**")
         if lig_ort > 0:
             yorumlar.append(f"- Lig ortalaması: **{lig_ort:.2f}** gol/maç")
         if lam_ev > 1.5:
@@ -923,10 +889,6 @@ def gol_detayli_aciklama(v, a):
         yorumlar.append(f"- Deplasman atak gücü: **{at_dep:.2f}** gol/maç")
         yorumlar.append(f"- Ev sahibi yenen: **{y_ev:.2f}** gol/maç")
         yorumlar.append(f"- Deplasman yenen: **{y_dep:.2f}** gol/maç")
-        if tg_23_ev > 0:
-            yorumlar.append(f"- 2-3 gol dağılımı (Ev): **%{tg_23_ev:.1f}**")
-        if tg_23_dep > 0:
-            yorumlar.append(f"- 2-3 gol dağılımı (Dep): **%{tg_23_dep:.1f}**")
         if lig_ort > 0:
             yorumlar.append(f"- Lig ortalaması: **{lig_ort:.2f}** gol/maç")
         cs_ev = v.get("clean_sheets_ev", 0)
@@ -952,8 +914,6 @@ def kg_detayli_aciklama(v, a):
     cs_dep = v.get("clean_sheets_dep", 0)
     ts_ev = v.get("team_scored_ev", 0)
     ts_dep = v.get("team_scored_dep", 0)
-    btts25_ev = v.get("btts_over25_ev", 0)
-    btts25_dep = v.get("btts_over25_dep", 0)
 
     yorumlar = []
 
@@ -963,10 +923,6 @@ def kg_detayli_aciklama(v, a):
             yorumlar.append(f"- Ev sahibi KG Var oranı: **%{kg_ev:.1f}**")
         if kg_dep > 0:
             yorumlar.append(f"- Deplasman KG Var oranı: **%{kg_dep:.1f}**")
-        if btts25_ev > 0:
-            yorumlar.append(f"- Ev KG+Üst 2.5: **%{btts25_ev:.1f}**")
-        if btts25_dep > 0:
-            yorumlar.append(f"- Dep KG+Üst 2.5: **%{btts25_dep:.1f}**")
         yorumlar.append(f"- Ev sahibi gol beklentisi: **{lam_ev:.2f}**")
         yorumlar.append(f"- Deplasman gol beklentisi: **{lam_dep:.2f}**")
         if ts_ev >= 70:
@@ -983,10 +939,6 @@ def kg_detayli_aciklama(v, a):
             yorumlar.append(f"- Ev sahibi KG Var oranı: **%{kg_ev:.1f}** (düşük)")
         if kg_dep > 0:
             yorumlar.append(f"- Deplasman KG Var oranı: **%{kg_dep:.1f}** (düşük)")
-        if btts25_ev > 0:
-            yorumlar.append(f"- Ev KG+Üst 2.5: **%{btts25_ev:.1f}** (düşük)")
-        if btts25_dep > 0:
-            yorumlar.append(f"- Dep KG+Üst 2.5: **%{btts25_dep:.1f}** (düşük)")
         if cs_ev > 0:
             yorumlar.append(f"- Ev sahibi clean sheet: **%{cs_ev:.0f}**")
         if cs_dep > 0:
@@ -1018,9 +970,8 @@ def okunan_veriler_paneli(v):
             st.markdown(f"- Team scored: **{v.get('team_scored_ev', 0):.1f}%**")
             st.markdown(f"- KG Var: **{v.get('kg_siklik_ev', 0):.1f}%**")
             st.markdown(f"- Üst 2.5: **{v.get('ust25_ev', 0):.1f}%**")
-            st.markdown(f"- 2-3 gol: **{v.get('tg_23_ev', 0):.1f}%**")
-            st.markdown(f"- KG+Üst2.5: **{v.get('btts_over25_ev', 0):.1f}%**")
             st.markdown(f"- Form: **{v.get('form_str_ev', '')}**")
+            st.markdown(f"- Sıralama: **{v.get('siralama_ev', 0)}**")
         with c2:
             st.markdown(f"**{v.get('takim_dep', 'Dep')}**")
             st.markdown(f"- Atılan: **{v.get('atilan_dep', 0):.2f}**")
@@ -1029,9 +980,8 @@ def okunan_veriler_paneli(v):
             st.markdown(f"- Team scored: **{v.get('team_scored_dep', 0):.1f}%**")
             st.markdown(f"- KG Var: **{v.get('kg_siklik_dep', 0):.1f}%**")
             st.markdown(f"- Üst 2.5: **{v.get('ust25_dep', 0):.1f}%**")
-            st.markdown(f"- 2-3 gol: **{v.get('tg_23_dep', 0):.1f}%**")
-            st.markdown(f"- KG+Üst2.5: **{v.get('btts_over25_dep', 0):.1f}%**")
             st.markdown(f"- Form: **{v.get('form_str_dep', '')}**")
+            st.markdown(f"- Sıralama: **{v.get('siralama_dep', 0)}**")
 
 
 # ==========================================
@@ -1160,7 +1110,7 @@ elif st.session_state.sayfa == "gecmis":
         st.info("ℹ️ Henüz kayıtlı maç yok.")
     else:
         st.markdown("### 🎯 ÖNERİ İSTATİSTİKLERİ")
-        st.caption("Gol (Üst/Alt ayrı) • KG (Var/Yok ayrı)")
+        st.caption("Gol (Üst/Alt ayrı) • KG (Var/Yok ayrı) • 1X2 ve Çifte kaldırıldı")
         col_1, col_2 = st.columns(2)
         with col_1:
             st.markdown("**Üst / Alt 2.5**")
@@ -1447,6 +1397,7 @@ elif st.session_state.sayfa == "sonuc":
 
     st.markdown(f"<small>Var: %{kg_var_model:.1f} • Yok: %{kg_yok_model:.1f}</small>", unsafe_allow_html=True)
 
+    # KAYIT KONTROLÜ
     kaydet_mi = gol_poz or kg_poz
 
     if not st.session_state.kayit_yapildi:
