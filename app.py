@@ -1,4 +1,3 @@
-
 import streamlit as st
 import math
 import copy
@@ -43,6 +42,7 @@ st.markdown("""
 # ==========================================
 GECMIS_DOSYA = "gecmis.json"
 GELECEK_DOSYA = "gelecek.json"
+ADMIN_SIFRE = "Mg153759"
 
 
 def _yukle(dosya):
@@ -187,6 +187,14 @@ if "okunamayan_alanlar" not in st.session_state: st.session_state.okunamayan_ala
 if "manuel_bekleyen" not in st.session_state: st.session_state.manuel_bekleyen = []
 if "tek_silme_onay" not in st.session_state: st.session_state.tek_silme_onay = None
 if "tek_silme_gelecek" not in st.session_state: st.session_state.tek_silme_gelecek = None
+
+# ROL YÖNETİMİ
+if "giris_yapildi" not in st.session_state: st.session_state.giris_yapildi = False
+if "rol" not in st.session_state: st.session_state.rol = None  # "admin" veya "misafir"
+
+
+def admin_mi():
+    return st.session_state.get("rol") == "admin"
 
 
 # ==========================================
@@ -532,8 +540,6 @@ def metinden_veri_cikar(metin):
     veri = {}; okunamayanlar = []
     veri["format"] = "genel"
     return veri, okunamayanlar
-
-
 # ==========================================
 # POISSON & LAMBDA
 # ==========================================
@@ -954,7 +960,9 @@ def kg_detayli_aciklama(v, a):
         yorumlar.append(f"- **Sonuç:** En az bir takımın gol atmayacağı beklentisi → KG Yok mantıklı")
 
     return yorumlar
-    # ==========================================
+
+
+# ==========================================
 # OKUNAN VERİLER PANELİ
 # ==========================================
 def okunan_veriler_paneli(v):
@@ -985,78 +993,156 @@ def okunan_veriler_paneli(v):
 
 
 # ==========================================
-# SAYFA 1: GİRİŞ
+# GİRİŞ EKRANI (ŞİFRE / MİSAFİR)
+# ==========================================
+def giris_ekrani():
+    st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:gray;'>Giriş yap veya misafir olarak devam et.</p>", unsafe_allow_html=True)
+    st.markdown("")
+
+    with st.form("giris_form"):
+        sifre = st.text_input("🔐 Şifre (Admin)", type="password", key="sifre_input")
+        c1, c2 = st.columns(2)
+        with c1:
+            admin_btn = st.form_submit_button("👑 Admin Girişi", use_container_width=True, type="primary")
+        with c2:
+            misafir_btn = st.form_submit_button("👤 Misafir Girişi", use_container_width=True)
+
+        if admin_btn:
+            if sifre == ADMIN_SIFRE:
+                st.session_state.giris_yapildi = True
+                st.session_state.rol = "admin"
+                st.session_state.sayfa = "giris"
+                st.rerun()
+            else:
+                st.error("❌ Yanlış şifre.")
+
+        if misafir_btn:
+            st.session_state.giris_yapildi = True
+            st.session_state.rol = "misafir"
+            st.session_state.sayfa = "giris"
+            st.rerun()
+
+
+# ==========================================
+# ÜST BAR (ROL GÖSTERGESİ + ÇIKIŞ)
+# ==========================================
+def ust_bar():
+    c1, c2 = st.columns([3, 1])
+    with c1:
+        if admin_mi():
+            st.markdown("👑 **Admin Modu**")
+        else:
+            st.markdown("👤 **Misafir Modu**")
+    with c2:
+        if st.button("🚪 Çıkış", use_container_width=True, key="cikis_btn"):
+            st.session_state.giris_yapildi = False
+            st.session_state.rol = None
+            st.session_state.sayfa = "giris"
+            st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
+            st.session_state.tek_silme_onay = None
+            st.session_state.tek_silme_gelecek = None
+            st.session_state.silme_onay = False
+            st.session_state.aktif_kayit_idx = None
+            st.session_state.aktif_gelecek_idx = None
+            st.rerun()
+
+
+# ==========================================
+# UYGULAMA BAŞLANGIÇ
+# ==========================================
+if not st.session_state.giris_yapildi:
+    giris_ekrani()
+    st.stop()
+
+ust_bar()
+
+
+# ==========================================
+# SAYFA 1: GİRİŞ (ANA SAYFA)
 # ==========================================
 if st.session_state.sayfa == "giris":
     st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:gray;'>İstatistik metnini kopyala → yapıştır → analiz et.</p>", unsafe_allow_html=True)
-    st.markdown("### 📋 İstatistik Metnini Yapıştır")
 
-    yapistir_metni = st.text_area("Yapıştırma alanı", height=280, key="yapistir_input", label_visibility="collapsed", placeholder="İstatistik metnini buraya yapıştır.")
-    st.divider()
+    if admin_mi():
+        st.markdown("<p style='text-align:center; color:gray;'>İstatistik metnini kopyala → yapıştır → analiz et.</p>", unsafe_allow_html=True)
+        st.markdown("### 📋 İstatistik Metnini Yapıştır")
 
-    col_bt1, col_bt2, col_bt3 = st.columns([2, 1, 1])
-    with col_bt1:
-        analiz_btn = st.button("🚀 ANALİZ ET", use_container_width=True, type="primary")
-    with col_bt2:
-        gecmis_btn = st.button("📊 Geçmiş", use_container_width=True)
-    with col_bt3:
-        gelecek_btn = st.button("🔮 Gelecek", use_container_width=True)
+        yapistir_metni = st.text_area("Yapıştırma alanı", height=280, key="yapistir_input", label_visibility="collapsed", placeholder="İstatistik metnini buraya yapıştır.")
+        st.divider()
 
-    if gecmis_btn:
-        st.session_state.sayfa = "gecmis"
-        st.session_state.kayit_yapildi = False
-        st.session_state.gecmisten_gelindi = False
-        st.session_state.gelecekten_gelindi = False
-        st.session_state.aktif_kayit_idx = None
-        st.session_state.aktif_gelecek_idx = None
-        st.session_state.okunamayan_alanlar = []
-        st.session_state.manuel_bekleyen = []
-        st.session_state.tek_silme_onay = None
-        st.session_state.silme_onay = False
-        st.rerun()
+        col_bt1, col_bt2, col_bt3 = st.columns([2, 1, 1])
+        with col_bt1:
+            analiz_btn = st.button("🚀 ANALİZ ET", use_container_width=True, type="primary")
+        with col_bt2:
+            gecmis_btn = st.button("📊 Geçmiş", use_container_width=True)
+        with col_bt3:
+            gelecek_btn = st.button("🔮 Gelecek", use_container_width=True)
 
-    if gelecek_btn:
-        st.session_state.sayfa = "gelecek"
-        st.session_state.kayit_yapildi = False
-        st.session_state.gecmisten_gelindi = False
-        st.session_state.gelecekten_gelindi = False
-        st.session_state.aktif_kayit_idx = None
-        st.session_state.aktif_gelecek_idx = None
-        st.session_state.okunamayan_alanlar = []
-        st.session_state.manuel_bekleyen = []
-        st.session_state.tek_silme_gelecek = None
-        st.rerun()
-
-    if analiz_btn:
-        if not yapistir_metni.strip():
-            st.warning("⚠️ Önce metni yapıştır.")
-        else:
-            cikan, okunamayanlar = metinden_veri_cikar(yapistir_metni)
-            if not cikan:
-                st.error("❌ Metinden hiçbir veri çıkarılamadı.")
+        if analiz_btn:
+            if not yapistir_metni.strip():
+                st.warning("⚠️ Önce metni yapıştır.")
             else:
-                yeni_veri = copy.deepcopy(VARSAYILAN_VERI)
-                yeni_veri.update(cikan)
-                st.session_state.form_verileri = yeni_veri
-                st.session_state.kayit_yapildi = False
-                st.session_state.gecmisten_gelindi = False
-                st.session_state.gelecekten_gelindi = False
-                st.session_state.aktif_kayit_idx = None
-                st.session_state.aktif_gelecek_idx = None
-                st.session_state.okunamayan_alanlar = okunamayanlar
-                st.session_state.manuel_bekleyen = okunamayanlar.copy()
-
-                if not veri_yeterli_mi(yeni_veri):
-                    st.error(f"⚠️ Analiz için yeterli veri yok.")
+                cikan, okunamayanlar = metinden_veri_cikar(yapistir_metni)
+                if not cikan:
+                    st.error("❌ Metinden hiçbir veri çıkarılamadı.")
                 else:
-                    if okunamayanlar:
-                        st.session_state.sayfa = "manuel_giris"
+                    yeni_veri = copy.deepcopy(VARSAYILAN_VERI)
+                    yeni_veri.update(cikan)
+                    st.session_state.form_verileri = yeni_veri
+                    st.session_state.kayit_yapildi = False
+                    st.session_state.gecmisten_gelindi = False
+                    st.session_state.gelecekten_gelindi = False
+                    st.session_state.aktif_kayit_idx = None
+                    st.session_state.aktif_gelecek_idx = None
+                    st.session_state.okunamayan_alanlar = okunamayanlar
+                    st.session_state.manuel_bekleyen = okunamayanlar.copy()
+
+                    if not veri_yeterli_mi(yeni_veri):
+                        st.error(f"⚠️ Analiz için yeterli veri yok.")
                     else:
-                        st.session_state.sayfa = "sonuc"
-                    st.rerun()
+                        if okunamayanlar:
+                            st.session_state.sayfa = "manuel_giris"
+                        else:
+                            st.session_state.sayfa = "sonuc"
+                        st.rerun()
+    else:
+        # MİSAFİR MODU — yapıştırma gizli
+        st.markdown("<p style='text-align:center; color:gray;'>Analizleri görüntülemek için aşağıdaki butonları kullan.</p>", unsafe_allow_html=True)
+        st.markdown("")
+        st.divider()
+        col_bt2, col_bt3 = st.columns(2)
+        with col_bt2:
+            gecmis_btn = st.button("📊 Geçmiş Maçlar", use_container_width=True, type="primary")
+        with col_bt3:
+            gelecek_btn = st.button("🔮 Gelecek Maçlar", use_container_width=True, type="primary")
 
+    # NAVİGASYON
+    if st.session_state.sayfa == "giris":
+        if "gecmis_btn" in dir() and gecmis_btn:
+            st.session_state.sayfa = "gecmis"
+            st.session_state.kayit_yapildi = False
+            st.session_state.gecmisten_gelindi = False
+            st.session_state.gelecekten_gelindi = False
+            st.session_state.aktif_kayit_idx = None
+            st.session_state.aktif_gelecek_idx = None
+            st.session_state.okunamayan_alanlar = []
+            st.session_state.manuel_bekleyen = []
+            st.session_state.tek_silme_onay = None
+            st.session_state.silme_onay = False
+            st.rerun()
 
+        if "gelecek_btn" in dir() and gelecek_btn:
+            st.session_state.sayfa = "gelecek"
+            st.session_state.kayit_yapildi = False
+            st.session_state.gecmisten_gelindi = False
+            st.session_state.gelecekten_gelindi = False
+            st.session_state.aktif_kayit_idx = None
+            st.session_state.aktif_gelecek_idx = None
+            st.session_state.okunamayan_alanlar = []
+            st.session_state.manuel_bekleyen = []
+            st.session_state.tek_silme_gelecek = None
+            st.rerun()
 # ==========================================
 # MANUEL GİRİŞ
 # ==========================================
@@ -1143,68 +1229,89 @@ elif st.session_state.sayfa == "gecmis":
             skor_ev = v_g.get("skor_ev", 0); skor_dep = v_g.get("skor_dep", 0)
             baslik = f"⚽ {takim_ev} {skor_ev}-{skor_dep} {takim_dep}"
 
-            col_maç, col_sil = st.columns([5, 1])
-            with col_maç:
+            if admin_mi():
+                col_maç, col_sil = st.columns([5, 1])
+                with col_maç:
+                    if st.button(baslik, use_container_width=True, key=f"mac_{idx_gercek}"):
+                        st.session_state.form_verileri = copy.deepcopy(v_g)
+                        st.session_state.kayit_yapildi = True
+                        st.session_state.gecmisten_gelindi = True
+                        st.session_state.gelecekten_gelindi = False
+                        st.session_state.aktif_kayit_idx = idx_gercek
+                        st.session_state.aktif_gelecek_idx = None
+                        st.session_state.okunamayan_alanlar = []
+                        st.session_state.sayfa = "sonuc"
+                        st.rerun()
+                with col_sil:
+                    if st.button("🗑️", key=f"sil_{idx_gercek}"):
+                        if st.session_state.tek_silme_onay == idx_gercek:
+                            st.session_state.tek_silme_onay = None
+                        else:
+                            st.session_state.tek_silme_onay = idx_gercek
+                        st.rerun()
+
+                if st.session_state.tek_silme_onay == idx_gercek:
+                    st.warning(f"⚠️ **{takim_ev} vs {takim_dep}** silinsin mi?")
+                    col_e, col_h = st.columns(2)
+                    with col_e:
+                        if st.button("✅ Sil", key=f"evet_{idx_gercek}", use_container_width=True, type="primary"):
+                            if 0 <= idx_gercek < len(st.session_state.gecmis_analizler):
+                                st.session_state.gecmis_analizler.pop(idx_gercek)
+                                gecmis_kaydet(st.session_state.gecmis_analizler)
+                            st.session_state.tek_silme_onay = None
+                            st.rerun()
+                    with col_h:
+                        if st.button("❌ İptal", key=f"hayir_{idx_gercek}", use_container_width=True):
+                            st.session_state.tek_silme_onay = None
+                            st.rerun()
+            else:
+                # MİSAFİR — sadece buton, sil yok
                 if st.button(baslik, use_container_width=True, key=f"mac_{idx_gercek}"):
                     st.session_state.form_verileri = copy.deepcopy(v_g)
                     st.session_state.kayit_yapildi = True
                     st.session_state.gecmisten_gelindi = True
+                    st.session_state.gelecekten_gelindi = False
                     st.session_state.aktif_kayit_idx = idx_gercek
+                    st.session_state.aktif_gelecek_idx = None
                     st.session_state.okunamayan_alanlar = []
                     st.session_state.sayfa = "sonuc"
                     st.rerun()
-            with col_sil:
-                if st.button("🗑️", key=f"sil_{idx_gercek}"):
-                    if st.session_state.tek_silme_onay == idx_gercek:
-                        st.session_state.tek_silme_onay = None
-                    else:
-                        st.session_state.tek_silme_onay = idx_gercek
-                    st.rerun()
-
-            if st.session_state.tek_silme_onay == idx_gercek:
-                st.warning(f"⚠️ **{takim_ev} vs {takim_dep}** silinsin mi?")
-                col_e, col_h = st.columns(2)
-                with col_e:
-                    if st.button("✅ Sil", key=f"evet_{idx_gercek}", use_container_width=True, type="primary"):
-                        if 0 <= idx_gercek < len(st.session_state.gecmis_analizler):
-                            st.session_state.gecmis_analizler.pop(idx_gercek)
-                            gecmis_kaydet(st.session_state.gecmis_analizler)
-                        st.session_state.tek_silme_onay = None
-                        st.rerun()
-                with col_h:
-                    if st.button("❌ İptal", key=f"hayir_{idx_gercek}", use_container_width=True):
-                        st.session_state.tek_silme_onay = None
-                        st.rerun()
 
     st.divider()
-    c_temizle, c_geri = st.columns(2)
-    with c_temizle:
-        if st.button("🗑️ Tüm Geçmişi Temizle", use_container_width=True, key="temizle_btn"):
-            st.session_state.silme_onay = True
-            st.rerun()
-    with c_geri:
-        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gecmis_geri"):
-            st.session_state.sayfa = "giris"
-            st.session_state.silme_onay = False
-            st.session_state.tek_silme_onay = None
-            st.rerun()
-
-    if st.session_state.silme_onay:
-        st.warning("⚠️ Tüm geçmiş silinecek. Emin misin?")
-        c_e, c_h = st.columns(2)
-        with c_e:
-            if st.button("✅ Evet, Sil", use_container_width=True, type="primary", key="sil_hepsi_evet"):
-                st.session_state.gecmis_analizler = []
-                try:
-                    if os.path.exists(GECMIS_DOSYA): os.remove(GECMIS_DOSYA)
-                except Exception: pass
+    if admin_mi():
+        c_temizle, c_geri = st.columns(2)
+        with c_temizle:
+            if st.button("🗑️ Tüm Geçmişi Temizle", use_container_width=True, key="temizle_btn"):
+                st.session_state.silme_onay = True
+                st.rerun()
+        with c_geri:
+            if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gecmis_geri"):
+                st.session_state.sayfa = "giris"
                 st.session_state.silme_onay = False
                 st.session_state.tek_silme_onay = None
                 st.rerun()
-        with c_h:
-            if st.button("❌ İptal", use_container_width=True, key="sil_hepsi_iptal"):
-                st.session_state.silme_onay = False
-                st.rerun()
+
+        if st.session_state.silme_onay:
+            st.warning("⚠️ Tüm geçmiş silinecek. Emin misin?")
+            c_e, c_h = st.columns(2)
+            with c_e:
+                if st.button("✅ Evet, Sil", use_container_width=True, type="primary", key="sil_hepsi_evet"):
+                    st.session_state.gecmis_analizler = []
+                    try:
+                        if os.path.exists(GECMIS_DOSYA): os.remove(GECMIS_DOSYA)
+                    except Exception: pass
+                    st.session_state.silme_onay = False
+                    st.session_state.tek_silme_onay = None
+                    st.rerun()
+            with c_h:
+                if st.button("❌ İptal", use_container_width=True, key="sil_hepsi_iptal"):
+                    st.session_state.silme_onay = False
+                    st.rerun()
+    else:
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gecmis_geri_misafir"):
+            st.session_state.sayfa = "giris"
+            st.session_state.tek_silme_onay = None
+            st.rerun()
 
 
 # ==========================================
@@ -1221,50 +1328,58 @@ elif st.session_state.sayfa == "gelecek":
             v_g = g["veri"]
             takim_ev = v_g.get("takim_ev", "Ev") or "Ev"
             takim_dep = v_g.get("takim_dep", "Dep") or "Dep"
-            st.markdown(f"**⚽ {takim_ev} vs {takim_dep}**")
-            sc1, sc2, sc3, sc4 = st.columns([1, 1, 1, 1])
-            with sc1:
-                yeni_skor_ev = st.number_input(f"Ev", min_value=0, max_value=20, value=0, step=1, key=f"gskor_ev_{idx_gercek}")
-            with sc2:
-                yeni_skor_dep = st.number_input(f"Dep", min_value=0, max_value=20, value=0, step=1, key=f"gskor_dep_{idx_gercek}")
-            with sc3:
-                st.markdown(""); st.markdown("")
-                if st.button("📥 Taşı", key=f"tası_{idx_gercek}", use_container_width=True, type="primary"):
-                    if 0 <= idx_gercek < len(st.session_state.gelecek_analizler):
-                        st.session_state.gelecek_analizler[idx_gercek]["veri"]["skor_ev"] = yeni_skor_ev
-                        st.session_state.gelecek_analizler[idx_gercek]["veri"]["skor_dep"] = yeni_skor_dep
-                        st.session_state.gelecek_analizler[idx_gercek]["veri"]["skor_belli"] = True
-                        d = sonuc_hesapla(st.session_state.gelecek_analizler[idx_gercek])
-                        if d: st.session_state.gelecek_analizler[idx_gercek]["dogruluk"] = d
-                        st.session_state.gecmis_analizler.append(st.session_state.gelecek_analizler[idx_gercek])
-                        st.session_state.gelecek_analizler.pop(idx_gercek)
-                        gecmis_kaydet(st.session_state.gecmis_analizler)
-                        gelecek_kaydet(st.session_state.gelecek_analizler)
-                    st.rerun()
-            with sc4:
-                st.markdown(""); st.markdown("")
-                if st.button("🗑️", key=f"silg_{idx_gercek}", use_container_width=True):
-                    if st.session_state.tek_silme_gelecek == idx_gercek:
-                        st.session_state.tek_silme_gelecek = None
-                    else:
-                        st.session_state.tek_silme_gelecek = idx_gercek
+            baslik = f"⚽ {takim_ev} vs {takim_dep}"
+
+            if admin_mi():
+                col_maç, col_sil = st.columns([5, 1])
+                with col_maç:
+                    if st.button(baslik, use_container_width=True, key=f"gmac_{idx_gercek}"):
+                        st.session_state.form_verileri = copy.deepcopy(v_g)
+                        st.session_state.kayit_yapildi = True
+                        st.session_state.gecmisten_gelindi = False
+                        st.session_state.gelecekten_gelindi = True
+                        st.session_state.aktif_kayit_idx = None
+                        st.session_state.aktif_gelecek_idx = idx_gercek
+                        st.session_state.okunamayan_alanlar = []
+                        st.session_state.sayfa = "sonuc"
+                        st.rerun()
+                with col_sil:
+                    if st.button("🗑️", key=f"gsil_{idx_gercek}"):
+                        if st.session_state.tek_silme_gelecek == idx_gercek:
+                            st.session_state.tek_silme_gelecek = None
+                        else:
+                            st.session_state.tek_silme_gelecek = idx_gercek
+                        st.rerun()
+
+                if st.session_state.tek_silme_gelecek == idx_gercek:
+                    st.warning(f"⚠️ **{takim_ev} vs {takim_dep}** silinsin mi?")
+                    c_e, c_h = st.columns(2)
+                    with c_e:
+                        if st.button("✅ Sil", key=f"evet_g_{idx_gercek}", use_container_width=True, type="primary"):
+                            if 0 <= idx_gercek < len(st.session_state.gelecek_analizler):
+                                st.session_state.gelecek_analizler.pop(idx_gercek)
+                                gelecek_kaydet(st.session_state.gelecek_analizler)
+                            st.session_state.tek_silme_gelecek = None
+                            st.rerun()
+                    with c_h:
+                        if st.button("❌ İptal", key=f"hayir_g_{idx_gercek}", use_container_width=True):
+                            st.session_state.tek_silme_gelecek = None
+                            st.rerun()
+            else:
+                # MİSAFİR — sadece buton, sil yok
+                if st.button(baslik, use_container_width=True, key=f"gmac_{idx_gercek}"):
+                    st.session_state.form_verileri = copy.deepcopy(v_g)
+                    st.session_state.kayit_yapildi = True
+                    st.session_state.gecmisten_gelindi = False
+                    st.session_state.gelecekten_gelindi = True
+                    st.session_state.aktif_kayit_idx = None
+                    st.session_state.aktif_gelecek_idx = idx_gercek
+                    st.session_state.okunamayan_alanlar = []
+                    st.session_state.sayfa = "sonuc"
                     st.rerun()
 
-            if st.session_state.tek_silme_gelecek == idx_gercek:
-                st.warning(f"⚠️ Silinsin mi?")
-                c_e, c_h = st.columns(2)
-                with c_e:
-                    if st.button("✅ Sil", key=f"evet_g_{idx_gercek}", use_container_width=True, type="primary"):
-                        if 0 <= idx_gercek < len(st.session_state.gelecek_analizler):
-                            st.session_state.gelecek_analizler.pop(idx_gercek)
-                            gelecek_kaydet(st.session_state.gelecek_analizler)
-                        st.session_state.tek_silme_gelecek = None
-                        st.rerun()
-                with c_h:
-                    if st.button("❌ İptal", key=f"hayir_g_{idx_gercek}", use_container_width=True):
-                        st.session_state.tek_silme_gelecek = None
-                        st.rerun()
             st.divider()
+
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="g_geri"):
         st.session_state.sayfa = "giris"
         st.session_state.tek_silme_gelecek = None
@@ -1397,10 +1512,41 @@ elif st.session_state.sayfa == "sonuc":
 
     st.markdown(f"<small>Var: %{kg_var_model:.1f} • Yok: %{kg_yok_model:.1f}</small>", unsafe_allow_html=True)
 
-    # KAYIT KONTROLÜ
+    # ================================
+    # GELECEKTEN GELİNDİYSE SKOR GİRME (SADECE ADMIN)
+    # ================================
+    if st.session_state.gelecekten_gelindi and admin_mi():
+        idx_g = st.session_state.aktif_gelecek_idx
+        if idx_g is not None and 0 <= idx_g < len(st.session_state.gelecek_analizler):
+            st.divider()
+            st.markdown("### 📥 Sonucu Gir ve Geçmişe Taşı")
+            sc1, sc2, sc3 = st.columns([1, 1, 1])
+            with sc1:
+                yeni_skor_ev = st.number_input("Ev Gol", min_value=0, max_value=20, value=int(v.get("skor_ev", 0)), step=1, key=f"gskor_ev_{idx_g}")
+            with sc2:
+                yeni_skor_dep = st.number_input("Dep Gol", min_value=0, max_value=20, value=int(v.get("skor_dep", 0)), step=1, key=f"gskor_dep_{idx_g}")
+            with sc3:
+                st.markdown(""); st.markdown("")
+                if st.button("📥 Taşı", key=f"tası_{idx_g}", use_container_width=True, type="primary"):
+                    kayit = st.session_state.gelecek_analizler[idx_g]
+                    kayit["veri"]["skor_ev"] = int(yeni_skor_ev)
+                    kayit["veri"]["skor_dep"] = int(yeni_skor_dep)
+                    kayit["veri"]["skor_belli"] = True
+                    yeni_d = sonuc_hesapla(kayit)
+                    if yeni_d: kayit["dogruluk"] = yeni_d
+                    st.session_state.gecmis_analizler.append(kayit)
+                    st.session_state.gelecek_analizler.pop(idx_g)
+                    gecmis_kaydet(st.session_state.gecmis_analizler)
+                    gelecek_kaydet(st.session_state.gelecek_analizler)
+                    st.session_state.gelecekten_gelindi = False
+                    st.session_state.aktif_gelecek_idx = None
+                    st.session_state.sayfa = "gelecek"
+                    st.rerun()
+
+    # KAYIT KONTROLÜ (yeni analiz yapıldıysa)
     kaydet_mi = gol_poz or kg_poz
 
-    if not st.session_state.kayit_yapildi:
+    if not st.session_state.kayit_yapildi and admin_mi():
         if kaydet_mi:
             yeni_kayit = kayit_olustur(v, a)
             if d is not None: yeni_kayit["dogruluk"] = d
