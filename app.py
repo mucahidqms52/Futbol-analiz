@@ -1,6 +1,8 @@
 import streamlit as st
+import math
 import copy
 import re
+import random
 import json
 import os
 
@@ -96,6 +98,8 @@ ESIK_YUKSEK = 65.0
 ESIK_ORTA = 55.0
 ESIK_BELIRSIZ = 50.0
 
+MONTE_CARLO_N = 10000
+
 # ==========================================
 # VARSAYILAN VERİ (88 ALAN)
 # ==========================================
@@ -112,11 +116,11 @@ VARSAYILAN_VERI = {
     "team_scored_2_ev": 0.0, "team_scored_2_dep": 0.0,
     "scored_both_halves_ev": 0.0, "scored_both_halves_dep": 0.0,
     "goal_both_halves_ev": 0.0, "goal_both_halves_dep": 0.0,
-    "ust05_ev": 0.0, "ust05_dep": 0.0,
-    "ust15_ev": 0.0, "ust15_dep": 0.0,
-    "ust25_ev": 0.0, "ust25_dep": 0.0,
-    "ust35_ev": 0.0, "ust35_dep": 0.0,
-    "kg_siklik_ev": 0.0, "kg_siklik_dep": 0.0,
+    "ust05_ev": 80.0, "ust05_dep": 80.0,
+    "ust15_ev": 50.0, "ust15_dep": 50.0,
+    "ust25_ev": 30.0, "ust25_dep": 30.0,
+    "ust35_ev": 20.0, "ust35_dep": 20.0,
+    "kg_siklik_ev": 50.0, "kg_siklik_dep": 50.0,
     "btts_1h_ev": 0.0, "btts_1h_dep": 0.0,
     "btts_2h_ev": 0.0, "btts_2h_dep": 0.0,
     "btts_over15_ev": 0.0, "btts_over15_dep": 0.0,
@@ -141,9 +145,9 @@ VARSAYILAN_VERI = {
     "lht_wft_ev": 0.0, "lht_wft_dep": 0.0,
     "lht_dft_ev": 0.0, "lht_dft_dep": 0.0,
     "lht_lft_ev": 0.0, "lht_lft_dep": 0.0,
-    "galibiyet_ev": 0.0, "galibiyet_dep": 0.0,
-    "beraberlik_ev": 0.0, "beraberlik_dep": 0.0,
-    "maglubiyet_ev": 0.0, "maglubiyet_dep": 0.0,
+    "galibiyet_ev": 30.0, "galibiyet_dep": 30.0,
+    "beraberlik_ev": 30.0, "beraberlik_dep": 30.0,
+    "maglubiyet_ev": 30.0, "maglubiyet_dep": 30.0,
     "win_1h_ev": 0.0, "win_1h_dep": 0.0,
     "draw_ht_ev": 0.0, "draw_ht_dep": 0.0,
     "lose_1h_ev": 0.0, "lose_1h_dep": 0.0,
@@ -160,6 +164,9 @@ VARSAYILAN_VERI = {
     "lig_kg": 0.0,
     "format": "bilinmiyor",
 }
+
+MAX_GOL = 8
+BELIRSIZLIK = 0.20
 
 # ==========================================
 # SESSION STATE
@@ -206,11 +213,8 @@ def esik_al(key):
 # ==========================================
 # YARDIMCI FONKSİYONLAR
 # ==========================================
-def guven_seviyesi_bul(olasilik):
-    if olasilik >= ESIK_YUKSEK: return ("yuksek", "🟢", "success", "Yüksek")
-    if olasilik >= ESIK_ORTA:   return ("orta", "🟡", "warning", "Orta")
-    if olasilik >= ESIK_BELIRSIZ: return ("belirsiz", "🔴", "error", "Belirsiz")
-    return ("cok_dusuk", "⚫", "error", "Düşük")
+def clamp(x, lo, hi):
+    return max(lo, min(hi, x))
 
 
 def ort_iki(a, b):
@@ -219,15 +223,11 @@ def ort_iki(a, b):
     return sum(vals) / len(vals)
 
 
-def veri_yeterli_mi(v):
-    """En az 2 kritik veri var mı?"""
-    kritik = [
-        v.get("atilan_ev", 0),
-        v.get("atilan_dep", 0),
-        v.get("yenen_ev", 0),
-        v.get("yenen_dep", 0),
-    ]
-    return sum(1 for x in kritik if x > 0) >= 2
+def guven_seviyesi_bul(olasilik):
+    if olasilik >= ESIK_YUKSEK: return ("yuksek", "🟢", "success", "Yüksek")
+    if olasilik >= ESIK_ORTA:   return ("orta", "🟡", "warning", "Orta")
+    if olasilik >= ESIK_BELIRSIZ: return ("belirsiz", "🔴", "error", "Belirsiz")
+    return ("cok_dusuk", "⚫", "error", "Düşük")
 
 
 def kayit_yeni_format_mi(g):
@@ -266,7 +266,7 @@ def ist_skor_metni(ist_kayit):
 
 
 # ==========================================
-# BACKTEST
+# BACKTEST FONKSİYONU
 # ==========================================
 def backtest_hesapla(gecmis, market_sec, market_esik):
     sonuc = {
@@ -361,9 +361,9 @@ MANUEL_ALANLAR = {
     "xG": [("xg_ev", "xG (Ev)", "float", 0.0), ("xg_dep", "xG (Dep)", "float", 0.0)],
     "Atılan Gol": [("atilan_ev", "Atılan Gol (Ev)", "float", 0.0), ("atilan_dep", "Atılan Gol (Dep)", "float", 0.0)],
     "Yenen Gol": [("yenen_ev", "Yenen Gol (Ev)", "float", 0.0), ("yenen_dep", "Yenen Gol (Dep)", "float", 0.0)],
-                }
+        }
 # ==========================================
-# SPORTYTRADER ÇIKARICI
+# SPORTYTRADER ÇIKARICI (88 ALAN)
 # ==========================================
 def _cift_tab(etiket, blok):
     pattern = r'([\d.,]+)%?\s*\t\s*' + re.escape(etiket) + r'\s*\t\s*([\d.,]+)%?'
@@ -619,250 +619,320 @@ def metinden_veri_cikar(metin):
 
 
 # ==========================================
-# AĞIRLIKLI ANALİZ (SADECE VERİ)
+# POISSON & LAMBDA (88 ALAN KULLANIMI)
 # ==========================================
-def hesapla_ust_25(v):
-    """Üst 2.5 — sadece direkt veri, ağırlıklı ortalama."""
-    toplam_agirlik = 0.0
-    toplam_deger = 0.0
-
-    # Direkt Üst 2.5 (en güçlü)
-    u25_ev = v.get("ust25_ev", 0)
-    u25_dep = v.get("ust25_dep", 0)
-    if u25_ev > 0:
-        toplam_deger += u25_ev * 0.20
-        toplam_agirlik += 0.20
-    if u25_dep > 0:
-        toplam_deger += u25_dep * 0.20
-        toplam_agirlik += 0.20
-
-    # Üst 1.5
-    u15_ev = v.get("ust15_ev", 0)
-    u15_dep = v.get("ust15_dep", 0)
-    if u15_ev > 0 and u15_dep > 0:
-        u15_ort = (u15_ev + u15_dep) / 2
-        toplam_deger += u15_ort * 0.10
-        toplam_agirlik += 0.10
-
-    # Üst 3.5
-    u35_ev = v.get("ust35_ev", 0)
-    u35_dep = v.get("ust35_dep", 0)
-    if u35_ev > 0 and u35_dep > 0:
-        u35_ort = (u35_ev + u35_dep) / 2
-        toplam_deger += u35_ort * 0.08
-        toplam_agirlik += 0.08
-
-    # TG 2-3
-    tg_2_3_ev = v.get("tg_2_ev", 0) + v.get("tg_3_ev", 0)
-    tg_2_3_dep = v.get("tg_2_dep", 0) + v.get("tg_3_dep", 0)
-    if tg_2_3_ev > 0 and tg_2_3_dep > 0:
-        tg_23_ort = (tg_2_3_ev + tg_2_3_dep) / 2
-        toplam_deger += tg_23_ort * 0.12
-        toplam_agirlik += 0.12
-
-    # TG 4+
-    tg_4_ev = v.get("tg_4_ev", 0)
-    tg_4_dep = v.get("tg_4_dep", 0)
-    if tg_4_ev > 0 and tg_4_dep > 0:
-        tg_4_ort = (tg_4_ev + tg_4_dep) / 2
-        toplam_deger += tg_4_ort * 0.08
-        toplam_agirlik += 0.08
-
-    # KG Var
-    kg_ev = v.get("kg_siklik_ev", 0)
-    kg_dep = v.get("kg_siklik_dep", 0)
-    if kg_ev > 0 and kg_dep > 0:
-        kg_ort = (kg_ev + kg_dep) / 2
-        toplam_deger += kg_ort * 0.07
-        toplam_agirlik += 0.07
-
-    # Atılan gol
-    at_ev = v.get("atilan_ev", 0)
-    at_dep = v.get("atilan_dep", 0)
-    if at_ev > 0 and at_dep > 0:
-        at_ort = (at_ev + at_dep) / 2
-        at_pct = min(100, at_ort / 3.0 * 100)
-        toplam_deger += at_pct * 0.08
-        toplam_agirlik += 0.08
-
-    # Yenen gol
-    y_ev = v.get("yenen_ev", 0)
-    y_dep = v.get("yenen_dep", 0)
-    if y_ev > 0 and y_dep > 0:
-        y_ort = (y_ev + y_dep) / 2
-        y_pct = min(100, y_ort / 3.0 * 100)
-        toplam_deger += y_pct * 0.05
-        toplam_agirlik += 0.05
-
-    # xG
-    xg_ev = v.get("xg_ev", 0)
-    xg_dep = v.get("xg_dep", 0)
-    if xg_ev > 0 and xg_dep > 0:
-        xg_ort = (xg_ev + xg_dep) / 2
-        xg_pct = min(100, xg_ort / 3.0 * 100)
-        toplam_deger += xg_pct * 0.02
-        toplam_agirlik += 0.02
-
-    if toplam_agirlik > 0:
-        return toplam_deger / toplam_agirlik
-    return 50.0
+def poisson_pmf(k, lam):
+    if lam <= 0: return 1.0 if k == 0 else 0.0
+    return (math.exp(-lam) * (lam ** k)) / math.factorial(k)
 
 
-def hesapla_kg_var(v):
-    """KG Var — sadece direkt veri, ağırlıklı ortalama."""
-    toplam_agirlik = 0.0
-    toplam_deger = 0.0
+def poisson_random(lam):
+    if lam <= 0: return 0
+    L = math.exp(-lam); k = 0; p = 1.0
+    while True:
+        k += 1; p *= random.random()
+        if p <= L: return k - 1
 
-    # Direkt KG Var
-    kg_ev = v.get("kg_siklik_ev", 0)
-    kg_dep = v.get("kg_siklik_dep", 0)
-    if kg_ev > 0:
-        toplam_deger += kg_ev * 0.30
-        toplam_agirlik += 0.30
-    if kg_dep > 0:
-        toplam_deger += kg_dep * 0.30
-        toplam_agirlik += 0.30
 
-    # BTTS İY
-    btts_1h_ev = v.get("btts_1h_ev", 0)
-    btts_1h_dep = v.get("btts_1h_dep", 0)
-    if btts_1h_ev > 0 and btts_1h_dep > 0:
-        btts_1h_ort = (btts_1h_ev + btts_1h_dep) / 2
-        toplam_deger += btts_1h_ort * 0.08
-        toplam_agirlik += 0.08
+def poisson_matris(lam_ev, lam_dep, max_gol=MAX_GOL):
+    return [[poisson_pmf(i, lam_ev) * poisson_pmf(j, lam_dep) for j in range(max_gol)] for i in range(max_gol)]
 
-    # BTTS 2Y
-    btts_2h_ev = v.get("btts_2h_ev", 0)
-    btts_2h_dep = v.get("btts_2h_dep", 0)
-    if btts_2h_ev > 0 and btts_2h_dep > 0:
-        btts_2h_ort = (btts_2h_ev + btts_2h_dep) / 2
-        toplam_deger += btts_2h_ort * 0.08
-        toplam_agirlik += 0.08
 
-    # Team scored
+def hesapla_lambda(v):
+    atilan_e = v.get("atilan_ev", 0.0)
+    yenen_e = v.get("yenen_ev", 0.0)
+    atilan_d = v.get("atilan_dep", 0.0)
+    yenen_d = v.get("yenen_dep", 0.0)
+
+    xg_e = v.get("xg_ev", 0.0)
+    xg_d = v.get("xg_dep", 0.0)
+
+    if xg_e > 0:
+        hucum_ev_baz = (xg_e * 0.60) + (atilan_e * 0.40)
+    else:
+        hucum_ev_baz = atilan_e if atilan_e > 0 else 1.2
+
+    if xg_d > 0:
+        hucum_dep_baz = (xg_d * 0.60) + (atilan_d * 0.40)
+    else:
+        hucum_dep_baz = atilan_d if atilan_d > 0 else 1.0
+
     ts_ev = v.get("team_scored_ev", 0)
     ts_dep = v.get("team_scored_dep", 0)
-    if ts_ev > 0 and ts_dep > 0:
-        ts_ort = (ts_ev + ts_dep) / 2
-        toplam_deger += ts_ort * 0.10
-        toplam_agirlik += 0.10
+    if ts_ev > 0:
+        hucum_ev_baz *= clamp(ts_ev / 60, 0.7, 1.3)
+    if ts_dep > 0:
+        hucum_dep_baz *= clamp(ts_dep / 60, 0.7, 1.3)
 
-    # TG 0-1 (yüksekse KG YOK)
-    tg_0_1_ev = v.get("tg_0_ev", 0) + v.get("tg_1_ev", 0)
-    tg_0_1_dep = v.get("tg_0_dep", 0) + v.get("tg_1_dep", 0)
-    if tg_0_1_ev > 0 and tg_0_1_dep > 0:
-        tg_01_ort = (tg_0_1_ev + tg_0_1_dep) / 2
-        kg_yok_puan = 100 - tg_01_ort
-        toplam_deger += kg_yok_puan * 0.14
-        toplam_agirlik += 0.14
+    savunma_dep_zaaf = yenen_d if yenen_d > 0 else 1.2
+    savunma_ev_zaaf = yenen_e if yenen_e > 0 else 1.0
 
-    # Clean Sheet
-    cs_ev = v.get("clean_sheets_ev", 0)
-    cs_dep = v.get("clean_sheets_dep", 0)
-    if cs_ev > 0 and cs_dep > 0:
-        cs_ort = (cs_ev + cs_dep) / 2
-        kg_yok_puan = 100 - cs_ort
-        toplam_deger += kg_yok_puan * 0.06
-        toplam_agirlik += 0.06
+    cs_ev = v.get("clean_sheets_ev", 0.0)
+    cs_dep = v.get("clean_sheets_dep", 0.0)
 
-    if toplam_agirlik > 0:
-        return toplam_deger / toplam_agirlik
-    return 50.0
+    def clean_sheet_freni(cs_orani):
+        if cs_orani >= 40.0:
+            return max(0.40, 1.0 - (cs_orani / 100.0 * 0.80))
+        return 1.0 - (cs_orani / 250.0) if cs_orani > 0 else 1.0
 
+    dep_freni = clean_sheet_freni(cs_ev)
+    ev_freni = clean_sheet_freni(cs_dep)
 
-def hesapla_1x2(v):
-    """1X2 — direkt veri + sıralama + form."""
+    lam_ev_ham = (hucum_ev_baz * 0.60) + (savunma_dep_zaaf * 0.40)
+    lam_dep_ham = (hucum_dep_baz * 0.60) + (savunma_ev_zaaf * 0.40)
+
+    ust25_e = v.get("ust25_ev", 0)
+    ust25_d = v.get("ust25_dep", 0)
+    if ust25_e > 0:
+        lam_ev_ham *= clamp(ust25_e / 50, 0.85, 1.15)
+    if ust25_d > 0:
+        lam_dep_ham *= clamp(ust25_d / 50, 0.85, 1.15)
+
+    kg_e = v.get("kg_siklik_ev", 0)
+    kg_d = v.get("kg_siklik_dep", 0)
+    if kg_e > 0 and kg_d > 0:
+        kg_ort = (kg_e + kg_d) / 2
+        if kg_ort >= 60:
+            lam_ev_ham *= 1.05
+            lam_dep_ham *= 1.05
+        elif kg_ort <= 35:
+            lam_ev_ham *= 0.95
+            lam_dep_ham *= 0.95
+
+    EV_ETKISI = 1.05
+    DEP_ETKISI = 0.95
+
+    form_ev = clamp(1 + (v.get("ppg_ev", 1.5) - 1.5) / 15, 0.85, 1.15)
+    form_dep = clamp(1 + (v.get("mpg_dep", 1.5) - 1.5) / 15, 0.85, 1.15)
+
+    sira_e = v.get("siralama_ev", 10)
+    sira_d = v.get("siralama_dep", 10)
+    dominasyon_bonus_ev = 1.0
+    if 1 <= sira_e <= 5 and sira_d >= 10:
+        dominasyon_bonus_ev = 1.20
+
     gal_ev = v.get("galibiyet_ev", 0)
-    ber_ev = v.get("beraberlik_ev", 0)
-    mag_ev = v.get("maglubiyet_ev", 0)
     gal_dep = v.get("galibiyet_dep", 0)
-    ber_dep = v.get("beraberlik_dep", 0)
-    mag_dep = v.get("maglubiyet_dep", 0)
+    if gal_ev > 0 and gal_dep > 0:
+        if gal_ev - gal_dep >= 25:
+            lam_ev_ham *= 1.08
+            lam_dep_ham *= 0.95
+        elif gal_dep - gal_ev >= 25:
+            lam_ev_ham *= 0.95
+            lam_dep_ham *= 1.08
 
+    wht_wft = v.get("wht_wft_ev", 0)
+    lht_lft = v.get("lht_lft_ev", 0)
+    if wht_wft >= 25:
+        lam_ev_ham *= 1.05
+    if lht_lft >= 25:
+        lam_dep_ham *= 1.05
+
+    lam_ev = lam_ev_ham * EV_ETKISI * form_ev * ev_freni * dominasyon_bonus_ev
+    lam_dep = lam_dep_ham * DEP_ETKISI * form_dep * dep_freni
+
+    if lam_ev > 2.50: lam_ev = 2.50 + (lam_ev - 2.50) * 0.5
+    if lam_dep > 2.50: lam_dep = 2.50 + (lam_dep - 2.50) * 0.5
+
+    lam_ev = clamp(lam_ev, 0.05, 4.5)
+    lam_dep = clamp(lam_dep, 0.05, 4.5)
+
+    guven = 0.80
+    return lam_ev, lam_dep, guven
+
+
+def matristen_olasilik(matris, max_gol=MAX_GOL):
     p1 = px = p2 = 0.0
+    ust_05 = ust_15 = ust_25 = ust_35 = 0.0
+    kg_var = 0.0; skorlar = {}; toplam = 0.0
+    for i in range(max_gol):
+        for j in range(max_gol):
+            p = matris[i][j]; toplam += p
+            if i > j: p1 += p
+            elif i == j: px += p
+            else: p2 += p
+            tg = i + j
+            if tg > 0.5: ust_05 += p
+            if tg > 1.5: ust_15 += p
+            if tg > 2.5: ust_25 += p
+            if tg > 3.5: ust_35 += p
+            if i > 0 and j > 0: kg_var += p
+            skorlar[f"{i}-{j}"] = p
+    return {"1": p1, "X": px, "2": p2, "ust_05": ust_05, "ust_15": ust_15,
+            "ust_25": ust_25, "ust_35": ust_35, "kg_var": kg_var, "skorlar": skorlar, "toplam": toplam}
 
-    if gal_ev > 0 and mag_dep > 0:
-        p1 = (gal_ev + mag_dep) / 2
-    if ber_ev > 0 and ber_dep > 0:
-        px = (ber_ev + ber_dep) / 2
-    if gal_dep > 0 and mag_ev > 0:
-        p2 = (gal_dep + mag_ev) / 2
 
-    s_ev = v.get("siralama_ev", 0)
-    s_dep = v.get("siralama_dep", 0)
-    if s_ev > 0 and s_dep > 0:
-        if s_ev < s_dep - 5:
-            p1 += 5
-        elif s_dep < s_ev - 5:
-            p2 += 5
+def veri_yeterli_mi(v):
+    onemli = [v["atilan_ev"], v["atilan_dep"], v["yenen_ev"], v["yenen_dep"]]
+    return sum(1 for x in onemli if x > 0) >= 2
 
-    ppg = v.get("ppg_ev", 1.5)
-    mpg = v.get("mpg_dep", 1.5)
-    if ppg > mpg + 0.5:
-        p1 += 3
-    elif mpg > ppg + 0.5:
-        p2 += 3
+
+def mac_ici_sok(lam_ev, lam_dep):
+    if random.random() < 0.03:
+        if random.random() < 0.5: lam_ev *= 0.70
+        else: lam_dep *= 0.70
+    return lam_ev, lam_dep
+
+
+def monte_carlo_simulasyon(lam_ev_base, lam_dep_base, n=MONTE_CARLO_N):
+    sayac = {"1": 0, "X": 0, "2": 0, "ust25": 0, "kg_var": 0}
+    for _ in range(n):
+        sapma_ev = random.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
+        sapma_dep = random.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
+        lam_ev = lam_ev_base * sapma_ev
+        lam_dep = lam_dep_base * sapma_dep
+        lam_ev, lam_dep = mac_ici_sok(lam_ev, lam_dep)
+        ev_gol = min(MAX_GOL - 1, poisson_random(lam_ev))
+        dep_gol = min(MAX_GOL - 1, poisson_random(lam_dep))
+        if ev_gol > dep_gol: sayac["1"] += 1
+        elif ev_gol == dep_gol: sayac["X"] += 1
+        else: sayac["2"] += 1
+        if ev_gol + dep_gol > 2.5: sayac["ust25"] += 1
+        if ev_gol > 0 and dep_gol > 0: sayac["kg_var"] += 1
+
+    def yuzde(s): return s / n * 100 if n > 0 else 0
+    return {"p1": yuzde(sayac["1"]), "px": yuzde(sayac["X"]), "p2": yuzde(sayac["2"]),
+            "ust25": yuzde(sayac["ust25"]), "alt25": 100 - yuzde(sayac["ust25"]),
+            "kg_var": yuzde(sayac["kg_var"]), "kg_yok": 100 - yuzde(sayac["kg_var"]), "n": n}
+
+
+# ==========================================
+# ANALİZ HESAPLA (88 ALAN FÜZYONU)
+# ==========================================
+def analiz_hesapla(v):
+    lam_ev, lam_dep, guven = hesapla_lambda(v)
+    matris = poisson_matris(lam_ev, lam_dep, MAX_GOL)
+    olas = matristen_olasilik(matris, MAX_GOL)
+    toplam = olas["toplam"] or 1
+
+    p1_po = olas["1"] / toplam * 100
+    px_po = olas["X"] / toplam * 100
+    p2_po = olas["2"] / toplam * 100
+    ust25_po = olas["ust_25"] / toplam * 100
+    kg_var_po = olas["kg_var"] / toplam * 100
+
+    mc = monte_carlo_simulasyon(lam_ev, lam_dep, MONTE_CARLO_N)
+    p1_mc = mc["p1"]; px_mc = mc["px"]; p2_mc = mc["p2"]
+    ust25_mc = mc["ust25"]; kg_var_mc = mc["kg_var"]
+
+    lig_ust25 = v.get("lig_ust25", 0.0)
+    lig_kg = v.get("lig_kg", 0.0)
+
+    ust15_e = v.get("ust15_ev", 0); ust15_d = v.get("ust15_dep", 0)
+    ust35_e = v.get("ust35_ev", 0); ust35_d = v.get("ust35_dep", 0)
+    kg_sik_e = v.get("kg_siklik_ev", 0); kg_sik_d = v.get("kg_siklik_dep", 0)
+    btts_1h_e = v.get("btts_1h_ev", 0); btts_1h_d = v.get("btts_1h_dep", 0)
+    btts_2h_e = v.get("btts_2h_ev", 0); btts_2h_d = v.get("btts_2h_dep", 0)
+    tg_0_e = v.get("tg_0_ev", 0); tg_0_d = v.get("tg_0_dep", 0)
+    tg_1_e = v.get("tg_1_ev", 0); tg_1_d = v.get("tg_1_dep", 0)
+    tg_2_e = v.get("tg_2_ev", 0); tg_2_d = v.get("tg_2_dep", 0)
+    tg_3_e = v.get("tg_3_ev", 0); tg_3_d = v.get("tg_3_dep", 0)
+    tg_4_e = v.get("tg_4_ev", 0); tg_4_d = v.get("tg_4_dep", 0)
+    gal_e = v.get("galibiyet_ev", 0); gal_d = v.get("galibiyet_dep", 0)
+    ber_e = v.get("beraberlik_ev", 0); ber_d = v.get("beraberlik_dep", 0)
+
+    p1 = (p1_po * 0.60) + (p1_mc * 0.40)
+    px = (px_po * 0.60) + (px_mc * 0.40)
+    p2 = (p2_po * 0.60) + (p2_mc * 0.40)
+
+    if gal_e > 0 and gal_d > 0:
+        p1 = (p1 * 0.85) + (gal_e * 0.15)
+        p2 = (p2 * 0.85) + (gal_d * 0.15)
+    if ber_e > 0 and ber_d > 0:
+        ber_ort = (ber_e + ber_d) / 2
+        px = (px * 0.85) + (ber_ort * 0.15)
 
     t = p1 + px + p2
-    if t > 0:
-        p1 = (p1 / t) * 100
-        px = (px / t) * 100
-        p2 = (p2 / t) * 100
+    if t > 0: p1, px, p2 = (p1 / t) * 100, (px / t) * 100, (p2 / t) * 100
+
+    if lig_ust25 > 0:
+        ust_25 = (ust25_po * 0.60) + (lig_ust25 * 0.10) + (ust25_mc * 0.30)
     else:
-        p1 = px = p2 = 33.3
+        ust_25 = (ust25_po * 0.65) + (ust25_mc * 0.35)
 
-    return p1, px, p2
+    if ust15_e > 0 and ust15_d > 0:
+        u15_ort = (ust15_e + ust15_d) / 2
+        if u15_ort >= 70:
+            ust_25 = (ust_25 * 0.90) + (u15_ort * 0.10)
+    if ust35_e > 0 and ust35_d > 0:
+        u35_ort = (ust35_e + ust35_d) / 2
+        if u35_ort >= 40:
+            ust_25 = (ust_25 * 0.92) + (u35_ort * 0.08)
 
+    tg_2_3 = ort_iki(tg_2_e + tg_3_e if tg_2_e > 0 else 0, tg_2_d + tg_3_d if tg_2_d > 0 else 0)
+    tg_4p = ort_iki(tg_4_e, tg_4_d)
+    if tg_2_3 > 0 or tg_4p > 0:
+        ust_egilim = tg_2_3 * 0.5 + tg_4p * 1.0
+        if ust_egilim >= 50:
+            ust_25 = (ust_25 * 0.93) + (ust_egilim * 0.07)
 
-def analiz_hesapla(v):
-    """ANA ANALİZ — Poisson yok, sadece 88 veri."""
-    ust_25 = hesapla_ust_25(v)
+    if lig_kg > 0:
+        kg_var_model = (kg_var_po * 0.40) + (lig_kg * 0.30) + (kg_var_mc * 0.30)
+    else:
+        kg_var_model = (kg_var_po * 0.60) + (kg_var_mc * 0.40)
 
-    at_ev = v.get("atilan_ev", 0)
-    at_dep = v.get("atilan_dep", 0)
-    if at_ev > 0 and at_dep > 0:
-        at_toplam = at_ev + at_dep
-        if at_toplam < 2.0:
-            baski = (2.0 - at_toplam) / 2.0
-            ust_25 = max(10, ust_25 * (1 - baski * 0.4))
+    if kg_sik_e > 0 and kg_sik_d > 0:
+        kg_ort = (kg_sik_e + kg_sik_d) / 2
+        kg_var_model = (kg_var_model * 0.85) + (kg_ort * 0.15)
 
-    cs_ev = v.get("clean_sheets_ev", 0)
-    cs_dep = v.get("clean_sheets_dep", 0)
-    if cs_ev >= 50 and cs_dep >= 50:
-        ust_25 = max(15, ust_25 * 0.85)
+    if btts_1h_e > 0 and btts_1h_d > 0:
+        btts_1h_ort = (btts_1h_e + btts_1h_d) / 2
+        if btts_1h_ort >= 30:
+            kg_var_model = (kg_var_model * 0.95) + (btts_1h_ort * 0.05)
 
-    ust_25 = max(5, min(95, ust_25))
-    alt_25 = 100 - ust_25
+    if btts_2h_e > 0 and btts_2h_d > 0:
+        btts_2h_ort = (btts_2h_e + btts_2h_d) / 2
+        if btts_2h_ort >= 30:
+            kg_var_model = (kg_var_model * 0.95) + (btts_2h_ort * 0.05)
 
-    kg_var_model = hesapla_kg_var(v)
+    tg_0_ort = ort_iki(tg_0_e, tg_0_d)
+    tg_1_ort = ort_iki(tg_1_e, tg_1_d)
+    if tg_0_ort >= 15 or tg_1_ort >= 15:
+        kg_yoklama = tg_0_ort + tg_1_ort
+        if kg_yoklama >= 30:
+            kg_var_model = (kg_var_model * 0.90) + ((100 - kg_yoklama) * 0.10)
 
-    if cs_ev >= 60 or cs_dep >= 60:
-        kg_var_model *= 0.92
+    toplam_beklenen_gol = lam_ev + lam_dep
 
-    kg_var_model = max(5, min(95, kg_var_model))
-    kg_yok_model = 100 - kg_var_model
+    if toplam_beklenen_gol < 1.80:
+        baski_faktoru = (1.80 - toplam_beklenen_gol) / 1.80
+        ust_25 = max(10.0, ust_25 * (1.0 - baski_faktoru * 0.8))
+        kg_var_model = max(15.0, kg_var_model * (1.0 - baski_faktoru * 0.9))
 
-    p1, px, p2 = hesapla_1x2(v)
+    cs_ev = v.get("clean_sheets_ev", 0.0)
+    cs_dep = v.get("clean_sheets_dep", 0.0)
 
+    if cs_ev >= 50.0 and lam_dep < 1.0:
+        kg_var_model *= 0.80
+    if cs_dep >= 50.0 and lam_ev < 1.0:
+        kg_var_model *= 0.80
+
+    kg_yok_model = 100.0 - kg_var_model
+
+    if kg_yok_model > 68.0 and p1 > 55.0 and lam_ev >= 1.70:
+        ust_25 = min(68.0, ust_25 * 1.35)
+
+    alt_25 = 100.0 - ust_25
+
+    tahmini_gol = lam_ev + lam_dep
     en_olasi = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
     en_guvenli = max([("1X", p1+px), ("X2", p2+px), ("12", p1+p2)], key=lambda x: x[1])
     en_olasi_gol = "Üst" if ust_25 > alt_25 else "Alt"
     en_olasi_kg = "Var" if kg_var_model > kg_yok_model else "Yok"
 
     return {
-        "lam_ev": 0, "lam_dep": 0, "guven": 0.9, "matris": [], "olas": {},
+        "lam_ev": lam_ev, "lam_dep": lam_dep, "guven": guven, "matris": matris, "olas": olas,
         "p1": p1, "px": px, "p2": p2,
         "cifte_1x": p1 + px, "cifte_x2": p2 + px, "cifte_12": p1 + p2,
-        "tahmini_gol": (at_ev + at_dep) if at_ev > 0 and at_dep > 0 else 2.5,
-        "ust_25": ust_25, "alt_25": alt_25,
+        "tahmini_gol": tahmini_gol, "ust_25": ust_25, "alt_25": alt_25,
         "kg_var_model": kg_var_model, "kg_yok_model": kg_yok_model,
         "en_olasi": en_olasi, "en_guvenli": en_guvenli,
         "en_olasi_gol": en_olasi_gol, "en_olasi_kg": en_olasi_kg,
-        "p1_po": 0, "px_po": 0, "p2_po": 0, "ust25_po": 0, "kg_var_po": 0,
+        "p1_po": p1_po, "px_po": px_po, "p2_po": p2_po, "ust25_po": ust25_po, "kg_var_po": kg_var_po,
         "p1_lig": 0, "px_lig": 0, "p2_lig": 0,
-        "ust25_lig": 0, "kg_var_lig": 0,
-        "p1_mc": 0, "px_mc": 0, "p2_mc": 0, "ust25_mc": 0, "kg_var_mc": 0,
-        "mc_n": 0
+        "ust25_lig": lig_ust25, "kg_var_lig": lig_kg,
+        "p1_mc": p1_mc, "px_mc": px_mc, "p2_mc": p2_mc, "ust25_mc": ust25_mc, "kg_var_mc": kg_var_mc,
+        "mc_n": mc["n"]
     }
 
 
@@ -952,7 +1022,14 @@ def detayli_analiz_yorumu(v):
 
 def gol_detayli_aciklama(v, a):
     ust_25 = a["ust_25"]; alt_25 = a["alt_25"]
-    u25 = ort_iki(v.get("ust25_ev", 0), v.get("ust25_dep", 0))
+    lam_ev = a["lam_ev"]; lam_dep = a["lam_dep"]
+    toplam_lambda = lam_ev + lam_dep
+
+    at_ev = v.get("atilan_ev", 0)
+    at_dep = v.get("atilan_dep", 0)
+    y_ev = v.get("yenen_ev", 0)
+    y_dep = v.get("yenen_dep", 0)
+    lig_ort = v.get("lig_ort_toplam", 0)
     u15 = ort_iki(v.get("ust15_ev", 0), v.get("ust15_dep", 0))
     u35 = ort_iki(v.get("ust35_ev", 0), v.get("ust35_dep", 0))
     tg_2_3 = ort_iki(v.get("tg_2_ev", 0) + v.get("tg_3_ev", 0), v.get("tg_2_dep", 0) + v.get("tg_3_dep", 0))
@@ -962,35 +1039,57 @@ def gol_detayli_aciklama(v, a):
 
     if ust_25 >= esik_al("ust"):
         yorumlar.append(f"🎯 **ÜST 2.5 NEDEN POZİTİF? (%{ust_25:.1f})**")
-        yorumlar.append(f"- Direkt Üst 2.5 ortalaması: **%{u25:.0f}** ← ANA VERİ")
-        yorumlar.append(f"- Üst 1.5 ortalaması: **%{u15:.0f}**")
-        yorumlar.append(f"- Üst 3.5 ortalaması: **%{u35:.0f}**")
-        yorumlar.append(f"- TG 2-3 gol oranı: **%{tg_2_3:.0f}**")
-        yorumlar.append(f"- TG 4+ gol oranı: **%{tg_4:.0f}**")
-        yorumlar.append(f"- **Sonuç:** Ağırlıklı ortalamada **Üst** → %{ust_25:.1f}")
+        yorumlar.append(f"- Toplam beklenen gol: **{toplam_lambda:.2f}**")
+        yorumlar.append(f"- Ev sahibi atak gücü: **{at_ev:.2f}** gol/maç")
+        yorumlar.append(f"- Deplasman atak gücü: **{at_dep:.2f}** gol/maç")
+        yorumlar.append(f"- Ev sahibi yenen: **{y_ev:.2f}** gol/maç")
+        yorumlar.append(f"- Deplasman yenen: **{y_dep:.2f}** gol/maç")
+        if lig_ort > 0:
+            yorumlar.append(f"- Lig ortalaması: **{lig_ort:.2f}** gol/maç")
+        if u15 > 0:
+            yorumlar.append(f"- Üst 1.5 ortalaması: **%{u15:.0f}**")
+        if u35 > 0:
+            yorumlar.append(f"- Üst 3.5 ortalaması: **%{u35:.0f}**")
+        if tg_2_3 > 0:
+            yorumlar.append(f"- TG 2-3 gol oranı: **%{tg_2_3:.0f}**")
+        if tg_4 > 0:
+            yorumlar.append(f"- TG 4+ gol oranı: **%{tg_4:.0f}**")
+        if lam_ev > 1.5:
+            yorumlar.append(f"- ✅ Ev sahibi hücum beklentisi yüksek")
+        if lam_dep > 1.2:
+            yorumlar.append(f"- ✅ Deplasman hücum beklentisi yüksek")
+        if y_ev > 1.2 or y_dep > 1.2:
+            yorumlar.append(f"- ✅ Savunma zaafiyeti var")
+        yorumlar.append(f"- **Sonuç:** Toplam gol beklentisi **2.5 üstü** → Üst 2.5 mantıklı")
 
     elif alt_25 >= esik_al("alt"):
         yorumlar.append(f"🎯 **ALT 2.5 NEDEN POZİTİF? (%{alt_25:.1f})**")
-        yorumlar.append(f"- Direkt Üst 2.5: **%{u25:.0f}** → Alt: **%{100-u25:.0f}**")
-        yorumlar.append(f"- Üst 1.5 ortalaması: **%{u15:.0f}**")
-        yorumlar.append(f"- Üst 3.5 ortalaması: **%{u35:.0f}**")
-        yorumlar.append(f"- TG 2-3 gol oranı: **%{tg_2_3:.0f}**")
-        tg_0_1 = ort_iki(v.get("tg_0_ev", 0) + v.get("tg_1_ev", 0), v.get("tg_0_dep", 0) + v.get("tg_1_dep", 0))
-        if tg_0_1 > 0:
-            yorumlar.append(f"- TG 0-1 gol oranı: **%{tg_0_1:.0f}**")
+        yorumlar.append(f"- Toplam beklenen gol: **{toplam_lambda:.2f}**")
+        yorumlar.append(f"- Ev sahibi atak gücü: **{at_ev:.2f}** gol/maç")
+        yorumlar.append(f"- Deplasman atak gücü: **{at_dep:.2f}** gol/maç")
+        yorumlar.append(f"- Ev sahibi yenen: **{y_ev:.2f}** gol/maç")
+        yorumlar.append(f"- Deplasman yenen: **{y_dep:.2f}** gol/maç")
+        if lig_ort > 0:
+            yorumlar.append(f"- Lig ortalaması: **{lig_ort:.2f}** gol/maç")
         cs_ev = v.get("clean_sheets_ev", 0)
         cs_dep = v.get("clean_sheets_dep", 0)
         if cs_ev >= 40:
-            yorumlar.append(f"- ✅ Ev sahibi clean sheet: **%{cs_ev:.0f}**")
+            yorumlar.append(f"- ✅ Ev sahibi clean sheet: **%{cs_ev:.0f}** (savunma sağlam)")
         if cs_dep >= 40:
-            yorumlar.append(f"- ✅ Deplasman clean sheet: **%{cs_dep:.0f}**")
-        yorumlar.append(f"- **Sonuç:** Ağırlıklı ortalamada **Alt** → %{alt_25:.1f}")
+            yorumlar.append(f"- ✅ Deplasman clean sheet: **%{cs_dep:.0f}** (savunma sağlam)")
+        tg_0_1 = ort_iki(v.get("tg_0_ev", 0) + v.get("tg_1_ev", 0), v.get("tg_0_dep", 0) + v.get("tg_1_dep", 0))
+        if tg_0_1 > 0:
+            yorumlar.append(f"- TG 0-1 gol oranı: **%{tg_0_1:.0f}**")
+        if lam_ev < 1.3 and lam_dep < 1.3:
+            yorumlar.append(f"- ✅ İki takım da düşük gol beklentisi")
+        yorumlar.append(f"- **Sonuç:** Toplam gol beklentisi **2.5 altı** → Alt 2.5 mantıklı")
 
     return yorumlar
 
 
 def kg_detayli_aciklama(v, a):
     kg_var = a["kg_var_model"]; kg_yok = a["kg_yok_model"]
+    lam_ev = a["lam_ev"]; lam_dep = a["lam_dep"]
 
     kg_ev = v.get("kg_siklik_ev", 0)
     kg_dep = v.get("kg_siklik_dep", 0)
@@ -1000,39 +1099,48 @@ def kg_detayli_aciklama(v, a):
     ts_dep = v.get("team_scored_dep", 0)
     btts_1h = ort_iki(v.get("btts_1h_ev", 0), v.get("btts_1h_dep", 0))
     btts_2h = ort_iki(v.get("btts_2h_ev", 0), v.get("btts_2h_dep", 0))
-    tg_01 = ort_iki(v.get("tg_0_ev", 0) + v.get("tg_1_ev", 0), v.get("tg_0_dep", 0) + v.get("tg_1_dep", 0))
 
     yorumlar = []
 
     if kg_var >= esik_al("kg_var"):
         yorumlar.append(f"🤝 **KG VAR NEDEN POZİTİF? (%{kg_var:.1f})**")
         if kg_ev > 0:
-            yorumlar.append(f"- Ev sahibi KG Var: **%{kg_ev:.0f}** ← ANA VERİ")
+            yorumlar.append(f"- Ev sahibi KG Var oranı: **%{kg_ev:.1f}**")
         if kg_dep > 0:
-            yorumlar.append(f"- Deplasman KG Var: **%{kg_dep:.0f}** ← ANA VERİ")
+            yorumlar.append(f"- Deplasman KG Var oranı: **%{kg_dep:.1f}**")
+        yorumlar.append(f"- Ev sahibi gol beklentisi: **{lam_ev:.2f}**")
+        yorumlar.append(f"- Deplasman gol beklentisi: **{lam_dep:.2f}**")
         if btts_1h > 0:
-            yorumlar.append(f"- İY KG: **%{btts_1h:.0f}**")
+            yorumlar.append(f"- İY KG ortalaması: **%{btts_1h:.0f}**")
         if btts_2h > 0:
-            yorumlar.append(f"- 2Y KG: **%{btts_2h:.0f}**")
-        if ts_ev > 0:
-            yorumlar.append(f"- Ev sahibi gol atma: **%{ts_ev:.0f}**")
-        if ts_dep > 0:
-            yorumlar.append(f"- Deplasman gol atma: **%{ts_dep:.0f}**")
-        yorumlar.append(f"- **Sonuç:** Ağırlıklı KG Var → **%{kg_var:.1f}**")
+            yorumlar.append(f"- 2Y KG ortalaması: **%{btts_2h:.0f}**")
+        if ts_ev >= 70:
+            yorumlar.append(f"- ✅ Ev sahibi gol atmaya yatkın: **%{ts_ev:.0f}**")
+        if ts_dep >= 70:
+            yorumlar.append(f"- ✅ Deplasman gol atmaya yatkın: **%{ts_dep:.0f}**")
+        if lam_ev >= 1.0 and lam_dep >= 1.0:
+            yorumlar.append(f"- ✅ İki takım da gol atma beklentisi içinde")
+        yorumlar.append(f"- **Sonuç:** Her iki takımın da gol atma ihtimali yüksek → KG Var mantıklı")
 
     elif kg_yok >= esik_al("kg_yok"):
         yorumlar.append(f"🤝 **KG YOK NEDEN POZİTİF? (%{kg_yok:.1f})**")
         if kg_ev > 0:
-            yorumlar.append(f"- Ev sahibi KG Var: **%{kg_ev:.0f}** → KG Yok: **%{100-kg_ev:.0f}**")
+            yorumlar.append(f"- Ev sahibi KG Var oranı: **%{kg_ev:.1f}** (düşük)")
         if kg_dep > 0:
-            yorumlar.append(f"- Deplasman KG Var: **%{kg_dep:.0f}** → KG Yok: **%{100-kg_dep:.0f}**")
-        if tg_01 > 0:
-            yorumlar.append(f"- TG 0-1 gol oranı: **%{tg_01:.0f}** (yüksek = KG Yok)")
+            yorumlar.append(f"- Deplasman KG Var oranı: **%{kg_dep:.1f}** (düşük)")
         if cs_ev > 0:
             yorumlar.append(f"- Ev sahibi clean sheet: **%{cs_ev:.0f}**")
         if cs_dep > 0:
             yorumlar.append(f"- Deplasman clean sheet: **%{cs_dep:.0f}**")
-        yorumlar.append(f"- **Sonuç:** Ağırlıklı KG Yok → **%{kg_yok:.1f}**")
+        yorumlar.append(f"- Ev sahibi gol beklentisi: **{lam_ev:.2f}**")
+        yorumlar.append(f"- Deplasman gol beklentisi: **{lam_dep:.2f}**")
+        if ts_ev < 60:
+            yorumlar.append(f"- ⚠️ Ev sahibi gol atmaya yatkın değil: **%{ts_ev:.0f}**")
+        if ts_dep < 60:
+            yorumlar.append(f"- ⚠️ Deplasman gol atmaya yatkın değil: **%{ts_dep:.0f}**")
+        if lam_ev < 1.0 or lam_dep < 1.0:
+            yorumlar.append(f"- ✅ En az bir takım gol atmayabilir")
+        yorumlar.append(f"- **Sonuç:** En az bir takımın gol atmayacağı beklentisi → KG Yok mantıklı")
 
     return yorumlar
 
@@ -1540,7 +1648,7 @@ elif st.session_state.sayfa == "gelecek":
 
 
 # ==========================================
-# BACKTEST
+# BACKTEST (SADECE ADMIN)
 # ==========================================
 elif st.session_state.sayfa == "backtest":
     if not admin_mi():
@@ -1628,7 +1736,7 @@ elif st.session_state.sayfa == "backtest":
 
 
 # ==========================================
-# AYARLAR
+# AYARLAR (SADECE ADMIN)
 # ==========================================
 elif st.session_state.sayfa == "ayarlar":
     if not admin_mi():
