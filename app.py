@@ -101,33 +101,51 @@ ESIK_BELIRSIZ = 50.0
 MONTE_CARLO_N = 10000
 
 # ==========================================
-# VARSAYILAN VERİ
+# VARSAYILAN VERİ (88 ALAN)
 # ==========================================
 VARSAYILAN_VERI = {
+    # FORM
     "ppg_ev": 0.0, "mpg_dep": 0.0,
+    "form_str_ev": "", "form_str_dep": "",
+    # SIRALAMA
     "siralama_ev": 0, "siralama_dep": 0,
+    "puan_ev": 0, "puan_dep": 0,
+    # xG
     "xg_ev": 0.0, "xg_dep": 0.0,
+    # ATAK/GOL
     "atilan_ev": 0.0, "atilan_dep": 0.0,
     "yenen_ev": 0.0, "yenen_dep": 0.0,
+    # SAVUNMA
     "clean_sheets_ev": 0.0, "clean_sheets_dep": 0.0,
     "team_scored_ev": 0.0, "team_scored_dep": 0.0,
+    "team_scored_2_ev": 0.0, "team_scored_2_dep": 0.0,
+    "scored_both_halves_ev": 0.0, "scored_both_halves_dep": 0.0,
+    "goal_both_halves_ev": 0.0, "goal_both_halves_dep": 0.0,
+    # ÜST/ALT
     "ust05_ev": 80.0, "ust05_dep": 80.0,
     "ust15_ev": 50.0, "ust15_dep": 50.0,
     "ust25_ev": 30.0, "ust25_dep": 30.0,
     "ust35_ev": 20.0, "ust35_dep": 20.0,
+    # KG
     "kg_siklik_ev": 50.0, "kg_siklik_dep": 50.0,
     "btts_1h_ev": 0.0, "btts_1h_dep": 0.0,
     "btts_2h_ev": 0.0, "btts_2h_dep": 0.0,
     "btts_over15_ev": 0.0, "btts_over15_dep": 0.0,
     "btts_over25_ev": 0.0, "btts_over25_dep": 0.0,
+    # TOPLAM GOL
     "tg_0_ev": 0.0, "tg_0_dep": 0.0,
     "tg_1_ev": 0.0, "tg_1_dep": 0.0,
     "tg_2_ev": 0.0, "tg_2_dep": 0.0,
     "tg_3_ev": 0.0, "tg_3_dep": 0.0,
     "tg_4_ev": 0.0, "tg_4_dep": 0.0,
+    "tg_01_ev": 0.0, "tg_01_dep": 0.0,
+    "tg_23_ev": 0.0, "tg_23_dep": 0.0,
+    "tg_4p_ev": 0.0, "tg_4p_dep": 0.0,
+    # İLK YARI
     "ht_ust05_ev": 0.0, "ht_ust05_dep": 0.0,
     "ht_ust15_ev": 0.0, "ht_ust15_dep": 0.0,
     "ht_ust25_ev": 0.0, "ht_ust25_dep": 0.0,
+    # 1Y/2Y
     "wht_wft_ev": 0.0, "wht_wft_dep": 0.0,
     "wht_dft_ev": 0.0, "wht_dft_dep": 0.0,
     "wht_lft_ev": 0.0, "wht_lft_dep": 0.0,
@@ -137,23 +155,27 @@ VARSAYILAN_VERI = {
     "lht_wft_ev": 0.0, "lht_wft_dep": 0.0,
     "lht_dft_ev": 0.0, "lht_dft_dep": 0.0,
     "lht_lft_ev": 0.0, "lht_lft_dep": 0.0,
+    # 1X2
     "galibiyet_ev": 30.0, "galibiyet_dep": 30.0,
     "beraberlik_ev": 30.0, "beraberlik_dep": 30.0,
     "maglubiyet_ev": 30.0, "maglubiyet_dep": 30.0,
+    # İY/MS
     "win_1h_ev": 0.0, "win_1h_dep": 0.0,
     "draw_ht_ev": 0.0, "draw_ht_dep": 0.0,
     "lose_1h_ev": 0.0, "lose_1h_dep": 0.0,
+    # DİĞER
     "win_btts_ev": 0.0, "win_btts_dep": 0.0,
     "draw_btts_ev": 0.0, "draw_btts_dep": 0.0,
     "lose_btts_ev": 0.0, "lose_btts_dep": 0.0,
     "win_over15_ev": 0.0, "win_over15_dep": 0.0,
     "lose_over15_ev": 0.0, "lose_over15_dep": 0.0,
-    "takim_ev": "", "takim_dep": "", "skor_ev": 0, "skor_dep": 0,
+    # MAÇ BİLGİ
+    "takim_ev": "", "takim_dep": "",
+    "skor_ev": 0, "skor_dep": 0,
     "skor_belli": False,
     "lig_ort_toplam": 0.0,
     "lig_ust25": 0.0,
     "lig_kg": 0.0,
-    "form_str_ev": "", "form_str_dep": "",
     "format": "bilinmiyor",
 }
 
@@ -178,15 +200,12 @@ if "manuel_bekleyen" not in st.session_state: st.session_state.manuel_bekleyen =
 if "tek_silme_onay" not in st.session_state: st.session_state.tek_silme_onay = None
 if "tek_silme_gelecek" not in st.session_state: st.session_state.tek_silme_gelecek = None
 
-# ROL YÖNETİMİ
 if "giris_yapildi" not in st.session_state: st.session_state.giris_yapildi = False
 if "rol" not in st.session_state: st.session_state.rol = None
 
-# EŞİKLER
 if "esikler" not in st.session_state:
     st.session_state.esikler = ayarlar_yukle()
 
-# BACKTEST
 if "bt_market" not in st.session_state:
     st.session_state.bt_market = {"kg_var": False, "kg_yok": False, "ust": False, "alt": False}
 if "bt_market_esik" not in st.session_state:
@@ -210,6 +229,13 @@ def esik_al(key):
 # ==========================================
 def clamp(x, lo, hi):
     return max(lo, min(hi, x))
+
+
+def ort_iki(a, b):
+    """İki değerin ortalaması (0 olanları atlar)"""
+    vals = [x for x in [a, b] if x is not None and x > 0]
+    if not vals: return 0
+    return sum(vals) / len(vals)
 
 
 def guven_seviyesi_bul(olasilik):
@@ -350,9 +376,9 @@ MANUEL_ALANLAR = {
     "xG": [("xg_ev", "xG (Ev)", "float", 0.0), ("xg_dep", "xG (Dep)", "float", 0.0)],
     "Atılan Gol": [("atilan_ev", "Atılan Gol (Ev)", "float", 0.0), ("atilan_dep", "Atılan Gol (Dep)", "float", 0.0)],
     "Yenen Gol": [("yenen_ev", "Yenen Gol (Ev)", "float", 0.0), ("yenen_dep", "Yenen Gol (Dep)", "float", 0.0)],
-                }
+}
 # ==========================================
-# SPORTYTRADER ÇIKARICI
+# SPORTYTRADER ÇIKARICI (88 ALAN)
 # ==========================================
 def _cift_tab(etiket, blok):
     pattern = r'([\d.,]+)%?\s*\t\s*' + re.escape(etiket) + r'\s*\t\s*([\d.,]+)%?'
@@ -426,9 +452,12 @@ def sportytrader_veri_cikar(metin):
     takim_ev = veri.get("takim_ev", "")
     takim_dep = veri.get("takim_dep", "")
 
+    # =====================
+    # MAIN STATS
+    # =====================
     idx = metin.find("Main Stats")
     if idx != -1:
-        blok = metin[idx:idx+1000]
+        blok = metin[idx:idx+1200]
         v1, v2 = _cift_tab("Goals scored per game", blok)
         if v1 is not None: veri["atilan_ev"] = v1; veri["atilan_dep"] = v2
         v1, v2 = _cift_tab("Goals conceded per game", blok)
@@ -444,9 +473,12 @@ def sportytrader_veri_cikar(metin):
         v1, v2 = _cift_tab("Goal in both halves", blok)
         if v1 is not None: veri["goal_both_halves_ev"] = v1; veri["goal_both_halves_dep"] = v2
 
+    # =====================
+    # WIN DRAW LOSE
+    # =====================
     idx = metin.find("Win Draw Lose")
     if idx != -1:
-        blok = metin[idx:idx+1200]
+        blok = metin[idx:idx+1500]
         v1, v2 = _cift_tab("Win and Over 1.5 goals", blok)
         if v1 is not None: veri["win_over15_ev"] = v1; veri["win_over15_dep"] = v2
         v1, v2 = _cift_tab("Lose and Over 1.5 goals", blok)
@@ -472,9 +504,12 @@ def sportytrader_veri_cikar(metin):
                 except ValueError:
                     pass
 
+    # =====================
+    # BOTH TEAMS TO SCORE
+    # =====================
     idx = metin.find("Both Teams to Score")
     if idx != -1:
-        blok = metin[idx:idx+1200]
+        blok = metin[idx:idx+1500]
         v1, v2 = _cift_tab("BTTS in first-half", blok)
         if v1 is not None: veri["btts_1h_ev"] = v1; veri["btts_1h_dep"] = v2
         v1, v2 = _cift_tab("BBTS in second-half", blok)
@@ -495,12 +530,14 @@ def sportytrader_veri_cikar(metin):
             try:
                 veri["kg_siklik_ev"] = float(m.group(1).replace(",", "."))
                 veri["kg_siklik_dep"] = float(m.group(2).replace(",", "."))
-                veri["kg_oran"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
             except ValueError: pass
 
+    # =====================
+    # MATCH TOTAL GOALS
+    # =====================
     idx = metin.find("Match Total Goals")
     if idx != -1:
-        blok = metin[idx:idx+1200]
+        blok = metin[idx:idx+1500]
         v1, v2 = _cift_tab("Match total goals 0 or 1", blok)
         if v1 is not None: veri["tg_01_ev"] = v1; veri["tg_01_dep"] = v2
         v1, v2 = _cift_tab("Match total goals 2 or 3", blok)
@@ -515,13 +552,13 @@ def sportytrader_veri_cikar(metin):
         if v1 is not None: veri["tg_2_ev"] = v1; veri["tg_2_dep"] = v2
         v1, v2 = _cift_tab("Match total goals 3", blok)
         if v1 is not None: veri["tg_3_ev"] = v1; veri["tg_3_dep"] = v2
-        if veri.get("tg_4_ev", 0) == 0 and veri.get("tg_4p_ev", 0) > 0:
-            veri["tg_4_ev"] = veri["tg_4p_ev"]
-            veri["tg_4_dep"] = veri["tg_4p_dep"]
 
+    # =====================
+    # OVER UNDER GOALS
+    # =====================
     idx = metin.find("Over Under Goals")
     if idx != -1:
-        blok = metin[idx:idx+1200]
+        blok = metin[idx:idx+1500]
         v1, v2 = _cift_tab("Over 0.5 goals at half-time", blok)
         if v1 is not None: veri["ht_ust05_ev"] = v1; veri["ht_ust05_dep"] = v2
         v1, v2 = _cift_tab("Over 1.5 goals at half-time", blok)
@@ -534,10 +571,15 @@ def sportytrader_veri_cikar(metin):
         if v1 is not None: veri["ust25_ev"] = v1; veri["ust25_dep"] = v2
         v1, v2 = _cift_tab("Over 3.5 goals", blok)
         if v1 is not None: veri["ust35_ev"] = v1; veri["ust35_dep"] = v2
+        v1, v2 = _cift_tab("Over 0.5 goals", blok)
+        if v1 is not None: veri["ust05_ev"] = v1; veri["ust05_dep"] = v2
 
+    # =====================
+    # HALF TIME-FULL TIME
+    # =====================
     idx = metin.find("Half Time-Full Time")
     if idx != -1:
-        blok = metin[idx:idx+1500]
+        blok = metin[idx:idx+2000]
         for etiket, key in [
             ("Win HT - Win FT", "wht_wft"), ("Win HT - Draw FT", "wht_dft"),
             ("Win HT - Lose FT", "wht_lft"), ("Draw HT - Win FT", "dht_wft"),
@@ -550,6 +592,9 @@ def sportytrader_veri_cikar(metin):
                 veri[key + "_ev"] = v1
                 veri[key + "_dep"] = v2
 
+    # =====================
+    # SIRALAMA
+    # =====================
     if takim_ev:
         s, p = _sira_bul(metin, takim_ev)
         if s is not None:
@@ -564,6 +609,9 @@ def sportytrader_veri_cikar(metin):
     if veri.get("siralama_ev", 0) == 0: okunamayanlar.append("Sıralama (Ev)")
     if veri.get("siralama_dep", 0) == 0: okunamayanlar.append("Sıralama (Dep)")
 
+    # =====================
+    # FORM
+    # =====================
     m = re.search(
         r'\n([WDL])\s*\r?\n([WDL])\s*\r?\n([WDL])\s*\r?\n([WDL])\s*\r?\n([WDL])\s*\r?\nForm\s*\t?\s*\r?\n([WDL])\s*\r?\n([WDL])\s*\r?\n([WDL])\s*\r?\n([WDL])\s*\r?\n([WDL])',
         metin
@@ -575,25 +623,21 @@ def sportytrader_veri_cikar(metin):
         veri["form_str_dep"] = form_dep
         def _form_puan(s):
             return sum(3 if c == "W" else 1 if c == "D" else 0 for c in s) / max(len(s), 1) * 3
-        veri["form_puan_ev"] = _form_puan(form_ev)
-        veri["form_puan_dep"] = _form_puan(form_dep)
+        veri["ppg_ev"] = _form_puan(form_ev)
+        veri["mpg_dep"] = _form_puan(form_dep)
 
+    # =====================
+    # LİG ORTALAMALARI
+    # =====================
     if veri.get("atilan_ev", 0) > 0 and veri.get("yenen_ev", 0) > 0:
         veri["lig_ort_toplam"] = (veri.get("atilan_ev", 0) + veri.get("atilan_dep", 0) +
                                   veri.get("yenen_ev", 0) + veri.get("yenen_dep", 0)) / 2
-        veri["lig_ort_ev"] = veri.get("atilan_ev", 0)
-        veri["lig_ort_dep"] = veri.get("atilan_dep", 0)
 
     if veri.get("ust25_ev", 0) > 0 and veri.get("ust25_dep", 0) > 0:
         veri["lig_ust25"] = (veri["ust25_ev"] + veri["ust25_dep"]) / 2
 
     if veri.get("kg_siklik_ev", 0) > 0 and veri.get("kg_siklik_dep", 0) > 0:
         veri["lig_kg"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
-
-    if veri.get("form_puan_ev", 0) > 0:
-        veri["ppg_ev"] = veri["form_puan_ev"]
-    if veri.get("form_puan_dep", 0) > 0:
-        veri["mpg_dep"] = veri["form_puan_dep"]
 
     veri["format"] = "sportytrader"
     return veri, okunamayanlar
@@ -614,7 +658,7 @@ def metinden_veri_cikar(metin):
 
 
 # ==========================================
-# POISSON & LAMBDA
+# POISSON & LAMBDA (88 ALAN KULLANIMI)
 # ==========================================
 def poisson_pmf(k, lam):
     if lam <= 0: return 1.0 if k == 0 else 0.0
@@ -634,6 +678,19 @@ def poisson_matris(lam_ev, lam_dep, max_gol=MAX_GOL):
 
 
 def hesapla_lambda(v):
+    """
+    88 ALAN KULLANIMI:
+    - Atak/Gol: atilan, yenen, xg, team_scored, team_scored_2
+    - Savunma: clean_sheets, scored_both_halves
+    - Form: ppg, mpg, form_str
+    - Sıralama: siralama
+    - Üst/Alt: ust15, ust25, ust35
+    - KG: kg_siklik, btts_1h, btts_2h, btts_over15
+    - Toplam gol: tg_0, tg_1, tg_2, tg_3, tg_4
+    - 1Y/2Y: wht_wft, dht_dft, lht_lft
+    - 1X2: galibiyet, beraberlik, maglubiyet
+    """
+    # === TEMEL ===
     atilan_e = v.get("atilan_ev", 0.0)
     yenen_e = v.get("yenen_ev", 0.0)
     atilan_d = v.get("atilan_dep", 0.0)
@@ -642,45 +699,104 @@ def hesapla_lambda(v):
     xg_e = v.get("xg_ev", 0.0)
     xg_d = v.get("xg_dep", 0.0)
 
+    # === HÜCUM ===
     if xg_e > 0:
-        hucum_ev_baz = (xg_e * 0.70) + (atilan_e * 0.30)
+        hucum_ev_baz = (xg_e * 0.60) + (atilan_e * 0.40)
     else:
         hucum_ev_baz = atilan_e if atilan_e > 0 else 1.2
 
     if xg_d > 0:
-        hucum_dep_baz = (xg_d * 0.70) + (atilan_d * 0.30)
+        hucum_dep_baz = (xg_d * 0.60) + (atilan_d * 0.40)
     else:
         hucum_dep_baz = atilan_d if atilan_d > 0 else 1.0
 
+    # === TEAM SCORED ETKİSİ ===
+    ts_ev = v.get("team_scored_ev", 0)
+    ts_dep = v.get("team_scored_dep", 0)
+    if ts_ev > 0:
+        ts_etki_ev = clamp(ts_ev / 60, 0.7, 1.3)
+        hucum_ev_baz *= ts_etki_ev
+    if ts_dep > 0:
+        ts_etki_dep = clamp(ts_dep / 60, 0.7, 1.3)
+        hucum_dep_baz *= ts_etki_dep
+
+    # === SAVUNMA ===
     savunma_dep_zaaf = yenen_d if yenen_d > 0 else 1.2
     savunma_ev_zaaf = yenen_e if yenen_e > 0 else 1.0
 
-    lam_ev_ham = (hucum_ev_baz * 0.60) + (savunma_dep_zaaf * 0.40)
-    lam_dep_ham = (hucum_dep_baz * 0.60) + (savunma_ev_zaaf * 0.40)
-
-    EV_ETKISI = 1.05
-    DEP_ETKISI = 0.95
-
-    form_ev = clamp(1 + (v.get("ppg_ev", 1.5) - 1.5) / 15, 0.85, 1.15)
-    form_dep = clamp(1 + (v.get("mpg_dep", 1.5) - 1.5) / 15, 0.85, 1.15)
-
+    # === CLEAN SHEET ETKİSİ (GÜÇLENDİRİLMİŞ) ===
     cs_ev = v.get("clean_sheets_ev", 0.0)
     cs_dep = v.get("clean_sheets_dep", 0.0)
 
     def clean_sheet_freni(cs_orani):
         if cs_orani >= 40.0:
-            return max(0.40, 1.0 - (cs_orani / 100.0 * 0.75))
+            return max(0.40, 1.0 - (cs_orani / 100.0 * 0.80))
         return 1.0 - (cs_orani / 250.0) if cs_orani > 0 else 1.0
 
     dep_freni = clean_sheet_freni(cs_ev)
     ev_freni = clean_sheet_freni(cs_dep)
 
+    # === LAMBDA HAM ===
+    lam_ev_ham = (hucum_ev_baz * 0.60) + (savunma_dep_zaaf * 0.40)
+    lam_dep_ham = (hucum_dep_baz * 0.60) + (savunma_ev_zaaf * 0.40)
+
+    # === ÜST 2.5 ETKİSİ ===
+    ust25_e = v.get("ust25_ev", 0)
+    ust25_d = v.get("ust25_dep", 0)
+    if ust25_e > 0:
+        u25_etki = clamp(ust25_e / 50, 0.85, 1.15)
+        lam_ev_ham *= u25_etki
+    if ust25_d > 0:
+        u25_etki = clamp(ust25_d / 50, 0.85, 1.15)
+        lam_dep_ham *= u25_etki
+
+    # === KG SIKLIK ETKİSİ ===
+    kg_e = v.get("kg_siklik_ev", 0)
+    kg_d = v.get("kg_siklik_dep", 0)
+    if kg_e > 0 and kg_d > 0:
+        kg_ort = (kg_e + kg_d) / 2
+        if kg_ort >= 60:
+            lam_ev_ham *= 1.05
+            lam_dep_ham *= 1.05
+        elif kg_ort <= 35:
+            lam_ev_ham *= 0.95
+            lam_dep_ham *= 0.95
+
+    # === EV/DEP ETKİSİ ===
+    EV_ETKISI = 1.05
+    DEP_ETKISI = 0.95
+
+    # === FORM ETKİSİ ===
+    form_ev = clamp(1 + (v.get("ppg_ev", 1.5) - 1.5) / 15, 0.85, 1.15)
+    form_dep = clamp(1 + (v.get("mpg_dep", 1.5) - 1.5) / 15, 0.85, 1.15)
+
+    # === SIRALAMA ETKİSİ ===
     sira_e = v.get("siralama_ev", 10)
     sira_d = v.get("siralama_dep", 10)
     dominasyon_bonus_ev = 1.0
     if 1 <= sira_e <= 5 and sira_d >= 10:
-        dominasyon_bonus_ev = 1.25
+        dominasyon_bonus_ev = 1.20
 
+    # === 1X2 ETKİSİ (KARŞILIKLI) ===
+    gal_ev = v.get("galibiyet_ev", 0)
+    gal_dep = v.get("galibiyet_dep", 0)
+    if gal_ev > 0 and gal_dep > 0:
+        if gal_ev - gal_dep >= 25:
+            lam_ev_ham *= 1.08
+            lam_dep_ham *= 0.95
+        elif gal_dep - gal_ev >= 25:
+            lam_ev_ham *= 0.95
+            lam_dep_ham *= 1.08
+
+    # === İY/MS ETKİSİ ===
+    wht_wft = v.get("wht_wft_ev", 0)
+    lht_lft = v.get("lht_lft_ev", 0)
+    if wht_wft >= 25:
+        lam_ev_ham *= 1.05
+    if lht_lft >= 25:
+        lam_dep_ham *= 1.05
+
+    # === LAMBDA SON ===
     lam_ev = lam_ev_ham * EV_ETKISI * form_ev * ev_freni * dominasyon_bonus_ev
     lam_dep = lam_dep_ham * DEP_ETKISI * form_dep * dep_freni
 
@@ -750,7 +866,7 @@ def monte_carlo_simulasyon(lam_ev_base, lam_dep_base, n=MONTE_CARLO_N):
 
 
 # ==========================================
-# ANALİZ HESAPLA
+# ANALİZ HESAPLA (88 ALAN)
 # ==========================================
 def analiz_hesapla(v):
     lam_ev, lam_dep, guven = hesapla_lambda(v)
@@ -768,25 +884,100 @@ def analiz_hesapla(v):
     p1_mc = mc["p1"]; px_mc = mc["px"]; p2_mc = mc["p2"]
     ust25_mc = mc["ust25"]; kg_var_mc = mc["kg_var"]
 
+    # === LİG ORTALAMALARI ===
     lig_ust25 = v.get("lig_ust25", 0.0)
     lig_kg = v.get("lig_kg", 0.0)
 
+    # === EK VERİLER ===
+    ust15_e = v.get("ust15_ev", 0)
+    ust15_d = v.get("ust15_dep", 0)
+    ust35_e = v.get("ust35_ev", 0)
+    ust35_d = v.get("ust35_dep", 0)
+    kg_sik_e = v.get("kg_siklik_ev", 0)
+    kg_sik_d = v.get("kg_siklik_dep", 0)
+    btts_1h_e = v.get("btts_1h_ev", 0)
+    btts_1h_d = v.get("btts_1h_dep", 0)
+    btts_2h_e = v.get("btts_2h_ev", 0)
+    btts_2h_d = v.get("btts_2h_dep", 0)
+    tg_0_e = v.get("tg_0_ev", 0); tg_0_d = v.get("tg_0_dep", 0)
+    tg_1_e = v.get("tg_1_ev", 0); tg_1_d = v.get("tg_1_dep", 0)
+    tg_2_e = v.get("tg_2_ev", 0); tg_2_d = v.get("tg_2_dep", 0)
+    tg_3_e = v.get("tg_3_ev", 0); tg_3_d = v.get("tg_3_dep", 0)
+    tg_4_e = v.get("tg_4_ev", 0); tg_4_d = v.get("tg_4_dep", 0)
+    gal_e = v.get("galibiyet_ev", 0); gal_d = v.get("galibiyet_dep", 0)
+    ber_e = v.get("beraberlik_ev", 0); ber_d = v.get("beraberlik_dep", 0)
+    mag_e = v.get("maglubiyet_ev", 0); mag_d = v.get("maglubiyet_dep", 0)
+
+    # === 1X2 (Poisson + MC) ===
     p1 = (p1_po * 0.60) + (p1_mc * 0.40)
     px = (px_po * 0.60) + (px_mc * 0.40)
     p2 = (p2_po * 0.60) + (p2_mc * 0.40)
+
+    # === 1X2 EK VERİ ETKİSİ ===
+    if gal_e > 0 and gal_d > 0:
+        p1 = (p1 * 0.85) + (gal_e * 0.15)
+        p2 = (p2 * 0.85) + (gal_d * 0.15)
+    if ber_e > 0 and ber_d > 0:
+        ber_ort = (ber_e + ber_d) / 2
+        px = (px * 0.85) + (ber_ort * 0.15)
+
     t = p1 + px + p2
     if t > 0: p1, px, p2 = (p1 / t) * 100, (px / t) * 100, (p2 / t) * 100
 
+    # === ÜST 2.5 (Poisson + MC + Lig) ===
     if lig_ust25 > 0:
-        ust_25 = (ust25_po * 0.65) + (lig_ust25 * 0.05) + (ust25_mc * 0.30)
+        ust_25 = (ust25_po * 0.60) + (lig_ust25 * 0.10) + (ust25_mc * 0.30)
     else:
         ust_25 = (ust25_po * 0.65) + (ust25_mc * 0.35)
 
+    # === ÜST 2.5 EK VERİ ETKİSİ (ust15, ust35) ===
+    if ust15_e > 0 and ust15_d > 0 and ust35_e > 0 and ust35_d > 0:
+        # ust15 ortalaması yüksekse → üst ihtimali artar
+        u15_ort = (ust15_e + ust15_d) / 2
+        u35_ort = (ust35_e + ust35_d) / 2
+        if u15_ort >= 70:
+            ust_25 = (ust_25 * 0.90) + (u15_ort * 0.10)
+        if u35_ort >= 40:
+            ust_25 = (ust_25 * 0.92) + (u35_ort * 0.08)
+
+    # === ÜST 2.5 EK VERİ ETKİSİ (TG dağılımı) ===
+    tg_2_3 = ort_iki(tg_2_e + tg_3_e if tg_2_e > 0 else 0, tg_2_d + tg_3_d if tg_2_d > 0 else 0)
+    tg_4p = ort_iki(tg_4_e, tg_4_d)
+    if tg_2_3 > 0 or tg_4p > 0:
+        ust_egilim = tg_2_3 * 0.5 + tg_4p * 1.0
+        if ust_egilim >= 50:
+            ust_25 = (ust_25 * 0.93) + (ust_egilim * 0.07)
+
+    # === KG VAR/YOK ===
     if lig_kg > 0:
-        kg_var_model = (kg_var_po * 0.40) + (lig_kg * 0.35) + (kg_var_mc * 0.25)
+        kg_var_model = (kg_var_po * 0.40) + (lig_kg * 0.30) + (kg_var_mc * 0.30)
     else:
         kg_var_model = (kg_var_po * 0.60) + (kg_var_mc * 0.40)
 
+    # === KG EK VERİ ETKİSİ (kg_siklik, btts_1h, btts_2h) ===
+    if kg_sik_e > 0 and kg_sik_d > 0:
+        kg_ort = (kg_sik_e + kg_sik_d) / 2
+        kg_var_model = (kg_var_model * 0.85) + (kg_ort * 0.15)
+
+    if btts_1h_e > 0 and btts_1h_d > 0:
+        btts_1h_ort = (btts_1h_e + btts_1h_d) / 2
+        if btts_1h_ort >= 30:
+            kg_var_model = (kg_var_model * 0.95) + (btts_1h_ort * 0.05)
+
+    if btts_2h_e > 0 and btts_2h_d > 0:
+        btts_2h_ort = (btts_2h_e + btts_2h_d) / 2
+        if btts_2h_ort >= 30:
+            kg_var_model = (kg_var_model * 0.95) + (btts_2h_ort * 0.05)
+
+    # === KG EK VERİ ETKİSİ (TG 0 ve 1) ===
+    tg_0_ort = ort_iki(tg_0_e, tg_0_d)
+    tg_1_ort = ort_iki(tg_1_e, tg_1_d)
+    if tg_0_ort >= 15 or tg_1_ort >= 15:
+        kg_yoklama = tg_0_ort + tg_1_ort
+        if kg_yoklama >= 30:
+            kg_var_model = (kg_var_model * 0.90) + ((100 - kg_yoklama) * 0.10)
+
+    # === TOPLAM BEKLENEN GOL ===
     toplam_beklenen_gol = lam_ev + lam_dep
 
     if toplam_beklenen_gol < 1.80:
@@ -839,6 +1030,9 @@ def kayit_olustur(v, a):
         "en_olasi_gol": a["en_olasi_gol"], "en_olasi_kg": a["en_olasi_kg"]}}
 
 
+# ==========================================
+# DOĞRULUK
+# ==========================================
 def sonuc_hesapla(kayit):
     v = kayit["veri"]; analiz = kayit.get("analiz", {})
     if not v.get("skor_belli", False): return None
@@ -876,10 +1070,8 @@ def sonuc_hesapla(kayit):
         "oneri_kg": {"tahmin": oneri_kg, "tuttu": _t(d_ok), "durum": d_ok},
         "gercek_gol": "Üst" if gercek_ust else "Alt",
         "gercek_kg": "Var" if gercek_kg_var else "Yok",
-    }
-
-
-# ==========================================
+        }
+    # ==========================================
 # YORUM
 # ==========================================
 def detayli_analiz_yorumu(v):
@@ -927,6 +1119,10 @@ def gol_detayli_aciklama(v, a):
     y_ev = v.get("yenen_ev", 0)
     y_dep = v.get("yenen_dep", 0)
     lig_ort = v.get("lig_ort_toplam", 0)
+    u15 = ort_iki(v.get("ust15_ev", 0), v.get("ust15_dep", 0))
+    u35 = ort_iki(v.get("ust35_ev", 0), v.get("ust35_dep", 0))
+    tg_2_3 = ort_iki(v.get("tg_2_ev", 0) + v.get("tg_3_ev", 0), v.get("tg_2_dep", 0) + v.get("tg_3_dep", 0))
+    tg_4 = ort_iki(v.get("tg_4_ev", 0), v.get("tg_4_dep", 0))
 
     yorumlar = []
 
@@ -939,6 +1135,14 @@ def gol_detayli_aciklama(v, a):
         yorumlar.append(f"- Deplasman yenen: **{y_dep:.2f}** gol/maç")
         if lig_ort > 0:
             yorumlar.append(f"- Lig ortalaması: **{lig_ort:.2f}** gol/maç")
+        if u15 > 0:
+            yorumlar.append(f"- Üst 1.5 ortalaması: **%{u15:.0f}**")
+        if u35 > 0:
+            yorumlar.append(f"- Üst 3.5 ortalaması: **%{u35:.0f}**")
+        if tg_2_3 > 0:
+            yorumlar.append(f"- TG 2-3 gol oranı: **%{tg_2_3:.0f}**")
+        if tg_4 > 0:
+            yorumlar.append(f"- TG 4+ gol oranı: **%{tg_4:.0f}**")
         if lam_ev > 1.5:
             yorumlar.append(f"- ✅ Ev sahibi hücum beklentisi yüksek")
         if lam_dep > 1.2:
@@ -962,6 +1166,9 @@ def gol_detayli_aciklama(v, a):
             yorumlar.append(f"- ✅ Ev sahibi clean sheet: **%{cs_ev:.0f}** (savunma sağlam)")
         if cs_dep >= 40:
             yorumlar.append(f"- ✅ Deplasman clean sheet: **%{cs_dep:.0f}** (savunma sağlam)")
+        tg_0_1 = ort_iki(v.get("tg_0_ev", 0) + v.get("tg_1_ev", 0), v.get("tg_0_dep", 0) + v.get("tg_1_dep", 0))
+        if tg_0_1 > 0:
+            yorumlar.append(f"- TG 0-1 gol oranı: **%{tg_0_1:.0f}**")
         if lam_ev < 1.3 and lam_dep < 1.3:
             yorumlar.append(f"- ✅ İki takım da düşük gol beklentisi")
         yorumlar.append(f"- **Sonuç:** Toplam gol beklentisi **2.5 altı** → Alt 2.5 mantıklı")
@@ -979,6 +1186,8 @@ def kg_detayli_aciklama(v, a):
     cs_dep = v.get("clean_sheets_dep", 0)
     ts_ev = v.get("team_scored_ev", 0)
     ts_dep = v.get("team_scored_dep", 0)
+    btts_1h = ort_iki(v.get("btts_1h_ev", 0), v.get("btts_1h_dep", 0))
+    btts_2h = ort_iki(v.get("btts_2h_ev", 0), v.get("btts_2h_dep", 0))
 
     yorumlar = []
 
@@ -990,6 +1199,10 @@ def kg_detayli_aciklama(v, a):
             yorumlar.append(f"- Deplasman KG Var oranı: **%{kg_dep:.1f}**")
         yorumlar.append(f"- Ev sahibi gol beklentisi: **{lam_ev:.2f}**")
         yorumlar.append(f"- Deplasman gol beklentisi: **{lam_dep:.2f}**")
+        if btts_1h > 0:
+            yorumlar.append(f"- İY KG ortalaması: **%{btts_1h:.0f}**")
+        if btts_2h > 0:
+            yorumlar.append(f"- 2Y KG ortalaması: **%{btts_2h:.0f}**")
         if ts_ev >= 70:
             yorumlar.append(f"- ✅ Ev sahibi gol atmaya yatkın: **%{ts_ev:.0f}**")
         if ts_dep >= 70:
@@ -1034,8 +1247,11 @@ def okunan_veriler_paneli(v):
             st.markdown(f"- Team scored: **{v.get('team_scored_ev', 0):.1f}%**")
             st.markdown(f"- KG Var: **{v.get('kg_siklik_ev', 0):.1f}%**")
             st.markdown(f"- Üst 2.5: **{v.get('ust25_ev', 0):.1f}%**")
+            st.markdown(f"- Üst 1.5: **{v.get('ust15_ev', 0):.1f}%**")
+            st.markdown(f"- Üst 3.5: **{v.get('ust35_ev', 0):.1f}%**")
             st.markdown(f"- Form: **{v.get('form_str_ev', '')}**")
             st.markdown(f"- Sıralama: **{v.get('siralama_ev', 0)}**")
+            st.markdown(f"- Galibiyet: **{v.get('galibiyet_ev', 0):.1f}%**")
         with c2:
             st.markdown(f"**{v.get('takim_dep', 'Dep')}**")
             st.markdown(f"- Atılan: **{v.get('atilan_dep', 0):.2f}**")
@@ -1044,8 +1260,27 @@ def okunan_veriler_paneli(v):
             st.markdown(f"- Team scored: **{v.get('team_scored_dep', 0):.1f}%**")
             st.markdown(f"- KG Var: **{v.get('kg_siklik_dep', 0):.1f}%**")
             st.markdown(f"- Üst 2.5: **{v.get('ust25_dep', 0):.1f}%**")
+            st.markdown(f"- Üst 1.5: **{v.get('ust15_dep', 0):.1f}%**")
+            st.markdown(f"- Üst 3.5: **{v.get('ust35_dep', 0):.1f}%**")
             st.markdown(f"- Form: **{v.get('form_str_dep', '')}**")
             st.markdown(f"- Sıralama: **{v.get('siralama_dep', 0)}**")
+            st.markdown(f"- Galibiyet: **{v.get('galibiyet_dep', 0):.1f}%**")
+
+        st.markdown("---")
+        st.markdown("**🎯 Kullanılan 88 Alan (Aktif)**")
+        c3, c4, c5 = st.columns(3)
+        with c3:
+            st.caption("Atak/Gol")
+            st.caption(f"xG E: {v.get('xg_ev',0):.2f} | D: {v.get('xg_dep',0):.2f}")
+            st.caption(f"TS E: {v.get('team_scored_ev',0):.0f}% | D: {v.get('team_scored_dep',0):.0f}%")
+        with c4:
+            st.caption("Üst/Alt")
+            st.caption(f"Üst15 E: {v.get('ust15_ev',0):.0f}% | D: {v.get('ust15_dep',0):.0f}%")
+            st.caption(f"Üst25 E: {v.get('ust25_ev',0):.0f}% | D: {v.get('ust25_dep',0):.0f}%")
+        with c5:
+            st.caption("KG/Form")
+            st.caption(f"KG E: {v.get('kg_siklik_ev',0):.0f}% | D: {v.get('kg_siklik_dep',0):.0f}%")
+            st.caption(f"PPG: {v.get('ppg_ev',0):.2f} | MPG: {v.get('mpg_dep',0):.2f}")
 
 
 # ==========================================
@@ -1101,7 +1336,9 @@ def ust_bar():
             st.session_state.bt_sonuc = None
             st.session_state.bt_detaylar = []
             st.rerun()
-            # ==========================================
+
+
+# ==========================================
 # UYGULAMA BAŞLANGIÇ
 # ==========================================
 if not st.session_state.giris_yapildi:
@@ -1347,9 +1584,6 @@ elif st.session_state.sayfa == "gecmis":
                     st.session_state.sayfa = "sonuc"
                     st.rerun()
 
-    # ================================
-    # YEDEKLEME (İNDİR / YÜKLE)
-    # ================================
     st.divider()
     st.markdown("### 💾 Yedekleme (Geçmiş Maçlar)")
     if admin_mi():
@@ -1379,7 +1613,6 @@ elif st.session_state.sayfa == "gecmis":
                 except Exception as e:
                     st.error(f"❌ Yükleme hatası: {e}")
 
-    # SİLME / GERİ
     st.divider()
     if admin_mi():
         c_temizle, c_geri = st.columns(2)
@@ -1484,9 +1717,6 @@ elif st.session_state.sayfa == "gelecek":
 
             st.divider()
 
-    # ================================
-    # YEDEKLEME (İNDİR / YÜKLE)
-    # ================================
     if admin_mi():
         st.markdown("### 💾 Yedekleme (Gelecek Maçlar)")
         c_ind2, c_yuk2 = st.columns(2)
