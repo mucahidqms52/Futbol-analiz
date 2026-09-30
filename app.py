@@ -268,6 +268,29 @@ def ist_skor_metni(ist_kayit):
 # ==========================================
 # BACKTEST FONKSİYONU
 # ==========================================
+def _form_ppg(s):
+    return sum(3 if c == "W" else 1 if c == "D" else 0 for c in s) / max(len(s), 1)
+
+
+def yeniden_analiz(v):
+    """Kayıtlı ham veriden güncel hesaplamayla analizi yeniden üretir (önbellekli)."""
+    v2 = copy.deepcopy(v)
+    # Eski kayıtlarda PPG/MPG 3 kat şişmişti: form dizisi varsa baştan hesapla
+    if v2.get("form_str_ev"):
+        v2["ppg_ev"] = _form_ppg(v2["form_str_ev"])
+    if v2.get("form_str_dep"):
+        v2["mpg_dep"] = _form_ppg(v2["form_str_dep"])
+
+    anahtar = json.dumps(v2, sort_keys=True, ensure_ascii=False)
+    if "bt_analiz_cache" not in st.session_state:
+        st.session_state.bt_analiz_cache = {}
+    cache = st.session_state.bt_analiz_cache
+    if anahtar not in cache:
+        a = analiz_hesapla(v2)
+        cache[anahtar] = {"ust_25": a["ust_25"], "kg_var_model": a["kg_var_model"]}
+    return cache[anahtar]
+
+
 def backtest_hesapla(gecmis, market_sec, market_esik):
     sonuc = {
         "kg_var": {"dogru": 0, "yanlis": 0},
@@ -290,9 +313,15 @@ def backtest_hesapla(gecmis, market_sec, market_esik):
             gercek_kg_var = (skor_ev > 0 and skor_dep > 0)
             gercek_ust = toplam_gol > 2.5
 
-            ust_25 = analiz.get("ust_25", 50)
+            # GÜNCEL HESAPLAMA: kayıtlı eski yüzdeler yerine ham veriden yeniden hesapla
+            try:
+                yeni_analiz = yeniden_analiz(v)
+                ust_25 = yeni_analiz["ust_25"]
+                kg_var = yeni_analiz["kg_var_model"]
+            except Exception:
+                ust_25 = analiz.get("ust_25", 50)
+                kg_var = analiz.get("kg_var_model", 50)
             alt_25 = 100 - ust_25
-            kg_var = analiz.get("kg_var_model", 50)
             kg_yok = 100 - kg_var
 
             mac_kayit = {
@@ -1655,7 +1684,7 @@ elif st.session_state.sayfa == "backtest":
         st.stop()
 
     st.markdown("<h1>🔬 Geçmiş Backtest</h1>", unsafe_allow_html=True)
-    st.caption("Test etmek istediğin marketleri seç ve eşikleri ayarla.")
+    st.caption("Test etmek istediğin marketleri seç ve eşikleri ayarla. Yüzdeler, kayıtlı ham veriden güncel hesaplamayla yeniden üretilir.")
     st.divider()
 
     st.markdown("### ⚙️ Test Seçenekleri ve Eşikler")
