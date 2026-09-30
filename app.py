@@ -2251,4 +2251,27 @@ elif st.session_state.sayfa == "sonuc":
         else:
             # GELECEK: sadece öneri varsa kaydet
             if kaydet_mi:
-     
+         if skor_belli:
+        # GEÇMİŞ: her zaman kaydet
+        st.session_state.gecmis_analizler.append(yeni_kayit)
+        gecmis_kaydet(st.session_state.gecmis_analizler)
+        if kaydet_mi:
+            st.success("📊 Geçmişe kaydedildi. (öneri vardı)")
+        else:
+            st.info("📊 Geçmişe kaydedildi. (öneri yoktu ama backtest için kaydedildi)")
+    else:
+        # GELECEK: sadece öneri varsa kaydet
+        if kaydet_mi:
+            st.session_state.gelecek_analizler.append(yeni_kayit)
+            gelecek_kaydet(st.session_state.gelecek_analizler)
+            st.info("🔮 Gelecek Maçlar'a kaydedildi.")
+        else:
+            st.warning("⚠️ Her iki market de negatif. Bu maç geleceğe **kaydedilmedi**.")
+
+    st.session_state.kayit_yapildi = True
+
+st.divider()
+if st.button("🔄 Yeni Maç Analizi", use_container_width=True, type="primary"):
+    st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
+    st.session_state.sayfa = "giris"
+    st.rerun()
