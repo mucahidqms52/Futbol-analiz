@@ -120,6 +120,146 @@ st.markdown("""
     .stApp .fa-mk-badge.ok { background: rgba(34,197,94,0.15); color: #22c55e !important; border: 1px solid rgba(34,197,94,0.45); }
     .stApp .fa-mk-badge.no { background: rgba(148,163,184,0.12); color: #94a3b8 !important; border: 1px solid rgba(148,163,184,0.35); }
     .stApp .fa-mk-info { font-size: 0.72rem; color: #8fa0bd !important; }
+
+    /* ===== MODERN GİRİŞ EKRANI ===== */
+    .login-hero {
+        text-align: center;
+        padding: 40px 10px 24px 10px;
+        position: relative;
+    }
+    .login-logo {
+        font-size: 4.5rem;
+        line-height: 1;
+        margin-bottom: 12px;
+        display: inline-block;
+        filter: drop-shadow(0 0 20px rgba(34,197,94,0.5));
+        animation: logoPulse 3s ease-in-out infinite;
+    }
+    @keyframes logoPulse {
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(34,197,94,0.4)); }
+        50% { transform: scale(1.06); filter: drop-shadow(0 0 32px rgba(34,197,94,0.85)); }
+    }
+    .login-title {
+        font-size: 2rem !important;
+        font-weight: 900 !important;
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 0 !important;
+        padding: 0 !important;
+        letter-spacing: 1.2px;
+        border: none !important;
+        text-align: center !important;
+    }
+    .login-subtitle {
+        font-size: 0.88rem;
+        color: #8fa0bd !important;
+        margin-top: 8px;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+
+    div[data-testid="stForm"] {
+        background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95)) !important;
+        border: 1px solid rgba(34,197,94,0.18) !important;
+        border-radius: 22px !important;
+        padding: 24px 20px !important;
+        box-shadow: 0 12px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(34,197,94,0.04) inset !important;
+        backdrop-filter: blur(12px);
+    }
+    div[data-testid="stForm"] label p {
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        color: #cbd5e1 !important;
+        letter-spacing: 0.4px;
+        margin-bottom: 4px !important;
+    }
+    div[data-testid="stForm"] input {
+        height: 46px !important;
+        font-size: 0.95rem !important;
+        padding: 0 14px !important;
+        background: rgba(11,18,32,0.85) !important;
+        border: 1.5px solid #23304a !important;
+        border-radius: 12px !important;
+        transition: all 0.2s ease;
+    }
+    div[data-testid="stForm"] input:focus {
+        border-color: #22c55e !important;
+        box-shadow: 0 0 0 3px rgba(34,197,94,0.18) !important;
+        outline: none !important;
+    }
+    div[data-testid="stForm"] button {
+        height: 46px !important;
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        border-radius: 12px !important;
+        letter-spacing: 0.3px;
+        transition: all 0.2s ease;
+    }
+    div[data-testid="stForm"] button[kind="primary"] {
+        background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+        box-shadow: 0 6px 20px rgba(34,197,94,0.3) !important;
+        border: none !important;
+    }
+    div[data-testid="stForm"] button[kind="primary"]:hover {
+        box-shadow: 0 8px 28px rgba(34,197,94,0.5) !important;
+        transform: translateY(-1px);
+    }
+    div[data-testid="stForm"] button[kind="secondary"] {
+        background: rgba(30,41,59,0.55) !important;
+        border: 1.5px solid #23304a !important;
+    }
+    div[data-testid="stForm"] button[kind="secondary"]:hover {
+        border-color: #3b82f6 !important;
+        background: rgba(59,130,246,0.08) !important;
+    }
+
+    .login-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 10px 0 6px 0;
+        color: #64748b !important;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 3px;
+        justify-content: center;
+    }
+    .login-divider::before, .login-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #23304a 50%, transparent);
+    }
+
+    .login-features {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 22px;
+        padding: 0 10px;
+    }
+    .lf-chip {
+        display: inline-block;
+        padding: 6px 14px;
+        background: rgba(34,197,94,0.08);
+        border: 1px solid rgba(34,197,94,0.25);
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #cbd5e1 !important;
+        letter-spacing: 0.3px;
+    }
+    .login-footer {
+        text-align: center;
+        margin-top: 26px;
+        font-size: 0.72rem;
+        color: #64748b !important;
+        letter-spacing: 0.5px;
+    }
+    .login-footer b { color: #22c55e !important; font-weight: 700; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -454,16 +594,6 @@ def guven_seviyesi_bul(olasilik):
     return ("cok_dusuk", "⚫", "error", "Düşük")
 
 
-def kayit_yeni_format_mi(g):
-    if "dogruluk" not in g or not g["dogruluk"]:
-        return False
-    d = g["dogruluk"]
-    if "oneri_gol" not in d: return False
-    if not isinstance(d.get("oneri_gol"), dict): return False
-    if "tuttu" not in d["oneri_gol"]: return False
-    return True
-
-
 def oneri_istatistik_guncel(gecmis):
     ist = {"1x2": {"tam": 0, "yakin": 0, "yanlis": 0},
            "gol": {"tam": 0, "yakin": 0, "yanlis": 0},
@@ -488,13 +618,6 @@ def oneri_istatistik_guncel(gecmis):
         except Exception:
             continue
     return ist
-
-
-def ist_skor_metni(ist_kayit):
-    t = ist_kayit["tam"]; y = ist_kayit["yakin"]; yl = ist_kayit["yanlis"]
-    top = t + y + yl
-    if top == 0: return "— veri yok"
-    return f"✅{t} 🟡{y} ❌{yl} → **%{(t+y)/top*100:.0f}** isabet"
 
 
 # ==========================================
@@ -727,7 +850,6 @@ def sportytrader_veri_cikar(metin):
         veri["takim_ev"] = m.group(1).strip()
         veri["takim_dep"] = m.group(2).strip()
 
-    # ===== SAAT =====
     m = re.search(r'Time\s*\t\s*(\d{1,2}:\d{2})', metin)
     if m:
         veri["saat"] = m.group(1).strip()
@@ -736,7 +858,6 @@ def sportytrader_veri_cikar(metin):
         if m:
             veri["saat"] = m.group(1).strip()
 
-    # ===== TARİH =====
     m = re.search(r'Date\s*\t\s*(\d{1,2}\.\d{1,2}\.\d{2,4})', metin)
     if m:
         veri["tarih"] = m.group(1).strip()
@@ -745,7 +866,6 @@ def sportytrader_veri_cikar(metin):
         if m:
             veri["tarih"] = m.group(1).strip()
 
-    # ===== ÜLKE =====
     veri["ulke"] = _ulke_bul(metin)
 
     m = re.search(r'FT\s*\r?\n\s*(\d+)\s*-\s*(\d+)', metin)
@@ -1481,7 +1601,6 @@ def kg_detayli_aciklama(v, a):
 
 
 def birx_iki_detayli_aciklama(v, a):
-    """1X2 için detaylı yorum — Alt/Üst/KG gibi."""
     p1 = a["p1"]; px = a["px"]; p2 = a["p2"]
     en = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
     secim, yuzde = en
@@ -1499,7 +1618,6 @@ def birx_iki_detayli_aciklama(v, a):
     yorumlar = []
     yorumlar.append(f"🎯 **1X2 NEDEN {secim}? (Ev %{p1:.1f} • X %{px:.1f} • Dep %{p2:.1f})**")
 
-    # 1. Form
     if ppg > 0 and mpg > 0:
         fark = ppg - mpg
         if fark >= 0.5:
@@ -1509,7 +1627,6 @@ def birx_iki_detayli_aciklama(v, a):
         else:
             yorumlar.append(f"- Form dengeli (Ev PPG {ppg:.2f} / Dep MPG {mpg:.2f})")
 
-    # 2. Sıralama
     if s_ev > 0 and s_dep > 0:
         fark_sira = s_dep - s_ev
         if fark_sira >= 5:
@@ -1519,7 +1636,6 @@ def birx_iki_detayli_aciklama(v, a):
         else:
             yorumlar.append(f"- Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**)")
 
-    # 3. Gol atma gücü
     if at_ev > 0 and at_dep > 0:
         if at_ev - at_dep >= 0.5:
             yorumlar.append(f"- ✅ **Atak gücü:** Ev **{at_ev:.2f}** vs Dep **{at_dep:.2f}** gol/maç → Ev daha üretken")
@@ -1528,7 +1644,6 @@ def birx_iki_detayli_aciklama(v, a):
         else:
             yorumlar.append(f"- Atak güçleri benzer (Ev **{at_ev:.2f}** / Dep **{at_dep:.2f}**)")
 
-    # 4. Savunma
     if y_ev > 0 and y_dep > 0:
         if y_dep - y_ev >= 0.5:
             yorumlar.append(f"- ✅ **Savunma:** Ev **{y_ev:.2f}** vs Dep **{y_dep:.2f}** gol yiyor → Dep zayıf")
@@ -1537,13 +1652,11 @@ def birx_iki_detayli_aciklama(v, a):
         else:
             yorumlar.append(f"- Savunmalar benzer (Ev **{y_ev:.2f}** / Dep **{y_dep:.2f}**)")
 
-    # 5. Galibiyet/beraberlik
     if gal_e > 0 or gal_d > 0:
         yorumlar.append(f"- Galibiyet oranı: Ev **%{gal_e:.0f}** • Dep **%{gal_d:.0f}**")
     if ber_e > 0 or ber_d > 0:
         yorumlar.append(f"- Beraberlik oranı: Ev **%{ber_e:.0f}** • Dep **%{ber_d:.0f}**")
 
-    # Sonuç
     if yuzde >= esik_secim:
         yorumlar.append(f"- **Sonuç:** En yüksek olasılık **{isim}** (%{yuzde:.1f}) ≥ eşik %{esik_secim:.0f} → **POZİTİF ✅**")
     else:
@@ -1613,7 +1726,6 @@ def mac_karti(ev, dep, skor_belli, skor_ev, skor_dep, lam_ev, lam_dep, saat="", 
 
 
 def mac_tahmin_karti(v_g, g=None):
-    """Maçın altında gösterilen mini tahmin kartı: 1X2, Gol, KG."""
     try:
         try:
             ya = yeniden_analiz(v_g)
@@ -1623,21 +1735,18 @@ def mac_tahmin_karti(v_g, g=None):
         ust_25 = ya.get("ust_25", 50); alt_25 = 100 - ust_25
         kg_var = ya.get("kg_var_model", 50); kg_yok = 100 - kg_var
 
-        # 1X2
         en1x2 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
         sec1x2, y1x2 = en1x2
         e1x2 = esik_1x2_al(sec1x2)
         p1x2_poz = y1x2 >= e1x2
         isim1x2 = {"1": "1 — Ev Kazanır", "X": "X — Beraberlik", "2": "2 — Dep Kazanır"}[sec1x2]
 
-        # Gol
         if ust_25 >= alt_25:
             gol_s = "Üst 2.5"; gol_y = ust_25; gol_e = esik_al("ust")
         else:
             gol_s = "Alt 2.5"; gol_y = alt_25; gol_e = esik_al("alt")
         gol_poz = gol_y >= gol_e
 
-        # KG
         if kg_var >= kg_yok:
             kg_s = "KG Var"; kg_y = kg_var; kg_e = esik_al("kg_var")
         else:
@@ -1814,20 +1923,37 @@ def nav_bar():
 
 
 # ==========================================
-# GİRİŞ EKRANI
+# GİRİŞ EKRANI (MODERN)
 # ==========================================
 def giris_ekrani():
-    st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:gray;'>Giriş yap veya misafir olarak devam et.</p>", unsafe_allow_html=True)
-    st.markdown("")
+    st.markdown("""
+        <div class="login-hero">
+            <div class="login-logo">⚽</div>
+            <h1 class="login-title">Futbol Analiz Pro</h1>
+            <p class="login-subtitle">Akıllı maç analizi ve tahmin motoru</p>
+        </div>
+    """, unsafe_allow_html=True)
 
     with st.form("giris_form"):
-        sifre = st.text_input("🔐 Şifre (Admin)", type="password", key="sifre_input")
-        c1, c2 = st.columns(2)
-        with c1:
-            admin_btn = st.form_submit_button("👑 Admin Girişi", use_container_width=True, type="primary")
-        with c2:
-            misafir_btn = st.form_submit_button("👤 Misafir Girişi", use_container_width=True)
+        sifre = st.text_input(
+            "🔐 Admin Şifresi",
+            type="password",
+            key="sifre_input",
+            placeholder="Şifreni gir..."
+        )
+
+        admin_btn = st.form_submit_button(
+            "👑  Admin Girişi",
+            use_container_width=True,
+            type="primary"
+        )
+
+        st.markdown('<div class="login-divider">VEYA</div>', unsafe_allow_html=True)
+
+        misafir_btn = st.form_submit_button(
+            "👤  Misafir Olarak Devam Et",
+            use_container_width=True
+        )
 
         if admin_btn:
             if sifre == ADMIN_SIFRE:
@@ -1836,13 +1962,24 @@ def giris_ekrani():
                 st.session_state.sayfa = "giris"
                 st.rerun()
             else:
-                st.error("❌ Yanlış şifre.")
+                st.error("❌ Yanlış şifre. Tekrar deneyin.")
 
         if misafir_btn:
             st.session_state.giris_yapildi = True
             st.session_state.rol = "misafir"
             st.session_state.sayfa = "giris"
             st.rerun()
+
+    st.markdown("""
+        <div class="login-features">
+            <span class="lf-chip">🎯 1X2</span>
+            <span class="lf-chip">⚽ Üst / Alt 2.5</span>
+            <span class="lf-chip">🤝 KG Var / Yok</span>
+            <span class="lf-chip">🔬 Backtest</span>
+            <span class="lf-chip">📊 İstatistik</span>
+        </div>
+        <div class="login-footer">© <b>Futbol Analiz Pro</b> • Bilgi amaçlıdır • Kesin sonuç garantisi yoktur</div>
+    """, unsafe_allow_html=True)
 
 
 def ust_bar():
@@ -2249,26 +2386,17 @@ elif st.session_state.sayfa == "gecmis":
             ulke = v_g.get("ulke", "")
             saat = v_g.get("saat", "")
             tarih = v_g.get("tarih", "")
-            bayrak = ulke_bayrak_bul(ulke)
 
             ikon = mac_sonuc_ikon(g)
+            st.markdown(f"### {ikon}", unsafe_allow_html=False)
             header_html = mac_karti(takim_ev, takim_dep, True, skor_ev, skor_dep, 0, 0,
                                     saat=saat, ulke=ulke, tarih=tarih)
-            # mac_karti model beklenen gol 0 verir; gerçek beklenen golü göstermek için override
-            try:
-                ya_x = yeniden_analiz(v_g)
-                lam_e_x = ya_x.get("lam_ev", 0) if "lam_ev" in ya_x else 0
-            except Exception:
-                lam_e_x = 0
-            # Hero'nun alt satırı zaten yok, sadece üst bilgi önemli
-            st.markdown(f'<div style="position:relative;">{header_html}</div>', unsafe_allow_html=True)
+            st.markdown(header_html, unsafe_allow_html=True)
 
-            # Mini tahmin kartı
             tahmin_html = mac_tahmin_karti(v_g, g)
             if tahmin_html:
                 st.markdown(tahmin_html, unsafe_allow_html=True)
 
-            # Doğruluk etiketi
             try:
                 try:
                     ya2 = yeniden_analiz(v_g)
@@ -2298,7 +2426,6 @@ elif st.session_state.sayfa == "gecmis":
             except Exception:
                 pass
 
-            # Buton satırı
             if admin_mi():
                 col_detay, col_sil = st.columns([5, 1])
                 with col_detay:
@@ -2433,13 +2560,6 @@ elif st.session_state.sayfa == "gelecek":
             saat = v_g.get("saat", "")
             tarih = v_g.get("tarih", "")
 
-            # Hero: ülke + tarih/saat + takımlar
-            try:
-                ya_h = yeniden_analiz(v_g)
-                lam_e = ya_h.get("p1", 0); lam_d = ya_h.get("p2", 0)
-            except Exception:
-                lam_e = lam_d = 0
-            # Beklenen gol hesabı için doğrudan a
             try:
                 analiz_full = analiz_hesapla(v_g)
                 lam_ev_h = analiz_full["lam_ev"]; lam_dep_h = analiz_full["lam_dep"]
@@ -2449,12 +2569,10 @@ elif st.session_state.sayfa == "gelecek":
                              saat=saat, ulke=ulke, tarih=tarih)
             st.markdown(hero, unsafe_allow_html=True)
 
-            # Mini tahmin kartı
             tahmin_html = mac_tahmin_karti(v_g, g)
             if tahmin_html:
                 st.markdown(tahmin_html, unsafe_allow_html=True)
 
-            # Butonlar
             if admin_mi():
                 col_detay, col_sil = st.columns([5, 1])
                 with col_detay:
@@ -2786,7 +2904,6 @@ elif st.session_state.sayfa == "sonuc":
         for baslik, metin in detayli_analiz_yorumu(v):
             st.markdown(f"**{baslik}**"); st.markdown(metin); st.markdown("")
 
-        # 1X2 detaylı yorum
         y1x2 = birx_iki_detayli_aciklama(v, a)
         if y1x2:
             st.markdown("---")
