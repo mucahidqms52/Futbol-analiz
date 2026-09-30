@@ -1,3 +1,4 @@
+
 import streamlit as st
 import math
 import copy
@@ -143,7 +144,7 @@ def gelecek_kaydet(v): _kaydet(GELECEK_DOSYA, v)
 
 
 def ayarlar_yukle():
-    varsayilan = {"ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0, "1x2": 55.0}
+    varsayilan = {"ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0}
     try:
         if os.path.exists(AYARLAR_DOSYA):
             with open(AYARLAR_DOSYA, "r", encoding="utf-8") as f:
@@ -264,9 +265,9 @@ if "esikler" not in st.session_state:
     st.session_state.esikler = ayarlar_yukle()
 
 if "bt_market" not in st.session_state:
-    st.session_state.bt_market = {"1x2": False, "kg_var": False, "kg_yok": False, "ust": False, "alt": False}
+    st.session_state.bt_market = {"kg_var": False, "kg_yok": False, "ust": False, "alt": False}
 if "bt_market_esik" not in st.session_state:
-    st.session_state.bt_market_esik = {"1x2": 55.0, "kg_var": 70.0, "kg_yok": 70.0, "ust": 70.0, "alt": 70.0}
+    st.session_state.bt_market_esik = {"kg_var": 70.0, "kg_yok": 70.0, "ust": 70.0, "alt": 70.0}
 if "bt_sonuc" not in st.session_state:
     st.session_state.bt_sonuc = None
 if "bt_detaylar" not in st.session_state:
@@ -312,13 +313,11 @@ def kayit_yeni_format_mi(g):
 
 
 def oneri_istatistik(gecmis):
-    ist = {"1x2": {"tam": 0, "yakin": 0, "yanlis": 0},
-           "gol": {"tam": 0, "yakin": 0, "yanlis": 0},
-           "kg": {"tam": 0, "yakin": 0, "yanlis": 0}}
+    ist = {"gol": {"tam": 0, "yakin": 0, "yanlis": 0}, "kg": {"tam": 0, "yakin": 0, "yanlis": 0}}
     for g in gecmis:
         if not kayit_yeni_format_mi(g): continue
         d = g["dogruluk"]
-        for key in ["oneri_1x2", "oneri_gol", "oneri_kg"]:
+        for key in ["oneri_gol", "oneri_kg"]:
             kisa = key.replace("oneri_", "")
             try:
                 durum = d[key].get("durum", None); tuttu = d[key].get("tuttu", None)
@@ -333,9 +332,7 @@ def oneri_istatistik(gecmis):
 
 def oneri_istatistik_guncel(gecmis):
     """Geçmiş maçları, AYARLAR'daki güncel eşikler ve güncel hesaplamayla yeniden değerlendirir."""
-    ist = {"1x2": {"tam": 0, "yakin": 0, "yanlis": 0},
-           "gol": {"tam": 0, "yakin": 0, "yanlis": 0},
-           "kg": {"tam": 0, "yakin": 0, "yanlis": 0}}
+    ist = {"gol": {"tam": 0, "yakin": 0, "yanlis": 0}, "kg": {"tam": 0, "yakin": 0, "yanlis": 0}}
     for g in gecmis:
         try:
             v = g["veri"]
@@ -348,7 +345,7 @@ def oneri_istatistik_guncel(gecmis):
             d = sonuc_hesapla({"veri": v, "analiz": ya})
             if not d:
                 continue
-            for key in ["oneri_1x2", "oneri_gol", "oneri_kg"]:
+            for key in ["oneri_gol", "oneri_kg"]:
                 kisa = key.replace("oneri_", "")
                 durum = d[key].get("durum")
                 if durum == "tam": ist[kisa]["tam"] += 1
@@ -397,19 +394,12 @@ def yeniden_analiz(v):
     cache = st.session_state.bt_analiz_cache
     if anahtar not in cache:
         a = analiz_hesapla(v2)
-        cache[anahtar] = {
-            "ust_25": a["ust_25"],
-            "kg_var_model": a["kg_var_model"],
-            "p1": a["p1"],
-            "px": a["px"],
-            "p2": a["p2"],
-        }
+        cache[anahtar] = {"ust_25": a["ust_25"], "kg_var_model": a["kg_var_model"]}
     return cache[anahtar]
 
 
 def backtest_hesapla(gecmis, market_sec, market_esik):
     sonuc = {
-        "1x2": {"dogru": 0, "yanlis": 0},
         "kg_var": {"dogru": 0, "yanlis": 0},
         "kg_yok": {"dogru": 0, "yanlis": 0},
         "ust": {"dogru": 0, "yanlis": 0},
@@ -430,23 +420,13 @@ def backtest_hesapla(gecmis, market_sec, market_esik):
             gercek_kg_var = (skor_ev > 0 and skor_dep > 0)
             gercek_ust = toplam_gol > 2.5
 
-            if skor_ev > skor_dep: gercek_1x2 = "1"
-            elif skor_ev == skor_dep: gercek_1x2 = "X"
-            else: gercek_1x2 = "2"
-
             try:
                 yeni_analiz = yeniden_analiz(v)
                 ust_25 = yeni_analiz["ust_25"]
                 kg_var = yeni_analiz["kg_var_model"]
-                p1_y = yeni_analiz["p1"]
-                px_y = yeni_analiz["px"]
-                p2_y = yeni_analiz["p2"]
             except Exception:
                 ust_25 = analiz.get("ust_25", 50)
                 kg_var = analiz.get("kg_var_model", 50)
-                p1_y = analiz.get("p1", 33.33)
-                px_y = analiz.get("px", 33.33)
-                p2_y = analiz.get("p2", 33.34)
             alt_25 = 100 - ust_25
             kg_yok = 100 - kg_var
 
@@ -456,20 +436,8 @@ def backtest_hesapla(gecmis, market_sec, market_esik):
                 "skor": f"{skor_ev}-{skor_dep}",
                 "gercek_kg": "Var" if gercek_kg_var else "Yok",
                 "gercek_gol": "Üst" if gercek_ust else "Alt",
-                "gercek_1x2": gercek_1x2,
                 "detaylar": []
             }
-
-            # ===== 1X2 TEST =====
-            if market_sec.get("1x2", False):
-                en_yuksek = max([("1", p1_y), ("X", px_y), ("2", p2_y)], key=lambda x: x[1])
-                if en_yuksek[1] >= market_esik["1x2"]:
-                    if en_yuksek[0] == gercek_1x2:
-                        sonuc["1x2"]["dogru"] += 1
-                        mac_kayit["detaylar"].append(f"1X2: {en_yuksek[0]} ✅")
-                    else:
-                        sonuc["1x2"]["yanlis"] += 1
-                        mac_kayit["detaylar"].append(f"1X2: {en_yuksek[0]} ❌ (gerçek: {gercek_1x2})")
 
             if market_sec.get("kg_var", False):
                 if kg_var >= market_esik["kg_var"] and kg_var >= kg_yok:
@@ -534,7 +502,7 @@ MANUEL_ALANLAR = {
 # ==========================================
 ULKE_BAYRAK = {
     "switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭",
-    "england": "🏴", "ingiltere": "🏴", "i̇ngiltere": "🏴",
+    "england": "", "ingiltere": "", "i̇ngiltere": "",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "i̇spanya": "🇪🇸",
     "italy": "🇮🇹", "italya": "🇮🇹", "i̇talya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪",
@@ -554,8 +522,8 @@ ULKE_BAYRAK = {
     "ukraine": "🇺🇦", "ukrayna": "🇺🇦",
     "poland": "🇵🇱", "polonya": "🇵🇱",
     "greece": "🇬🇷", "yunanistan": "🇬🇷",
-    "scotland": "🏴", "i̇skoçya": "🏴",
-    "wales": "🏴", "galler": "🏴",
+    "scotland": "", "i̇skoçya": "",
+    "wales": "", "galler": "",
     "ireland": "🇮🇪", "i̇rlanda": "🇮🇪",
     "austria": "🇦🇹", "avusturya": "🇦🇹",
     "croatia": "🇭🇷", "hırvatistan": "🇭🇷",
@@ -1228,21 +1196,8 @@ def sonuc_hesapla(kayit):
     gercek_ust = toplam_gol > 2.5
     gercek_kg_var = (skor_ev > 0 and skor_dep > 0)
 
-    if skor_ev > skor_dep: gercek_1x2 = "1"
-    elif skor_ev == skor_dep: gercek_1x2 = "X"
-    else: gercek_1x2 = "2"
-
     ust_25 = analiz.get("ust_25", 50); alt_25 = 100 - ust_25
     kg_var = analiz.get("kg_var_model", 50); kg_yok = 100 - kg_var
-
-    # ===== 1X2 TAHMİN =====
-    p1_a = analiz.get("p1", 33.33)
-    px_a = analiz.get("px", 33.33)
-    p2_a = analiz.get("p2", 33.34)
-    en_yuksek_1x2 = max([("1", p1_a), ("X", px_a), ("2", p2_a)], key=lambda x: x[1])
-    oneri_1x2 = None
-    if en_yuksek_1x2[1] >= esik_al("1x2"):
-        oneri_1x2 = en_yuksek_1x2[0]
 
     oneri_gol = None
     if ust_25 >= esik_al("ust") and ust_25 >= alt_25: oneri_gol = "Üst"
@@ -1251,10 +1206,6 @@ def sonuc_hesapla(kayit):
     oneri_kg = None
     if kg_var >= esik_al("kg_var") and kg_var >= kg_yok: oneri_kg = "Var"
     elif kg_yok >= esik_al("kg_yok") and kg_yok >= kg_var: oneri_kg = "Yok"
-
-    if oneri_1x2 is None: d_o1 = None
-    else:
-        d_o1 = "tam" if oneri_1x2 == gercek_1x2 else "yanlis"
 
     if oneri_gol is None: d_og = None
     else:
@@ -1269,10 +1220,8 @@ def sonuc_hesapla(kayit):
     def _t(d): return None if d is None else (d == "tam")
 
     return {
-        "oneri_1x2": {"tahmin": oneri_1x2, "tuttu": _t(d_o1), "durum": d_o1},
         "oneri_gol": {"tahmin": oneri_gol, "tuttu": _t(d_og), "durum": d_og},
         "oneri_kg": {"tahmin": oneri_kg, "tuttu": _t(d_ok), "durum": d_ok},
-        "gercek_1x2": gercek_1x2,
         "gercek_gol": "Üst" if gercek_ust else "Alt",
         "gercek_kg": "Var" if gercek_kg_var else "Yok",
     }
@@ -1485,9 +1434,9 @@ def olasilik_bar(etiket, yuzde, esik=None, renk="#3b82f6"):
 def olasilik_paneli(a):
     satirlar = (
         '<div class="fa-ttl">Maç Sonucu</div>'
-        + olasilik_bar("Ev Sahibi (1)", a["p1"], esik_al("1x2"), "#3b82f6")
-        + olasilik_bar("Beraberlik (X)", a["px"], esik_al("1x2"), "#94a3b8")
-        + olasilik_bar("Deplasman (2)", a["p2"], esik_al("1x2"), "#f59e0b")
+        + olasilik_bar("Ev Sahibi (1)", a["p1"], None, "#3b82f6")
+        + olasilik_bar("Beraberlik (X)", a["px"], None, "#94a3b8")
+        + olasilik_bar("Deplasman (2)", a["p2"], None, "#f59e0b")
         + '<div class="fa-ttl" style="margin-top:12px">Piyasalar (çizgi = eşik)</div>'
         + olasilik_bar("Üst 2.5", a["ust_25"], esik_al("ust"))
         + olasilik_bar("Alt 2.5", a["alt_25"], esik_al("alt"))
@@ -1561,7 +1510,7 @@ def mac_sonuc_ikon(g):
         d = sonuc_hesapla({"veri": v, "analiz": ya})
         if not d:
             return "⚫"
-        verilen = [x for x in [d["oneri_1x2"]["tuttu"], d["oneri_gol"]["tuttu"], d["oneri_kg"]["tuttu"]] if x is not None]
+        verilen = [x for x in [d["oneri_gol"]["tuttu"], d["oneri_kg"]["tuttu"]] if x is not None]
         if not verilen:
             return "⚫"
         if all(verilen):
@@ -1849,15 +1798,12 @@ elif st.session_state.sayfa == "gecmis":
     else:
         st.markdown("### 🎯 ÖNERİ İSTATİSTİKLERİ")
         st.caption("Ayarlar'daki güncel eşiklerle ve güncel hesaplamayla yeniden hesaplanır.")
-        col_1, col_2, col_3 = st.columns(3)
+        col_1, col_2 = st.columns(2)
         with col_1:
-            st.markdown(istat_karti("🎯 1X2 (Maç Sonucu)", oneri_ist["1x2"],
-                                    f"Eşik: %{esik_al('1x2'):.0f}"), unsafe_allow_html=True)
-        with col_2:
-            st.markdown(istat_karti("⚽ Üst / Alt 2.5", oneri_ist["gol"],
+            st.markdown(istat_karti("Üst / Alt 2.5", oneri_ist["gol"],
                                     f"Eşikler: Üst %{esik_al('ust'):.0f} • Alt %{esik_al('alt'):.0f}"), unsafe_allow_html=True)
-        with col_3:
-            st.markdown(istat_karti("🤝 KG Var / Yok", oneri_ist["kg"],
+        with col_2:
+            st.markdown(istat_karti("KG Var / Yok", oneri_ist["kg"],
                                     f"Eşikler: Var %{esik_al('kg_var'):.0f} • Yok %{esik_al('kg_yok'):.0f}"), unsafe_allow_html=True)
 
     st.divider()
@@ -2101,27 +2047,22 @@ elif st.session_state.sayfa == "backtest":
     st.divider()
 
     st.markdown("### ⚙️ Test Seçenekleri ve Eşikler")
-    c1, c2, c3 = st.columns(3)
+    c1, c2 = st.columns(2)
     with c1:
-        st.markdown("**🎯 Maç Sonucu**")
-        sec_1x2 = st.checkbox("1X2", value=st.session_state.bt_market.get("1x2", False), key="bt_1x2")
-        esik_1x2 = st.slider("1X2 eşiği (%)", 0, 100, int(st.session_state.bt_market_esik.get("1x2", 55.0)), 1, key="sl_1x2", disabled=not sec_1x2)
-    with c2:
         st.markdown("**🤝 KG**")
         sec_kg_var = st.checkbox("KG Var", value=st.session_state.bt_market["kg_var"], key="bt_kg_var")
         esik_kg_var = st.slider("KG Var eşiği (%)", 0, 100, int(st.session_state.bt_market_esik["kg_var"]), 1, key="sl_kg_var", disabled=not sec_kg_var)
         sec_kg_yok = st.checkbox("KG Yok", value=st.session_state.bt_market["kg_yok"], key="bt_kg_yok")
         esik_kg_yok = st.slider("KG Yok eşiği (%)", 0, 100, int(st.session_state.bt_market_esik["kg_yok"]), 1, key="sl_kg_yok", disabled=not sec_kg_yok)
-    with c3:
+    with c2:
         st.markdown("**⚽ Gol**")
         sec_ust = st.checkbox("Üst 2.5", value=st.session_state.bt_market["ust"], key="bt_ust")
         esik_ust = st.slider("Üst 2.5 eşiği (%)", 0, 100, int(st.session_state.bt_market_esik["ust"]), 1, key="sl_ust", disabled=not sec_ust)
         sec_alt = st.checkbox("Alt 2.5", value=st.session_state.bt_market["alt"], key="bt_alt")
         esik_alt = st.slider("Alt 2.5 eşiği (%)", 0, 100, int(st.session_state.bt_market_esik["alt"]), 1, key="sl_alt", disabled=not sec_alt)
 
-    secenekler = {"1x2": sec_1x2, "kg_var": sec_kg_var, "kg_yok": sec_kg_yok, "ust": sec_ust, "alt": sec_alt}
+    secenekler = {"kg_var": sec_kg_var, "kg_yok": sec_kg_yok, "ust": sec_ust, "alt": sec_alt}
     esikler = {
-        "1x2": float(esik_1x2),
         "kg_var": float(esik_kg_var), "kg_yok": float(esik_kg_yok),
         "ust": float(esik_ust), "alt": float(esik_alt)
     }
@@ -2178,7 +2119,6 @@ elif st.session_state.sayfa == "backtest":
         st.caption(f"📅 {st.session_state.get('bt_mod_etiket', '')}")
 
         for key, baslik in [
-            ("1x2", "🎯 1X2 (Maç Sonucu)"),
             ("kg_var", "🤝 KG Var"), ("kg_yok", "🤝 KG Yok"),
             ("ust", "⚽ Üst 2.5"), ("alt", "⚽ Alt 2.5"),
         ]:
@@ -2191,8 +2131,7 @@ elif st.session_state.sayfa == "backtest":
         with st.expander(f"📋 Maç Detayları ({len(st.session_state.bt_detaylar)} maç)"):
             for m in st.session_state.bt_detaylar:
                 st.markdown(f"**{m['takim_ev']} {m['skor']} {m['takim_dep']}**")
-                gercek_1x2 = m.get("gercek_1x2", "?")
-                st.caption(f"Gerçek: 1X2={gercek_1x2} / Gol={m['gercek_gol']} / KG={m['gercek_kg']}")
+                st.caption(f"Gerçek: Gol={m['gercek_gol']} / KG={m['gercek_kg']}")
                 for dd in m["detaylar"]:
                     st.markdown(f" • {dd}")
                 st.markdown("")
@@ -2220,10 +2159,6 @@ elif st.session_state.sayfa == "ayarlar":
 
     mevcut = st.session_state.esikler.copy()
 
-    st.markdown("### 🎯 Maç Sonucu Eşiği")
-    yeni_1x2 = st.slider("1X2 eşiği (%)", 0, 100, int(mevcut.get("1x2", 55.0)), 1, key="ay_1x2",
-                         help="En yüksek olasılıklı sonuç bu eşiği geçerse öneri verilir.")
-
     st.markdown("### ⚽ Gol Eşikleri")
     c1, c2 = st.columns(2)
     with c1:
@@ -2243,7 +2178,6 @@ elif st.session_state.sayfa == "ayarlar":
     with c_kaydet:
         if st.button("💾 Kaydet", use_container_width=True, type="primary"):
             yeni_esikler = {
-                "1x2": float(yeni_1x2),
                 "ust": float(yeni_ust), "alt": float(yeni_alt),
                 "kg_var": float(yeni_kg_var), "kg_yok": float(yeni_kg_yok),
             }
@@ -2252,7 +2186,7 @@ elif st.session_state.sayfa == "ayarlar":
             st.success("✅ Eşikler kaydedildi!")
     with c_sifirla:
         if st.button("🔄 Sıfırla", use_container_width=True):
-            varsayilan = {"ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0, "1x2": 55.0}
+            varsayilan = {"ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0}
             st.session_state.esikler = varsayilan
             ayarlar_kaydet(varsayilan)
             st.success("✅ Varsayılan eşiklere dönüldü!")
@@ -2265,7 +2199,6 @@ elif st.session_state.sayfa == "ayarlar":
     st.divider()
     st.info(f"""
     **Şu anki aktif eşikler:**
-    - 1X2 (Maç Sonucu): **%{st.session_state.esikler.get('1x2', 55.0):.0f}**
     - Üst 2.5: **%{st.session_state.esikler['ust']:.0f}**
     - Alt 2.5: **%{st.session_state.esikler['alt']:.0f}**
     - KG Var: **%{st.session_state.esikler['kg_var']:.0f}**
@@ -2298,11 +2231,11 @@ elif st.session_state.sayfa == "sonuc":
         d = sonuc_hesapla({"veri": v, "analiz": a})
         with st.expander("✅ Tahmin Doğruluğu", expanded=True):
             st.markdown("**🎯 Öneri Tahminleri**")
-            st.caption(f"1X2: %{esik_al('1x2'):.0f} • Üst: %{esik_al('ust'):.0f} • Alt: %{esik_al('alt'):.0f} • KG Var: %{esik_al('kg_var'):.0f} • KG Yok: %{esik_al('kg_yok'):.0f}")
-            c1, c2, c3 = st.columns(3)
-            for col, key in zip([c1, c2, c3], ["oneri_1x2", "oneri_gol", "oneri_kg"]):
+            st.caption(f"Üst: %{esik_al('ust'):.0f} • Alt: %{esik_al('alt'):.0f} • KG Var: %{esik_al('kg_var'):.0f} • KG Yok: %{esik_al('kg_yok'):.0f}")
+            c1, c2 = st.columns(2)
+            for col, key in zip([c1, c2], ["oneri_gol", "oneri_kg"]):
                 o = d[key]
-                etiket = {"oneri_1x2": "1X2", "oneri_gol": "Gol", "oneri_kg": "KG"}[key]
+                etiket = {"oneri_gol": "Gol", "oneri_kg": "KG"}[key]
                 with col:
                     if o["tuttu"] is None:
                         st.markdown(f"⚫ **{etiket}**"); st.markdown("Öneri yok")
@@ -2310,8 +2243,6 @@ elif st.session_state.sayfa == "sonuc":
                         ikon = "✅" if o["tuttu"] else "❌"
                         st.markdown(rozet(f"{ikon} {etiket}", "green" if o["tuttu"] else "red"), unsafe_allow_html=True)
                         st.markdown(f"{o['tahmin']}")
-            gercek_1x2 = d.get("gercek_1x2", "?")
-            st.caption(f"Gerçek sonuç: **{gercek_1x2}**")
     else:
         d = None
 
@@ -2388,17 +2319,16 @@ elif st.session_state.sayfa == "sonuc":
                     st.rerun()
 
     # ========================================
-    # KAYIT KONTROLÜ
+    # KAYIT KONTROLÜ (DÜZELTİLMİŞ)
     # ========================================
-    en_yuksek_1x2 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
-    bir_x_iki_poz = en_yuksek_1x2[1] >= esik_al("1x2")
-    kaydet_mi = gol_poz or kg_poz or bir_x_iki_poz
+    kaydet_mi = gol_poz or kg_poz
 
     if not st.session_state.kayit_yapildi and admin_mi():
         yeni_kayit = kayit_olustur(v, a)
         if d is not None: yeni_kayit["dogruluk"] = d
 
         if skor_belli:
+            # GEÇMİŞ: her zaman kaydet (öneri olsun olmasın)
             st.session_state.gecmis_analizler.append(yeni_kayit)
             gecmis_kaydet(st.session_state.gecmis_analizler)
             if kaydet_mi:
@@ -2406,12 +2336,13 @@ elif st.session_state.sayfa == "sonuc":
             else:
                 st.info("📊 Geçmişe kaydedildi. (öneri yoktu ama backtest için kaydedildi)")
         else:
+            # GELECEK: sadece öneri varsa kaydet
             if kaydet_mi:
                 st.session_state.gelecek_analizler.append(yeni_kayit)
                 gelecek_kaydet(st.session_state.gelecek_analizler)
                 st.info("🔮 Gelecek Maçlar'a kaydedildi.")
             else:
-                st.warning("⚠️ Hiçbir market pozitif değil. Bu maç geleceğe **kaydedilmedi**.")
+                st.warning("⚠️ Her iki market de negatif. Bu maç geleceğe **kaydedilmedi**.")
 
         st.session_state.kayit_yapildi = True
 
