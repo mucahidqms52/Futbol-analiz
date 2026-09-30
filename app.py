@@ -67,13 +67,11 @@ st.markdown("""
     div[data-testid="stFileUploader"] section { background: #131c2e !important; border: 1px dashed #23304a !important; border-radius: 12px !important; }
     div[data-testid="stMetric"] { background: #131c2e; border: 1px solid #23304a; border-radius: 12px; }
 
-    /* Gezinme çubuğu: mobilde de yan yana kalsın */
     .st-key-fa_nav div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.3rem !important; }
     .st-key-fa_nav div[data-testid="stColumn"], .st-key-fa_nav div[data-testid="column"] { min-width: 0 !important; flex: 1 1 0 !important; width: auto !important; }
     .st-key-fa_nav .stButton button { padding: 0.2rem 0.2rem !important; height: 2rem !important; }
     .st-key-fa_nav .stButton button p { font-size: 0.72rem !important; white-space: nowrap; }
 
-    /* ===== ÖZEL BİLEŞENLER ===== */
     .stApp .fa-hero { background: linear-gradient(135deg, #16233d, #0f1a2e); border: 1px solid #23304a; border-radius: 18px; padding: 14px 10px; margin: 6px 0 10px 0; text-align: center; }
     .stApp .fa-teams { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
     .stApp .fa-team { flex: 1; font-weight: 700; font-size: 0.95rem; line-height: 1.2; word-break: break-word; }
@@ -384,7 +382,6 @@ def _form_ppg(s):
 def yeniden_analiz(v):
     """Kayıtlı ham veriden güncel hesaplamayla analizi yeniden üretir (önbellekli)."""
     v2 = copy.deepcopy(v)
-    # Eski kayıtlarda PPG/MPG 3 kat şişmişti: form dizisi varsa baştan hesapla
     if v2.get("form_str_ev"):
         v2["ppg_ev"] = _form_ppg(v2["form_str_ev"])
     if v2.get("form_str_dep"):
@@ -422,7 +419,6 @@ def backtest_hesapla(gecmis, market_sec, market_esik):
             gercek_kg_var = (skor_ev > 0 and skor_dep > 0)
             gercek_ust = toplam_gol > 2.5
 
-            # GÜNCEL HESAPLAMA: kayıtlı eski yüzdeler yerine ham veriden yeniden hesapla
             try:
                 yeni_analiz = yeniden_analiz(v)
                 ust_25 = yeni_analiz["ust_25"]
@@ -723,7 +719,6 @@ def sportytrader_veri_cikar(metin):
         form_dep = m.group(6) + m.group(7) + m.group(8) + m.group(9) + m.group(10)
         veri["form_str_ev"] = form_ev
         veri["form_str_dep"] = form_dep
-        # DÜZELTME: Maç başına puan (0-3). Önceki "* 3" çarpanı kaldırıldı.
         def _form_puan(s):
             return sum(3 if c == "W" else 1 if c == "D" else 0 for c in s) / max(len(s), 1)
         veri["ppg_ev"] = _form_puan(form_ev)
@@ -766,7 +761,6 @@ def poisson_pmf(k, lam):
 
 
 def poisson_random(lam, rng=None):
-    # DÜZELTME: Opsiyonel rng parametresi (tekrarlanabilir simülasyon için)
     r = rng if rng is not None else random
     if lam <= 0: return 0
     L = math.exp(-lam); k = 0; p = 1.0
@@ -811,8 +805,6 @@ def hesapla_lambda(v):
     cs_ev = v.get("clean_sheets_ev", 0.0)
     cs_dep = v.get("clean_sheets_dep", 0.0)
 
-    # DÜZELTME: %40 sınırındaki süreksizlik giderildi (0.84 -> 0.84 sürekli geçiş).
-    # <40: 1 - cs/250 (40'ta 0.84) ; >=40: 0.84'ten 100'de 0.40'a lineer iniş.
     def clean_sheet_freni(cs_orani):
         if cs_orani <= 0:
             return 1.0
@@ -921,7 +913,6 @@ def mac_ici_sok(lam_ev, lam_dep, rng=None):
 
 
 def monte_carlo_simulasyon(lam_ev_base, lam_dep_base, n=MONTE_CARLO_N):
-    # DÜZELTME: Lambda'lardan türetilen sabit seed -> aynı maç her zaman aynı sonucu verir
     seed = int(round(lam_ev_base * 1_000_000)) * 1_000_003 + int(round(lam_dep_base * 1_000_000))
     rng = random.Random(seed)
 
@@ -1009,8 +1000,6 @@ def analiz_hesapla(v):
         if u35_ort >= 40:
             ust_25 = (ust_25 * 0.92) + (u35_ort * 0.08)
 
-    # DÜZELTME: Üst eğilimi artık sadece 3 gol ve 4+ gol oranlarından hesaplanıyor.
-    # (Önceden "2 gol" da dahildi; 2 gol Alt 2.5'e girdiği için mantık hatalıydı.)
     tg_3p = ort_iki(
         (tg_3_e + tg_4_e) if (tg_3_e > 0 or tg_4_e > 0) else 0,
         (tg_3_d + tg_4_d) if (tg_3_d > 0 or tg_4_d > 0) else 0,
@@ -1136,7 +1125,7 @@ def sonuc_hesapla(kayit):
         "gercek_gol": "Üst" if gercek_ust else "Alt",
         "gercek_kg": "Var" if gercek_kg_var else "Yok",
     }
-# ==========================================
+    # ==========================================
 # YORUM
 # ==========================================
 def detayli_analiz_yorumu(v):
@@ -1840,9 +1829,7 @@ elif st.session_state.sayfa == "gecmis":
             st.session_state.sayfa = "giris"
             st.session_state.tek_silme_onay = None
             st.rerun()
-
-
-# ==========================================
+            # ==========================================
 # GELECEK
 # ==========================================
 elif st.session_state.sayfa == "gelecek":
@@ -2232,7 +2219,7 @@ elif st.session_state.sayfa == "sonuc":
                     st.rerun()
 
     # ========================================
-    # KAYIT KONTROLÜ (GÜNCELLENMİŞ)
+    # KAYIT KONTROLÜ (DÜZELTİLMİŞ)
     # ========================================
     kaydet_mi = gol_poz or kg_poz
 
@@ -2251,27 +2238,16 @@ elif st.session_state.sayfa == "sonuc":
         else:
             # GELECEK: sadece öneri varsa kaydet
             if kaydet_mi:
-         if skor_belli:
-        # GEÇMİŞ: her zaman kaydet
-        st.session_state.gecmis_analizler.append(yeni_kayit)
-        gecmis_kaydet(st.session_state.gecmis_analizler)
-        if kaydet_mi:
-            st.success("📊 Geçmişe kaydedildi. (öneri vardı)")
-        else:
-            st.info("📊 Geçmişe kaydedildi. (öneri yoktu ama backtest için kaydedildi)")
-    else:
-        # GELECEK: sadece öneri varsa kaydet
-        if kaydet_mi:
-            st.session_state.gelecek_analizler.append(yeni_kayit)
-            gelecek_kaydet(st.session_state.gelecek_analizler)
-            st.info("🔮 Gelecek Maçlar'a kaydedildi.")
-        else:
-            st.warning("⚠️ Her iki market de negatif. Bu maç geleceğe **kaydedilmedi**.")
+                st.session_state.gelecek_analizler.append(yeni_kayit)
+                gelecek_kaydet(st.session_state.gelecek_analizler)
+                st.info("🔮 Gelecek Maçlar'a kaydedildi.")
+            else:
+                st.warning("⚠️ Her iki market de negatif. Bu maç geleceğe **kaydedilmedi**.")
 
-    st.session_state.kayit_yapildi = True
+        st.session_state.kayit_yapildi = True
 
-st.divider()
-if st.button("🔄 Yeni Maç Analizi", use_container_width=True, type="primary"):
-    st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
-    st.session_state.sayfa = "giris"
-    st.rerun()
+    st.divider()
+    if st.button("🔄 Yeni Maç Analizi", use_container_width=True, type="primary"):
+        st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
+        st.session_state.sayfa = "giris"
+        st.rerun()
