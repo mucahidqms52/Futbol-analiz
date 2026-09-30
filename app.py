@@ -167,7 +167,7 @@ def ayarlar_kaydet(esikler):
 # ==========================================
 ULKE_BAYRAK = {
     "switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭", "schweiz": "🇨🇭",
-    "england": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ingiltere": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "i̇ngiltere": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+    "england": "🏴", "ingiltere": "🏴", "i̇ngiltere": "🏴",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "i̇spanya": "🇪🇸",
     "italy": "🇮🇹", "italya": "🇮🇹", "i̇talya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪",
@@ -187,8 +187,8 @@ ULKE_BAYRAK = {
     "ukraine": "🇺🇦", "ukrayna": "🇺🇦",
     "poland": "🇵🇱", "polonya": "🇵🇱",
     "greece": "🇬🇷", "yunanistan": "🇬🇷",
-    "scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "i̇skoçya": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "iskoçya": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-    "wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "galler": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+    "scotland": "🏴", "i̇skoçya": "🏴", "iskoçya": "🏴",
+    "wales": "🏴", "galler": "🏴",
     "ireland": "🇮🇪", "i̇rlanda": "🇮🇪", "irlanda": "🇮🇪",
     "austria": "🇦🇹", "avusturya": "🇦🇹",
     "croatia": "🇭🇷", "hırvatistan": "🇭🇷",
@@ -257,10 +257,8 @@ def ulke_bayrak_bul(ulke_adi):
     if not ulke_adi:
         return "🌍"
     u = ulke_adi.lower().strip()
-    # Önce tam eşleşme
     if u in ULKE_BAYRAK:
         return ULKE_BAYRAK[u]
-    # Sonra kısmi eşleşme (uzun anahtarlardan kısaya)
     for anahtar in sorted(ULKE_BAYRAK.keys(), key=len, reverse=True):
         if anahtar in u:
             return ULKE_BAYRAK[anahtar]
@@ -668,11 +666,9 @@ def _ulke_bul(metin):
     if not satir:
         return ""
     alt = satir.lower()
-    # Uzun anahtarlardan kısaya doğru ara
     for anahtar in sorted(ULKE_BAYRAK.keys(), key=len, reverse=True):
         if anahtar in alt:
             return anahtar
-    # Bulunamazsa ilk 1-3 kelimeyi döndür
     parcalar = satir.split()
     return " ".join(parcalar[:2]) if len(parcalar) >= 2 else (parcalar[0] if parcalar else "")
 
@@ -685,17 +681,14 @@ def sportytrader_veri_cikar(metin):
         veri["takim_ev"] = m.group(1).strip()
         veri["takim_dep"] = m.group(2).strip()
 
-    # === SAAT ÇIKAR ===
     m = re.search(r'Time\s*\t\s*(\d{1,2}:\d{2})', metin)
     if m:
         veri["saat"] = m.group(1).strip()
     else:
-        # Alternatif: takım satırından sonraki "30.09.2026 19:00" formatı
         m = re.search(r'\d{1,2}\.\d{1,2}\.\d{2,4}\s+(\d{1,2}:\d{2})', metin)
         if m:
             veri["saat"] = m.group(1).strip()
 
-    # === TARİH ÇIKAR ===
     m = re.search(r'Date\s*\t\s*(\d{1,2}\.\d{1,2}\.\d{2,4})', metin)
     if m:
         veri["tarih"] = m.group(1).strip()
@@ -704,7 +697,6 @@ def sportytrader_veri_cikar(metin):
         if m:
             veri["tarih"] = m.group(1).strip()
 
-    # === ÜLKE ÇIKAR (Standings'ten) ===
     veri["ulke"] = _ulke_bul(metin)
 
     m = re.search(r'FT\s*\r?\n\s*(\d+)\s*-\s*(\d+)', metin)
@@ -1936,7 +1928,7 @@ if st.session_state.sayfa == "giris":
         if gelecek_btn:
             nav_git("gelecek")
 
-        # Misafir açıklama bölümü
+        # Misafir açıklama bölümü (Gelecek Maçlar butonunun altında)
         st.markdown("")
         st.divider()
         misafir_aciklama()
@@ -2147,7 +2139,6 @@ elif st.session_state.sayfa == "gelecek":
             takim_ev = v_g.get("takim_ev", "Ev") or "Ev"
             takim_dep = v_g.get("takim_dep", "Dep") or "Dep"
 
-            # === BAYRAK + SAAT BAŞLIK ===
             bayrak = ulke_bayrak_bul(v_g.get("ulke", ""))
             saat = v_g.get("saat", "")
             tarih = v_g.get("tarih", "")
@@ -2535,9 +2526,6 @@ elif st.session_state.sayfa == "sonuc":
                     st.session_state.sayfa = "gelecek"
                     st.rerun()
 
-    # ========================================
-    # KAYIT KONTROLÜ
-    # ========================================
     kaydet_mi = gol_poz or kg_poz
 
     if not st.session_state.kayit_yapildi and admin_mi():
@@ -2545,7 +2533,6 @@ elif st.session_state.sayfa == "sonuc":
         if d is not None: yeni_kayit["dogruluk"] = d
 
         if skor_belli:
-            # GEÇMİŞ: her zaman kaydet (öneri olsun olmasın)
             st.session_state.gecmis_analizler.append(yeni_kayit)
             gecmis_kaydet(st.session_state.gecmis_analizler)
             if kaydet_mi:
@@ -2553,7 +2540,6 @@ elif st.session_state.sayfa == "sonuc":
             else:
                 st.info("📊 Geçmişe kaydedildi. (öneri yoktu ama backtest için kaydedildi)")
         else:
-            # GELECEK: sadece öneri varsa kaydet
             if kaydet_mi:
                 st.session_state.gelecek_analizler.append(yeni_kayit)
                 gelecek_kaydet(st.session_state.gelecek_analizler)
