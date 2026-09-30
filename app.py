@@ -536,7 +536,7 @@ MANUEL_ALANLAR = {
 # ==========================================
 ULKE_BAYRAK = {
     "switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭",
-    "england": "🏴", "ingiltere": "🏴", "i̇ngiltere": "🏴",
+    "england": "🏴󠁧󠁢󠁥󠁮󠁧", "ingiltere": "🏴", "i̇ngiltere": "🏴",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "i̇spanya": "🇪🇸",
     "italy": "🇮🇹", "italya": "🇮🇹", "i̇talya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪",
@@ -1442,7 +1442,7 @@ def okunan_veriler_paneli(v):
         with c2:
             st.markdown(f"**{v.get('takim_dep', 'Dep')}**")
             st.markdown(f"- Atılan: **{v.get('atilan_dep', 0):.2f}**")
-            st.markdown(f"- Yenen: **{v.get('yenen_dep", 0):.2f}**")
+            st.markdown(f"- Yenen: **{v.get('yenen_dep', 0):.2f}**")
             st.markdown(f"- Clean sheets: **{v.get('clean_sheets_dep', 0):.1f}%**")
             st.markdown(f"- Team scored: **{v.get('team_scored_dep', 0):.1f}%**")
             st.markdown(f"- KG Var: **{v.get('kg_siklik_dep', 0):.1f}%**")
@@ -2124,7 +2124,7 @@ elif st.session_state.sayfa == "gelecek":
 elif st.session_state.sayfa == "backtest":
     if not admin_mi():
         st.error("❌ Bu sayfa sadece admin içindir.")
-        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary"):
+        if st.button("⬅️️ Ana Sayfa", use_container_width=True, type="primary"):
             st.session_state.sayfa = "giris"
             st.rerun()
         st.stop()
@@ -2133,7 +2133,7 @@ elif st.session_state.sayfa == "backtest":
     st.caption("Test etmek istediğin marketleri seç ve eşikleri ayarla. Yüzdeler, kayıtlı ham veriden güncel hesaplamayla yeniden üretilir.")
     st.divider()
 
-    st.markdown("### ⚙️ Test Seçenekleri ve Eşikler")
+    st.markdown("### ⚙️️ Test Seçenekleri ve Eşikler")
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown("**🎯 Maç Sonucu (1X2)**")
@@ -2426,7 +2426,7 @@ elif st.session_state.sayfa == "sonuc":
             with sc3:
                 st.markdown(""); st.markdown("")
                 if st.button("📥 Taşı", key=f"tasi_{idx_g}", use_container_width=True, type="primary"):
-                    kayit = st.session_state.gelecekten_gelindi and st.session_state.gelecek_analizler[idx_g]
+                    kayit = st.session_state.gelecek_analizler[idx_g]
                     kayit["veri"]["skor_ev"] = int(yeni_skor_ev)
                     kayit["veri"]["skor_dep"] = int(yeni_skor_dep)
                     kayit["veri"]["skor_belli"] = True
