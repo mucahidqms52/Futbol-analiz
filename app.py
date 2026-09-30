@@ -293,7 +293,6 @@ def esik_al(key):
 
 
 def esik_1x2_al(secim):
-    """secim: '1', 'X' veya '2' → o seçim için ayrı eşiği döndürür."""
     key_map = {"1": "esik_1", "X": "esik_x", "2": "esik_2"}
     return st.session_state.esikler.get(key_map.get(secim, ""), 55.0)
 
@@ -326,26 +325,6 @@ def kayit_yeni_format_mi(g):
     if not isinstance(d.get("oneri_gol"), dict): return False
     if "tuttu" not in d["oneri_gol"]: return False
     return True
-
-
-def oneri_istatistik(gecmis):
-    ist = {"1x2": {"tam": 0, "yakin": 0, "yanlis": 0},
-           "gol": {"tam": 0, "yakin": 0, "yanlis": 0},
-           "kg": {"tam": 0, "yakin": 0, "yanlis": 0}}
-    for g in gecmis:
-        if not kayit_yeni_format_mi(g): continue
-        d = g["dogruluk"]
-        for key in ["oneri_1x2", "oneri_gol", "oneri_kg"]:
-            kisa = key.replace("oneri_", "")
-            try:
-                durum = d[key].get("durum", None); tuttu = d[key].get("tuttu", None)
-                if durum == "tam": ist[kisa]["tam"] += 1
-                elif durum == "yakin": ist[kisa]["yakin"] += 1
-                elif durum == "yanlis": ist[kisa]["yanlis"] += 1
-                elif tuttu is True: ist[kisa]["tam"] += 1
-                elif tuttu is False: ist[kisa]["yanlis"] += 1
-            except (KeyError, TypeError): continue
-    return ist
 
 
 def oneri_istatistik_guncel(gecmis):
@@ -545,6 +524,7 @@ MANUEL_ALANLAR = {
     "Atılan Gol": [("atilan_ev", "Atılan Gol (Ev)", "float", 0.0), ("atilan_dep", "Atılan Gol (Dep)", "float", 0.0)],
     "Yenen Gol": [("yenen_ev", "Yenen Gol (Ev)", "float", 0.0), ("yenen_dep", "Yenen Gol (Dep)", "float", 0.0)],
 }
+
 # ==========================================
 # ÜLKE → BAYRAK
 # ==========================================
@@ -643,6 +623,7 @@ def ulke_bayrak_bul(ulke_adi):
         if anahtar in u:
             return bayrak
     return "🌍"
+
 # ==========================================
 # SPORTYTRADER ÇIKARICI
 # ==========================================
@@ -1291,7 +1272,9 @@ def sonuc_hesapla(kayit):
         "gercek_gol": "Üst" if gercek_ust else "Alt",
         "gercek_kg": "Var" if gercek_kg_var else "Yok",
     }
-    # ==========================================
+
+
+# ==========================================
 # YORUM
 # ==========================================
 def detayli_analiz_yorumu(v):
@@ -1588,7 +1571,6 @@ def mac_sonuc_ikon(g):
 
 
 def gecmis_1x2_etiket(g):
-    """Geçmiş maç için 1X2 tahmin + sonuç etiketi."""
     try:
         v = g["veri"]
         if not v.get("skor_belli", False):
@@ -1613,7 +1595,6 @@ def gecmis_1x2_etiket(g):
 
 
 def gelecek_1x2_etiket(g):
-    """Gelecek maç için 1X2 tahmin etiketi."""
     try:
         v = g["veri"]
         try:
@@ -1724,6 +1705,179 @@ def ust_bar():
             st.session_state.bt_sonuc = None
             st.session_state.bt_detaylar = []
             st.rerun()
+
+
+# ==========================================
+# MİSAFİR AÇIKLAMA BÖLÜMÜ
+# ==========================================
+def misafir_aciklama():
+    with st.expander("📖 **Uygulamayı Tanı ve Kuralları Oku**", expanded=False):
+        st.markdown("""
+### ⚽ Futbol Analiz Pro Nedir?
+
+Bu uygulama, futbol maçlarının **geçmiş istatistiklerini** analiz ederek 
+**1X2 (Maç Sonucu)**, **Üst/Alt 2.5** ve **Karşılıklı Gol (KG)** tahminleri üretir. 
+Sadece **bilgilendirme amaçlıdır.** Kesin sonuç garantisi **YOKTUR.**
+
+---
+
+### 🎯 EŞİKLER NEDİR? NEDEN KULLANILIR?
+
+**Eşik** = Bir tahminin "oynanabilir" sayılması için geçmesi gereken minimum yüzde.
+
+**Örnek eşikler:**
+- 1X2 → %55+ (sadece yüksek olasılıklı sonuçlar)
+- Üst 2.5 → %82
+- Alt 2.5 → %74
+- KG Var → %73
+- KG Yok → %88
+
+**Neden eşik kullanılır?**
+Her maçta tahmin üretilmez. Çünkü bazı maçlar "**belirsiz**" (%50-55 civarı) olur. 
+Bu tür maçları oynamak **kumar** olur. Eşikler sayesinde sadece **YÜKSEK OLASILIKLI** 
+maçlara odaklanılır. Bu da isabet oranını yükseltir.
+
+---
+
+### 📊 1X2 NEDİR? NASIL OKUNUR?
+
+**1X2**, maç sonucu bahsidir:
+- **1** = Ev sahibi kazanır
+- **X** = Beraberlik
+- **2** = Deplasman kazanır
+
+**Nasıl yorumlanır?**
+Analiz sayfasında 3 bar görürsün: **p1, px, p2**. En yüksek olan **en olası** sonuçtur. 
+Ama unutma: 1X2 tahmini **en zor** markettir. Çünkü 3 seçenek vardır.
+
+**Önemli:**
+- %50+ → **Oynanabilir** (yüksek olasılık)
+- %40-50 → **Belirsiz** (riskli)
+- %40 altı → **Oynama** (kumar)
+
+---
+
+### 📊 GEÇMİŞ VERİLER NASIL OKUNUR?
+
+Geçmiş sayfasında her maçın yanında **renkli ikon** vardır:
+
+- ✅ = Her iki tahmin de tuttu (Gol + KG)
+- 🟡 = Sadece biri tuttu (kısmi başarı)
+- ❌ = İki tahmin de yanlış çıktı
+- ⚫ = O maçta öneri verilmedi (eşik altı, oynanmadı)
+
+**Üst kısımdaki istatistikler:**
+- ✅ X doğru → Kazanılan tahmin sayısı
+- ❌ Y yanlış → Kaybedilen tahmin sayısı
+- %Z isabet → Genel başarı oranı
+
+**ÖNEMLİ:** İsabet **%100 olmaz.** %85+ çok iyi, %90+ mükemmel. 
+Ama %100 imkansızdır. Her zaman kayıp olacaktır.
+
+---
+
+### 🔮 GELECEK MAÇLAR NASIL KULLANILIR?
+
+Gelecek maçlar, **henüz oynanmamış** ama analiz edilmiş maçlardır. 
+Her maçın yanında:
+- 🇹🇷 **Bayrak** → Ülke
+- 🕐 **Saat** → Maç saati
+- ⚽ **Takım isimleri**
+
+Bu maçlara tıklayarak analizi görebilirsin. Ama unutma: 
+**Gelecek maç tahminleri %100 değildir.** Kesin sonuç yoktur.
+
+---
+
+### ⚡ STRATEJİ: TEKLİ Mİ, KOMBİNE Mİ?
+
+#### 📌 TEKLİ BAHİS
+Her maça ayrı ayrı oyna. Risk düşük, kazanç düşük.
+Öneri: %85 isabetli tahminlere haftada 5-10 tekli.
+
+#### 📌 2'Lİ KOMBİNE
+İki maçı birleştir. İsabet = **%85 × %85 = %72**.
+Ama oran 2 katına çıkar. Riskli ama kârlı.
+
+#### 📌 3'LÜ KOMBİNE
+Üç maçı birleştir. İsabet = **%85³ = %61**.
+Yüksek risk, yüksek kazanç. Haftada max 1-2 tane.
+
+**🎯 FORMÜL:** Kombine isabet = **Her maçın isabeti ÇARPILIR**
+
+---
+
+### ⚠️ DİKKATLİ BAHİS KURALLARI
+
+**1. KAYBETMEYİ KABUL ET**
+Hiçbir sistem %100 değildir. 10 maçtan 1-2 tanesi kaybedilecektir. 
+Bu normaldir, panik yapma.
+
+**2. BANKANI KORU**
+Toplam paranı tek bahse **YATIRMA.**
+Kural: Her bahis, bankanın **%2-5'ini** geçmesin.
+Örnek: 5.000 TL banka → max 100-250 TL bahis
+
+**3. KAYIPTAN SONRA ARTTIRMA (Martingale YAPMA)**
+"Kaybettim, 2 katı basayım" → **BÜYÜK HATA.**
+Her zaman **sabit miktar.** Sabırlı ol.
+
+**4. SADECE ÖNERİLERE OYNA**
+Eşiği geçmeyen maçlara oynama. Kod "belirsiz" diyorsa uzak dur. 
+**Belirsiz maç = kumar.**
+
+**5. HAFTALIK LİMİT KOY**
+Örn: Haftada max 20 bahis, aylık max 80.
+Bu limiti aşma. Aşarsan **bağımlılık** başlar.
+
+**6. KAYIP SERİSİNDE ARA VER**
+3-4 üst üste kayıp gelirse 2-3 gün ara ver.
+Sinirle bahis yapma. Soğukkanlı ol.
+
+**7. KAZANCI ÇEK**
+Kazandığının %30-50'sini **hemen çek.** Kalanı bankada tut.
+Her şeyi tekrar riske atma.
+
+**8. ALKOL/SİNİR/AÇLIK DURUMUNDA OYNAMA**
+Beyin net olmalı. Duygusal kararlar **kaybettirir.**
+
+---
+
+### 🚫 SORUMLULUK REDDİ
+
+- Bu uygulama **SADECE bilgi amaçlıdır.**
+- Hiçbir kayıptan **sorumlu değiliz.**
+- Bahis oynamak **YASAL RİSK** içerir.
+- **18 yaşından küçükler** bahis oynayamaz.
+- Kaybettiğiniz parayı **geri talep etme hakkınız yok.**
+- **Bağımlılık riski** vardır. Profesyonel yardım alın.
+- **Yeşilay Danışma: 115**
+- Kumar bağımlılığı **ciddi bir hastalıktır.**
+
+---
+
+### 💡 ÖZET
+
+**✅ Yap:**
+- Eşiği geçen maçlara oyna
+- Sabit miktar bas
+- Kazancı çek
+- Sabırlı ol
+- Kaybı kabul et
+
+**❌ Yapma:**
+- Belirsiz maçlara oyna
+- Kayıptan sonra 2 katı bas
+- Tüm bankayı riske at
+- Duygusal karar ver
+- Borçla bahis yap
+
+**🎯 HEDEF:** Uzun vadede kârlı olmak.
+Kısa vadede kayıp normal. Önemli olan **ortalamadır.**
+
+**Bol şans! Ama unutma: BU BİR KUMAR DEĞİL, ANALİZ.**
+**Ve her analiz yanılabilir.** 🍀
+        """)
 
 
 # ==========================================
@@ -1849,6 +2003,11 @@ if st.session_state.sayfa == "giris":
             st.session_state.aktif_gelecek_idx = None
             st.session_state.tek_silme_gelecek = None
             st.rerun()
+
+        # Misafir açıklama bölümü — butonların altında
+        st.markdown("")
+        st.divider()
+        misafir_aciklama()
 
 
 # ==========================================
@@ -2416,7 +2575,6 @@ elif st.session_state.sayfa == "sonuc":
     st.divider()
     st.markdown("## 🏆 FİNAL ÖNERİ")
 
-    # ===== 1X2 FİNAL ÖNERİ =====
     en_yuksek_1x2 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
     secim_1x2, yuzde_1x2 = en_yuksek_1x2
     esik_1x2_secim = esik_1x2_al(secim_1x2)
@@ -2469,9 +2627,6 @@ elif st.session_state.sayfa == "sonuc":
                     st.session_state.sayfa = "gelecek"
                     st.rerun()
 
-    # ========================================
-    # KAYIT KONTROLÜ
-    # ========================================
     kaydet_mi = gol_poz or kg_poz or poz_1x2
 
     if not st.session_state.kayit_yapildi and admin_mi():
