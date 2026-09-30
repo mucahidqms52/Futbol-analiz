@@ -268,6 +268,17 @@ def ist_skor_metni(ist_kayit):
 # ==========================================
 # BACKTEST FONKSİYONU
 # ==========================================
+def wilson_aralik(dogru, toplam, z=1.96):
+    """%95 Wilson güven aralığı (yüzde olarak)."""
+    if toplam <= 0:
+        return 0.0, 0.0
+    p = dogru / toplam
+    payda = 1 + z * z / toplam
+    merkez = (p + z * z / (2 * toplam)) / payda
+    yari = z * math.sqrt(p * (1 - p) / toplam + z * z / (4 * toplam * toplam)) / payda
+    return max(0.0, (merkez - yari) * 100), min(100.0, (merkez + yari) * 100)
+
+
 def _form_ppg(s):
     return sum(3 if c == "W" else 1 if c == "D" else 0 for c in s) / max(len(s), 1)
 
@@ -1710,12 +1721,44 @@ elif st.session_state.sayfa == "backtest":
 
     st.divider()
 
+    st.markdown("### 📅 Maç Aralığı")
+    tum_gecmis = st.session_state.gecmis_analizler
+    toplam_mac = len(tum_gecmis)
+    mod = st.radio(
+        "Hangi maçlarda test edilsin?",
+        ["Tümü", "Ayar seti (ilk N maç)", "Test seti (N'den sonrası)"],
+        key="bt_mod",
+        help="Eşikleri 'Ayar seti'nde bul, sonra aynı eşiklerle 'Test seti'ni çalıştır. Test setinde eşik değiştirme."
+    )
+    bolme = toplam_mac // 2
+    if mod != "Tümü" and toplam_mac >= 4:
+        bolme = st.slider("N (kayıt sırasına göre bölme noktası)", 1, toplam_mac - 1, max(1, toplam_mac // 2), 1, key="bt_bolme")
+        if mod.startswith("Ayar"):
+            st.caption(f"Test edilecek: ilk **{bolme}** maç (toplam {toplam_mac})")
+        else:
+            st.caption(f"Test edilecek: **{bolme + 1}.** maçtan sonuncuya, **{toplam_mac - bolme}** maç (toplam {toplam_mac})")
+    else:
+        st.caption(f"Test edilecek: tüm **{toplam_mac}** maç")
+
+    if mod == "Tümü" or toplam_mac < 4:
+        secili_gecmis = tum_gecmis
+        mod_etiket = f"Tümü ({toplam_mac} maç)"
+    elif mod.startswith("Ayar"):
+        secili_gecmis = tum_gecmis[:bolme]
+        mod_etiket = f"Ayar seti: ilk {bolme} maç"
+    else:
+        secili_gecmis = tum_gecmis[bolme:]
+        mod_etiket = f"Test seti: {bolme + 1}. maçtan sonrası ({toplam_mac - bolme} maç)"
+
+    st.divider()
+
     if st.button("🚀 TEST ET", use_container_width=True, type="primary"):
         if not any(secenekler.values()):
             st.warning("⚠️ En az bir market seç.")
         else:
             with st.spinner("Test ediliyor..."):
-                sonuc, detaylar = backtest_hesapla(st.session_state.gecmis_analizler, secenekler, esikler)
+                st.session_state.bt_mod_etiket = mod_etiket
+                sonuc, detaylar = backtest_hesapla(secili_gecmis, secenekler, esikler)
                 st.session_state.bt_sonuc = sonuc
                 st.session_state.bt_detaylar = detaylar
                 st.session_state.bt_market = secenekler
@@ -1725,6 +1768,7 @@ elif st.session_state.sayfa == "backtest":
         sonuc = st.session_state.bt_sonuc
         st.divider()
         st.markdown("## 📊 BACKTEST SONUCU")
+        st.caption(f"📅 {st.session_state.get('bt_mod_etiket', '')}")
 
         for key, baslik in [
             ("kg_var", "🤝 KG Var"), ("kg_yok", "🤝 KG Yok"),
@@ -1741,6 +1785,8 @@ elif st.session_state.sayfa == "backtest":
                     cc2.metric("❌ Yanlış", d["yanlis"])
                     cc3.metric("📊 İsabet", f"%{yuzde:.1f}")
                     st.progress(yuzde / 100)
+                    alt_s, ust_s = wilson_aralik(d["dogru"], top)
+                    st.caption(f"%95 güven aralığı: %{alt_s:.0f} – %{ust_s:.0f} ({top} bahis)")
                 else:
                     st.info("Eşiği geçen maç yok.")
                 st.markdown("")
