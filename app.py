@@ -497,6 +497,105 @@ MANUEL_ALANLAR = {
     "Yenen Gol": [("yenen_ev", "Yenen Gol (Ev)", "float", 0.0), ("yenen_dep", "Yenen Gol (Dep)", "float", 0.0)],
 }
 # ==========================================
+# ÜLKE → BAYRAK
+# ==========================================
+ULKE_BAYRAK = {
+    "switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭",
+    "england": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ingiltere": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "i̇ngiltere": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+    "spain": "🇪🇸", "ispanya": "🇪🇸", "i̇spanya": "🇪🇸",
+    "italy": "🇮🇹", "italya": "🇮🇹", "i̇talya": "🇮🇹",
+    "germany": "🇩🇪", "almanya": "🇩🇪",
+    "france": "🇫🇷", "fransa": "🇫🇷",
+    "netherlands": "🇳🇱", "hollanda": "🇳🇱",
+    "portugal": "🇵🇹", "portekiz": "🇵🇹",
+    "belgium": "🇧🇪", "belçika": "🇧🇪",
+    "turkey": "🇹🇷", "türkiye": "🇹🇷", "turkiye": "🇹🇷",
+    "argentina": "🇦🇷", "arjantin": "🇦🇷",
+    "brazil": "🇧🇷", "brezilya": "🇧🇷",
+    "mexico": "🇲🇽", "meksika": "🇲🇽",
+    "usa": "🇺🇸", "united states": "🇺🇸", "abd": "🇺🇸",
+    "japan": "🇯🇵", "japonya": "🇯🇵",
+    "south korea": "🇰🇷", "korea": "🇰🇷", "güney kore": "🇰🇷",
+    "china": "🇨🇳", "çin": "🇨🇳",
+    "russia": "🇷🇺", "rusya": "🇷🇺",
+    "ukraine": "🇺🇦", "ukrayna": "🇺🇦",
+    "poland": "🇵🇱", "polonya": "🇵🇱",
+    "greece": "🇬🇷", "yunanistan": "🇬🇷",
+    "scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "i̇skoçya": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+    "wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "galler": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+    "ireland": "🇮🇪", "i̇rlanda": "🇮🇪",
+    "austria": "🇦🇹", "avusturya": "🇦🇹",
+    "croatia": "🇭🇷", "hırvatistan": "🇭🇷",
+    "serbia": "🇷🇸", "sırbistan": "🇷🇸",
+    "romania": "🇷🇴", "romanya": "🇷🇴",
+    "bulgaria": "🇧🇬", "bulgaristan": "🇧🇬",
+    "denmark": "🇩🇰", "danimarka": "🇩🇰",
+    "sweden": "🇸🇪", "i̇sveç": "🇸🇪",
+    "norway": "🇳🇴", "norveç": "🇳🇴",
+    "finland": "🇫🇮", "finlandiya": "🇫🇮",
+    "iceland": "🇮🇸", "i̇zlanda": "🇮🇸",
+    "hungary": "🇭🇺", "macaristan": "🇭🇺",
+    "czech": "🇨🇿", "çekya": "🇨🇿",
+    "slovakia": "🇸🇰", "slovakya": "🇸🇰",
+    "slovenia": "🇸🇮", "slovenya": "🇸🇮",
+    "saudi": "🇸🇦", "suudi arabistan": "🇸🇦",
+    "uae": "🇦🇪", "birleşik arap emirlikleri": "🇦🇪",
+    "qatar": "🇶🇦", "katar": "🇶🇦",
+    "egypt": "🇪🇬", "mısır": "🇪🇬",
+    "morocco": "🇲🇦", "fas": "🇲🇦",
+    "algeria": "🇩🇿", "cezayir": "🇩🇿",
+    "tunisia": "🇹🇳", "tunus": "🇹🇳",
+    "nigeria": "🇳🇬", "nijerya": "🇳🇬",
+    "south africa": "🇿🇦", "güney afrika": "🇿🇦",
+    "australia": "🇦🇺", "avustralya": "🇦🇺",
+    "new zealand": "🇳🇿", "yeni zelanda": "🇳🇿",
+    "india": "🇮🇳", "hindistan": "🇮🇳",
+    "iran": "🇮🇷",
+    "iraq": "🇮🇶", "irak": "🇮🇶",
+    "israel": "🇮🇱", "i̇srail": "🇮🇱",
+    "colombia": "🇨🇴", "kolombiya": "🇨🇴",
+    "chile": "🇨🇱", "şili": "🇨🇱",
+    "peru": "🇵🇪",
+    "uruguay": "🇺🇾",
+    "ecuador": "🇪🇨", "ekvador": "🇪🇨",
+    "paraguay": "🇵🇾",
+    "bolivia": "🇧🇴", "bolivya": "🇧🇴",
+    "venezuela": "🇻🇪",
+    "costa rica": "🇨🇷",
+    "panama": "🇵🇦",
+    "jamaica": "🇯🇲",
+    "canada": "🇨🇦", "kanada": "🇨🇦",
+    "kosovo": "🇽🇰", "kosova": "🇽🇰",
+    "albania": "🇦🇱", "arnavutluk": "🇦🇱",
+    "moldova": "🇲🇩",
+    "georgia": "🇬🇪", "gürcistan": "🇬🇪",
+    "armenia": "🇦🇲", "ermenistan": "🇦🇲",
+    "azerbaijan": "🇦🇿", "azerbaycan": "🇦🇿",
+    "kazakhstan": "🇰🇿", "kazakistan": "🇰🇿",
+    "uzbekistan": "🇺🇿", "özbekistan": "🇺🇿",
+    "belarus": "🇧🇾",
+    "latvia": "🇱🇻", "letonya": "🇱🇻",
+    "lithuania": "🇱🇹", "litvanya": "🇱🇹",
+    "estonia": "🇪🇪", "estonya": "🇪🇪",
+    "luxembourg": "🇱🇺", "lüksemburg": "🇱🇺",
+    "malta": "🇲🇹",
+    "cyprus": "🇨🇾", "kıbrıs": "🇨🇾",
+    "montenegro": "🇲🇪", "karadağ": "🇲🇪",
+    "north macedonia": "🇲🇰", "kuzey makedonya": "🇲🇰",
+    "bosnia": "🇧🇦", "bosna": "🇧🇦",
+}
+
+
+def ulke_bayrak_bul(ulke_adi):
+    """Ülke adından bayrak emojisi döndürür."""
+    if not ulke_adi:
+        return "🌍"
+    u = ulke_adi.lower().strip()
+    for anahtar, bayrak in ULKE_BAYRAK.items():
+        if anahtar in u:
+            return bayrak
+    return "🌍"
+# ==========================================
 # SPORTYTRADER ÇIKARICI
 # ==========================================
 def _cift_tab(etiket, blok):
