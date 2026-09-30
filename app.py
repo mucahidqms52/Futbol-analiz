@@ -1,4 +1,3 @@
-
 import streamlit as st
 import math
 import copy
@@ -586,8 +585,9 @@ def sportytrader_veri_cikar(metin):
         form_dep = m.group(6) + m.group(7) + m.group(8) + m.group(9) + m.group(10)
         veri["form_str_ev"] = form_ev
         veri["form_str_dep"] = form_dep
+        # DÜZELTME: Maç başına puan (0-3). Önceki "* 3" çarpanı kaldırıldı.
         def _form_puan(s):
-            return sum(3 if c == "W" else 1 if c == "D" else 0 for c in s) / max(len(s), 1) * 3
+            return sum(3 if c == "W" else 1 if c == "D" else 0 for c in s) / max(len(s), 1)
         veri["ppg_ev"] = _form_puan(form_ev)
         veri["mpg_dep"] = _form_puan(form_dep)
 
@@ -627,11 +627,13 @@ def poisson_pmf(k, lam):
     return (math.exp(-lam) * (lam ** k)) / math.factorial(k)
 
 
-def poisson_random(lam):
+def poisson_random(lam, rng=None):
+    # DÜZELTME: Opsiyonel rng parametresi (tekrarlanabilir simülasyon için)
+    r = rng if rng is not None else random
     if lam <= 0: return 0
     L = math.exp(-lam); k = 0; p = 1.0
     while True:
-        k += 1; p *= random.random()
+        k += 1; p *= r.random()
         if p <= L: return k - 1
 
 
@@ -671,10 +673,14 @@ def hesapla_lambda(v):
     cs_ev = v.get("clean_sheets_ev", 0.0)
     cs_dep = v.get("clean_sheets_dep", 0.0)
 
+    # DÜZELTME: %40 sınırındaki süreksizlik giderildi (0.84 -> 0.84 sürekli geçiş).
+    # <40: 1 - cs/250 (40'ta 0.84) ; >=40: 0.84'ten 100'de 0.40'a lineer iniş.
     def clean_sheet_freni(cs_orani):
-        if cs_orani >= 40.0:
-            return max(0.40, 1.0 - (cs_orani / 100.0 * 0.80))
-        return 1.0 - (cs_orani / 250.0) if cs_orani > 0 else 1.0
+        if cs_orani <= 0:
+            return 1.0
+        if cs_orani < 40.0:
+            return 1.0 - (cs_orani / 250.0)
+        return max(0.40, 0.84 - (cs_orani - 40.0) * (0.44 / 60.0))
 
     dep_freni = clean_sheet_freni(cs_ev)
     ev_freni = clean_sheet_freni(cs_dep)
@@ -768,23 +774,28 @@ def veri_yeterli_mi(v):
     return sum(1 for x in onemli if x > 0) >= 2
 
 
-def mac_ici_sok(lam_ev, lam_dep):
-    if random.random() < 0.03:
-        if random.random() < 0.5: lam_ev *= 0.70
+def mac_ici_sok(lam_ev, lam_dep, rng=None):
+    r = rng if rng is not None else random
+    if r.random() < 0.03:
+        if r.random() < 0.5: lam_ev *= 0.70
         else: lam_dep *= 0.70
     return lam_ev, lam_dep
 
 
 def monte_carlo_simulasyon(lam_ev_base, lam_dep_base, n=MONTE_CARLO_N):
+    # DÜZELTME: Lambda'lardan türetilen sabit seed -> aynı maç her zaman aynı sonucu verir
+    seed = int(round(lam_ev_base * 1_000_000)) * 1_000_003 + int(round(lam_dep_base * 1_000_000))
+    rng = random.Random(seed)
+
     sayac = {"1": 0, "X": 0, "2": 0, "ust25": 0, "kg_var": 0}
     for _ in range(n):
-        sapma_ev = random.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
-        sapma_dep = random.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
+        sapma_ev = rng.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
+        sapma_dep = rng.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
         lam_ev = lam_ev_base * sapma_ev
         lam_dep = lam_dep_base * sapma_dep
-        lam_ev, lam_dep = mac_ici_sok(lam_ev, lam_dep)
-        ev_gol = min(MAX_GOL - 1, poisson_random(lam_ev))
-        dep_gol = min(MAX_GOL - 1, poisson_random(lam_dep))
+        lam_ev, lam_dep = mac_ici_sok(lam_ev, lam_dep, rng)
+        ev_gol = min(MAX_GOL - 1, poisson_random(lam_ev, rng))
+        dep_gol = min(MAX_GOL - 1, poisson_random(lam_dep, rng))
         if ev_gol > dep_gol: sayac["1"] += 1
         elif ev_gol == dep_gol: sayac["X"] += 1
         else: sayac["2"] += 1
@@ -860,10 +871,14 @@ def analiz_hesapla(v):
         if u35_ort >= 40:
             ust_25 = (ust_25 * 0.92) + (u35_ort * 0.08)
 
-    tg_2_3 = ort_iki(tg_2_e + tg_3_e if tg_2_e > 0 else 0, tg_2_d + tg_3_d if tg_2_d > 0 else 0)
-    tg_4p = ort_iki(tg_4_e, tg_4_d)
-    if tg_2_3 > 0 or tg_4p > 0:
-        ust_egilim = tg_2_3 * 0.5 + tg_4p * 1.0
+    # DÜZELTME: Üst eğilimi artık sadece 3 gol ve 4+ gol oranlarından hesaplanıyor.
+    # (Önceden "2 gol" da dahildi; 2 gol Alt 2.5'e girdiği için mantık hatalıydı.)
+    tg_3p = ort_iki(
+        (tg_3_e + tg_4_e) if (tg_3_e > 0 or tg_4_e > 0) else 0,
+        (tg_3_d + tg_4_d) if (tg_3_d > 0 or tg_4_d > 0) else 0,
+    )
+    if tg_3p > 0:
+        ust_egilim = tg_3p
         if ust_egilim >= 50:
             ust_25 = (ust_25 * 0.93) + (ust_egilim * 0.07)
 
