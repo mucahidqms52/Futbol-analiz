@@ -167,7 +167,7 @@ def ayarlar_kaydet(esikler):
 # ==========================================
 ULKE_BAYRAK = {
     "switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭", "schweiz": "🇨🇭",
-    "england": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ingiltere": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "i̇ngiltere": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+    "england": "", "ingiltere": "", "i̇ngiltere": "",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "i̇spanya": "🇪🇸",
     "italy": "🇮🇹", "italya": "🇮🇹", "i̇talya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪",
@@ -187,8 +187,8 @@ ULKE_BAYRAK = {
     "ukraine": "🇺🇦", "ukrayna": "🇺🇦",
     "poland": "🇵🇱", "polonya": "🇵🇱",
     "greece": "🇬🇷", "yunanistan": "🇬🇷",
-    "scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "i̇skoçya": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "iskoçya": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-    "wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "galler": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+    "scotland": "", "i̇skoçya": "", "iskoçya": "",
+    "wales": "", "galler": "",
     "ireland": "🇮🇪", "i̇rlanda": "🇮🇪", "irlanda": "🇮🇪",
     "austria": "🇦🇹", "avusturya": "🇦🇹",
     "croatia": "🇭🇷", "hırvatistan": "🇭🇷",
