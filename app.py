@@ -16,7 +16,6 @@ st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="cent
 
 import subprocess, sys
 
-
 @st.cache_resource(show_spinner="Tarayıcı kuruluyor (ilk açılışta 1-2 dk sürer)...")
 def _tarayici_kur():
     try:
@@ -25,8 +24,8 @@ def _tarayici_kur():
         pass
     return True
 
-
-_tarayici_kur()
+# 500 HATASINI ÖNLEMEK İÇİN AŞAĞIDAKİ SATIR YORUMA ALINDI
+# _tarayici_kur()
 
 st.markdown("""
 <style>
@@ -146,7 +145,7 @@ st.markdown("""
     .stApp .ga-bar { position: relative; height: 9px; background: #1a2439; border-radius: 99px; overflow: hidden; margin: 13px 0; box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); }
     .stApp .ga-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 55%, #ffffff)); box-shadow: 0 0 14px var(--c); }
     .stApp .ga-items { display: grid; gap: 9px; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); }
-    .stApp .ga-item { position: relative; background: rgba(255,255,255,0.035); border: 1px solid #232f47; border-radius: 14px; padding: 10px 6px 99px 6px; text-align: center; transition: transform 0.15s ease, border-color 0.15s ease; }
+    .stApp .ga-item { position: relative; background: rgba(255,255,255,0.035); border: 1px solid #232f47; border-radius: 14px; padding: 10px 6px 9px 6px; text-align: center; transition: transform 0.15s ease, border-color 0.15s ease; }
     .stApp .ga-item:hover { transform: translateY(-2px); border-color: var(--c); }
     .stApp .ga-il { font-size: 0.7rem; font-weight: 700; color: #93a4c1 !important; letter-spacing: 0.3px; }
     .stApp .ga-iv { font-size: 1.35rem; font-weight: 900; color: var(--c) !important; line-height: 1.3; }
