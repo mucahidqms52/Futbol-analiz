@@ -313,7 +313,7 @@ def esik_1x2_al(secim):
 # ==========================================
 ULKE_BAYRAK = {
     "switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭",
-    "england": "🏴", "ingiltere": "🏴", "i̇ngiltere": "🏴",
+    "england": "🏴󠁧󠁢󠁥󠁮󠁧", "ingiltere": "🏴", "i̇ngiltere": "🏴",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "italy": "🇮🇹", "italya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪", "france": "🇫🇷", "fransa": "🇫🇷",
     "netherlands": "🇳🇱", "hollanda": "🇳🇱", "portugal": "🇵🇹", "portekiz": "🇵🇹",
@@ -391,16 +391,11 @@ def guven_seviyesi_bul(o):
 # ==========================================
 # SAYFA ÇEKİCİ (API YOK) — Playwright + requests yedek
 # ==========================================
-# Not: Fonksiyon adı eski kodla uyumlu kalsın diye _scrapingbee_get olarak bırakıldı.
-# Artık ScrapingBee veya herhangi bir API kullanılmıyor.
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
 
 
 def _js_tikla_kodu(mac_sec):
-    # Filtre: Last games = mac_sec (5/10/15). Ev sahibi takım = Home, deplasman takımı = Away.
-    # Sayfada her takım için Home/Away/Overall var; sırayla ilk "Home" ve son "Away" seçilir.
-    # Tablo içindeki hücreler (puan durumu vb.) atlanır.
     return """
     (function() {
         var macSayi = "%s";
@@ -441,7 +436,6 @@ def _playwright_html(url, mac_sec, timeout, dogrula=False):
             try:
                 ctx = b.new_context(user_agent=UA, locale="en-US")
                 pg = ctx.new_page()
-                # Hız/RAM için resim, medya, font yükleme
                 pg.route("**/*", lambda route: route.abort()
                          if route.request.resource_type in ("image", "media", "font")
                          else route.continue_())
@@ -456,7 +450,6 @@ def _playwright_html(url, mac_sec, timeout, dogrula=False):
 
                 if dogrula and hedef:
                     n = _son_n_oku(pg.inner_text("body"))
-                    # Sayfa "Last 10 games" diyorsa filtre uygulanmamış demektir: gerçek tıklamayla tekrar dene
                     if n is not None and n != hedef:
                         try:
                             for el in pg.get_by_text(str(hedef), exact=True).all()[:20]:
@@ -482,8 +475,6 @@ def _playwright_html(url, mac_sec, timeout, dogrula=False):
 
 def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3, dogrula=False):
     son_hata = None
-
-    # --- Aşama 1: gerçek tarayıcı (veriler eskisiyle birebir aynı) ---
     try:
         import playwright  # noqa: F401
         playwright_var = True
@@ -503,8 +494,6 @@ def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3, 
             if deneme < max_retry - 1:
                 time.sleep(2 + deneme * 2)
 
-    # --- Aşama 2: yedek, düz requests (JS tıklamaları olmaz => varsayılan 10 maç gelir) ---
-    # Maç filtresi doğrulanması istenen sayfalarda bu yedek KULLANILMAZ, yanlış veri yerine hata döner.
     if dogrula:
         return None, son_hata or "Filtre uygulanamadı"
     try:
@@ -547,8 +536,25 @@ def mutating_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI):
         h2_list = link.find_all("h2")
         takim_ev = h2_list[0].get_text(strip=True) if len(h2_list) > 0 else ""
         takim_dep = h2_list[1].get_text(strip=True) if len(h2_list) > 1 else ""
-        saat_el = link.find(class_=re.compile(r"nostart|time|match-time"))
-        saat = saat_el.get_text(strip=True) if saat_el else ""
+        # h2 yoksa URL'den çıkarmayı dene
+        if not takim_ev:
+            mm = re.search(r'match-preview/([a-z0-9\-]+)-vs-([a-z0-9\-]+)', href)
+            if mm:
+                takim_ev = mm.group(1).replace("-", " ").title()
+                takim_dep = mm.group(2).replace("-", " ").title()
+        # Saat: <time> etiketi varsa ondan, yoksa boş
+        saat = ""
+        t_el = link.find("time")
+        if t_el:
+            dt_attr = t_el.get("datetime", "")
+            mm = re.search(r'T(\d{2}):(\d{2})', dt_attr)
+            if mm:
+                saat = f"{mm.group(1)}:{mm.group(2)}"
+            else:
+                txt = t_el.get_text(strip=True)
+                mm = re.search(r'(\d{1,2}):(\d{2})', txt)
+                if mm:
+                    saat = f"{int(mm.group(1)):02d}:{mm.group(2)}"
         maclar.append({"url": href, "takim_ev": takim_ev, "takim_dep": takim_dep, "saat": saat})
     return maclar, []
 
@@ -563,21 +569,67 @@ def mutating_mac_detay_cek(url):
 def _mac_html_parse(html, url=""):
     soup = BeautifulSoup(html, "html.parser")
     veri = {}; okunamayanlar = []
-    h1 = soup.find("h1")
-    if h1:
-        baslik = h1.get_text(strip=True)
-        if " - " in baslik:
-            p = baslik.replace(" Stats", "").replace(" stats", "").split(" - ")
-            veri["takim_ev"] = p[0].strip()
-            if len(p) > 1: veri["takim_dep"] = p[1].strip()
+
+    # === Takım isimleri: önce URL'den, sonra h1'den ===
+    if url:
+        try:
+            m = re.search(r'match-preview/([^/?#]+)', url)
+            if m:
+                slug = m.group(1)
+                mm = re.search(r'([a-z0-9\-]+)-vs-([a-z0-9\-]+)', slug)
+                if mm:
+                    t1 = mm.group(1).replace("-", " ").title()
+                    t2 = mm.group(2).replace("-", " ").title()
+                    veri["takim_ev"] = t1
+                    veri["takim_dep"] = t2
+        except Exception:
+            pass
+
+    if not veri.get("takim_ev"):
+        h1 = soup.find("h1")
+        if h1:
+            baslik = h1.get_text(strip=True)
+            baslik = baslik.replace(" Stats", "").replace(" stats", "").strip()
+            if " - " in baslik:
+                p = baslik.split(" - ")
+                veri["takim_ev"] = p[0].strip()
+                if len(p) > 1: veri["takim_dep"] = p[1].strip()
+
     metin = _html_metne_cevir(html)
     veri["son_n"] = _son_n_oku(metin)
+
+    # === Tarih ===
     m = re.search(r'(\d{1,2}\.\d{1,2}\.\d{4})', metin)
     if m: veri["tarih"] = m.group(1)
-    m = re.search(r'(\d{1,2}:\d{2})', metin)
-    if m: veri["saat"] = m.group(1)
+
+    # === Saat: <time> veya "Kick-off" ===
+    veri["saat"] = ""
+    try:
+        t_el = soup.find("time")
+        if t_el:
+            dt_attr = t_el.get("datetime", "")
+            mm = re.search(r'T(\d{2}):(\d{2})', dt_attr)
+            if mm:
+                veri["saat"] = f"{mm.group(1)}:{mm.group(2)}"
+            else:
+                txt = t_el.get_text(strip=True)
+                mm = re.search(r'(\d{1,2}):(\d{2})', txt)
+                if mm:
+                    veri["saat"] = f"{int(mm.group(1)):02d}:{mm.group(2)}"
+        if not veri["saat"]:
+            for el in soup.find_all(["span", "div", "p", "strong", "b"], limit=200):
+                txt = el.get_text(" ", strip=True)
+                if ("kick-off" in txt.lower() or "kick off" in txt.lower()):
+                    mm = re.search(r'(\d{1,2}):(\d{2})', txt)
+                    if mm:
+                        veri["saat"] = f"{int(mm.group(1)):02d}:{mm.group(2)}"
+                        break
+    except Exception:
+        pass
+
     veri["ulke"] = _ulke_bul(metin)
 
+    # === Skor ===
     skor_ev = skor_dep = None
     m = re.search(r'FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
     if m:
@@ -707,7 +759,6 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
                 try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
 
-    # Ana thread'de session_state'e ekle
     for kayit in eklenecekler:
         st.session_state.gelecek_analizler.append(kayit)
     if eklenecekler:
@@ -739,10 +790,10 @@ def _lig_son_mac_linklerini_al(lig_url, adet=10):
             takim_ev = img[0].get("alt", "").strip()
             takim_dep = img[1].get("alt", "").strip()
         if not takim_ev:
-            txt = link.get_text(" ", strip=True)
-            if " - " in txt:
-                p = txt.split(" - ")
-                takim_ev = p[0].strip(); takim_dep = p[1].strip() if len(p) > 1 else ""
+            mm = re.search(r'match-preview/([a-z0-9\-]+)-vs-([a-z0-9\-]+)', href)
+            if mm:
+                takim_ev = mm.group(1).replace("-", " ").title()
+                takim_dep = mm.group(2).replace("-", " ").title()
         maclar.append({"url": href, "takim_ev": takim_ev, "takim_dep": takim_dep})
         if len(maclar) >= adet: break
     return maclar, []
@@ -804,7 +855,6 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
                 try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
 
-    # Ana thread'de session_state'e ekle
     for kayit in eklenecekler:
         st.session_state.gecmis_analizler.append(kayit)
     if eklenecekler:
@@ -826,7 +876,6 @@ def _skor_parse(html):
 
 
 def _skor_cek(url, tarayici_yedek=False):
-    """(skor veya None, hata veya None). Önce hızlı requests, istenirse tarayıcı yedeği."""
     html = None; hata = None
     try:
         r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
@@ -844,7 +893,7 @@ def _skor_cek(url, tarayici_yedek=False):
         elif hata2:
             hata = hata2
     if skor is None and html:
-        hata = None  # sayfa alındı ama skor yok = maç bitmemiş
+        hata = None
     return skor, hata
 
 
@@ -1160,9 +1209,8 @@ def sonuc_hesapla(kayit):
 
 
 def test_hesapla(kayitlar, e):
-    """Geçmiş maçları verilen eşiklerle değerlendirir (kayıtlı analiz değerlerini kullanır)."""
     isimler = ["1", "X", "2", "Üst", "Alt", "KG Var", "KG Yok"]
-    st_ = {k: [0, 0] for k in isimler}  # [tahmin sayısı, tutan]
+    st_ = {k: [0, 0] for k in isimler}
     satirlar = []
     for g in kayitlar:
         v = g.get("veri", {}); a = g.get("analiz", {})
@@ -1206,7 +1254,6 @@ def _ga_renk(pc):
 
 
 def ozet_html(ist):
-    """test_hesapla çıktısını modern kartlara çevirir (1X2 / Gol / KG)."""
     def _pc(n, h): return (h / n * 100) if n else None
 
     def _yorum(pc):
@@ -1463,7 +1510,7 @@ if st.session_state.sayfa == "giris":
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center; color:gray;'>Mutating.com'dan otomatik çek. Paralel + Retry aktif.</p>", unsafe_allow_html=True)
 
-        # ==== HIZLI SONUÇ İŞLEME (biten maçları otomatik geçmişe taşı) ====
+        # ==== HIZLI SONUÇ İŞLEME ====
         st.markdown("### 🏁 Biten Maçları Otomatik Aktar")
         st.caption("Gelecek'teki maçların skorlarını siteden okur, bitenleri skorlarıyla birlikte **Geçmiş'e** taşır. Bitmemişler Gelecek'te kalır.")
         if st.session_state.get("skor_ozet"):
@@ -1620,15 +1667,6 @@ if st.session_state.sayfa == "giris":
                 <div class="mh-hero-sub">Akıllı maç analizi ve tahmin motoru</div>
                 <div class="mh-hero-badge">● CANLI VERİ</div>
             </div>
-            <div class="mh-info">
-                <b style="color:#22c55e;">📖 Nasıl Kullanılır?</b><br><br>
-                <b>📊 Geçmiş Maçlar:</b> Admin tarafından eklenen, skoru belli olan maçlar ve o maçlara ait tahminlerin sonuçları burada listelenir. <b>Genel Analiz</b> kartlarında her piyasanın (1X2, Üst/Alt 2.5, KG) isabet oranlarını görebilirsin.<br><br>
-                <b>🔮 Gelecek Maçlar:</b> Yaklaşan maçlar için modelin ürettiği tahminler burada gösterilir. Her maç kartında 1X2, Gol ve KG önerileri; yüzdeleri ve eşik durumları (✅ / ⚪) ile birlikte listelenir. Maçlar başlama saatine göre sıralanır (Türkiye saati).<br><br>
-                <b>🎯 1X2:</b> Maç sonucu tahmini — Ev (1), Beraberlik (X), Deplasman (2).<br>
-                <b>⚽ Gol:</b> Toplam 2.5 gol üstü / altı tahmini.<br>
-                <b>🤝 KG:</b> Karşılıklı gol var / yok tahmini.<br><br>
-                <b>💡 İpucu:</b> Detay için her maçın altındaki <b>🔍 Detaylı</b> butonuna basabilirsin.
-            </div>
             <div class="mh-stat-grid">
                 <div class="mh-stat"><div class="mh-stat-icon">📊</div><div class="mh-stat-num">{gs}</div><div class="mh-stat-lbl">Geçmiş Maç</div></div>
                 <div class="mh-stat"><div class="mh-stat-icon">🔮</div><div class="mh-stat-num">{gl}</div><div class="mh-stat-lbl">Gelecek Maç</div></div>
@@ -1683,7 +1721,7 @@ Bu sistem, futbol maçlarını istatistiksel olarak analiz eden bir **Poisson da
 **🔄 Güncelleme**
 - Sistem her gün admin tarafından güncellenen maç listesiyle çalışır.
 - Maçlar bittikçe skorlar otomatik olarak alınır ve istatistiklere eklenir.
-            """, unsafe_allow_html=True)
+            """)
 
         with st.expander("🎮 Nasıl Oynanır? — Adım Adım Rehber", expanded=False):
             st.markdown("""
@@ -1717,7 +1755,7 @@ Bu sistem, futbol maçlarını istatistiksel olarak analiz eden bir **Poisson da
 - İstatistiklere bakarak hangi piyasanın daha güvenilir olduğunu değerlendirebilirsin.
 
 **⚠️ Unutma:** Bu sistem bir tahmin aracıdır. Kesin sonuç garantisi vermez. Yatırım kararlarını **kendi araştırmanla** ve **sorumlu bir şekilde** ver.
-            """, unsafe_allow_html=True)
+            """)
 
         with st.expander("⚠️ Sorumluluk Reddi ve Yasal Uyarı", expanded=False):
             st.markdown("""
@@ -1813,7 +1851,6 @@ elif st.session_state.sayfa == "gecmis":
                         st.session_state.tek_silme_onay = None; st.rerun()
         st.divider()
 
-    # Yedekleme
     if admin_mi():
         st.markdown("### 💾 Yedekleme (Geçmiş)")
         cind, cyuk = st.columns(2)
@@ -1877,7 +1914,6 @@ elif st.session_state.sayfa == "gelecek":
     toplam_g = len(gel)
     if not gel:
         st.info("ℹ️ Gelecek maç yok. Ana sayfada **Bugünün Maçlarını Çek** basınca tahmin olanlar otomatik eklenir.")
-    # Maç saatine göre artan sıralama (+2 TR). Saati olmayanlar en sona.
     _gel_sirali = sorted(gel, key=lambda x: _saat_dakika(x.get("veri", {}).get("saat", "")))
     for i, g in enumerate(_gel_sirali):
         try:
@@ -1926,7 +1962,6 @@ elif st.session_state.sayfa == "gelecek":
                 st.session_state.sayfa = "sonuc"; st.rerun()
         st.divider()
 
-    # Yedekleme
     if admin_mi():
         st.markdown("### 💾 Yedekleme (Gelecek)")
         cind, cyuk = st.columns(2)
@@ -2018,7 +2053,7 @@ elif st.session_state.sayfa == "ayarlar":
 
 
 # ==========================================
-# TEST (Geçmiş maçlar üzerinde eşik testi)
+# TEST
 # ==========================================
 elif st.session_state.sayfa == "test":
     if not admin_mi():
