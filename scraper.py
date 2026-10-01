@@ -1,6 +1,6 @@
 """
 Mutating.com Veri Toplayıcı Bot (PARALEL + AUTO)
-- Bugünün maçları: skor varsa Geçmiş'e, yoksa tahmin varsa Gelecek'e
+- Bugünün maçları: skor varsa Geçmiş'e, yoksa hem gelecek.json hem gelecek_tahmin.json'a
 - LİGLER: son N maçı Geçmiş'e ekler
 """
 import sys
@@ -38,7 +38,8 @@ ESIKLER = {
     "kg_var": 57.0, "kg_yok": 72.0,
 }
 
-VERI_DOSYA_GELECEK = "data/gelecek.json"
+VERI_DOSYA_GELECEK = "data/gelecek.json"              # Tüm oynanmamış
+VERI_DOSYA_GELECEK_TAHMIN = "data/gelecek_tahmin.json"  # Sadece eşiği geçen
 VERI_DOSYA_GECMIS = "data/gecmis.json"
 
 MAX_GOL = 8
@@ -209,6 +210,7 @@ def esik_1x2_al(secim):
 
 
 def tahmin_var_mi(v):
+    """Bu maçta eşiği geçen bir tahmin var mı?"""
     try:
         a = analiz_hesapla(v)
         s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
@@ -452,15 +454,15 @@ def _mac_isle(mac, hedef_tip, mevcut_urls):
         if veri.get("atilan_ev", 0) == 0 or veri.get("yenen_ev", 0) == 0:
             return ("atlandi", None, "İstatistik eksik")
 
-        if not skor_var and not tahmin_var_mi(veri):
-            return ("atlandi", None, "Tahmin yok")
-
         kayit = kayit_olustur(veri, analiz_hesapla(veri))
         if skor_var:
             kayit["dogruluk"] = sonuc_hesapla(kayit)
             return ("eklendi_gecmis", kayit, f"{veri.get('skor_ev')}-{veri.get('skor_dep')}")
         else:
-            return ("eklendi_gelecek", kayit, "tahmin")
+            # Skorsuz → gelecek.json'a her zaman ekle
+            # Tahmin varsa → ayrıca gelecek_tahmin.json için işaretle
+            tahmin_var = tahmin_var_mi(veri)
+            return ("eklendi_gelecek", kayit, "tahminli" if tahmin_var else "tahminsiz")
     except Exception as e:
         return ("hata", mac, str(e))
 
@@ -474,13 +476,17 @@ def main():
     print(f"⚡ Paralel: {PARALEL} thread")
     print("=" * 60)
 
-    gelecek_mevcut = _yukle(VERI_DOSYA_GELECEK)
+    gelecek_mevcut = _yukle(VERI_DOSYA_GELECEK)            # Tüm oynanmamış
+    tahmin_mevcut = _yukle(VERI_DOSYA_GELECEK_TAHMIN)       # Sadece tahmini
     gecmis_mevcut = _yukle(VERI_DOSYA_GECMIS)
-    gelecek_urls = set(g.get("veri", {}).get("kaynak_url", "") for g in gelecek_mevcut)
-    gecmis_urls = set(g.get("veri", {}).get("kaynak_url", "") for g in gecmis_mevcut)
-    print(f"📂 Mevcut: Gelecek={len(gelecek_mevcut)}, Geçmiş={len(gecmis_mevcut)}")
 
-    yeni_g = 0; yeni_ge = 0
+    gelecek_urls = set(g.get("veri", {}).get("kaynak_url", "") for g in gelecek_mevcut)
+    tahmin_urls = set(g.get("veri", {}).get("kaynak_url", "") for g in tahmin_mevcut)
+    gecmis_urls = set(g.get("veri", {}).get("kaynak_url", "") for g in gecmis_mevcut)
+
+    print(f"📂 Mevcut: Gelecek={len(gelecek_mevcut)}, Tahmin={len(tahmin_mevcut)}, Geçmiş={len(gecmis_mevcut)}")
+
+    yeni_g = 0; yeni_t = 0; yeni_ge = 0
 
     # ---- 1) BUGÜNÜN MAÇLARI (AUTO) ----
     print("\n🔄 Bugünün maçları...")
@@ -505,10 +511,22 @@ def main():
                         print(f"  [{tamamlanan}/{len(maclar)}] ✅ Bitmiş → Geçmiş ({mesaj})")
                     elif sonuc == "eklendi_gelecek":
                         with _kilit:
+                            # Her zaman gelecek.json'a ekle
                             gelecek_mevcut.append(kayit)
                             gelecek_urls.add(kayit["veri"].get("kaynak_url", ""))
-                        yeni_g += 1
-                        print(f"  [{tamamlanan}/{len(maclar)}] ✅ Tahmin → Gelecek")
+                            yeni_g += 1
+                            # Tahmin varsa ayrıca tahmin.json'a ekle
+                            if mesaj == "tahminli":
+                                url = kayit["veri"].get("kaynak_url", "")
+                                if url not in tahmin_urls:
+                                    tahmin_mevcut.append(kayit)
+                                    tahmin_urls.add(url)
+                                    yeni_t += 1
+                                    print(f"  [{tamamlanan}/{len(maclar)}] ✅ Tahmin var → Gelecek + Tahmin")
+                                else:
+                                    print(f"  [{tamamlanan}/{len(maclar)}] ⏭️  Tahmin zaten var")
+                            else:
+                                print(f"  [{tamamlanan}/{len(maclar)}] ⚪ Tahmin yok → Sadece Gelecek")
                     else:
                         print(f"  [{tamamlanan}/{len(maclar)}] ⏭️  {mesaj}")
                 except Exception as e:
@@ -544,11 +562,14 @@ def main():
             print(f"  ❌ Lig hatası: {e}")
 
     _kaydet(VERI_DOSYA_GELECEK, gelecek_mevcut)
+    _kaydet(VERI_DOSYA_GELECEK_TAHMIN, tahmin_mevcut)
     _kaydet(VERI_DOSYA_GECMIS, gecmis_mevcut)
 
     print("\n" + "=" * 60)
-    print(f"✅ Bitti! Yeni: Gelecek={yeni_g}, Geçmiş={yeni_ge}")
-    print(f"📊 Toplam: Gelecek={len(gelecek_mevcut)}, Geçmiş={len(gecmis_mevcut)}")
+    print(f"✅ Bitti!")
+    print(f"   Gelecek: +{yeni_g} → Toplam {len(gelecek_mevcut)}")
+    print(f"   Tahmin:  +{yeni_t} → Toplam {len(tahmin_mevcut)}")
+    print(f"   Geçmiş:  +{yeni_ge} → Toplam {len(gecmis_mevcut)}")
     print("=" * 60)
 
 
