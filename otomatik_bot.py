@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import copy
 from datetime import datetime
 
-# Mevcut projenizdeki (app.py) fonksiyonları güvenle içeri aktarıyoruz
+# Hatalı satır temizlendi, fonksiyonlar doğru şekilde içe aktarılıyor
 from app import (
     VARSAYILAN_VERI, 
     metinden_veri_cikar, 
@@ -16,7 +16,6 @@ from app import (
     gecmis_yukle, 
     gecmis_kaydet,
     esik_al,
-    esik_1x2_alt = None,
     esik_1x2_al
 )
 
@@ -57,17 +56,14 @@ def mutaring_calistir():
                     continue
 
                 detay_soup = BeautifulSoup(detay_resp.text, 'html.parser')
-                # Sayfadaki tüm metni (son 5 maç form durumları dahil) çekiyoruz
                 ham_metin = detay_soup.get_text(separator="\n")
 
-                # Sizin mevcut parser fonksiyonunuz son 5 maç formunu ve verileri çözer
                 cikan_veri, _ = metinden_veri_cikar(ham_metin)
 
                 if cikan_veri and cikan_veri.get("takim_ev") and cikan_veri.get("takim_dep"):
                     v = copy.deepcopy(VARSAYILAN_VERI)
                     v.update(cikan_veri)
                     
-                    # Sizin orijinal Poisson ve Monte Carlo modeliniz çalışıyor
                     a = analiz_hesapla(v)
                     yeni_kayit = kayit_olustur(v, a)
 
@@ -75,7 +71,6 @@ def mutaring_calistir():
                     takim_dep = v.get("takim_dep")
                     skor_belli = v.get("skor_belli", False)
 
-                    # Eşik Kontrolü (Sizin belirlediğiniz kurallar)
                     p1 = a["p1"]; px = a["px"]; p2 = a["p2"]
                     ust_25 = a["ust_25"]; alt_25 = a["alt_25"]
                     kg_var = a["kg_var_model"]; kg_yok = a["kg_yok_model"]
@@ -102,12 +97,10 @@ def mutaring_calistir():
                         gecmis_keys = [f"{g['veri']['takim_ev']}-{g['veri']['takim_dep']}" for g in guncellenen_gecmis]
                         if mac_anahtar not in gecmis_keys:
                             guncellenen_gecmis.append(yeni_kayit)
-                            print(f"🏁 Biten Maç Geçmişe Taşındı: {takim_ev} vs {takim_dep}")
                     else:
                         gelecek_keys = [f"{g['veri']['takim_ev']}-{g['veri']['takim_dep']}" for g in guncellenen_gelecek]
                         if mac_anahtar not in gelecek_keys and kaydet_mi:
                             guncellenen_gelecek.append(yeni_kayit)
-                            print(f"🔮 Eşiği Geçen Maç Geleceğe Eklendi: {takim_ev} vs {takim_dep}")
 
                 time.sleep(1)
             except Exception as e:
@@ -115,10 +108,10 @@ def mutaring_calistir():
 
         gelecek_kaydet(guncellenen_gelecek)
         gecmis_kaydet(guncellenen_gecmis)
-        print("✅ Otomatik tarama ve JSON güncellemesi başarıyla tamamlandı.")
+        print("✅ Güncelleme tamamlandı.")
 
     except Exception as e:
-        print(f"❌ Otomasyon Hatası: {e}")
+        print(f"❌ Hata: {e}")
 
 if __name__ == "__main__":
     mutaring_calistir()
