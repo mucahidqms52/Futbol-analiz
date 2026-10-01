@@ -122,16 +122,9 @@ st.markdown("""
     .stApp .fa-mk-info { font-size: 0.72rem; color: #8fa0bd !important; }
 
     /* ===== MODERN GİRİŞ EKRANI ===== */
-    .login-hero {
-        text-align: center;
-        padding: 40px 10px 24px 10px;
-        position: relative;
-    }
+    .login-hero { text-align: center; padding: 40px 10px 24px 10px; position: relative; }
     .login-logo {
-        font-size: 4.5rem;
-        line-height: 1;
-        margin-bottom: 12px;
-        display: inline-block;
+        font-size: 4.5rem; line-height: 1; margin-bottom: 12px; display: inline-block;
         filter: drop-shadow(0 0 20px rgba(34,197,94,0.5));
         animation: logoPulse 3s ease-in-out infinite;
     }
@@ -140,126 +133,167 @@ st.markdown("""
         50% { transform: scale(1.06); filter: drop-shadow(0 0 32px rgba(34,197,94,0.85)); }
     }
     .login-title {
-        font-size: 2rem !important;
-        font-weight: 900 !important;
+        font-size: 2rem !important; font-weight: 900 !important;
         background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin: 0 !important;
-        padding: 0 !important;
-        letter-spacing: 1.2px;
-        border: none !important;
-        text-align: center !important;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; margin: 0 !important; padding: 0 !important;
+        letter-spacing: 1.2px; border: none !important; text-align: center !important;
     }
-    .login-subtitle {
-        font-size: 0.88rem;
-        color: #8fa0bd !important;
-        margin-top: 8px;
-        letter-spacing: 0.5px;
-        font-weight: 500;
-    }
+    .login-subtitle { font-size: 0.88rem; color: #8fa0bd !important; margin-top: 8px; letter-spacing: 0.5px; font-weight: 500; }
 
     div[data-testid="stForm"] {
         background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95)) !important;
         border: 1px solid rgba(34,197,94,0.18) !important;
-        border-radius: 22px !important;
-        padding: 24px 20px !important;
+        border-radius: 22px !important; padding: 24px 20px !important;
         box-shadow: 0 12px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(34,197,94,0.04) inset !important;
         backdrop-filter: blur(12px);
     }
-    div[data-testid="stForm"] label p {
-        font-size: 0.8rem !important;
-        font-weight: 700 !important;
-        color: #cbd5e1 !important;
-        letter-spacing: 0.4px;
-        margin-bottom: 4px !important;
-    }
+    div[data-testid="stForm"] label p { font-size: 0.8rem !important; font-weight: 700 !important; color: #cbd5e1 !important; letter-spacing: 0.4px; margin-bottom: 4px !important; }
     div[data-testid="stForm"] input {
-        height: 46px !important;
-        font-size: 0.95rem !important;
-        padding: 0 14px !important;
-        background: rgba(11,18,32,0.85) !important;
-        border: 1.5px solid #23304a !important;
-        border-radius: 12px !important;
-        transition: all 0.2s ease;
+        height: 46px !important; font-size: 0.95rem !important; padding: 0 14px !important;
+        background: rgba(11,18,32,0.85) !important; border: 1.5px solid #23304a !important;
+        border-radius: 12px !important; transition: all 0.2s ease;
     }
-    div[data-testid="stForm"] input:focus {
-        border-color: #22c55e !important;
-        box-shadow: 0 0 0 3px rgba(34,197,94,0.18) !important;
-        outline: none !important;
-    }
-    div[data-testid="stForm"] button {
-        height: 46px !important;
-        font-size: 0.95rem !important;
-        font-weight: 700 !important;
-        border-radius: 12px !important;
-        letter-spacing: 0.3px;
-        transition: all 0.2s ease;
-    }
-    div[data-testid="stForm"] button[kind="primary"] {
-        background: linear-gradient(135deg, #16a34a, #22c55e) !important;
-        box-shadow: 0 6px 20px rgba(34,197,94,0.3) !important;
-        border: none !important;
-    }
-    div[data-testid="stForm"] button[kind="primary"]:hover {
-        box-shadow: 0 8px 28px rgba(34,197,94,0.5) !important;
-        transform: translateY(-1px);
-    }
-    div[data-testid="stForm"] button[kind="secondary"] {
-        background: rgba(30,41,59,0.55) !important;
-        border: 1.5px solid #23304a !important;
-    }
-    div[data-testid="stForm"] button[kind="secondary"]:hover {
-        border-color: #3b82f6 !important;
-        background: rgba(59,130,246,0.08) !important;
-    }
+    div[data-testid="stForm"] input:focus { border-color: #22c55e !important; box-shadow: 0 0 0 3px rgba(34,197,94,0.18) !important; outline: none !important; }
+    div[data-testid="stForm"] button { height: 46px !important; font-size: 0.95rem !important; font-weight: 700 !important; border-radius: 12px !important; letter-spacing: 0.3px; transition: all 0.2s ease; }
+    div[data-testid="stForm"] button[kind="primary"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; box-shadow: 0 6px 20px rgba(34,197,94,0.3) !important; border: none !important; }
+    div[data-testid="stForm"] button[kind="primary"]:hover { box-shadow: 0 8px 28px rgba(34,197,94,0.5) !important; transform: translateY(-1px); }
+    div[data-testid="stForm"] button[kind="secondary"] { background: rgba(30,41,59,0.55) !important; border: 1.5px solid #23304a !important; }
+    div[data-testid="stForm"] button[kind="secondary"]:hover { border-color: #3b82f6 !important; background: rgba(59,130,246,0.08) !important; }
 
-    .login-divider {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin: 10px 0 6px 0;
-        color: #64748b !important;
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 3px;
-        justify-content: center;
-    }
-    .login-divider::before, .login-divider::after {
-        content: "";
-        flex: 1;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #23304a 50%, transparent);
-    }
+    .login-divider { display: flex; align-items: center; gap: 12px; margin: 10px 0 6px 0; color: #64748b !important; font-size: 0.7rem; font-weight: 700; letter-spacing: 3px; justify-content: center; }
+    .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #23304a 50%, transparent); }
 
-    .login-features {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 8px;
-        margin-top: 22px;
-        padding: 0 10px;
-    }
-    .lf-chip {
-        display: inline-block;
-        padding: 6px 14px;
-        background: rgba(34,197,94,0.08);
-        border: 1px solid rgba(34,197,94,0.25);
-        border-radius: 99px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #cbd5e1 !important;
-        letter-spacing: 0.3px;
-    }
-    .login-footer {
-        text-align: center;
-        margin-top: 26px;
-        font-size: 0.72rem;
-        color: #64748b !important;
-        letter-spacing: 0.5px;
-    }
+    .login-features { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 22px; padding: 0 10px; }
+    .lf-chip { display: inline-block; padding: 6px 14px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); border-radius: 99px; font-size: 0.75rem; font-weight: 600; color: #cbd5e1 !important; letter-spacing: 0.3px; }
+    .login-footer { text-align: center; margin-top: 26px; font-size: 0.72rem; color: #64748b !important; letter-spacing: 0.5px; }
     .login-footer b { color: #22c55e !important; font-weight: 700; }
+
+    /* ===== MİSAFİR ANA SAYFA MODERN ===== */
+    .mh-hero {
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+        padding: 30px 14px 22px 14px;
+        background: linear-gradient(135deg, rgba(22,35,61,0.85), rgba(15,26,46,0.9));
+        border: 1px solid rgba(34,197,94,0.22);
+        border-radius: 22px;
+        margin: 6px 0 16px 0;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(34,197,94,0.05) inset;
+    }
+    .mh-hero::before {
+        content: "";
+        position: absolute; top: -60%; left: -60%;
+        width: 220%; height: 220%;
+        background: radial-gradient(circle at 50% 50%, rgba(34,197,94,0.15), transparent 55%);
+        animation: mhGlow 5s ease-in-out infinite;
+        pointer-events: none;
+    }
+    @keyframes mhGlow {
+        0%, 100% { opacity: 0.5; transform: scale(1) rotate(0deg); }
+        50% { opacity: 1; transform: scale(1.15) rotate(20deg); }
+    }
+    .mh-hero-icon {
+        font-size: 3.2rem; line-height: 1; margin-bottom: 10px; display: inline-block;
+        filter: drop-shadow(0 0 20px rgba(34,197,94,0.55));
+        animation: logoPulse 3s ease-in-out infinite;
+        position: relative; z-index: 1;
+    }
+    .mh-hero-title {
+        font-size: 1.7rem; font-weight: 900;
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; letter-spacing: 1px;
+        position: relative; z-index: 1; margin: 0;
+    }
+    .mh-hero-sub {
+        font-size: 0.84rem; color: #8fa0bd;
+        margin-top: 8px; letter-spacing: 0.4px;
+        position: relative; z-index: 1;
+    }
+    .mh-hero-badge {
+        display: inline-block;
+        margin-top: 12px;
+        padding: 4px 14px;
+        background: rgba(34,197,94,0.12);
+        border: 1px solid rgba(34,197,94,0.4);
+        border-radius: 99px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #22c55e !important;
+        letter-spacing: 0.6px;
+        position: relative; z-index: 1;
+    }
+
+    .mh-stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 0 0 16px 0;
+    }
+    .mh-stat {
+        position: relative;
+        background: linear-gradient(145deg, #16233d, #0f1a2e);
+        border: 1px solid #23304a;
+        border-radius: 16px;
+        padding: 14px 8px 12px 8px;
+        text-align: center;
+        overflow: hidden;
+        transition: transform 0.2s ease;
+    }
+    .mh-stat:hover { transform: translateY(-2px); }
+    .mh-stat::after {
+        content: "";
+        position: absolute; top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #22c55e, #3b82f6);
+    }
+    .mh-stat-icon { font-size: 1.3rem; margin-bottom: 2px; }
+    .mh-stat-num { font-size: 1.85rem; font-weight: 900; color: #22c55e !important; line-height: 1; letter-spacing: -1px; }
+    .mh-stat-lbl { font-size: 0.68rem; color: #8fa0bd !important; margin-top: 5px; letter-spacing: 0.6px; text-transform: uppercase; font-weight: 700; }
+
+    .mh-section-title {
+        font-size: 0.78rem;
+        color: #8fa0bd !important;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        font-weight: 700;
+        margin: 4px 0 8px 4px;
+        text-align: left;
+        border-left: 3px solid #22c55e;
+        padding-left: 8px;
+    }
+
+    /* Misafir nav butonları büyük */
+    .st-key-fa_misafir_nav .stButton button {
+        height: 72px !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+        border-radius: 16px !important;
+        letter-spacing: 0.4px;
+        box-shadow: 0 8px 24px rgba(34,197,94,0.25) !important;
+        transition: all 0.2s ease;
+    }
+    .st-key-fa_misafir_nav .stButton button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(34,197,94,0.4) !important;
+    }
+    .st-key-fa_misafir_nav .stButton button p {
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+    }
+
+    .mh-info {
+        background: linear-gradient(145deg, rgba(19,28,46,0.6), rgba(11,18,32,0.8));
+        border: 1px solid #23304a;
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin-top: 14px;
+        font-size: 0.76rem;
+        color: #8fa0bd !important;
+        line-height: 1.6;
+    }
+    .mh-info b { color: #22c55e !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -459,7 +493,7 @@ def esik_1x2_al(secim):
 # ==========================================
 ULKE_BAYRAK = {
     "switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭",
-    "england": "🏴", "ingiltere": "🏴", "i̇ngiltere": "🏴",
+    "england": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ingiltere": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "i̇ngiltere": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "i̇spanya": "🇪🇸",
     "italy": "🇮🇹", "italya": "🇮🇹", "i̇talya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪",
@@ -479,8 +513,8 @@ ULKE_BAYRAK = {
     "ukraine": "🇺🇦", "ukrayna": "🇺🇦",
     "poland": "🇵🇱", "polonya": "🇵🇱",
     "greece": "🇬🇷", "yunanistan": "🇬🇷",
-    "scotland": "🏴", "i̇skoçya": "🏴",
-    "wales": "🏴", "galler": "🏴",
+    "scotland": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "i̇skoçya": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+    "wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿", "galler": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
     "ireland": "🇮🇪", "i̇rlanda": "🇮🇪",
     "austria": "🇦🇹", "avusturya": "🇦🇹",
     "croatia": "🇭🇷", "hırvatistan": "🇭🇷",
@@ -2193,9 +2227,8 @@ nav_bar()
 # SAYFA: ANA SAYFA
 # ==========================================
 if st.session_state.sayfa == "giris":
-    st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
-
     if admin_mi():
+        st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center; color:gray;'>İstatistik metnini kopyala → yapıştır → analiz et.</p>", unsafe_allow_html=True)
         st.markdown("### 📋 İstatistik Metnini Yapıştır")
 
@@ -2277,14 +2310,42 @@ if st.session_state.sayfa == "giris":
             st.session_state.sayfa = "ayarlar"
             st.rerun()
     else:
-        st.markdown("<p style='text-align:center; color:gray;'>Analizleri görüntülemek için aşağıdaki butonları kullan.</p>", unsafe_allow_html=True)
-        st.markdown("")
-        st.divider()
-        col_bt2, col_bt3 = st.columns(2)
-        with col_bt2:
-            gecmis_btn = st.button("📊 Geçmiş Maçlar", use_container_width=True, type="primary")
-        with col_bt3:
-            gelecek_btn = st.button("🔮 Gelecek Maçlar", use_container_width=True, type="primary")
+        # ===== MODERN MİSAFİR ANA SAYFA =====
+        gecmis_sayi = len(st.session_state.gecmis_analizler)
+        gelecek_sayi = len(st.session_state.gelecek_analizler)
+
+        st.markdown(f"""
+            <div class="mh-hero">
+                <div class="mh-hero-icon">⚽</div>
+                <div class="mh-hero-title">Futbol Analiz Pro</div>
+                <div class="mh-hero-sub">Akıllı maç analizi ve tahmin motoru</div>
+                <div class="mh-hero-badge">● CANLI VERİ</div>
+            </div>
+            <div class="mh-stat-grid">
+                <div class="mh-stat">
+                    <div class="mh-stat-icon">📊</div>
+                    <div class="mh-stat-num">{gecmis_sayi}</div>
+                    <div class="mh-stat-lbl">Geçmiş Maç</div>
+                </div>
+                <div class="mh-stat">
+                    <div class="mh-stat-icon">🔮</div>
+                    <div class="mh-stat-num">{gelecek_sayi}</div>
+                    <div class="mh-stat-lbl">Gelecek Maç</div>
+                </div>
+            </div>
+            <div class="mh-section-title">HIZLI ERİŞİM</div>
+        """, unsafe_allow_html=True)
+
+        try:
+            kutu = st.container(key="fa_misafir_nav")
+        except TypeError:
+            kutu = st.container()
+        with kutu:
+            col_bt2, col_bt3 = st.columns(2)
+            with col_bt2:
+                gecmis_btn = st.button("📊  Geçmiş Maçlar", use_container_width=True, type="primary", key="m_gecmis")
+            with col_bt3:
+                gelecek_btn = st.button("🔮  Gelecek Maçlar", use_container_width=True, type="primary", key="m_gelecek")
 
         if gecmis_btn:
             st.session_state.sayfa = "gecmis"
@@ -2302,9 +2363,21 @@ if st.session_state.sayfa == "giris":
             st.session_state.tek_silme_gelecek = None
             st.rerun()
 
-        st.markdown("")
-        st.divider()
+        st.markdown("""
+            <div class="mh-info">
+                💡 <b>İpucu:</b> Geçmiş maçlarda isabet oranlarını incele, gelecek maçlarda
+                yüksek güvenli tahminleri filtreleyerek kombine oluştur.
+            </div>
+            <div class="mh-section-title" style="margin-top:20px;">BİLGİLENDİRME</div>
+        """, unsafe_allow_html=True)
+
         misafir_aciklama()
+
+        st.markdown("""
+            <div class="login-footer" style="margin-top:24px;">
+                © <b>Futbol Analiz Pro</b> • Bilgi amaçlıdır • Kesin sonuç garantisi yoktur
+            </div>
+        """, unsafe_allow_html=True)
 
 
 # ==========================================
