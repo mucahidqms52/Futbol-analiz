@@ -3,6 +3,8 @@ Mutating.com Veri Toplayıcı Bot
 GitHub Actions tarafından günde 2 kez çalıştırılır.
 Streamlit'ten bağımsız çalışır, data/ klasörüne yazar.
 """
+import sys
+sys.stdout.reconfigure(line_buffering=True)
 import os
 import sys
 import json
