@@ -254,7 +254,7 @@ def esik_1x2_al(secim):
 # ÜLKE BAYRAK
 # ==========================================
 ULKE_BAYRAK = {
-    "switzerland": "🇨🇭", "isviçre": "🇨🇭", "england": "🏴󠁧󠁢󠁥󠁮󠁧🏴", "ingiltere": "🏴",
+    "switzerland": "🇨🇭", "isviçre": "🇨🇭", "england": "🏴", "ingiltere": "🏴",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "italy": "🇮🇹", "italya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪", "france": "🇫🇷", "fransa": "🇫🇷",
     "netherlands": "🇳🇱", "hollanda": "🇳🇱", "portugal": "🇵🇹", "portekiz": "🇵🇹",
