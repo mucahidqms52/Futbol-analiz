@@ -1277,7 +1277,13 @@ if st.session_state.sayfa == "canli":
     st.caption("LiveScore MCP ile 1000+ ligden gerçek zamanlı skorlar")
 
     if not MCP_OK:
-        st.error("""
-❌ **MCP kütüphanesi kurulu değil.**
-
+        st.error(""")
+        if not MCP_OK:
+    st.error(
+        "❌ **MCP kütüphanesi kurulu değil.**\n\n"
+        "`requirements.txt` dosyasına şu satırları ekleyin:\n"
+        "- `mcp`\n"
+        "- `nest_asyncio`\n\n"
+        "Sonra **Manage app → Reboot app** yapın."
+    )
 `requirements.txt` dosyasına şu satırları ekleyin:
