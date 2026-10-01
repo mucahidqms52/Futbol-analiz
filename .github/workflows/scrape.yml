@@ -1,14 +1,15 @@
 name: Mutating Veri Toplayıcı
 
 on:
+  # Her 2 saatte bir çalıştır (00:00, 02:00, 04:00...)
   schedule:
-    - cron: '0 6,18 * * *'
+    - cron: '0 */2 * * *'
   workflow_dispatch:
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       contents: write
 
@@ -35,12 +36,12 @@ jobs:
 
       - name: 🤖 Botu çalıştır
         run: python scraper.py
-        timeout-minutes: 25
+        timeout-minutes: 40
 
       - name: 💾 Değişiklikleri commit et
         run: |
           git config user.name "Mutating Bot"
           git config user.email "bot@users.noreply.github.com"
           git add data/ 2>/dev/null || true
-          git diff --quiet && git diff --staged --quiet || git commit -m "🤖 Otomatik veri: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git diff --quiet && git diff --staged --quiet || git commit -m "🤖 Otomatik: $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push
