@@ -7,6 +7,7 @@ import json
 import os
 import html as _html
 import time
+from datetime import datetime, timedelta
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
@@ -509,6 +510,33 @@ def okunan_veriler_paneli(v):
         st.markdown(f"- Üst 2.5: **{v.get('ust25_dep', 0):.1f}%**")
 
 
+def mac_durum_etiketi(v):
+    """Maç başladı mı bitti mi kontrol eder ve HTML etiket döner."""
+    try:
+        mac_tarih = (v.get("tarih", "") or "").strip()
+        mac_saat = (v.get("saat", "") or "").strip()
+        if not mac_tarih or not mac_saat:
+            return ""
+        # "10.09.2026" + "20:00" → datetime
+        mac_dt = datetime.strptime(f"{mac_tarih} {mac_saat}", "%d.%m.%Y %H:%M")
+        # TR saati = UTC + 3
+        simdi_tr = datetime.utcnow() + timedelta(hours=3)
+        fark_dk = (simdi_tr - mac_dt).total_seconds() / 60
+
+        if fark_dk < -15:
+            return ""  # Henüz yaklaşmadı
+        elif fark_dk < 0:
+            return '<div style="background:#3b82f6;color:white;padding:6px 12px;border-radius:8px;text-align:center;font-weight:700;margin-bottom:8px;">⏰ MAÇ BAŞLAMAK ÜZERE</div>'
+        elif fark_dk <= 60:
+            return '<div style="background:#ef4444;color:white;padding:6px 12px;border-radius:8px;text-align:center;font-weight:700;margin-bottom:8px;">🔴 MAÇ BAŞLADI</div>'
+        elif fark_dk <= 180:
+            return '<div style="background:#f59e0b;color:#0b1220;padding:6px 12px;border-radius:8px;text-align:center;font-weight:700;margin-bottom:8px;">⏱️ MAÇ DEVAM EDİYOR</div>'
+        else:
+            return '<div style="background:#475569;color:white;padding:6px 12px;border-radius:8px;text-align:center;font-weight:700;margin-bottom:8px;">✅ MAÇ BİTTİ — Sonuç güncellenecek</div>'
+    except Exception:
+        return ""
+
+
 def nav_bar():
     if st.session_state.sayfa == "giris": return
     try: k = st.container(key="fa_nav")
@@ -594,9 +622,9 @@ nav_bar()
 if st.session_state.sayfa == "giris":
     if admin_mi():
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center; color:gray;'>Veriler GitHub Actions tarafından otomatik toplanır.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:gray;'>Veriler GitHub Actions tarafından 2 saatte bir güncellenir.</p>", unsafe_allow_html=True)
 
-        st.info("🤖 **Bot günde 2 kez çalışır** (sabah 09:00 ve akşam 21:00). Veriler otomatik güncellenir.")
+        st.info("🤖 **Bot her 2 saatte bir çalışır.** Veriler otomatik güncellenir. Hiçbir şey yapman gerekmez.")
         st.caption(f"📊 Şu an: **{len(st.session_state.gecmis_analizler)}** geçmiş, **{len(st.session_state.gelecek_analizler)}** gelecek maç")
 
         c1, c2, c3 = st.columns(3)
@@ -737,7 +765,7 @@ elif st.session_state.sayfa == "gelecek":
     gel = st.session_state.gelecek_analizler
     toplam_g = len(gel)
     if not gel:
-        st.info("ℹ️ Gelecek maç yok. Bot bir sonraki çalışmasında tahmin olan maçları otomatik ekler.")
+        st.info("ℹ️ Gelecek maç yok. Bot 2 saatte bir otomatik çalışır.")
     for i, g in enumerate(reversed(gel)):
         ig = len(gel) - 1 - i
         v = g["veri"]
@@ -745,6 +773,12 @@ elif st.session_state.sayfa == "gelecek":
         try:
             a = analiz_hesapla(v); le = a["lam_ev"]; ld = a["lam_dep"]
         except Exception: le = ld = 0
+
+        # Durum etiketi (başladı mı bitti mi)
+        durum = mac_durum_etiketi(v)
+        if durum:
+            st.markdown(durum, unsafe_allow_html=True)
+
         st.markdown(mac_karti(te, td, False, 0, 0, le, ld, saat=v.get("saat", ""), ulke=v.get("ulke", ""), tarih=v.get("tarih", "")), unsafe_allow_html=True)
         th = mac_tahmin_karti(v, g)
         if th: st.markdown(th, unsafe_allow_html=True)
@@ -842,7 +876,7 @@ elif st.session_state.sayfa == "ayarlar":
     if not admin_mi():
         st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>⚙️ Eşik Ayarları</h1>", unsafe_allow_html=True)
-    st.caption("⚠️ Bu ayarlar Streamlit Cloud'da çalışır ama bot farklı eşikler kullanır. Bot için scraper.py'deki ESIKLER'i güncelle.")
+    st.caption("⚠️ Bu ayarlar bot için geçerli değil. Bot için scraper.py'deki ESIKLER'i güncelle.")
     mv = st.session_state.esikler.copy()
     st.markdown("### 🎯 Maç Sonucu")
     c1, c2, c3 = st.columns(3)
@@ -899,30 +933,6 @@ elif st.session_state.sayfa == "sonuc":
     else: ks, ky, ke = "KG Yok", kgy, esik_al("kg_yok")
     kp = ky >= ke
     st.markdown(oneri_karti("🤝 Karşılıklı Gol", ks, ky, ke, kp, f"Var %{kgv:.1f} • Yok %{kgy:.1f}"), unsafe_allow_html=True)
-
-    if st.session_state.gelecekten_gelindi and admin_mi():
-        ig = st.session_state.aktif_gelecek_idx
-        if ig is not None and 0 <= ig < len(st.session_state.gelecek_analizler):
-            st.divider()
-            st.markdown("### 📥 Sonucu Gir ve Geçmişe Taşı")
-            sc1, sc2, sc3 = st.columns([1, 1, 1])
-            with sc1: yse = st.number_input("Ev Gol", 0, 20, int(v.get("skor_ev", 0)), 1, key=f"gse_{ig}")
-            with sc2: ysd = st.number_input("Dep Gol", 0, 20, int(v.get("skor_dep", 0)), 1, key=f"gsd_{ig}")
-            with sc3:
-                st.markdown(""); st.markdown("")
-                if st.button("📥 Taşı", key=f"tasi_{ig}", use_container_width=True, type="primary"):
-                    k = st.session_state.gelecek_analizler[ig]
-                    k["veri"]["skor_ev"] = int(yse); k["veri"]["skor_dep"] = int(ysd); k["veri"]["skor_belli"] = True
-                    yd = sonuc_hesapla(k)
-                    if yd: k["dogruluk"] = yd
-                    st.session_state.gecmis_analizler.append(k)
-                    st.session_state.gelecek_analizler.pop(ig)
-                    gecmis_kaydet(st.session_state.gecmis_analizler)
-                    gelecek_kaydet(st.session_state.gelecek_analizler)
-                    st.session_state.gelecekten_gelindi = False
-                    st.session_state.aktif_gelecek_idx = None
-                    st.session_state.sayfa = "gelecek"
-                    st.rerun()
 
     st.divider()
     if st.button("🔄 Yeni Maç Analizi", use_container_width=True, type="primary"):
