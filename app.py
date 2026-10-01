@@ -6,6 +6,7 @@ import random
 import json
 import os
 import time
+import subprocess
 import html as _html
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
@@ -389,18 +390,30 @@ MANUEL_ALANLAR = {
 }
 
 # ==========================================
-# PLAYWRIGHT ILE CLOUDFLARE GECEN SCRAPER
+# PLAYWRIGHT ILE CLOUDFLARE GECEN SCRAPER (ST CLOUD UYUMLU)
 # ==========================================
 def gunun_maclarini_otomatik_cek():
     """
-    Playwright kullanarak Cloudflare korumasını gerçek tarayıcı ile geçer.
+    Playwright kullanarak Cloudflare korumasını geçer.
+    Streamlit Cloud ve lokal ortam uyumludur.
     """
     target_url = "https://www.sportytrader.com/en/football/predictions/"
     
     try:
+        # Streamlit Cloud üzerinde otomatik indirme komutunu çalıştır
+        try:
+            subprocess.run(["playwright", "install", "chromium"], check=False)
+        except Exception:
+            pass
+
         with sync_playwright() as p:
-            # Gerçek bir Chromium tarayıcısı başlat
-            browser = p.chromium.launch(headless=True)
+            # Hem lokalde hem Streamlit Cloud'da çalışabilmesi için alternatif yapı
+            try:
+                browser = p.chromium.launch(headless=True)
+            except Exception:
+                # Sunucuda sistem chromium'unu kullan
+                browser = p.chromium.launch(headless=True, executable_path="/usr/bin/chromium")
+
             context = browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
                 viewport={'width': 1280, 'height': 800}
@@ -443,7 +456,7 @@ def gunun_maclarini_otomatik_cek():
             return cekilen_veri_listesi, None
 
     except Exception as e:
-        return [], f"Playwright ile veri çekme hatası: {str(e)}"
+        return [], f"Playwright hatası: {str(e)}"
 
 # ==========================================
 # SPORTYTRADER METİN ÇIKARICI
@@ -826,7 +839,7 @@ if st.session_state.sayfa == "giris":
     if admin_mi():
         st.markdown("### 🌐 Canlı Veri Çekme (Otomatik)")
         if st.button("🔄 Günün Maçlarını İnternetten Otomatik Çek ve Analiz Et", type="primary", use_container_width=True):
-            with st.spinner("Günün maçları gerçek tarayıcı (Playwright) ile taranıyor ve analiz ediliyor..."):
+            with st.spinner("Günün maçları taranıyor ve analiz ediliyor..."):
                 maclar, hata = gunun_maclarini_otomatik_cek()
                 if hata:
                     st.error(f"❌ {hata}")
