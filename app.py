@@ -7,6 +7,11 @@ import json
 import os
 import html as _html
 from datetime import datetime, timedelta
+from streamlit_autorefresh import st_autorefresh
+
+# Sitenin her 60 saniyede bir verileri yenilemesini sağlar
+st_autorefresh(interval=60 * 1000, key="canli_veri_yenileme")
+
 
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
