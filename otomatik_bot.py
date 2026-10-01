@@ -21,8 +21,7 @@ from app import (
     esik_1x2_al
 )
 
-# 5 maçlık veriyi çekmek için ana sayfa isteği de 5 maç olarak ayarlanıyor
-MUTATING_URL = "https://www.mutating.com/soccer-predictions/?last=5"
+ANA_URL = "https://www.mutating.com/soccer-predictions/?last=5"
 
 def headers_uret():
     return {
@@ -38,28 +37,51 @@ def json_dosyalarini_kontrol_et():
             json.dump([], f)
 
 def mutaring_calistir():
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] 5 maçlık veri ve kesin biten maç filtresi başlatıldı...")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Bugün ve önümüzdeki 3 günün maçları taranıyor...")
     json_dosyalarini_kontrol_et()
     
     try:
-        response = requests.get(MUTATING_URL, headers=headers_uret(), timeout=15)
+        # Önce ana sayfayı (bugün ve tarih sekmelerini içeren sayfayı) çekiyoruz
+        response = requests.get(ANA_URL, headers=headers_uret(), timeout=15)
         if response.status_code != 200:
-            print(f"❌ Siteye erişilemedi. HTTP Kod: {response.status_code}")
+            print(f"❌ Ana sayfaya erişilemedi. HTTP Kod: {response.status_code}")
             return
 
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        mac_linkleri = []
+        # 1. Adım: Sayfadaki tarih sekmelerinin linklerini (02, 03, 04 günleri vb.) buluyoruz
+        taranacak_sayfalar = [ANA_URL]
         for a_tag in soup.find_all('a', href=True):
             href = a_tag['href']
-            if "-vs-" in href or "match" in href:
-                # 5 maçlık veri filtresini (?last=5) her maç linkine kesin olarak ekliyoruz
-                temiz_url = href.split("?")[0] if "?" in href else href
-                tam_link = temiz_url if temiz_url.startswith("http") else "https://www.mutating.com" + temiz_url
-                tam_link_5_mac = tam_link + "?last=5"
-                
-                if tam_link_5_mac not in mac_linkleri:
-                    mac_linkleri.append(tam_link_5_mac)
+            # Tarih veya gün geçiş linklerini yakalama
+            if any(t in href for t in ["/2026-", "/soccer-predictions/"]):
+                tam_tarih_link = href if href.startswith("http") else "https://www.mutating.com" + href
+                if "?last=5" not in tam_tarih_link:
+                    tam_tarih_link += "?last=5"
+                if tam_tarih_link not in taranacak_sayfalar:
+                    taranacak_sayfalar.append(tam_tarih_link)
+
+        # Çok fazla sayfada boğulmamak için ilk 5 gün/sayfa sekmesini sınır alıyoruz
+        taranacak_sayfalar = taranacak_sayfalar[:5]
+
+        mac_linkleri = []
+        for sayfa_url in taranacak_sayfalar:
+            try:
+                s_resp = requests.get(sayfa_url, headers=headers_uret(), timeout=10)
+                if s_resp.status_code != 200:
+                    continue
+                s_soup = BeautifulSoup(s_resp.text, 'html.parser')
+                for a_tag in s_soup.find_all('a', href=True):
+                    href = a_tag['href']
+                    if "-vs-" in href or "match" in href:
+                        temiz_url = href.split("?")[0] if "?" in href else href
+                        tam_link = temiz_url if temiz_url.startswith("http") else "https://www.mutating.com" + temiz_url
+                        tam_link_5_mac = tam_link + "?last=5"
+                        
+                        if tam_link_5_mac not in mac_linkleri:
+                            mac_linkleri.append(tam_link_5_mac)
+            except Exception:
+                continue
 
         gelecek_listesi = gelecek_yukle()
         gecmis_listesi = gecmis_yukle()
@@ -67,7 +89,7 @@ def mutaring_calistir():
         guncellenen_gelecek = list(gelecek_listesi) if gelecek_listesi else []
         guncellenen_gecmis = list(gecmis_listesi) if gecmis_listesi else []
 
-        for link in mac_linkleri[:25]:
+        for link in mac_linkleri[:40]: # Toplam taranacak maç limiti
             try:
                 detay_resp = requests.get(link, headers=headers_uret(), timeout=10)
                 if detay_resp.status_code != 200:
@@ -94,15 +116,11 @@ def mutaring_calistir():
                     v = copy.deepcopy(VARSAYILAN_VERI)
                     v.update(cikan_veri)
                     
-                    # --- BİTMİŞ MAÇ (FT) KONTROLÜ ---
-                    # Metin içinde "FT" geçiyorsa veya skor kesin belliyse maç bitmiştir!
+                    # BİTMİŞ MAÇ (FT) FİLTRESİ: Maç bittiyse kesinlikle geleceğe eklenmez
                     if "FT" in ham_metin or "Full Time" in ham_metin:
                         v["skor_belli"] = True
 
-                    skor_belli = v.get("skor_belli", False)
-
-                    # Eğer maç bittiyse (FT ise), GELECEK MAÇLARA ASLA EKLENMEZ!
-                    if skor_belli:
+                    if v.get("skor_belli", False):
                         continue
 
                     a = analiz_hesapla(v)
@@ -124,8 +142,7 @@ def mutaring_calistir():
                     kg_esik = esik_al("kg_var") if kg_var >= kg_yok else esik_al("kg_yok")
                     kg_poz = kg_yuzde >= kg_esik
 
-                    # --- KESİN EŞİK FİLTRESİ ---
-                    # Eşiği geçmeyen hiçbir maç gelecek listesine alınmaz (safdışı kalır)
+                    # KESİN EŞİK FİLTRESİ: Eşiği geçmeyenler safdışı kalır
                     kaydet_mi = bool(gol_poz or kg_poz or poz_1x2)
                     if not kaydet_mi:
                         continue
@@ -140,7 +157,7 @@ def mutaring_calistir():
             except Exception as e:
                 continue
 
-        # --- SIRALAMA: En erken maç en üstte ---
+        # --- NİHAİ KRONOLOJİK SIRALAMA: En erken tarih ve saat en üstte ---
         def sira_anahtari(item):
             try:
                 tarih_str = item["veri"].get("tarih", "01.01.2026")
@@ -149,11 +166,12 @@ def mutaring_calistir():
             except Exception:
                 return datetime.max
 
+        # reverse=False ile en erken maç (ve en erken gün) en üste getirilir
         guncellenen_gelecek.sort(key=sira_anahtari, reverse=False)
 
         gelecek_kaydet(guncellenen_gelecek)
         gecmis_kaydet(gecmis_listesi)
-        print("✅ 5 maçlık veri garantilendi, bitmiş maçlar (FT) filtrelendi ve eşik kuralları uygulandı.")
+        print("✅ Bugün ve önümüzdeki günlerin 5 maçlık verileri, FT filtresi ve kronolojik sıralaması tamamlandı.")
 
     except Exception as e:
         print(f"❌ Hata: {e}")
