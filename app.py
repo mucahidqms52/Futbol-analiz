@@ -1,3 +1,4 @@
+
 import streamlit as st
 import math
 import copy
@@ -7,568 +8,295 @@ import json
 import os
 import html as _html
 
-
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
-
 st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <style>
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
-    h1, h2, h3, h4, .fa-score, .fa-big, .mh-stat-num, .login-title, .mh-hero-title {
-        font-family: 'Rajdhani', 'Inter', sans-serif !important;
-        letter-spacing: 0.5px;
-    }
-
     .block-container {
-        padding-top: 1.2rem !important;
-        padding-bottom: 1rem !important;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+        padding-top: 2rem !important;
+        padding-bottom: 0.5rem !important;
+        padding-left: 0.7rem !important;
+        padding-right: 0.7rem !important;
         max-width: 100% !important;
     }
-
-    :root {
-        --bg-0: #060a14;
-        --bg-1: #0b1220;
-        --bg-2: #101a2e;
-        --card: #131c2e;
-        --card-2: #16223a;
-        --border: #1f2c44;
-        --border-glow: rgba(34,197,94,0.35);
-        --text: #eaf1fb;
-        --muted: #7f92b3;
-        --green: #22c55e;
-        --green-dark: #15803d;
-        --blue: #3b82f6;
-        --yellow: #f59e0b;
-        --red: #ef4444;
-    }
-
-    .stApp {
-        background:
-            radial-gradient(1200px 600px at 10% -10%, rgba(34,197,94,0.08), transparent 60%),
-            radial-gradient(900px 500px at 100% 0%, rgba(59,130,246,0.07), transparent 60%),
-            linear-gradient(180deg, #060a14 0%, #0b1220 100%) !important;
-    }
+    h1 { font-size: 1.2rem !important; margin: 0.2rem 0 !important; text-align: center; }
+    h2 { font-size: 1rem !important; margin: 0.3rem 0 !important; }
+    h3 { font-size: 0.9rem !important; margin: 0.15rem 0 !important; }
+    p { font-size: 0.85rem !important; margin: 0.2rem 0 !important; }
+    hr { margin: 0.3rem 0 !important; }
+    div[data-testid="stNumberInput"] label p { font-size: 0.75rem !important; margin: 0 !important; }
+    div[data-testid="stNumberInput"] input { font-size: 0.85rem !important; padding: 0.15rem 0.3rem !important; height: 1.8rem !important; }
+    div[data-testid="stNumberInput"] button { height: 1.8rem !important; padding: 0 !important; width: 1.5rem !important; }
+    div[data-testid="stNumberInput"] > div { margin-bottom: 0.2rem !important; }
+    div[data-testid="stMetric"] { padding: 0.2rem !important; }
+    div[data-testid="stMetricValue"] { font-size: 1rem !important; }
+    div[data-testid="stMetricLabel"] { font-size: 0.7rem !important; }
+    div[data-testid="stMetricDelta"] { font-size: 0.65rem !important; }
+    .stButton button { padding: 0.4rem 0.6rem !important; font-size: 0.9rem !important; height: 2.2rem !important; }
+    div[data-testid="stAlert"] { padding: 0.3rem 0.5rem !important; font-size: 0.85rem !important; }
+    details summary { font-size: 0.8rem !important; padding: 0.2rem 0.4rem !important; }
+    textarea { font-size: 0.75rem !important; }
+    div[data-testid="stExpander"] summary { font-size: 0.9rem !important; padding: 0.4rem !important; }
+    /* ===== PRO KOYU TEMA ===== */
+    .stApp { background: #0b1220 !important; }
     header[data-testid="stHeader"] { background: transparent !important; }
-
-    .stApp, .stApp p, .stApp span, .stApp label, .stApp li,
-    .stApp div[data-testid="stMarkdownContainer"] { color: var(--text) !important; }
-    .stApp div[data-testid="stCaptionContainer"], .stApp small { color: var(--muted) !important; }
-    hr { border-color: var(--border) !important; margin: 0.8rem 0 !important; }
-
-    h1 {
-        font-size: 1.6rem !important; font-weight: 800 !important;
-        margin: 0.6rem 0 !important; text-align: center;
-        background: linear-gradient(135deg, #eaf1fb 0%, #94a3b8 100%);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        letter-spacing: 0.5px;
-    }
-    h2 { font-size: 1.15rem !important; font-weight: 700 !important; margin: 0.5rem 0 !important; }
-    h3 {
-        font-size: 0.98rem !important; font-weight: 700 !important;
-        margin: 0.3rem 0 !important; border-left: 3px solid var(--green);
-        padding-left: 0.6rem;
-    }
-    p { font-size: 0.88rem !important; margin: 0.25rem 0 !important; line-height: 1.5; }
-
-    div[data-testid="stNumberInput"] label p { font-size: 0.75rem !important; margin: 0 !important; font-weight: 600; }
-    div[data-testid="stNumberInput"] input {
-        font-size: 0.9rem !important; padding: 0.4rem 0.5rem !important;
-        height: 2.1rem !important;
-    }
-    div[data-testid="stNumberInput"] button { height: 2.1rem !important; }
-    div[data-testid="stNumberInput"] > div { margin-bottom: 0.3rem !important; }
+    .stApp, .stApp p, .stApp span, .stApp label, .stApp li, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+    .stApp div[data-testid="stMarkdownContainer"] { color: #e6edf7 !important; }
+    .stApp div[data-testid="stCaptionContainer"], .stApp div[data-testid="stCaptionContainer"] *, .stApp small { color: #8fa0bd !important; }
+    hr { border-color: #23304a !important; }
+    h1 { letter-spacing: 0.2px; }
+    h2, h3 { border-left: 3px solid #22c55e; padding-left: 0.45rem; }
 
     .stTextArea textarea, .stTextInput input, div[data-testid="stNumberInput"] input {
-        background: var(--card) !important;
-        color: var(--text) !important;
-        border: 1.5px solid var(--border) !important;
-        border-radius: 12px !important;
-        transition: all 0.2s ease !important;
+        background: #131c2e !important; color: #e6edf7 !important; border: 1px solid #23304a !important; border-radius: 10px !important;
     }
-    .stTextArea textarea:focus, .stTextInput input:focus,
-    div[data-testid="stNumberInput"] input:focus {
-        border-color: var(--green) !important;
-        box-shadow: 0 0 0 4px rgba(34,197,94,0.12) !important;
-    }
-    div[data-baseweb="input"], div[data-baseweb="textarea"], div[data-baseweb="base-input"] {
-        background: var(--card) !important; border-radius: 12px !important;
-    }
+    div[data-baseweb="input"], div[data-baseweb="textarea"], div[data-baseweb="base-input"] { background: #131c2e !important; border-radius: 10px !important; }
 
-    .stButton button, div[data-testid="stDownloadButton"] button,
-    div[data-testid="stFormSubmitButton"] button {
-        background: linear-gradient(145deg, #18233a, #131c2e) !important;
-        border: 1.5px solid var(--border) !important;
-        border-radius: 12px !important;
-        font-weight: 700 !important;
-        font-size: 0.88rem !important;
-        color: var(--text) !important;
-        transition: all 0.2s ease !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
+    .stButton button, div[data-testid="stDownloadButton"] button, div[data-testid="stFormSubmitButton"] button {
+        background: #18233a !important; border: 1px solid #23304a !important; border-radius: 12px !important; font-weight: 600 !important;
     }
-    .stButton button p, div[data-testid="stDownloadButton"] button p,
-    div[data-testid="stFormSubmitButton"] button p { color: var(--text) !important; font-weight: 700 !important; }
+    .stButton button p, div[data-testid="stDownloadButton"] button p, div[data-testid="stFormSubmitButton"] button p { color: #e6edf7 !important; }
+    .stButton button:hover, div[data-testid="stDownloadButton"] button:hover { border-color: #22c55e !important; }
+    .stButton button[kind="primary"], button[data-testid="stBaseButton-primary"], button[data-testid="stBaseButton-primaryFormSubmit"] {
+        background: linear-gradient(135deg, #16a34a, #22c55e) !important; border: none !important;
+    }
+    .stButton button[kind="primary"] p, button[data-testid="stBaseButton-primary"] p, button[data-testid="stBaseButton-primaryFormSubmit"] p { color: #04130a !important; }
 
-    .stButton button:hover, div[data-testid="stDownloadButton"] button:hover {
-        border-color: var(--green) !important;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(34,197,94,0.2) !important;
-    }
+    div[data-testid="stExpander"] { background: #131c2e !important; border: 1px solid #23304a !important; border-radius: 14px !important; }
+    div[data-testid="stExpander"] details { border: none !important; }
+    div[data-testid="stAlert"] { border-radius: 12px !important; }
+    div[data-testid="stFileUploader"] section { background: #131c2e !important; border: 1px dashed #23304a !important; border-radius: 12px !important; }
+    div[data-testid="stMetric"] { background: #131c2e; border: 1px solid #23304a; border-radius: 12px; }
 
-    .stButton button[kind="primary"],
-    button[data-testid="stBaseButton-primary"],
-    button[data-testid="stBaseButton-primaryFormSubmit"] {
-        background: linear-gradient(135deg, #16a34a, #22c55e) !important;
-        border: none !important;
-        box-shadow: 0 6px 20px rgba(34,197,94,0.35) !important;
-        color: #04130a !important;
-    }
-    .stButton button[kind="primary"] p,
-    button[data-testid="stBaseButton-primary"] p,
-    button[data-testid="stBaseButton-primaryFormSubmit"] p { color: #04130a !important; }
+    .st-key-fa_nav div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.3rem !important; }
+    .st-key-fa_nav div[data-testid="stColumn"], .st-key-fa_nav div[data-testid="column"] { min-width: 0 !important; flex: 1 1 0 !important; width: auto !important; }
+    .st-key-fa_nav .stButton button { padding: 0.2rem 0.2rem !important; height: 2rem !important; }
+    .st-key-fa_nav .stButton button p { font-size: 0.72rem !important; white-space: nowrap; }
 
-    div[data-testid="stMetric"] {
-        padding: 0.5rem !important;
-        background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    }
-    div[data-testid="stMetricValue"] { font-size: 1.1rem !important; font-weight: 800 !important; }
-    div[data-testid="stMetricLabel"] { font-size: 0.72rem !important; }
-
-    /* ===== EXPANDER (BAŞLIK ÜST ÜSTE BİNME SORUNU DÜZELTİLDİ) ===== */
-    div[data-testid="stExpander"] {
-        background: linear-gradient(145deg, var(--card), #0f1829) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 16px !important;
-        overflow: hidden;
-    }
-
-    div[data-testid="stExpander"] details > summary {
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-        padding: 0.75rem 1rem !important;
-        font-size: 0.92rem !important;
-        font-weight: 700 !important;
-        line-height: 1.4 !important;
-        min-height: 48px !important;
-        overflow: hidden !important;
-        cursor: pointer !important;
-    }
-
-    div[data-testid="stExpander"] details > summary:hover {
-        background: rgba(34,197,94,0.05) !important;
-    }
-
-    /* Streamlit'in varsayılan ok ikonu yerine kendi okumuzu kullanmak için sıfırla */
-    div[data-testid="stExpander"] details > summary::before {
-        display: none !important;
-        content: none !important;
-    }
-
-    /* Başlık metni */
-    div[data-testid="stExpander"] details > summary p,
-    div[data-testid="stExpander"] details > summary span,
-    div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"] {
-        font-size: 0.92rem !important;
-        font-weight: 700 !important;
-        margin: 0 !important;
-        line-height: 1.4 !important;
-        color: #eaf1fb !important;
-        white-space: normal !important;
-        display: inline-block !important;
-    }
-
-    /* Summary içindeki flex container (Streamlit bazen bir div sarar) */
-    div[data-testid="stExpander"] details > summary > div {
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-        flex-wrap: nowrap !important;
-        width: 100% !important;
-    }
-
-    div[data-testid="stExpander"] details > summary > div > svg,
-    div[data-testid="stExpander"] details > summary > svg {
-        flex-shrink: 0 !important;
-        width: 16px !important;
-        height: 16px !important;
-        min-width: 16px !important;
-        transition: transform 0.2s ease !important;
-    }
-
-    /* Expander içerik */
-    div[data-testid="stExpander"] details > div[role="region"] {
-        padding: 0.5rem 1rem 1rem 1rem !important;
-    }
-
-    div[data-testid="stAlert"] { padding: 0.5rem 0.8rem !important; font-size: 0.87rem !important; border-radius: 12px !important; }
-
-    div[data-testid="stFileUploader"] section {
-        background: var(--card) !important;
-        border: 1.5px dashed var(--border) !important;
-        border-radius: 14px !important;
-    }
-
-    .st-key-fa_nav div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.35rem !important; }
-    .st-key-fa_nav div[data-testid="stColumn"], .st-key-fa_nav div[data-testid="column"] {
-        min-width: 0 !important; flex: 1 1 0 !important; width: auto !important;
-    }
-    .st-key-fa_nav .stButton button {
-        padding: 0.35rem 0.3rem !important; height: 2.4rem !important;
-        background: rgba(19,28,46,0.6) !important;
-        backdrop-filter: blur(8px);
-        border: 1px solid var(--border) !important;
-    }
-    .st-key-fa_nav .stButton button p { font-size: 0.78rem !important; white-space: nowrap; font-weight: 700 !important; }
-    .st-key-fa_nav .stButton button[kind="primary"] {
-        background: linear-gradient(135deg, #16a34a, #22c55e) !important;
-        box-shadow: 0 4px 16px rgba(34,197,94,0.4) !important;
-    }
-
-    .stApp .fa-hero {
-        position: relative; overflow: hidden;
-        background: linear-gradient(135deg, #14243e 0%, #0d1729 100%);
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        padding: 18px 14px;
-        margin: 8px 0 12px 0;
-        text-align: center;
-        box-shadow: 0 10px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(34,197,94,0.05) inset;
-    }
-    .stApp .fa-hero::before {
-        content: "";
-        position: absolute; inset: 0;
-        background: radial-gradient(circle at 50% 0%, rgba(34,197,94,0.15), transparent 60%);
-        pointer-events: none;
-    }
-    .stApp .fa-teams {
-        display: flex; align-items: center; justify-content: space-between; gap: 8px;
-        position: relative; z-index: 1;
-    }
-    .stApp .fa-team {
-        flex: 1; font-weight: 800; font-size: 1rem; line-height: 1.25;
-        word-break: break-word; letter-spacing: 0.3px;
-    }
-    .stApp .fa-score {
-        font-size: 2rem; font-weight: 900; color: var(--green) !important;
-        min-width: 90px; letter-spacing: 1px;
-        text-shadow: 0 0 20px rgba(34,197,94,0.5);
-    }
-    .stApp .fa-vs { font-size: 1rem; font-weight: 800; color: var(--muted) !important; min-width: 60px; letter-spacing: 2px; }
-    .stApp .fa-sub { font-size: 0.75rem; color: var(--muted) !important; margin-top: 8px; letter-spacing: 0.3px; }
-
-    .stApp .fa-card {
-        background: linear-gradient(145deg, var(--card), #0f1829);
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 14px;
-        margin-bottom: 12px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-        transition: all 0.25s ease;
-    }
-    .stApp .fa-card:hover { border-color: rgba(34,197,94,0.3); transform: translateY(-2px); }
-    .stApp .fa-card.fa-pos {
-        border-color: rgba(34,197,94,0.55);
-        box-shadow: 0 8px 28px rgba(34,197,94,0.15), 0 0 0 1px rgba(34,197,94,0.15) inset;
-    }
-    .stApp .fa-card.fa-neg { opacity: 0.9; }
-    .stApp .fa-ttl {
-        font-size: 0.75rem; font-weight: 800; color: var(--muted) !important;
-        text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
-    }
-    .stApp .fa-pickrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .stApp .fa-pick { font-size: 1.2rem; font-weight: 800; letter-spacing: 0.3px; }
-    .stApp .fa-pct { font-size: 1.6rem; font-weight: 900; color: var(--green) !important; text-shadow: 0 0 16px rgba(34,197,94,0.4); }
-    .stApp .fa-pct.fa-off { color: var(--muted) !important; text-shadow: none; }
-    .stApp .fa-mut { font-size: 0.75rem; color: var(--muted) !important; margin-top: 8px; letter-spacing: 0.2px; }
-    .stApp .fa-row { margin: 9px 0; }
-    .stApp .fa-row-top { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px; }
-    .stApp .fa-lbl { color: #cbd5e1 !important; font-weight: 500; }
-    .stApp .fa-val { font-weight: 800; }
-    .stApp .fa-bar { position: relative; height: 9px; background: #1a2438; border-radius: 99px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); }
-    .stApp .fa-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
-    .stApp .fa-tick { position: absolute; top: 0; bottom: 0; width: 2px; background: #eaf1fb; opacity: 0.8; }
-
-    .stApp .fa-badge {
-        display: inline-block; padding: 4px 11px; border-radius: 99px;
-        font-size: 0.72rem; font-weight: 800; white-space: nowrap;
-        letter-spacing: 0.4px; text-transform: uppercase;
-    }
-    .stApp .fa-b-green { background: rgba(34,197,94,0.15); color: var(--green) !important; border: 1px solid rgba(34,197,94,0.5); }
-    .stApp .fa-b-yellow { background: rgba(245,158,11,0.15); color: var(--yellow) !important; border: 1px solid rgba(245,158,11,0.5); }
-    .stApp .fa-b-red { background: rgba(239,68,68,0.15); color: var(--red) !important; border: 1px solid rgba(239,68,68,0.5); }
+    .stApp .fa-hero { background: linear-gradient(135deg, #16233d, #0f1a2e); border: 1px solid #23304a; border-radius: 18px; padding: 14px 10px; margin: 6px 0 10px 0; text-align: center; }
+    .stApp .fa-teams { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .stApp .fa-team { flex: 1; font-weight: 700; font-size: 0.95rem; line-height: 1.2; word-break: break-word; }
+    .stApp .fa-score { font-size: 1.7rem; font-weight: 800; color: #22c55e !important; min-width: 70px; }
+    .stApp .fa-vs { font-size: 0.95rem; font-weight: 700; color: #8fa0bd !important; min-width: 50px; }
+    .stApp .fa-sub { font-size: 0.72rem; color: #8fa0bd !important; margin-top: 6px; }
+    .stApp .fa-card { background: #131c2e; border: 1px solid #23304a; border-radius: 16px; padding: 12px; margin-bottom: 10px; }
+    .stApp .fa-card.fa-pos { border-color: rgba(34,197,94,0.55); box-shadow: 0 0 0 1px rgba(34,197,94,0.15) inset; }
+    .stApp .fa-card.fa-neg { opacity: 0.92; }
+    .stApp .fa-ttl { font-size: 0.78rem; font-weight: 700; color: #8fa0bd !important; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+    .stApp .fa-pickrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .stApp .fa-pick { font-size: 1.15rem; font-weight: 800; }
+    .stApp .fa-pct { font-size: 1.5rem; font-weight: 800; color: #22c55e !important; }
+    .stApp .fa-pct.fa-off { color: #8fa0bd !important; }
+    .stApp .fa-mut { font-size: 0.74rem; color: #8fa0bd !important; margin-top: 6px; }
+    .stApp .fa-row { margin: 7px 0; }
+    .stApp .fa-row-top { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px; }
+    .stApp .fa-lbl { color: #cbd5e1 !important; }
+    .stApp .fa-val { font-weight: 700; }
+    .stApp .fa-bar { position: relative; height: 8px; background: #1d2940; border-radius: 99px; overflow: hidden; }
+    .stApp .fa-fill { height: 100%; border-radius: 99px; }
+    .stApp .fa-tick { position: absolute; top: 0; bottom: 0; width: 2px; background: #e6edf7; opacity: 0.7; }
+    .stApp .fa-badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .stApp .fa-b-green { background: rgba(34,197,94,0.15); color: #22c55e !important; border: 1px solid rgba(34,197,94,0.45); }
+    .stApp .fa-b-yellow { background: rgba(245,158,11,0.15); color: #f59e0b !important; border: 1px solid rgba(245,158,11,0.45); }
+    .stApp .fa-b-red { background: rgba(239,68,68,0.15); color: #ef4444 !important; border: 1px solid rgba(239,68,68,0.45); }
     .stApp .fa-b-gray { background: rgba(148,163,184,0.12); color: #94a3b8 !important; border: 1px solid rgba(148,163,184,0.35); }
+    .stApp .fa-big { font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
+    .stApp .fa-g { color: #22c55e !important; }
+    .stApp .fa-y { color: #f59e0b !important; }
+    .stApp .fa-r { color: #ef4444 !important; }
+    .stApp .fa-ci { position: relative; height: 8px; background: #1d2940; border-radius: 99px; margin-top: 8px; }
+    .stApp .fa-ci-fill { position: absolute; top: 0; bottom: 0; background: rgba(148,163,184,0.45); border-radius: 99px; }
+    .stApp .fa-ci-dot { position: absolute; top: -3px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #0b1220; margin-left: -7px; }
 
-    .stApp .fa-big { font-size: 2rem; font-weight: 900; line-height: 1.05; letter-spacing: -0.5px; }
-    .stApp .fa-g { color: var(--green) !important; }
-    .stApp .fa-y { color: var(--yellow) !important; }
-    .stApp .fa-r { color: var(--red) !important; }
-
-    .stApp .fa-ci { position: relative; height: 9px; background: #1a2438; border-radius: 99px; margin-top: 10px; }
-    .stApp .fa-ci-fill { position: absolute; top: 0; bottom: 0; background: rgba(148,163,184,0.4); border-radius: 99px; }
-    .stApp .fa-ci-dot { position: absolute; top: -3px; width: 15px; height: 15px; border-radius: 50%; border: 2.5px solid #0b1220; margin-left: -7.5px; box-shadow: 0 0 12px currentColor; }
-
-    .stApp .fa-mk {
-        background: linear-gradient(145deg, var(--card), #0f1829);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 10px 14px;
-        margin: -4px 0 10px 0;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-    }
-    .stApp .fa-mk-row {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 8px 0; border-bottom: 1px dashed #1d2940;
-    }
+    /* ===== MAÇ KARTI TAHMİN SATIRLARI ===== */
+    .stApp .fa-mk { background: #131c2e; border: 1px solid #23304a; border-radius: 16px; padding: 10px 12px; margin: -4px 0 8px 0; }
+    .stApp .fa-mk-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #1d2940; }
     .stApp .fa-mk-row:last-child { border-bottom: none; }
-    .stApp .fa-mk-lbl { font-size: 0.82rem; font-weight: 800; color: #cbd5e1 !important; min-width: 60px; }
-    .stApp .fa-mk-pick { font-size: 0.95rem; font-weight: 800; }
-    .stApp .fa-mk-pick.pass { color: var(--green) !important; }
+    .stApp .fa-mk-lbl { font-size: 0.82rem; font-weight: 700; color: #cbd5e1 !important; min-width: 60px; }
+    .stApp .fa-mk-pick { font-size: 0.92rem; font-weight: 800; }
+    .stApp .fa-mk-pick.pass { color: #22c55e !important; }
     .stApp .fa-mk-pick.off { color: #94a3b8 !important; }
-    .stApp .fa-mk-pct { font-size: 0.88rem; font-weight: 800; color: var(--text) !important; }
-    .stApp .fa-mk-badge { font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 99px; margin-left: 6px; letter-spacing: 0.3px; }
-    .stApp .fa-mk-badge.ok { background: rgba(34,197,94,0.15); color: var(--green) !important; border: 1px solid rgba(34,197,94,0.5); }
+    .stApp .fa-mk-pct { font-size: 0.85rem; font-weight: 700; color: #e6edf7 !important; }
+    .stApp .fa-mk-badge { font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; margin-left: 6px; }
+    .stApp .fa-mk-badge.ok { background: rgba(34,197,94,0.15); color: #22c55e !important; border: 1px solid rgba(34,197,94,0.45); }
     .stApp .fa-mk-badge.no { background: rgba(148,163,184,0.12); color: #94a3b8 !important; border: 1px solid rgba(148,163,184,0.35); }
-    .stApp .fa-mk-info { font-size: 0.72rem; color: var(--muted) !important; }
+    .stApp .fa-mk-info { font-size: 0.72rem; color: #8fa0bd !important; }
 
-    .login-hero { text-align: center; padding: 50px 10px 30px 10px; position: relative; }
+    /* ===== MODERN GİRİŞ EKRANI ===== */
+    .login-hero { text-align: center; padding: 40px 10px 24px 10px; position: relative; }
     .login-logo {
-        font-size: 5rem; line-height: 1; margin-bottom: 16px; display: inline-block;
-        filter: drop-shadow(0 0 30px rgba(34,197,94,0.6));
+        font-size: 4.5rem; line-height: 1; margin-bottom: 12px; display: inline-block;
+        filter: drop-shadow(0 0 20px rgba(34,197,94,0.5));
         animation: logoPulse 3s ease-in-out infinite;
     }
     @keyframes logoPulse {
-        0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 20px rgba(34,197,94,0.5)); }
-        50% { transform: scale(1.08) rotate(-3deg); filter: drop-shadow(0 0 40px rgba(34,197,94,0.9)); }
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(34,197,94,0.4)); }
+        50% { transform: scale(1.06); filter: drop-shadow(0 0 32px rgba(34,197,94,0.85)); }
     }
     .login-title {
-        font-size: 2.4rem !important; font-weight: 900 !important;
+        font-size: 2rem !important; font-weight: 900 !important;
         background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         background-clip: text; margin: 0 !important; padding: 0 !important;
-        letter-spacing: 1.5px; border: none !important; text-align: center !important;
+        letter-spacing: 1.2px; border: none !important; text-align: center !important;
     }
-    .login-subtitle {
-        font-size: 0.92rem; color: var(--muted) !important;
-        margin-top: 10px; letter-spacing: 0.6px; font-weight: 500;
-    }
+    .login-subtitle { font-size: 0.88rem; color: #8fa0bd !important; margin-top: 8px; letter-spacing: 0.5px; font-weight: 500; }
 
     div[data-testid="stForm"] {
-        background: linear-gradient(145deg, rgba(19,28,46,0.9), rgba(11,18,32,0.98)) !important;
-        border: 1.5px solid rgba(34,197,94,0.2) !important;
-        border-radius: 24px !important;
-        padding: 28px 24px !important;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(34,197,94,0.05) inset !important;
-        backdrop-filter: blur(16px);
+        background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95)) !important;
+        border: 1px solid rgba(34,197,94,0.18) !important;
+        border-radius: 22px !important; padding: 24px 20px !important;
+        box-shadow: 0 12px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(34,197,94,0.04) inset !important;
+        backdrop-filter: blur(12px);
     }
-    div[data-testid="stForm"] label p {
-        font-size: 0.82rem !important; font-weight: 700 !important;
-        color: #cbd5e1 !important; letter-spacing: 0.4px; margin-bottom: 6px !important;
-    }
+    div[data-testid="stForm"] label p { font-size: 0.8rem !important; font-weight: 700 !important; color: #cbd5e1 !important; letter-spacing: 0.4px; margin-bottom: 4px !important; }
     div[data-testid="stForm"] input {
-        height: 48px !important; font-size: 0.98rem !important; padding: 0 16px !important;
-        background: rgba(11,18,32,0.9) !important;
-        border: 1.5px solid var(--border) !important;
-        border-radius: 12px !important;
-        transition: all 0.2s ease;
+        height: 46px !important; font-size: 0.95rem !important; padding: 0 14px !important;
+        background: rgba(11,18,32,0.85) !important; border: 1.5px solid #23304a !important;
+        border-radius: 12px !important; transition: all 0.2s ease;
     }
-    div[data-testid="stForm"] input:focus {
-        border-color: var(--green) !important;
-        box-shadow: 0 0 0 4px rgba(34,197,94,0.15) !important;
-        outline: none !important;
-    }
-    div[data-testid="stForm"] button {
-        height: 48px !important; font-size: 0.98rem !important;
-        font-weight: 800 !important; border-radius: 12px !important;
-        letter-spacing: 0.4px; transition: all 0.2s ease;
-    }
-    div[data-testid="stForm"] button[kind="primary"] {
-        background: linear-gradient(135deg, #16a34a, #22c55e) !important;
-        box-shadow: 0 8px 24px rgba(34,197,94,0.4) !important;
-        border: none !important;
-    }
-    div[data-testid="stForm"] button[kind="primary"]:hover {
-        box-shadow: 0 12px 32px rgba(34,197,94,0.55) !important;
-        transform: translateY(-2px);
-    }
-    div[data-testid="stForm"] button[kind="secondary"] {
-        background: rgba(30,41,59,0.6) !important;
-        border: 1.5px solid var(--border) !important;
-    }
-    div[data-testid="stForm"] button[kind="secondary"]:hover {
-        border-color: var(--blue) !important;
-        background: rgba(59,130,246,0.1) !important;
-    }
+    div[data-testid="stForm"] input:focus { border-color: #22c55e !important; box-shadow: 0 0 0 3px rgba(34,197,94,0.18) !important; outline: none !important; }
+    div[data-testid="stForm"] button { height: 46px !important; font-size: 0.95rem !important; font-weight: 700 !important; border-radius: 12px !important; letter-spacing: 0.3px; transition: all 0.2s ease; }
+    div[data-testid="stForm"] button[kind="primary"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; box-shadow: 0 6px 20px rgba(34,197,94,0.3) !important; border: none !important; }
+    div[data-testid="stForm"] button[kind="primary"]:hover { box-shadow: 0 8px 28px rgba(34,197,94,0.5) !important; transform: translateY(-1px); }
+    div[data-testid="stForm"] button[kind="secondary"] { background: rgba(30,41,59,0.55) !important; border: 1.5px solid #23304a !important; }
+    div[data-testid="stForm"] button[kind="secondary"]:hover { border-color: #3b82f6 !important; background: rgba(59,130,246,0.08) !important; }
 
-    .login-divider {
-        display: flex; align-items: center; gap: 14px;
-        margin: 14px 0 10px 0; color: #64748b !important;
-        font-size: 0.72rem; font-weight: 800; letter-spacing: 4px;
-        justify-content: center;
-    }
-    .login-divider::before, .login-divider::after {
-        content: ""; flex: 1; height: 1px;
-        background: linear-gradient(90deg, transparent, var(--border) 50%, transparent);
-    }
+    .login-divider { display: flex; align-items: center; gap: 12px; margin: 10px 0 6px 0; color: #64748b !important; font-size: 0.7rem; font-weight: 700; letter-spacing: 3px; justify-content: center; }
+    .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #23304a 50%, transparent); }
 
-    .login-features { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 26px; padding: 0 10px; }
-    .lf-chip {
-        display: inline-block; padding: 7px 16px;
-        background: rgba(34,197,94,0.08);
-        border: 1px solid rgba(34,197,94,0.3);
-        border-radius: 99px; font-size: 0.78rem; font-weight: 700;
-        color: #cbd5e1 !important; letter-spacing: 0.4px;
-        transition: all 0.2s ease;
-    }
-    .lf-chip:hover {
-        background: rgba(34,197,94,0.15);
-        border-color: var(--green);
-        transform: translateY(-2px);
-    }
-    .login-footer {
-        text-align: center; margin-top: 30px; font-size: 0.75rem;
-        color: #64748b !important; letter-spacing: 0.6px;
-    }
-    .login-footer b { color: var(--green) !important; font-weight: 800; }
+    .login-features { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 22px; padding: 0 10px; }
+    .lf-chip { display: inline-block; padding: 6px 14px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); border-radius: 99px; font-size: 0.75rem; font-weight: 600; color: #cbd5e1 !important; letter-spacing: 0.3px; }
+    .login-footer { text-align: center; margin-top: 26px; font-size: 0.72rem; color: #64748b !important; letter-spacing: 0.5px; }
+    .login-footer b { color: #22c55e !important; font-weight: 700; }
 
+    /* ===== MİSAFİR ANA SAYFA MODERN ===== */
     .mh-hero {
-        position: relative; overflow: hidden; text-align: center;
-        padding: 36px 16px 28px 16px;
-        background: linear-gradient(135deg, rgba(22,35,61,0.9), rgba(15,26,46,0.95));
-        border: 1.5px solid rgba(34,197,94,0.25);
-        border-radius: 24px;
-        margin: 8px 0 20px 0;
-        box-shadow: 0 16px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(34,197,94,0.06) inset;
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+        padding: 30px 14px 22px 14px;
+        background: linear-gradient(135deg, rgba(22,35,61,0.85), rgba(15,26,46,0.9));
+        border: 1px solid rgba(34,197,94,0.22);
+        border-radius: 22px;
+        margin: 6px 0 16px 0;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(34,197,94,0.05) inset;
     }
     .mh-hero::before {
         content: "";
         position: absolute; top: -60%; left: -60%;
         width: 220%; height: 220%;
-        background: radial-gradient(circle at 50% 50%, rgba(34,197,94,0.18), transparent 55%);
-        animation: mhGlow 6s ease-in-out infinite;
+        background: radial-gradient(circle at 50% 50%, rgba(34,197,94,0.15), transparent 55%);
+        animation: mhGlow 5s ease-in-out infinite;
         pointer-events: none;
     }
     @keyframes mhGlow {
         0%, 100% { opacity: 0.5; transform: scale(1) rotate(0deg); }
-        50% { opacity: 1; transform: scale(1.2) rotate(25deg); }
+        50% { opacity: 1; transform: scale(1.15) rotate(20deg); }
     }
     .mh-hero-icon {
-        font-size: 3.6rem; line-height: 1; margin-bottom: 12px;
-        display: inline-block;
-        filter: drop-shadow(0 0 24px rgba(34,197,94,0.65));
+        font-size: 3.2rem; line-height: 1; margin-bottom: 10px; display: inline-block;
+        filter: drop-shadow(0 0 20px rgba(34,197,94,0.55));
         animation: logoPulse 3s ease-in-out infinite;
         position: relative; z-index: 1;
     }
     .mh-hero-title {
-        font-size: 2rem; font-weight: 900;
+        font-size: 1.7rem; font-weight: 900;
         background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        background-clip: text; letter-spacing: 1.2px;
+        background-clip: text; letter-spacing: 1px;
         position: relative; z-index: 1; margin: 0;
     }
     .mh-hero-sub {
-        font-size: 0.88rem; color: var(--muted);
-        margin-top: 10px; letter-spacing: 0.5px;
+        font-size: 0.84rem; color: #8fa0bd;
+        margin-top: 8px; letter-spacing: 0.4px;
         position: relative; z-index: 1;
     }
     .mh-hero-badge {
-        display: inline-block; margin-top: 14px; padding: 5px 16px;
+        display: inline-block;
+        margin-top: 12px;
+        padding: 4px 14px;
         background: rgba(34,197,94,0.12);
-        border: 1px solid rgba(34,197,94,0.45);
-        border-radius: 99px; font-size: 0.75rem; font-weight: 800;
-        color: var(--green) !important; letter-spacing: 1px;
+        border: 1px solid rgba(34,197,94,0.4);
+        border-radius: 99px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #22c55e !important;
+        letter-spacing: 0.6px;
         position: relative; z-index: 1;
     }
 
     .mh-stat-grid {
-        display: grid; grid-template-columns: 1fr 1fr;
-        gap: 12px; margin: 0 0 20px 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 0 0 16px 0;
     }
     .mh-stat {
         position: relative;
         background: linear-gradient(145deg, #16233d, #0f1a2e);
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 18px 10px 16px 10px;
+        border: 1px solid #23304a;
+        border-radius: 16px;
+        padding: 14px 8px 12px 8px;
         text-align: center;
         overflow: hidden;
-        transition: all 0.25s ease;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        transition: transform 0.2s ease;
     }
-    .mh-stat:hover {
-        transform: translateY(-3px);
-        border-color: rgba(34,197,94,0.4);
-        box-shadow: 0 12px 32px rgba(34,197,94,0.15);
-    }
+    .mh-stat:hover { transform: translateY(-2px); }
     .mh-stat::after {
-        content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        content: "";
+        position: absolute; top: 0; left: 0; right: 0;
+        height: 3px;
         background: linear-gradient(90deg, #22c55e, #3b82f6);
     }
-    .mh-stat-icon { font-size: 1.5rem; margin-bottom: 4px; }
-    .mh-stat-num {
-        font-size: 2.1rem; font-weight: 900; color: var(--green) !important;
-        line-height: 1; letter-spacing: -1px;
-        text-shadow: 0 0 20px rgba(34,197,94,0.4);
-    }
-    .mh-stat-lbl {
-        font-size: 0.7rem; color: var(--muted) !important;
-        margin-top: 7px; letter-spacing: 0.8px;
-        text-transform: uppercase; font-weight: 800;
-    }
+    .mh-stat-icon { font-size: 1.3rem; margin-bottom: 2px; }
+    .mh-stat-num { font-size: 1.85rem; font-weight: 900; color: #22c55e !important; line-height: 1; letter-spacing: -1px; }
+    .mh-stat-lbl { font-size: 0.68rem; color: #8fa0bd !important; margin-top: 5px; letter-spacing: 0.6px; text-transform: uppercase; font-weight: 700; }
 
     .mh-section-title {
-        font-size: 0.8rem; color: var(--muted) !important;
-        text-transform: uppercase; letter-spacing: 1.4px;
-        font-weight: 800; margin: 6px 0 10px 4px;
-        text-align: left; border-left: 3px solid var(--green);
-        padding-left: 10px;
+        font-size: 0.78rem;
+        color: #8fa0bd !important;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        font-weight: 700;
+        margin: 4px 0 8px 4px;
+        text-align: left;
+        border-left: 3px solid #22c55e;
+        padding-left: 8px;
     }
 
+    /* Misafir nav butonları büyük */
     .st-key-fa_misafir_nav .stButton button {
-        height: 80px !important; font-size: 1.05rem !important;
-        font-weight: 900 !important; border-radius: 18px !important;
-        letter-spacing: 0.5px;
-        box-shadow: 0 10px 28px rgba(34,197,94,0.3) !important;
-        transition: all 0.25s ease;
+        height: 72px !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+        border-radius: 16px !important;
+        letter-spacing: 0.4px;
+        box-shadow: 0 8px 24px rgba(34,197,94,0.25) !important;
+        transition: all 0.2s ease;
     }
     .st-key-fa_misafir_nav .stButton button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 16px 40px rgba(34,197,94,0.5) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(34,197,94,0.4) !important;
     }
     .st-key-fa_misafir_nav .stButton button p {
-        font-size: 1.05rem !important; font-weight: 900 !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
     }
 
     .mh-info {
-        background: linear-gradient(145deg, rgba(19,28,46,0.7), rgba(11,18,32,0.9));
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 14px 16px;
-        margin-top: 18px;
-        font-size: 0.8rem; color: var(--muted) !important;
-        line-height: 1.7;
+        background: linear-gradient(145deg, rgba(19,28,46,0.6), rgba(11,18,32,0.8));
+        border: 1px solid #23304a;
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin-top: 14px;
+        font-size: 0.76rem;
+        color: #8fa0bd !important;
+        line-height: 1.6;
     }
-    .mh-info b { color: var(--green) !important; }
-
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: var(--bg-1); }
-    ::-webkit-scrollbar-thumb { background: #2a3a56; border-radius: 99px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--green); }
-
-    section[data-testid="stSidebar"] { background: var(--bg-1) !important; border-right: 1px solid var(--border); }
-
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(12px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .stApp .fa-card, .stApp .fa-hero, .stApp .fa-mk, .mh-stat {
-        animation: fadeInUp 0.4s ease-out;
-    }
+    .mh-info b { color: #22c55e !important; }
 </style>
 """, unsafe_allow_html=True)
-
 
 # ==========================================
 # DOSYALAR
@@ -639,7 +367,6 @@ ESIK_ORTA = 55.0
 ESIK_BELIRSIZ = 50.0
 
 MONTE_CARLO_N = 10000
-
 
 # ==========================================
 # VARSAYILAN VERİ
@@ -712,7 +439,6 @@ VARSAYILAN_VERI = {
 MAX_GOL = 8
 BELIRSIZLIK = 0.20
 
-
 # ==========================================
 # SESSION STATE
 # ==========================================
@@ -731,10 +457,8 @@ if "manuel_bekleyen" not in st.session_state: st.session_state.manuel_bekleyen =
 if "tek_silme_onay" not in st.session_state: st.session_state.tek_silme_onay = None
 if "tek_silme_gelecek" not in st.session_state: st.session_state.tek_silme_gelecek = None
 
-# GİRİŞ ARTIK DEFAULT OLARAK MİSAFİR
-if "giris_yapildi" not in st.session_state: st.session_state.giris_yapildi = True
-if "rol" not in st.session_state: st.session_state.rol = "misafir"
-if "admin_login_acik" not in st.session_state: st.session_state.admin_login_acik = False
+if "giris_yapildi" not in st.session_state: st.session_state.giris_yapildi = False
+if "rol" not in st.session_state: st.session_state.rol = None
 
 if "esikler" not in st.session_state:
     st.session_state.esikler = ayarlar_yukle()
@@ -1095,7 +819,6 @@ MANUEL_ALANLAR = {
     "Atılan Gol": [("atilan_ev", "Atılan Gol (Ev)", "float", 0.0), ("atilan_dep", "Atılan Gol (Dep)", "float", 0.0)],
     "Yenen Gol": [("yenen_ev", "Yenen Gol (Ev)", "float", 0.0), ("yenen_dep", "Yenen Gol (Dep)", "float", 0.0)],
 }
-
 
 # ==========================================
 # SPORTYTRADER ÇIKARICI
@@ -1519,7 +1242,7 @@ def matristen_olasilik(matris, max_gol=MAX_GOL):
 
 
 def veri_yeterli_mi(v):
-    onemli = [v.get("atilan_ev", 0), v.get("atilan_dep", 0), v.get("yenen_ev", 0), v.get("yenen_dep", 0)]
+    onemli = [v["atilan_ev"], v["atilan_dep"], v["yenen_ev"], v["yenen_dep"]]
     return sum(1 for x in onemli if x > 0) >= 2
 
 
@@ -1766,60 +1489,39 @@ def sonuc_hesapla(kayit):
 
 
 # ==========================================
-# YORUM (GÜVENLİ - .get() KULLANIR)
+# YORUM
 # ==========================================
 def detayli_analiz_yorumu(v):
     yorumlar = []
-    ppg = v.get("ppg_ev", 0.0)
-    mpg = v.get("mpg_dep", 0.0)
+    ppg, mpg = v["ppg_ev"], v["mpg_dep"]
+    fark = ppg - mpg
+    if ppg >= 2.0 and mpg <= 1.0:
+        txt = f"Ev sahibi evinde mükemmel form (**PPG {ppg:.2f}**), deplasman zayıf (**MPG {mpg:.2f}**)."
+    elif fark >= 0.7: txt = f"Ev sahibi form olarak önde (**PPG {ppg:.2f}** vs **{mpg:.2f}**)."
+    elif fark <= -0.7: txt = f"Deplasman form olarak önde (**MPG {mpg:.2f}** vs **{ppg:.2f}**)."
+    else: txt = f"Form dengeli (**PPG {ppg:.2f}** vs **MPG {mpg:.2f}**)."
+    yorumlar.append(("📈 FORM", txt))
 
-    if ppg > 0 or mpg > 0:
-        fark = ppg - mpg
-        if ppg >= 2.0 and mpg <= 1.0:
-            txt = f"Ev sahibi evinde mükemmel form (**PPG {ppg:.2f}**), deplasman zayıf (**MPG {mpg:.2f}**)."
-        elif fark >= 0.7:
-            txt = f"Ev sahibi form olarak önde (**PPG {ppg:.2f}** vs **{mpg:.2f}**)."
-        elif fark <= -0.7:
-            txt = f"Deplasman form olarak önde (**MPG {mpg:.2f}** vs **{ppg:.2f}**)."
-        else:
-            txt = f"Form dengeli (**PPG {ppg:.2f}** vs **MPG {mpg:.2f}**)."
-        yorumlar.append(("📈 FORM", txt))
-
-    s_ev = v.get("siralama_ev", 0)
-    s_dep = v.get("siralama_dep", 0)
+    s_ev, s_dep = v["siralama_ev"], v["siralama_dep"]
     if s_ev > 0 and s_dep > 0:
         fark_sira = s_dep - s_ev
-        if fark_sira >= 8:
-            txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. **{fark_sira} basamak** ciddi fark."
-        elif fark_sira >= 3:
-            txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. Ev sahibi üstün."
-        elif fark_sira <= -8:
-            txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman **{abs(fark_sira)} basamak** yukarıda."
-        else:
-            txt = f"Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**)."
+        if fark_sira >= 8: txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. **{fark_sira} basamak** ciddi fark."
+        elif fark_sira >= 3: txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. Ev sahibi üstün."
+        elif fark_sira <= -8: txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman **{abs(fark_sira)} basamak** yukarıda."
+        else: txt = f"Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**)."
         yorumlar.append(("🏆 SIRALAMA", txt))
 
-    at_ev = v.get("atilan_ev", 0.0)
-    at_dep = v.get("atilan_dep", 0.0)
-    if at_ev > 0 or at_dep > 0:
-        if at_ev - at_dep >= 0.6:
-            txt = f"Ev sahibi maç başına **{at_ev:.1f}** gol atıyor, deplasman **{at_dep:.1f}**."
-        elif at_ev - at_dep <= -0.6:
-            txt = f"Deplasman maç başına **{at_dep:.1f}** gol atıyor, ev sahibi **{at_ev:.1f}**."
-        else:
-            txt = f"Atılan goller benzer (Ev **{at_ev:.1f}** / Dep **{at_dep:.1f}**)."
-        yorumlar.append(("⚽ ATILAN GOL", txt))
+    at_ev, at_dep = v["atilan_ev"], v["atilan_dep"]
+    if at_ev - at_dep >= 0.6: txt = f"Ev sahibi maç başına **{at_ev:.1f}** gol atıyor, deplasman **{at_dep:.1f}**."
+    elif at_ev - at_dep <= -0.6: txt = f"Deplasman maç başına **{at_dep:.1f}** gol atıyor, ev sahibi **{at_ev:.1f}**."
+    else: txt = f"Atılan goller benzer (Ev **{at_ev:.1f}** / Dep **{at_dep:.1f}**)."
+    yorumlar.append(("⚽ ATILAN GOL", txt))
 
-    y_ev = v.get("yenen_ev", 0.0)
-    y_dep = v.get("yenen_dep", 0.0)
-    if y_ev > 0 or y_dep > 0:
-        if y_dep - y_ev >= 0.7:
-            txt = f"Ev sahibi savunması sağlam (**{y_ev:.1f}**), deplasman zayıf (**{y_dep:.1f}**)."
-        elif y_dep - y_ev <= -0.7:
-            txt = f"Deplasman savunması sağlam (**{y_dep:.1f}**), ev sahibi zayıf (**{y_ev:.1f}**)."
-        else:
-            txt = f"Savunmalar benzer (Ev **{y_ev:.1f}** / Dep **{y_dep:.1f}**)."
-        yorumlar.append(("🛡️ YENEN GOL", txt))
+    y_ev, y_dep = v["yenen_ev"], v["yenen_dep"]
+    if y_dep - y_ev >= 0.7: txt = f"Ev sahibi savunması sağlam (**{y_ev:.1f}**), deplasman zayıf (**{y_dep:.1f}**)."
+    elif y_dep - y_ev <= -0.7: txt = f"Deplasman savunması sağlam (**{y_dep:.1f}**), ev sahibi zayıf (**{y_ev:.1f}**)."
+    else: txt = f"Savunmalar benzer (Ev **{y_ev:.1f}** / Dep **{y_dep:.1f}**)."
+    yorumlar.append(("🛡️ YENEN GOL", txt))
 
     return yorumlar
 
@@ -2233,6 +1935,8 @@ def nav_git(hedef):
 
 
 def nav_bar():
+    if st.session_state.sayfa == "giris":
+        return
     try:
         kutu = st.container(key="fa_nav")
     except TypeError:
@@ -2254,100 +1958,93 @@ def nav_bar():
 
 
 # ==========================================
-# ADMİN GİRİŞ EKRANI
+# GİRİŞ EKRANI (MODERN)
 # ==========================================
-def admin_giris_ekrani():
+def giris_ekrani():
     st.markdown("""
         <div class="login-hero">
-            <div class="login-logo">👑</div>
-            <h1 class="login-title">Admin Girişi</h1>
-            <p class="login-subtitle">Yönetici paneline erişim</p>
+            <div class="login-logo">⚽</div>
+            <h1 class="login-title">Futbol Analiz Pro</h1>
+            <p class="login-subtitle">Akıllı maç analizi ve tahmin motoru</p>
         </div>
     """, unsafe_allow_html=True)
 
-    with st.form("admin_giris_form"):
+    with st.form("giris_form"):
         sifre = st.text_input(
             "🔐 Admin Şifresi",
             type="password",
-            key="admin_sifre_input",
+            key="sifre_input",
             placeholder="Şifreni gir..."
         )
 
-        col_a, col_b = st.columns(2)
-        with col_a:
-            giris_btn = st.form_submit_button(
-                "✅ Giriş Yap",
-                use_container_width=True,
-                type="primary"
-            )
-        with col_b:
-            iptal_btn = st.form_submit_button(
-                "⬅️ Geri Dön",
-                use_container_width=True
-            )
+        admin_btn = st.form_submit_button(
+            "👑  Admin Girişi",
+            use_container_width=True,
+            type="primary"
+        )
 
-        if giris_btn:
+        st.markdown('<div class="login-divider">VEYA</div>', unsafe_allow_html=True)
+
+        misafir_btn = st.form_submit_button(
+            "👤  Misafir Olarak Devam Et",
+            use_container_width=True
+        )
+
+        if admin_btn:
             if sifre == ADMIN_SIFRE:
+                st.session_state.giris_yapildi = True
                 st.session_state.rol = "admin"
-                st.session_state.admin_login_acik = False
                 st.session_state.sayfa = "giris"
                 st.rerun()
             else:
                 st.error("❌ Yanlış şifre. Tekrar deneyin.")
 
-        if iptal_btn:
-            st.session_state.admin_login_acik = False
+        if misafir_btn:
+            st.session_state.giris_yapildi = True
+            st.session_state.rol = "misafir"
+            st.session_state.sayfa = "giris"
             st.rerun()
 
     st.markdown("""
-        <div class="login-footer">© <b>Futbol Analiz Pro</b> • Yönetici Erişimi</div>
+        <div class="login-features">
+            <span class="lf-chip">🎯 1X2</span>
+            <span class="lf-chip">⚽ Üst / Alt 2.5</span>
+            <span class="lf-chip">🤝 KG Var / Yok</span>
+            <span class="lf-chip">🔬 Backtest</span>
+            <span class="lf-chip">📊 İstatistik</span>
+        </div>
+        <div class="login-footer">© <b>Futbol Analiz Pro</b> • Bilgi amaçlıdır • Kesin sonuç garantisi yoktur</div>
     """, unsafe_allow_html=True)
 
 
-# ==========================================
-# ÜST BAR (Giriş / Çıkış)
-# ==========================================
 def ust_bar():
-    c1, c2 = st.columns([4, 1])
+    c1, c2 = st.columns([3, 1])
     with c1:
         if admin_mi():
-            st.markdown(
-                '<div style="padding:8px 0; font-size:0.85rem; color:#22c55e; font-weight:700;">'
-                '👑 Admin Modu</div>',
-                unsafe_allow_html=True
-            )
+            st.markdown("👑 **Admin Modu**")
         else:
-            st.markdown(
-                '<div style="padding:8px 0; font-size:0.85rem; color:#8fa0bd; font-weight:600;">'
-                '👤 Misafir Modu</div>',
-                unsafe_allow_html=True
-            )
+            st.markdown("👤 **Misafir Modu**")
     with c2:
-        if admin_mi():
-            if st.button("🚪 Çıkış", use_container_width=True, key="cikis_btn"):
-                st.session_state.rol = "misafir"
-                st.session_state.admin_login_acik = False
-                st.session_state.sayfa = "giris"
-                st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
-                st.session_state.tek_silme_onay = None
-                st.session_state.tek_silme_gelecek = None
-                st.session_state.silme_onay = False
-                st.session_state.aktif_kayit_idx = None
-                st.session_state.aktif_gelecek_idx = None
-                st.session_state.bt_sonuc = None
-                st.session_state.bt_detaylar = []
-                st.rerun()
-        else:
-            if st.button("🔐 Giriş", use_container_width=True, key="giris_btn", type="primary"):
-                st.session_state.admin_login_acik = True
-                st.rerun()
+        if st.button("🚪 Çıkış", use_container_width=True, key="cikis_btn"):
+            st.session_state.giris_yapildi = False
+            st.session_state.rol = None
+            st.session_state.sayfa = "giris"
+            st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
+            st.session_state.tek_silme_onay = None
+            st.session_state.tek_silme_gelecek = None
+            st.session_state.silme_onay = False
+            st.session_state.aktif_kayit_idx = None
+            st.session_state.aktif_gelecek_idx = None
+            st.session_state.bt_sonuc = None
+            st.session_state.bt_detaylar = []
+            st.rerun()
 
 
 # ==========================================
 # MİSAFİR AÇIKLAMA BÖLÜMÜ
 # ==========================================
 def misafir_aciklama():
-    with st.expander("📖 Uygulamayı Tanı ve Kuralları Oku", expanded=False):
+    with st.expander("📖 **Uygulamayı Tanı ve Kuralları Oku**", expanded=False):
         st.markdown("""
 ### ⚽ Futbol Analiz Pro Nedir?
 
@@ -2519,8 +2216,8 @@ Kısa vadede kayıp normal. Önemli olan **ortalamadır.**
 # ==========================================
 # UYGULAMA BAŞLANGIÇ
 # ==========================================
-if st.session_state.admin_login_acik and not admin_mi():
-    admin_giris_ekrani()
+if not st.session_state.giris_yapildi:
+    giris_ekrani()
     st.stop()
 
 ust_bar()
@@ -2614,6 +2311,7 @@ if st.session_state.sayfa == "giris":
             st.session_state.sayfa = "ayarlar"
             st.rerun()
     else:
+        # ===== MODERN MİSAFİR ANA SAYFA =====
         gecmis_sayi = len(st.session_state.gecmis_analizler)
         gelecek_sayi = len(st.session_state.gelecek_analizler)
 
@@ -3277,22 +2975,15 @@ elif st.session_state.sayfa == "sonuc":
         d = None
 
     with st.expander("🔍 Geniş Kapsamlı Analiz", expanded=False):
-        genel_yorumlar = detayli_analiz_yorumu(v)
-        if genel_yorumlar:
-            for baslik, metin in genel_yorumlar:
-                st.markdown(f"**{baslik}**")
-                st.markdown(metin)
-                st.markdown("")
-        else:
-            st.caption("ℹ️ Genel form/sıralama verisi yok.")
+        for baslik, metin in detayli_analiz_yorumu(v):
+            st.markdown(f"**{baslik}**"); st.markdown(metin); st.markdown("")
 
         y1x2 = birx_iki_detayli_aciklama(v, a)
         if y1x2:
             st.markdown("---")
             for satir in y1x2:
                 if satir.startswith("🎯"):
-                    st.markdown(f"**{satir}**")
-                    st.markdown("")
+                    st.markdown(f"### {satir}")
                 else:
                     st.markdown(satir)
 
@@ -3301,8 +2992,7 @@ elif st.session_state.sayfa == "sonuc":
             st.markdown("---")
             for satir in gol_aciklama:
                 if satir.startswith("🎯"):
-                    st.markdown(f"**{satir}**")
-                    st.markdown("")
+                    st.markdown(f"### {satir}")
                 else:
                     st.markdown(satir)
 
@@ -3311,13 +3001,12 @@ elif st.session_state.sayfa == "sonuc":
             st.markdown("---")
             for satir in kg_aciklama:
                 if satir.startswith("🤝"):
-                    st.markdown(f"**{satir}**")
-                    st.markdown("")
+                    st.markdown(f"### {satir}")
                 else:
                     st.markdown(satir)
 
-        if not y1x2 and not gol_aciklama and not kg_aciklama and not genel_yorumlar:
-            st.info("ℹ️ Gösterilecek analiz yorumu yok.")
+        if not gol_aciklama and not kg_aciklama:
+            st.info("ℹ️ Her iki market de pozitif değil.")
 
     st.divider()
     st.markdown("## 🏆 FİNAL ÖNERİ")
