@@ -390,17 +390,16 @@ MANUEL_ALANLAR = {
 }
 
 # ==========================================
-# GÜNCELLENMİŞ PLAYWRIGHT SCRAPER (/betting-tips/football/)
+# GÜNCELLENMİŞ PLAYWRIGHT SCRAPER (POP-UP & GELİŞMİŞ BEKLEME DESTEKLİ)
 # ==========================================
 def gunun_maclarini_otomatik_cek():
     """
-    Playwright kullanarak SportyTrader'ın güncel bahis tahminleri
-    sayfasından (betting-tips/football) maç verilerini çeker.
+    Playwright kullanarak SportyTrader üzerindeki pop-up engellerini ve
+    dinamik yüklemeleri aşarak günün maçlarını çeker.
     """
     target_url = "https://www.sportytrader.com/en/betting-tips/football/"
     
     try:
-        # Streamlit Cloud üzerinde otomatik indirme komutunu çalıştır
         try:
             subprocess.run(["playwright", "install", "chromium"], check=False)
         except Exception:
@@ -413,47 +412,46 @@ def gunun_maclarini_otomatik_cek():
                 browser = p.chromium.launch(headless=True, executable_path="/usr/bin/chromium")
 
             context = browser.new_context(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-                viewport={'width': 1280, 'height': 800}
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                viewport={'width': 1366, 'height': 768}
             )
             page = context.new_page()
             
             # Sayfaya git ve yüklenmesini bekle
-            page.goto(target_url, wait_until="domcontentloaded", timeout=60000)
-            
-            # Dinamik içeriğin (lazy-load) tetiklenmesi için sayfayı aşağı kaydır
-            page.evaluate("window.scrollBy(0, 1000)")
-            time.sleep(3)
-            
+            page.goto(target_url, wait_until="networkidle", timeout=60000)
+            time.sleep(2)
+
+            # Pop-up veya çerez onay pencerelerini kapatmak için Esc gönder/tıkla
+            try:
+                page.keyboard.press("Escape")
+                if page.is_visible("button#onetrust-accept-btn-handler"):
+                    page.click("button#onetrust-accept-btn-handler", timeout=3000)
+            except Exception:
+                pass
+
+            # Sayfayı yavaşça aşağı kaydırarak maç kartlarının yüklenmesini sağla (Lazy Loading)
+            for _ in range(4):
+                page.mouse.wheel(0, 800)
+                time.sleep(1)
+
             soup = BeautifulSoup(page.content(), "html.parser")
             
             mac_linkleri = []
             
-            # /betting-tips/football/ altındaki maç tahmin linklerini tara
+            # Sitedeki tüm tıklanabilir maç bağlantılarını bul
             for a_tag in soup.find_all('a', href=True):
                 href = a_tag['href']
                 
-                # Tahmin detay link formatı: /en/betting-tips/takim1-takim2-12345/
-                if "/betting-tips/" in href and href.count("-") >= 2:
-                    # Kategori, makale veya genel sayfaları filtrele
-                    if not any(x in href for x in ["/league/", "/championship/", "/bookmaker/", "/football/"]):
+                # Tahmin bağlantısı kontrolü
+                if "/betting-tips/" in href and href != "/en/betting-tips/football/":
+                    # Kategori ve tanıtım sayfalarını hariç tut
+                    if not any(x in href for x in ["/league/", "/bookmaker/", "/bonus/", "/news/"]):
                         if href not in mac_linkleri:
-                            mac_linkleri.append(href)
-                    elif "/betting-tips/football/" in href and href != "/en/betting-tips/football/":
-                        if href not in mac_linkleri and href.count("-") >= 3:
-                            mac_linkleri.append(href)
-
-            if not mac_linkleri:
-                # Alternatif geniş seçici kontrolü
-                for a_tag in soup.select('a[href*="-"]'):
-                    href = a_tag.get('href', '')
-                    if "/betting-tips/" in href and href not in mac_linkleri:
-                        if href != "/en/betting-tips/football/":
                             mac_linkleri.append(href)
 
             if not mac_linkleri:
                 browser.close()
-                return [], "Günün fikstüründe çekilecek uygun maç bulunamadı."
+                return [], "Günün fikstüründe çekilecek uygun maç bulunamadı. (Sitede aktif maç veya link yapısı uyumsuz)"
                 
             cekilen_veri_listesi = []
             
@@ -894,7 +892,7 @@ if st.session_state.sayfa == "giris":
         with col_bt3: gelecek_btn = st.button("🔮 Gelecek", use_container_width=True)
 
         if analiz_btn:
-            if not yapistir_metni.strip(): st.warning("⚠️ Önce metni yapıştırın.")
+            if not yapistir_metni.strip(): st.warning("⚠️️ Önce metni yapıştırın.")
             else:
                 cikan, okunamayanlar = metinden_veri_cikar(yapistir_metni)
                 if not cikan: st.error("❌ Veri çıkarılamadı.")
