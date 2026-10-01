@@ -37,22 +37,23 @@ def json_dosyalarini_kontrol_et():
             json.dump([], f)
 
 def saat_ve_tarih_ayarla(veri_sozlugu):
-    """Saati alır ve hatasız bir şekilde +2 saat ekler"""
+    """Tarih ve saate timedelta kullanarak hatasız tam +2 saat ekler"""
     try:
-        mevcut_saat = veri_sozlugu.get("saat", "00:00")
-        if ":" in mevcut_saat:
-            parcalar = mevcut_saat.split(":")
-            saat = int(parcalar[0]) + 2
-            dakika = int(parcalar[1])
-            if saat >= 24:
-                saat -= 24
-            veri_sozlugu["saat"] = f"{saat:02d}:{dakika:02d}"
+        tarih_str = veri_sozlugu.get("tarih", "01.01.2026")
+        saat_str = veri_sozlugu.get("saat", "00:00")
+        
+        # Mevcut tarih ve saati birleştirip 2 saat ekliyoruz
+        dt = datetime.strptime(f"{tarih_str} {saat_str}", "%d.%m.%Y %H:%M")
+        dt_yeni = dt + timedelta(hours=2)
+        
+        veri_sozlugu["tarih"] = dt_yeni.strftime("%d.%m.%Y")
+        veri_sozlugu["saat"] = dt_yeni.strftime("%H:%M")
     except Exception:
         pass
     return veri_sozlugu
 
 def mutaring_calistir():
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Mutating.com tam kapsamlı veri çekme ve eşik analizi başladı...")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Mutating.com veri çekme ve saat ayarı başlatıldı...")
     json_dosyalarini_kontrol_et()
     
     try:
@@ -104,6 +105,7 @@ def mutaring_calistir():
                     v = copy.deepcopy(VARSAYILAN_VERI)
                     v.update(cikan_veri)
                     
+                    # Saat ve tarih +2 saat hatasız güncelleniyor
                     v = saat_ve_tarih_ayarla(v)
                     
                     a = analiz_hesapla(v)
@@ -115,7 +117,7 @@ def mutaring_calistir():
                     ust_25 = a["ust_25"]; alt_25 = a["alt_25"]
                     kg_var = a["kg_var_model"]; kg_yok = a["kg_yok_model"]
 
-                    en_yuksek_1x2 = max([("1", p1), ("X", px), (_, p2) if False else ("2", p2)], key=lambda x: x[1])
+                    en_yuksek_1x2 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
                     sec_1x2, yuzde_1x2 = en_yuksek_1x2
                     poz_1x2 = yuzde_1x2 >= esik_1x2_al(sec_1x2)
 
@@ -124,7 +126,7 @@ def mutaring_calistir():
                     gol_poz = gol_yuzde >= gol_esik
 
                     kg_yuzde = kg_var if kg_var >= kg_yok else kg_yok
-                    kg_esik = esik_al("kg_var") if kg_var >= kg_yok else esik_al("kg_yok")
+                    kg_esik = esik_al("kg_var") if kg_var >= kg_yok else kg_al("kg_yok") if "kg_al" in globals() else 50
                     kg_poz = kg_yuzde >= kg_esik
 
                     kaydet_mi = gol_poz or kg_poz or poz_1x2
@@ -146,6 +148,7 @@ def mutaring_calistir():
             except Exception as e:
                 continue
 
+        # --- SIRALAMA: En erken maç en üstte, geceye doğru aşağıya doğru sıralanır ---
         def sira_anahtari(item):
             try:
                 tarih_str = item["veri"].get("tarih", "01.01.2026")
@@ -154,11 +157,11 @@ def mutaring_calistir():
             except Exception:
                 return datetime.max
 
-        guncellenen_gelecek.sort(key=sira_anahtari)
+        guncellenen_gelecek.sort(key=sira_anahtari, reverse=False)
 
         gelecek_kaydet(guncellenen_gelecek)
         gecmis_kaydet(guncellenen_gecmis)
-        print("✅ Tüm veriler başarıyla işlendi, sıralandı ve kaydedildi.")
+        print("✅ Saatler düzeltildi, sıralama yapıldı ve veriler kaydedildi.")
 
     except Exception as e:
         print(f"❌ Hata: {e}")
