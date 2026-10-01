@@ -114,8 +114,6 @@ st.markdown("""
     .mh-stat-num { font-size: 1.85rem; font-weight: 900; color: #22c55e !important; line-height: 1; }
     .mh-stat-lbl { font-size: 0.68rem; color: #8fa0bd !important; margin-top: 5px; text-transform: uppercase; font-weight: 700; }
     .mh-section-title { font-size: 0.78rem; color: #8fa0bd !important; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; margin: 4px 0 8px 4px; text-align: left; border-left: 3px solid #22c55e; padding-left: 8px; }
-    .st-key-fa_misafir_nav .stButton button { height: 72px !important; font-size: 1rem !important; font-weight: 800 !important; border-radius: 16px !important; }
-    .st-key-fa_misafir_nav .stButton button p { font-size: 1rem !important; font-weight: 800 !important; }
     .mh-info { background: linear-gradient(145deg, rgba(19,28,46,0.6), rgba(11,18,32,0.8)); border: 1px solid #23304a; border-radius: 14px; padding: 12px 14px; margin-top: 14px; font-size: 0.76rem; color: #8fa0bd !important; line-height: 1.6; }
     .mh-info b { color: #22c55e !important; }
 </style>
@@ -239,8 +237,6 @@ if "tek_silme_onay" not in st.session_state: st.session_state.tek_silme_onay = N
 if "tek_silme_gelecek" not in st.session_state: st.session_state.tek_silme_gelecek = None
 if "tek_silme_gelecek_tahmin" not in st.session_state: st.session_state.tek_silme_gelecek_tahmin = None
 if "silme_onay" not in st.session_state: st.session_state.silme_onay = False
-if "silme_onay_gelecek" not in st.session_state: st.session_state.silme_onay_gelecek = False
-if "silme_onay_gelecek_tahmin" not in st.session_state: st.session_state.silme_onay_gelecek_tahmin = False
 if "giris_yapildi" not in st.session_state: st.session_state.giris_yapildi = False
 if "rol" not in st.session_state: st.session_state.rol = None
 if "esikler" not in st.session_state: st.session_state.esikler = ayarlar_yukle()
@@ -258,7 +254,7 @@ def esik_1x2_al(secim):
 # ÜLKE BAYRAK
 # ==========================================
 ULKE_BAYRAK = {
-    "switzerland": "🇨🇭", "isviçre": "🇨🇭", "england": "🏴󠁧󠁢󠁥󠁮󠁧", "ingiltere": "🏴",
+    "switzerland": "🇨🇭", "isviçre": "🇨🇭", "england": "🏴󠁧󠁢󠁥󠁮󠁧🏴", "ingiltere": "🏴",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "italy": "🇮🇹", "italya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪", "france": "🇫🇷", "fransa": "🇫🇷",
     "netherlands": "🇳🇱", "hollanda": "🇳🇱", "portugal": "🇵🇹", "portekiz": "🇵🇹",
@@ -796,7 +792,7 @@ Sadece **bilgilendirme amaçlıdır.** Kesin sonuç garantisi **YOKTUR.**
 
 ---
 
-### 🎯 EŞİKLER NEDİR? NEDEN KULLANILIR?
+### 🎯 EŞİKLER NEDİR?
 
 **Eşik** = Bir tahminin "oynanabilir" sayılması için geçmesi gereken minimum yüzde.
 
@@ -807,7 +803,7 @@ Sadece **bilgilendirme amaçlıdır.** Kesin sonuç garantisi **YOKTUR.**
 - KG Var → %57
 - KG Yok → %72
 
-**Neden eşik?** Belirsiz maçları elemek için. Sadece yüksek olasılıklı maçlara odaklanılır.
+**Neden eşik?** Belirsiz maçları elemek için.
 
 ---
 
@@ -816,11 +812,9 @@ Sadece **bilgilendirme amaçlıdır.** Kesin sonuç garantisi **YOKTUR.**
 - **X** = Beraberlik
 - **2** = Deplasman kazanır
 
-En yüksek olasılıklı sonuç **en olası** sonuçtur. 1X2 en zor markettir.
-
 ---
 
-### 📊 GEÇMİŞ VERİLER NASIL OKUNUR?
+### 📊 GEÇMİŞ VERİLER
 - ✅ = Her iki tahmin de tuttu
 - 🟡 = Sadece biri tuttu
 - ❌ = İki tahmin de yanlış
@@ -830,25 +824,24 @@ En yüksek olasılıklı sonuç **en olası** sonuçtur. 1X2 en zor markettir.
 
 ### ⚠️ DİKKATLİ BAHİS KURALLARI
 
-**1. KAYBETMEYİ KABUL ET** — Hiçbir sistem %100 değildir.
-**2. BANKANI KORU** — Her bahis bankanın %2-5'i.
-**3. MARTINGALE YAPMA** — Kayıptan sonra 2 katı basma.
-**4. SADECE ÖNERİLERE OYNA** — Eşiği geçmeyen maçlara oynama.
-**5. HAFTALIK LİMİT KOY** — Örn: max 20 bahis.
-**6. KAYIP SERİSİNDE ARA VER** — 3-4 kayıp sonrası 2-3 gün mola.
-**7. KAZANCI ÇEK** — %30-50'sini hemen çek.
+**1. KAYBETMEYİ KABUL ET**
+**2. BANKANI KORU** — Her bahis bankanın %2-5'i
+**3. MARTINGALE YAPMA**
+**4. SADECE ÖNERİLERE OYNA**
+**5. HAFTALIK LİMİT KOY**
+**6. KAYIP SERİSİNDE ARA VER**
+**7. KAZANCI ÇEK**
 **8. ALKOL/SİNİR DURUMUNDA OYNAMA**
 
 ---
 
 ### 🚫 SORUMLULUK REDDİ
 
-- Bu uygulama **SADECE bilgi amaçlıdır.**
-- Hiçbir kayıptan **sorumlu değiliz.**
+- **SADECE bilgi amaçlıdır.**
 - **18 yaşından küçükler** bahis oynayamaz.
 - **Yeşilay Danışma: 115**
 
-**Bol şans! BU BİR ANALİZ, KUMAR DEĞİL.** 🍀
+**Bol şans! 🍀**
         """)
 
 
@@ -913,7 +906,6 @@ if st.session_state.sayfa == "giris":
         st.markdown("""
             <div class="mh-info">
                 💡 <b>İpucu:</b> "Tahmin Edilen Maçlar" bölümünde sadece <b>eşikleri geçen</b> maçlar listelenir.
-                Her maçta <b>1X2</b>, <b>Üst/Alt 2.5</b> ve <b>KG Var/Yok</b> tahminlerini görürsün.
             </div>
             <div class="mh-section-title" style="margin-top:20px;">BİLGİLENDİRME</div>
         """, unsafe_allow_html=True)
@@ -921,7 +913,7 @@ if st.session_state.sayfa == "giris":
 
         st.markdown("""
             <div class="login-footer" style="margin-top:24px;">
-                © <b>Futbol Analiz Pro</b> • Bilgi amaçlıdır • Kesin sonuç garantisi yoktur
+                © <b>Futbol Analiz Pro</b> • Bilgi amaçlıdır
             </div>
         """, unsafe_allow_html=True)
 
@@ -933,10 +925,8 @@ elif st.session_state.sayfa == "gecmis":
     st.markdown("<h1>📊 Geçmiş Maçlar</h1>", unsafe_allow_html=True)
     gec = st.session_state.gecmis_analizler
     toplam = len(gec)
-
     ist = oneri_istatistik_guncel(gec)
     st.markdown("### 🎯 ÖNERİ İSTATİSTİKLERİ")
-    st.caption("Güncel eşiklerle yeniden hesaplanır")
     c_1, c_2, c_3 = st.columns(3)
     with c_1:
         st.markdown(istat_karti("🎯 1X2", ist["1x2"],
@@ -950,10 +940,8 @@ elif st.session_state.sayfa == "gecmis":
         st.markdown(istat_karti("🤝 KG Var/Yok", ist["kg"],
             f"Var %{esik_al('kg_var'):.0f} • Yok %{esik_al('kg_yok'):.0f}"),
             unsafe_allow_html=True)
-
     st.divider()
     st.markdown(f"### ⚽ Maçlar ({toplam})")
-
     if not gec:
         st.info("ℹ️ Kayıt yok.")
     for i, g in enumerate(reversed(gec)):
@@ -987,71 +975,19 @@ elif st.session_state.sayfa == "gecmis":
                     if st.button("❌ İptal", key=f"ghayir_{ig}", use_container_width=True):
                         st.session_state.tek_silme_onay = None; st.rerun()
         st.divider()
-
-    if admin_mi():
-        st.markdown("### 💾 Yedekleme (Geçmiş)")
-        cind, cyuk = st.columns(2)
-        with cind:
-            st.download_button(
-                label=f"📥 Geçmişi İndir ({toplam} maç)",
-                data=json.dumps(st.session_state.gecmis_analizler, ensure_ascii=False, indent=2),
-                file_name=f"gecmis_{toplam}mac.json",
-                mime="application/json",
-                use_container_width=True,
-                key="ind_gecmis"
-            )
-        with cyuk:
-            yuk = st.file_uploader("📤 Geçmişi Yükle (JSON)", type=["json"], key="yuk_gecmis")
-            if yuk is not None:
-                try:
-                    veri = json.loads(yuk.read().decode("utf-8"))
-                    if isinstance(veri, list):
-                        st.session_state.gecmis_analizler = veri
-                        gecmis_kaydet(veri)
-                        st.success(f"✅ {len(veri)} maç yüklendi!")
-                        st.rerun()
-                    else:
-                        st.error("❌ Format hatalı.")
-                except Exception as ex:
-                    st.error(f"❌ Hata: {ex}")
-
-        st.divider()
-        ct, cg = st.columns(2)
-        with ct:
-            if st.button("🗑️ Tüm Geçmişi Temizle", use_container_width=True, key="g_temizle"):
-                st.session_state.silme_onay = True; st.rerun()
-        with cg:
-            if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="g_geri"):
-                st.session_state.sayfa = "giris"; st.rerun()
-        if st.session_state.silme_onay:
-            st.warning("⚠️ Tüm geçmiş silinecek. Emin misin?")
-            ce, ch = st.columns(2)
-            with ce:
-                if st.button("✅ Evet, Sil", key="g_sil_evet", use_container_width=True, type="primary"):
-                    st.session_state.gecmis_analizler = []
-                    try:
-                        if os.path.exists(GECMIS_DOSYA): os.remove(GECMIS_DOSYA)
-                    except Exception: pass
-                    st.session_state.silme_onay = False
-                    st.rerun()
-            with ch:
-                if st.button("❌ İptal", key="g_sil_hayir", use_container_width=True):
-                    st.session_state.silme_onay = False; st.rerun()
-    else:
-        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="g_geri_m"):
-            st.session_state.sayfa = "giris"; st.rerun()
+    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="g_geri"):
+        st.session_state.sayfa = "giris"; st.rerun()
 
 
 # ==========================================
-# GELECEK (Tüm oynanmamış — admin)
+# GELECEK
 # ==========================================
 elif st.session_state.sayfa == "gelecek":
     st.markdown("<h1>🔮 Gelecek Maçlar</h1>", unsafe_allow_html=True)
-    st.caption("Tüm oynanmamış maçlar. Eşiği geçenler 'Tahmin' bölümünde de görünür.")
+    st.caption("Tüm oynanmamış maçlar.")
     gel = st.session_state.gelecek_analizler
-    toplam_g = len(gel)
     if not gel:
-        st.info("ℹ️ Gelecek maç yok. Bot 2 saatte bir otomatik çalışır.")
+        st.info("ℹ️ Gelecek maç yok.")
     for i, g in enumerate(reversed(gel)):
         ig = len(gel) - 1 - i
         v = g["veri"]
@@ -1059,11 +995,8 @@ elif st.session_state.sayfa == "gelecek":
         try:
             a = analiz_hesapla(v); le = a["lam_ev"]; ld = a["lam_dep"]
         except Exception: le = ld = 0
-
         durum = mac_durum_etiketi(v)
-        if durum:
-            st.markdown(durum, unsafe_allow_html=True)
-
+        if durum: st.markdown(durum, unsafe_allow_html=True)
         st.markdown(mac_karti(te, td, False, 0, 0, le, ld, saat=v.get("saat", ""), ulke=v.get("ulke", ""), tarih=v.get("tarih", "")), unsafe_allow_html=True)
         th = mac_tahmin_karti(v, g)
         if th: st.markdown(th, unsafe_allow_html=True)
@@ -1092,49 +1025,19 @@ elif st.session_state.sayfa == "gelecek":
                     if st.button("❌ İptal", key=f"gghayir_{ig}", use_container_width=True):
                         st.session_state.tek_silme_gelecek = None; st.rerun()
         st.divider()
-
-    if admin_mi():
-        st.markdown("### 💾 Yedekleme (Gelecek)")
-        cind, cyuk = st.columns(2)
-        with cind:
-            st.download_button(
-                label=f"📥 Geleceği İndir ({toplam_g} maç)",
-                data=json.dumps(st.session_state.gelecek_analizler, ensure_ascii=False, indent=2),
-                file_name=f"gelecek_{toplam_g}mac.json",
-                mime="application/json",
-                use_container_width=True,
-                key="ind_gelecek"
-            )
-        with cyuk:
-            yuk = st.file_uploader("📤 Geleceği Yükle (JSON)", type=["json"], key="yuk_gelecek")
-            if yuk is not None:
-                try:
-                    veri = json.loads(yuk.read().decode("utf-8"))
-                    if isinstance(veri, list):
-                        st.session_state.gelecek_analizler = veri
-                        gelecek_kaydet(veri)
-                        st.success(f"✅ {len(veri)} maç yüklendi!")
-                        st.rerun()
-                    else:
-                        st.error("❌ Format hatalı.")
-                except Exception as ex:
-                    st.error(f"❌ Hata: {ex}")
-
-        st.divider()
-        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gel_geri"):
-            st.session_state.sayfa = "giris"; st.rerun()
+    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gel_geri"):
+        st.session_state.sayfa = "giris"; st.rerun()
 
 
 # ==========================================
-# GELECEK TAHMİN (Sadece eşiği geçenler)
+# GELECEK TAHMİN
 # ==========================================
 elif st.session_state.sayfa == "gelecek_tahmin":
     st.markdown("<h1>🎯 Tahmin Edilen Maçlar</h1>", unsafe_allow_html=True)
     st.caption("Sadece eşikleri geçen maçlar.")
     gel = st.session_state.gelecek_tahmin_analizler
-    toplam_g = len(gel)
     if not gel:
-        st.info("ℹ️ Şu an tahmin edilen maç yok. Bot 2 saatte bir otomatik çalışır.")
+        st.info("ℹ️ Tahmin edilen maç yok.")
     for i, g in enumerate(reversed(gel)):
         ig = len(gel) - 1 - i
         v = g["veri"]
@@ -1142,11 +1045,8 @@ elif st.session_state.sayfa == "gelecek_tahmin":
         try:
             a = analiz_hesapla(v); le = a["lam_ev"]; ld = a["lam_dep"]
         except Exception: le = ld = 0
-
         durum = mac_durum_etiketi(v)
-        if durum:
-            st.markdown(durum, unsafe_allow_html=True)
-
+        if durum: st.markdown(durum, unsafe_allow_html=True)
         st.markdown(mac_karti(te, td, False, 0, 0, le, ld, saat=v.get("saat", ""), ulke=v.get("ulke", ""), tarih=v.get("tarih", "")), unsafe_allow_html=True)
         th = mac_tahmin_karti(v, g)
         if th: st.markdown(th, unsafe_allow_html=True)
@@ -1182,40 +1082,8 @@ elif st.session_state.sayfa == "gelecek_tahmin":
                 st.session_state.aktif_gelecek_idx = ig
                 st.session_state.sayfa = "sonuc"; st.rerun()
         st.divider()
-
-    if admin_mi():
-        st.markdown("### 💾 Yedekleme (Tahmin)")
-        cind, cyuk = st.columns(2)
-        with cind:
-            st.download_button(
-                label=f"📥 Tahminleri İndir ({toplam_g} maç)",
-                data=json.dumps(st.session_state.gelecek_tahmin_analizler, ensure_ascii=False, indent=2),
-                file_name=f"tahmin_{toplam_g}mac.json",
-                mime="application/json",
-                use_container_width=True,
-                key="ind_tahmin"
-            )
-        with cyuk:
-            yuk = st.file_uploader("📤 Tahminleri Yükle (JSON)", type=["json"], key="yuk_tahmin")
-            if yuk is not None:
-                try:
-                    veri = json.loads(yuk.read().decode("utf-8"))
-                    if isinstance(veri, list):
-                        st.session_state.gelecek_tahmin_analizler = veri
-                        gelecek_tahmin_kaydet(veri)
-                        st.success(f"✅ {len(veri)} maç yüklendi!")
-                        st.rerun()
-                    else:
-                        st.error("❌ Format hatalı.")
-                except Exception as ex:
-                    st.error(f"❌ Hata: {ex}")
-
-        st.divider()
-        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gt_geri"):
-            st.session_state.sayfa = "giris"; st.rerun()
-    else:
-        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gt_geri_m"):
-            st.session_state.sayfa = "giris"; st.rerun()
+    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gt_geri"):
+        st.session_state.sayfa = "giris"; st.rerun()
 
 
 # ==========================================
@@ -1224,68 +1092,49 @@ elif st.session_state.sayfa == "gelecek_tahmin":
 elif st.session_state.sayfa == "backtest":
     if not admin_mi():
         st.error("❌ Sadece admin.")
-        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary"):
-            st.session_state.sayfa = "giris"; st.rerun()
         st.stop()
-
     st.markdown("<h1>🔬 Backtest</h1>", unsafe_allow_html=True)
-    st.caption("Geçmiş maçlarda seçtiğin marketleri test et.")
-
     gec = st.session_state.gecmis_analizler
     if not gec:
         st.warning("⚠️ Geçmiş maç yok.")
-        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary"):
-            st.session_state.sayfa = "giris"; st.rerun()
         st.stop()
-
     st.markdown("### ⚙️ Test Seçenekleri")
     with st.expander("Marketleri ve Eşikleri Ayarla", expanded=True):
         c1, c2, c3 = st.columns(3)
         with c1:
-            st.markdown("**🎯 Maç Sonucu**")
             sec_1x2 = st.checkbox("1X2", value=True, key="bt_1x2")
-            esik_bt_1 = st.slider("1 eşiği %", 0, 100, 55, 1, key="bt_e1")
-            esik_bt_x = st.slider("X eşiği %", 0, 100, 55, 1, key="bt_ex")
-            esik_bt_2 = st.slider("2 eşiği %", 0, 100, 55, 1, key="bt_e2")
+            esik_bt_1 = st.slider("1 %", 0, 100, 55, 1, key="bt_e1")
+            esik_bt_x = st.slider("X %", 0, 100, 55, 1, key="bt_ex")
+            esik_bt_2 = st.slider("2 %", 0, 100, 55, 1, key="bt_e2")
         with c2:
-            st.markdown("**🤝 KG**")
             sec_kg_var = st.checkbox("KG Var", value=True, key="bt_kgv")
-            esik_kg_var = st.slider("KG Var eşiği %", 0, 100, 57, 1, key="bt_kgve")
+            esik_kg_var = st.slider("KG Var %", 0, 100, 57, 1, key="bt_kgve")
             sec_kg_yok = st.checkbox("KG Yok", value=True, key="bt_kgy")
-            esik_kg_yok = st.slider("KG Yok eşiği %", 0, 100, 72, 1, key="bt_kgye")
+            esik_kg_yok = st.slider("KG Yok %", 0, 100, 72, 1, key="bt_kgye")
         with c3:
-            st.markdown("**⚽ Gol**")
             sec_ust = st.checkbox("Üst 2.5", value=True, key="bt_ust")
-            esik_ust = st.slider("Üst eşiği %", 0, 100, 65, 1, key="bt_uste")
+            esik_ust = st.slider("Üst %", 0, 100, 65, 1, key="bt_uste")
             sec_alt = st.checkbox("Alt 2.5", value=True, key="bt_alt")
-            esik_alt = st.slider("Alt eşiği %", 0, 100, 55, 1, key="bt_alte")
-
+            esik_alt = st.slider("Alt %", 0, 100, 55, 1, key="bt_alte")
     secenekler = {"1x2": sec_1x2, "kg_var": sec_kg_var, "kg_yok": sec_kg_yok, "ust": sec_ust, "alt": sec_alt}
-    esikler = {
-        "esik_1": float(esik_bt_1), "esik_x": float(esik_bt_x), "esik_2": float(esik_bt_2),
-        "kg_var": float(esik_kg_var), "kg_yok": float(esik_kg_yok),
-        "ust": float(esik_ust), "alt": float(esik_alt),
-    }
-
+    esikler = {"esik_1": float(esik_bt_1), "esik_x": float(esik_bt_x), "esik_2": float(esik_bt_2),
+               "kg_var": float(esik_kg_var), "kg_yok": float(esik_kg_yok),
+               "ust": float(esik_ust), "alt": float(esik_alt)}
     if st.button("🚀 Test Et", use_container_width=True, type="primary", key="bt_btn"):
         if not any(secenekler.values()):
             st.warning("⚠️ En az bir market seç.")
         else:
             with st.spinner("Test ediliyor..."):
                 st.session_state.bt_sonuc = backtest_hesapla(gec, secenekler, esikler)
-
     if st.session_state.bt_sonuc:
         sonuc = st.session_state.bt_sonuc
         st.divider()
         st.markdown("## 📊 BACKTEST SONUCU")
-        for key, baslik in [
-            ("1x2", "🎯 1X2"), ("kg_var", "🤝 KG Var"), ("kg_yok", "🤝 KG Yok"),
-            ("ust", "⚽ Üst 2.5"), ("alt", "⚽ Alt 2.5"),
-        ]:
+        for key, baslik in [("1x2", "🎯 1X2"), ("kg_var", "🤝 KG Var"), ("kg_yok", "🤝 KG Yok"),
+                            ("ust", "⚽ Üst 2.5"), ("alt", "⚽ Alt 2.5")]:
             if secenekler.get(key, False):
                 d = sonuc.get(key, {"dogru": 0, "yanlis": 0})
                 st.markdown(backtest_karti(baslik, d["dogru"], d["yanlis"]), unsafe_allow_html=True)
-
     st.divider()
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="bt_geri"):
         st.session_state.sayfa = "giris"; st.rerun()
@@ -1298,18 +1147,14 @@ elif st.session_state.sayfa == "ayarlar":
     if not admin_mi():
         st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>⚙️ Eşik Ayarları</h1>", unsafe_allow_html=True)
-    st.caption("⚠️ Bu ayarlar bot için geçerli değil. Bot için scraper.py'deki ESIKLER'i güncelle.")
     mv = st.session_state.esikler.copy()
-    st.markdown("### 🎯 Maç Sonucu")
     c1, c2, c3 = st.columns(3)
     with c1: y1 = st.slider("1 (Ev) %", 0, 100, int(mv.get("esik_1", 55.0)), 1, key="ay_1")
     with c2: yx = st.slider("X %", 0, 100, int(mv.get("esik_x", 55.0)), 1, key="ay_x")
     with c3: y2 = st.slider("2 (Dep) %", 0, 100, int(mv.get("esik_2", 55.0)), 1, key="ay_2")
-    st.markdown("### ⚽ Gol")
     c4, c5 = st.columns(2)
     with c4: yu = st.slider("Üst 2.5 %", 0, 100, int(mv["ust"]), 1, key="ay_ust")
     with c5: ya = st.slider("Alt 2.5 %", 0, 100, int(mv["alt"]), 1, key="ay_alt")
-    st.markdown("### 🤝 KG")
     c6, c7 = st.columns(2)
     with c6: ykv = st.slider("KG Var %", 0, 100, int(mv["kg_var"]), 1, key="ay_kgv")
     with c7: yky = st.slider("KG Yok %", 0, 100, int(mv["kg_yok"]), 1, key="ay_kgy")
@@ -1355,7 +1200,6 @@ elif st.session_state.sayfa == "sonuc":
     else: ks, ky, ke = "KG Yok", kgy, esik_al("kg_yok")
     kp = ky >= ke
     st.markdown(oneri_karti("🤝 Karşılıklı Gol", ks, ky, ke, kp, f"Var %{kgv:.1f} • Yok %{kgy:.1f}"), unsafe_allow_html=True)
-
     st.divider()
     if st.button("🔄 Yeni Maç Analizi", use_container_width=True, type="primary"):
         st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
