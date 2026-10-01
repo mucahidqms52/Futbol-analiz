@@ -20,7 +20,6 @@ from app import (
     esik_1x2_al
 )
 
-# Son 5 maç filtresi (?last=5) parametresi eklendi
 MUTATING_URL = "https://www.mutating.com/soccer-predictions/?last=5"
 
 def headers_uret():
@@ -37,7 +36,7 @@ def json_dosyalarini_kontrol_et():
             json.dump([], f)
 
 def saat_ve_tarih_ayarla(veri_sozlugu):
-    """Saate hatasız +2 saat ekler"""
+    """Saate hatasız ve tek seferlik +2 saat ekler"""
     try:
         tarih_str = veri_sozlugu.get("tarih", "01.01.2026")
         saat_str = veri_sozlugu.get("saat", "00:00")
@@ -50,7 +49,7 @@ def saat_ve_tarih_ayarla(veri_sozlugu):
     return veri_sozlugu
 
 def mutaring_calistir():
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Mutating.com (Son 5 Maç ve Eşik Filtresi) başlatıldı...")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Mutating.com güncellenmiş tarama ve filtreleme başlatıldı...")
     json_dosyalarini_kontrol_et()
     
     try:
@@ -124,8 +123,9 @@ def mutaring_calistir():
                     kg_esik = esik_al("kg_var") if kg_var >= kg_yok else esik_al("kg_yok")
                     kg_poz = kg_yuzde >= kg_esik
 
-                    # Sadece eşiği geçen maçlar onay alacak
-                    kaydet_mi = gol_poz or kg_poz or poz_1x2
+                    # --- KESİN EŞİK KONTROLÜ ---
+                    # Eşiği geçmeyen maçlar asla içeri alınmaz
+                    kaydet_mi = bool(gol_poz or kg_poz or poz_1x2)
                     mac_anahtar = f"{takim_ev}-{takim_dep}"
 
                     if skor_belli:
@@ -137,7 +137,7 @@ def mutaring_calistir():
                             guncellenen_gecmis.append(yeni_kayit)
                     else:
                         gelecek_keys = [f"{g['veri']['takim_ev']}-{g['veri']['takim_dep']}" for g in guncellenen_gelecek]
-                        # Eşiği geçmeyenler içeri asla alınmaz (safdışı kalır)
+                        # Eşiği geçiyorsa ve listede yoksa ekle
                         if mac_anahtar not in gelecek_keys and kaydet_mi:
                             guncellenen_gelecek.append(yeni_kayit)
 
@@ -145,21 +145,21 @@ def mutaring_calistir():
             except Exception as e:
                 continue
 
-        # --- SIRALAMA: En geç maç en üstte, aşağıya doğru sıralanır ---
+        # --- KESİN SIRALAMA: En erken maç en üstte (Artan sıralama) ---
         def sira_anahtari(item):
             try:
                 tarih_str = item["veri"].get("tarih", "01.01.2026")
                 saat_str = item["veri"].get("saat", "00:00")
                 return datetime.strptime(f"{tarih_str} {saat_str}", "%d.%m.%Y %H:%M")
             except Exception:
-                return datetime.min
+                return datetime.max
 
-        # reverse=True yapılarak en geç/yakın maç en üste alındı
-        guncellenen_gelecek.sort(key=sira_anahtari, reverse=True)
+        # reverse=False yapılarak en erken maç en üste alındı
+        guncellenen_gelecek.sort(key=sira_anahtari, reverse=False)
 
         gelecek_kaydet(guncellenen_gelecek)
-        gecmis_kaydet(gecmis_listesi) # Geçmiş listesi korunuyor
-        print("✅ Son 5 maç filtresi uygulandı, eşikler denetlendi ve sıralama tamamlandı.")
+        gecmis_kaydet(guncellenen_gecmis)
+        print("✅ Kesin eşik filtresi uygulandı, saatler düzeltildi ve en erken maç üste gelecek şekilde sıralandı.")
 
     except Exception as e:
         print(f"❌ Hata: {e}")
