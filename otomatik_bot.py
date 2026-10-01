@@ -2,9 +2,11 @@ import time
 import requests
 from bs4 import BeautifulSoup
 import copy
+import os
+import json
 from datetime import datetime
 
-# Hatalı satır temizlendi, fonksiyonlar doğru şekilde içe aktarılıyor
+# Projedeki mevcut fonksiyonları içe aktarıyoruz
 from app import (
     VARSAYILAN_VERI, 
     metinden_veri_cikar, 
@@ -19,15 +21,27 @@ from app import (
     esik_1x2_al
 )
 
-MUTARING_URL = "https://www.mutaring.com"
+# Doğru site adresi
+MUTARING_URL = "https://www.mutating.com/soccer-predictions/"
 
 def headers_uret():
     return {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
     }
 
+def json_dosyalarini_kontrol_et():
+    """Git hata vermemesi için dosya yoksa boş liste olarak oluşturur"""
+    if not os.path.exists("gelecek.json"):
+        with open("gelecek.json", "w", encoding="utf-8") as f:
+            json.dump([], f)
+    if not os.path.exists("gecmis.json"):
+        with open("gecmis.json", "w", encoding="utf-8") as f:
+            json.dump([], f)
+
 def mutaring_calistir():
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Mutaring.com taraması ve son 5 maç analizi başlatıldı...")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Mutating.com taraması ve son 5 maç analizi başlatıldı...")
+    json_dosyalarini_kontrol_et()
+    
     try:
         response = requests.get(MUTARING_URL, headers=headers_uret(), timeout=15)
         if response.status_code != 200:
@@ -38,19 +52,19 @@ def mutaring_calistir():
         mac_linkleri = []
         for a_tag in soup.find_all('a', href=True):
             href = a_tag['href']
-            if "match" in href or "stats" in href or "fotboll" in href:
+            if "match" in href or "soccer" in href or "predict" in href:
                 if href not in mac_linkleri:
                     mac_linkleri.append(href)
 
         gelecek_listesi = gelecek_yukle()
         gecmis_listesi = gecmis_yukle()
         
-        guncellenen_gelecek = list(gelecek_listesi)
-        guncellenen_gecmis = list(gecmis_listesi)
+        guncellenen_gelecek = list(gelecek_listesi) if gelecek_listesi else []
+        guncellenen_gecmis = list(gecmis_listesi) if gecmis_listesi else []
 
         for link in mac_linkleri[:25]:
             try:
-                tam_link = link if link.startswith("http") else MUTARING_URL + link
+                tam_link = link if link.startswith("http") else "https://www.mutating.com" + link
                 detay_resp = requests.get(tam_link, headers=headers_uret(), timeout=10)
                 if detay_resp.status_code != 200:
                     continue
@@ -108,7 +122,7 @@ def mutaring_calistir():
 
         gelecek_kaydet(guncellenen_gelecek)
         gecmis_kaydet(guncellenen_gecmis)
-        print("✅ Güncelleme tamamlandı.")
+        print("✅ Güncelleme tamamlandı ve dosyalar kaydedildi.")
 
     except Exception as e:
         print(f"❌ Hata: {e}")
