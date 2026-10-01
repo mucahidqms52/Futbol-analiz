@@ -14,17 +14,21 @@ st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="cent
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <style>
+    /* ===== GLOBAL FONT KÜÇÜLTME ===== */
+    html { font-size: 13px !important; }
+    body, .stApp { font-size: 0.85rem !important; }
+
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
     h1, h2, h3, h4, .fa-score, .fa-big, .mh-stat-num, .login-title, .mh-hero-title {
         font-family: 'Rajdhani', 'Inter', sans-serif !important;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.4px;
     }
 
     .block-container {
-        padding-top: 1.2rem !important;
-        padding-bottom: 1rem !important;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+        padding-top: 0.8rem !important;
+        padding-bottom: 0.8rem !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
         max-width: 100% !important;
     }
 
@@ -56,36 +60,36 @@ st.markdown("""
     .stApp, .stApp p, .stApp span, .stApp label, .stApp li,
     .stApp div[data-testid="stMarkdownContainer"] { color: var(--text) !important; }
     .stApp div[data-testid="stCaptionContainer"], .stApp small { color: var(--muted) !important; }
-    hr { border-color: var(--border) !important; margin: 0.8rem 0 !important; }
+    hr { border-color: var(--border) !important; margin: 0.5rem 0 !important; }
 
     h1 {
-        font-size: 1.6rem !important; font-weight: 800 !important;
-        margin: 0.6rem 0 !important; text-align: center;
+        font-size: 1.35rem !important; font-weight: 800 !important;
+        margin: 0.4rem 0 !important; text-align: center;
         background: linear-gradient(135deg, #eaf1fb 0%, #94a3b8 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.4px;
     }
-    h2 { font-size: 1.15rem !important; font-weight: 700 !important; margin: 0.5rem 0 !important; }
+    h2 { font-size: 1rem !important; font-weight: 700 !important; margin: 0.4rem 0 !important; }
     h3 {
-        font-size: 0.98rem !important; font-weight: 700 !important;
-        margin: 0.3rem 0 !important; border-left: 3px solid var(--green);
-        padding-left: 0.6rem;
+        font-size: 0.88rem !important; font-weight: 700 !important;
+        margin: 0.25rem 0 !important; border-left: 3px solid var(--green);
+        padding-left: 0.5rem;
     }
-    p { font-size: 0.88rem !important; margin: 0.25rem 0 !important; line-height: 1.5; }
+    p { font-size: 0.8rem !important; margin: 0.2rem 0 !important; line-height: 1.45; }
 
-    div[data-testid="stNumberInput"] label p { font-size: 0.75rem !important; margin: 0 !important; font-weight: 600; }
+    div[data-testid="stNumberInput"] label p { font-size: 0.72rem !important; margin: 0 !important; font-weight: 600; }
     div[data-testid="stNumberInput"] input {
-        font-size: 0.9rem !important; padding: 0.4rem 0.5rem !important;
-        height: 2.1rem !important;
+        font-size: 0.85rem !important; padding: 0.35rem 0.5rem !important;
+        height: 2rem !important;
     }
-    div[data-testid="stNumberInput"] button { height: 2.1rem !important; }
-    div[data-testid="stNumberInput"] > div { margin-bottom: 0.3rem !important; }
+    div[data-testid="stNumberInput"] button { height: 2rem !important; }
+    div[data-testid="stNumberInput"] > div { margin-bottom: 0.25rem !important; }
 
     .stTextArea textarea, .stTextInput input, div[data-testid="stNumberInput"] input {
         background: var(--card) !important;
         color: var(--text) !important;
         border: 1.5px solid var(--border) !important;
-        border-radius: 12px !important;
+        border-radius: 10px !important;
         transition: all 0.2s ease !important;
     }
     .stTextArea textarea:focus, .stTextInput input:focus,
@@ -94,22 +98,23 @@ st.markdown("""
         box-shadow: 0 0 0 4px rgba(34,197,94,0.12) !important;
     }
     div[data-baseweb="input"], div[data-baseweb="textarea"], div[data-baseweb="base-input"] {
-        background: var(--card) !important; border-radius: 12px !important;
+        background: var(--card) !important; border-radius: 10px !important;
     }
 
     .stButton button, div[data-testid="stDownloadButton"] button,
     div[data-testid="stFormSubmitButton"] button {
         background: linear-gradient(145deg, #18233a, #131c2e) !important;
         border: 1.5px solid var(--border) !important;
-        border-radius: 12px !important;
+        border-radius: 10px !important;
         font-weight: 700 !important;
-        font-size: 0.88rem !important;
+        font-size: 0.8rem !important;
         color: var(--text) !important;
         transition: all 0.2s ease !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
+        padding: 0.35rem 0.5rem !important;
     }
     .stButton button p, div[data-testid="stDownloadButton"] button p,
-    div[data-testid="stFormSubmitButton"] button p { color: var(--text) !important; font-weight: 700 !important; }
+    div[data-testid="stFormSubmitButton"] button p { color: var(--text) !important; font-weight: 700 !important; font-size: 0.8rem !important; }
 
     .stButton button:hover, div[data-testid="stDownloadButton"] button:hover {
         border-color: var(--green) !important;
@@ -130,98 +135,129 @@ st.markdown("""
     button[data-testid="stBaseButton-primaryFormSubmit"] p { color: #04130a !important; }
 
     div[data-testid="stMetric"] {
-        padding: 0.5rem !important;
-        background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+        padding: 0.4rem !important;
+        background: var(--card); border: 1px solid var(--border); border-radius: 10px;
     }
-    div[data-testid="stMetricValue"] { font-size: 1.1rem !important; font-weight: 800 !important; }
-    div[data-testid="stMetricLabel"] { font-size: 0.72rem !important; }
+    div[data-testid="stMetricValue"] { font-size: 1rem !important; font-weight: 800 !important; }
+    div[data-testid="stMetricLabel"] { font-size: 0.68rem !important; }
 
-    /* ===== EXPANDER (BAŞLIK ÜST ÜSTE BİNME SORUNU DÜZELTİLDİ) ===== */
+    /* ============================================
+       EXPANDER — TAM DÜZELTİLDİ
+       keyboard_arrow_right ikonu gizlendi
+       ============================================ */
     div[data-testid="stExpander"] {
         background: linear-gradient(145deg, var(--card), #0f1829) !important;
         border: 1px solid var(--border) !important;
-        border-radius: 16px !important;
+        border-radius: 12px !important;
         overflow: hidden;
+        margin-bottom: 8px !important;
     }
 
+    /* Detay özet satırı */
     div[data-testid="stExpander"] details > summary {
         display: flex !important;
         align-items: center !important;
-        gap: 10px !important;
-        padding: 0.75rem 1rem !important;
-        font-size: 0.92rem !important;
+        gap: 6px !important;
+        padding: 0.5rem 0.8rem !important;
+        font-size: 0.82rem !important;
         font-weight: 700 !important;
-        line-height: 1.4 !important;
-        min-height: 48px !important;
+        line-height: 1.3 !important;
+        min-height: 38px !important;
         overflow: hidden !important;
         cursor: pointer !important;
+        list-style: none !important;
+    }
+
+    /* Varsayılan list-style oku (triangle) gizle */
+    div[data-testid="stExpander"] details > summary::-webkit-details-marker {
+        display: none !important;
+    }
+    div[data-testid="stExpander"] details > summary::marker {
+        display: none !important;
+        content: "" !important;
     }
 
     div[data-testid="stExpander"] details > summary:hover {
         background: rgba(34,197,94,0.05) !important;
     }
 
-    /* Streamlit'in varsayılan ok ikonu yerine kendi okumuzu kullanmak için sıfırla */
-    div[data-testid="stExpander"] details > summary::before {
+    /* Material Icons yazı olarak görünmesin - tamamen gizle
+       (keyboard_arrow_right sorunu buradan kaynaklanıyor) */
+    div[data-testid="stExpander"] details > summary > span[data-testid="stIconMaterial"],
+    div[data-testid="stExpander"] details > summary > span.material-icons,
+    div[data-testid="stExpander"] details > summary [data-testid="stIconMaterial"],
+    div[data-testid="stExpander"] details > summary .material-icons,
+    div[data-testid="stExpander"] details > summary [class*="material-symbols"],
+    div[data-testid="stExpander"] details > summary [class*="Material"],
+    div[data-testid="stExpander"] details > summary > svg + span,
+    div[data-testid="stExpander"] details > summary > span[aria-hidden="true"] {
         display: none !important;
-        content: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        font-size: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
     }
 
-    /* Başlık metni */
+    /* Summary içindeki metin */
     div[data-testid="stExpander"] details > summary p,
-    div[data-testid="stExpander"] details > summary span,
-    div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"] {
-        font-size: 0.92rem !important;
+    div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"],
+    div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"] p {
+        font-size: 0.82rem !important;
         font-weight: 700 !important;
         margin: 0 !important;
-        line-height: 1.4 !important;
+        line-height: 1.3 !important;
         color: #eaf1fb !important;
         white-space: normal !important;
         display: inline-block !important;
     }
 
-    /* Summary içindeki flex container (Streamlit bazen bir div sarar) */
+    /* Summary içindeki flex container */
     div[data-testid="stExpander"] details > summary > div {
         display: flex !important;
         align-items: center !important;
-        gap: 10px !important;
+        gap: 6px !important;
         flex-wrap: nowrap !important;
-        width: 100% !important;
     }
 
-    div[data-testid="stExpander"] details > summary > div > svg,
-    div[data-testid="stExpander"] details > summary > svg {
+    /* SVG ok (varsa) */
+    div[data-testid="stExpander"] details > summary svg {
         flex-shrink: 0 !important;
-        width: 16px !important;
-        height: 16px !important;
-        min-width: 16px !important;
+        width: 14px !important;
+        height: 14px !important;
+        min-width: 14px !important;
         transition: transform 0.2s ease !important;
     }
 
     /* Expander içerik */
     div[data-testid="stExpander"] details > div[role="region"] {
-        padding: 0.5rem 1rem 1rem 1rem !important;
+        padding: 0.4rem 0.8rem 0.8rem 0.8rem !important;
+        font-size: 0.82rem !important;
     }
 
-    div[data-testid="stAlert"] { padding: 0.5rem 0.8rem !important; font-size: 0.87rem !important; border-radius: 12px !important; }
+    div[data-testid="stAlert"] { padding: 0.4rem 0.7rem !important; font-size: 0.8rem !important; border-radius: 10px !important; }
 
     div[data-testid="stFileUploader"] section {
         background: var(--card) !important;
         border: 1.5px dashed var(--border) !important;
-        border-radius: 14px !important;
+        border-radius: 12px !important;
     }
 
-    .st-key-fa_nav div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.35rem !important; }
+    .st-key-fa_nav div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.3rem !important; }
     .st-key-fa_nav div[data-testid="stColumn"], .st-key-fa_nav div[data-testid="column"] {
         min-width: 0 !important; flex: 1 1 0 !important; width: auto !important;
     }
     .st-key-fa_nav .stButton button {
-        padding: 0.35rem 0.3rem !important; height: 2.4rem !important;
+        padding: 0.3rem 0.25rem !important; height: 2.1rem !important;
         background: rgba(19,28,46,0.6) !important;
         backdrop-filter: blur(8px);
         border: 1px solid var(--border) !important;
     }
-    .st-key-fa_nav .stButton button p { font-size: 0.78rem !important; white-space: nowrap; font-weight: 700 !important; }
+    .st-key-fa_nav .stButton button p { font-size: 0.72rem !important; white-space: nowrap; font-weight: 700 !important; }
     .st-key-fa_nav .stButton button[kind="primary"] {
         background: linear-gradient(135deg, #16a34a, #22c55e) !important;
         box-shadow: 0 4px 16px rgba(34,197,94,0.4) !important;
@@ -231,9 +267,9 @@ st.markdown("""
         position: relative; overflow: hidden;
         background: linear-gradient(135deg, #14243e 0%, #0d1729 100%);
         border: 1px solid var(--border);
-        border-radius: 20px;
-        padding: 18px 14px;
-        margin: 8px 0 12px 0;
+        border-radius: 16px;
+        padding: 14px 12px;
+        margin: 6px 0 10px 0;
         text-align: center;
         box-shadow: 0 10px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(34,197,94,0.05) inset;
     }
@@ -244,98 +280,99 @@ st.markdown("""
         pointer-events: none;
     }
     .stApp .fa-teams {
-        display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        display: flex; align-items: center; justify-content: space-between; gap: 6px;
         position: relative; z-index: 1;
     }
     .stApp .fa-team {
-        flex: 1; font-weight: 800; font-size: 1rem; line-height: 1.25;
-        word-break: break-word; letter-spacing: 0.3px;
+        flex: 1; font-weight: 800; font-size: 0.9rem; line-height: 1.2;
+        word-break: break-word; letter-spacing: 0.2px;
     }
     .stApp .fa-score {
-        font-size: 2rem; font-weight: 900; color: var(--green) !important;
-        min-width: 90px; letter-spacing: 1px;
+        font-size: 1.6rem; font-weight: 900; color: var(--green) !important;
+        min-width: 80px; letter-spacing: 0.5px;
         text-shadow: 0 0 20px rgba(34,197,94,0.5);
     }
-    .stApp .fa-vs { font-size: 1rem; font-weight: 800; color: var(--muted) !important; min-width: 60px; letter-spacing: 2px; }
-    .stApp .fa-sub { font-size: 0.75rem; color: var(--muted) !important; margin-top: 8px; letter-spacing: 0.3px; }
+    .stApp .fa-vs { font-size: 0.9rem; font-weight: 800; color: var(--muted) !important; min-width: 50px; letter-spacing: 1px; }
+    .stApp .fa-sub { font-size: 0.68rem; color: var(--muted) !important; margin-top: 6px; letter-spacing: 0.2px; }
 
     .stApp .fa-card {
         background: linear-gradient(145deg, var(--card), #0f1829);
         border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 14px;
-        margin-bottom: 12px;
+        border-radius: 14px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
         box-shadow: 0 6px 20px rgba(0,0,0,0.25);
         transition: all 0.25s ease;
     }
-    .stApp .fa-card:hover { border-color: rgba(34,197,94,0.3); transform: translateY(-2px); }
+    .stApp .fa-card:hover { border-color: rgba(34,197,94,0.3); transform: translateY(-1px); }
     .stApp .fa-card.fa-pos {
         border-color: rgba(34,197,94,0.55);
         box-shadow: 0 8px 28px rgba(34,197,94,0.15), 0 0 0 1px rgba(34,197,94,0.15) inset;
     }
     .stApp .fa-card.fa-neg { opacity: 0.9; }
     .stApp .fa-ttl {
-        font-size: 0.75rem; font-weight: 800; color: var(--muted) !important;
-        text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+        font-size: 0.68rem; font-weight: 800; color: var(--muted) !important;
+        text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;
     }
-    .stApp .fa-pickrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .stApp .fa-pick { font-size: 1.2rem; font-weight: 800; letter-spacing: 0.3px; }
-    .stApp .fa-pct { font-size: 1.6rem; font-weight: 900; color: var(--green) !important; text-shadow: 0 0 16px rgba(34,197,94,0.4); }
+    .stApp .fa-pickrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .stApp .fa-pick { font-size: 1rem; font-weight: 800; letter-spacing: 0.2px; }
+    .stApp .fa-pct { font-size: 1.35rem; font-weight: 900; color: var(--green) !important; text-shadow: 0 0 16px rgba(34,197,94,0.4); }
     .stApp .fa-pct.fa-off { color: var(--muted) !important; text-shadow: none; }
-    .stApp .fa-mut { font-size: 0.75rem; color: var(--muted) !important; margin-top: 8px; letter-spacing: 0.2px; }
-    .stApp .fa-row { margin: 9px 0; }
-    .stApp .fa-row-top { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px; }
+    .stApp .fa-mut { font-size: 0.68rem; color: var(--muted) !important; margin-top: 6px; letter-spacing: 0.15px; }
+    .stApp .fa-row { margin: 7px 0; }
+    .stApp .fa-row-top { display: flex; justify-content: space-between; font-size: 0.76rem; margin-bottom: 3px; }
     .stApp .fa-lbl { color: #cbd5e1 !important; font-weight: 500; }
     .stApp .fa-val { font-weight: 800; }
-    .stApp .fa-bar { position: relative; height: 9px; background: #1a2438; border-radius: 99px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); }
+    .stApp .fa-bar { position: relative; height: 8px; background: #1a2438; border-radius: 99px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); }
     .stApp .fa-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
     .stApp .fa-tick { position: absolute; top: 0; bottom: 0; width: 2px; background: #eaf1fb; opacity: 0.8; }
 
     .stApp .fa-badge {
-        display: inline-block; padding: 4px 11px; border-radius: 99px;
-        font-size: 0.72rem; font-weight: 800; white-space: nowrap;
-        letter-spacing: 0.4px; text-transform: uppercase;
+        display: inline-block; padding: 3px 9px; border-radius: 99px;
+        font-size: 0.65rem; font-weight: 800; white-space: nowrap;
+        letter-spacing: 0.3px; text-transform: uppercase;
     }
     .stApp .fa-b-green { background: rgba(34,197,94,0.15); color: var(--green) !important; border: 1px solid rgba(34,197,94,0.5); }
     .stApp .fa-b-yellow { background: rgba(245,158,11,0.15); color: var(--yellow) !important; border: 1px solid rgba(245,158,11,0.5); }
     .stApp .fa-b-red { background: rgba(239,68,68,0.15); color: var(--red) !important; border: 1px solid rgba(239,68,68,0.5); }
     .stApp .fa-b-gray { background: rgba(148,163,184,0.12); color: #94a3b8 !important; border: 1px solid rgba(148,163,184,0.35); }
 
-    .stApp .fa-big { font-size: 2rem; font-weight: 900; line-height: 1.05; letter-spacing: -0.5px; }
+    .stApp .fa-big { font-size: 1.6rem; font-weight: 900; line-height: 1.05; letter-spacing: -0.4px; }
     .stApp .fa-g { color: var(--green) !important; }
     .stApp .fa-y { color: var(--yellow) !important; }
     .stApp .fa-r { color: var(--red) !important; }
 
-    .stApp .fa-ci { position: relative; height: 9px; background: #1a2438; border-radius: 99px; margin-top: 10px; }
+    .stApp .fa-ci { position: relative; height: 8px; background: #1a2438; border-radius: 99px; margin-top: 8px; }
     .stApp .fa-ci-fill { position: absolute; top: 0; bottom: 0; background: rgba(148,163,184,0.4); border-radius: 99px; }
-    .stApp .fa-ci-dot { position: absolute; top: -3px; width: 15px; height: 15px; border-radius: 50%; border: 2.5px solid #0b1220; margin-left: -7.5px; box-shadow: 0 0 12px currentColor; }
+    .stApp .fa-ci-dot { position: absolute; top: -3px; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid #0b1220; margin-left: -7px; box-shadow: 0 0 12px currentColor; }
 
     .stApp .fa-mk {
         background: linear-gradient(145deg, var(--card), #0f1829);
         border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 10px 14px;
-        margin: -4px 0 10px 0;
+        border-radius: 12px;
+        padding: 8px 12px;
+        margin: -4px 0 8px 0;
         box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     }
     .stApp .fa-mk-row {
         display: flex; align-items: center; justify-content: space-between;
-        padding: 8px 0; border-bottom: 1px dashed #1d2940;
+        padding: 6px 0; border-bottom: 1px dashed #1d2940;
+        gap: 6px; flex-wrap: wrap;
     }
     .stApp .fa-mk-row:last-child { border-bottom: none; }
-    .stApp .fa-mk-lbl { font-size: 0.82rem; font-weight: 800; color: #cbd5e1 !important; min-width: 60px; }
-    .stApp .fa-mk-pick { font-size: 0.95rem; font-weight: 800; }
+    .stApp .fa-mk-lbl { font-size: 0.75rem; font-weight: 800; color: #cbd5e1 !important; min-width: 55px; }
+    .stApp .fa-mk-pick { font-size: 0.86rem; font-weight: 800; }
     .stApp .fa-mk-pick.pass { color: var(--green) !important; }
     .stApp .fa-mk-pick.off { color: #94a3b8 !important; }
-    .stApp .fa-mk-pct { font-size: 0.88rem; font-weight: 800; color: var(--text) !important; }
-    .stApp .fa-mk-badge { font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 99px; margin-left: 6px; letter-spacing: 0.3px; }
+    .stApp .fa-mk-pct { font-size: 0.78rem; font-weight: 800; color: var(--text) !important; }
+    .stApp .fa-mk-badge { font-size: 0.6rem; font-weight: 800; padding: 2px 7px; border-radius: 99px; margin-left: 4px; letter-spacing: 0.2px; }
     .stApp .fa-mk-badge.ok { background: rgba(34,197,94,0.15); color: var(--green) !important; border: 1px solid rgba(34,197,94,0.5); }
     .stApp .fa-mk-badge.no { background: rgba(148,163,184,0.12); color: #94a3b8 !important; border: 1px solid rgba(148,163,184,0.35); }
-    .stApp .fa-mk-info { font-size: 0.72rem; color: var(--muted) !important; }
+    .stApp .fa-mk-info { font-size: 0.66rem; color: var(--muted) !important; }
 
-    .login-hero { text-align: center; padding: 50px 10px 30px 10px; position: relative; }
+    .login-hero { text-align: center; padding: 40px 10px 24px 10px; position: relative; }
     .login-logo {
-        font-size: 5rem; line-height: 1; margin-bottom: 16px; display: inline-block;
+        font-size: 4.2rem; line-height: 1; margin-bottom: 14px; display: inline-block;
         filter: drop-shadow(0 0 30px rgba(34,197,94,0.6));
         animation: logoPulse 3s ease-in-out infinite;
     }
@@ -344,34 +381,34 @@ st.markdown("""
         50% { transform: scale(1.08) rotate(-3deg); filter: drop-shadow(0 0 40px rgba(34,197,94,0.9)); }
     }
     .login-title {
-        font-size: 2.4rem !important; font-weight: 900 !important;
+        font-size: 2rem !important; font-weight: 900 !important;
         background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         background-clip: text; margin: 0 !important; padding: 0 !important;
-        letter-spacing: 1.5px; border: none !important; text-align: center !important;
+        letter-spacing: 1.2px; border: none !important; text-align: center !important;
     }
     .login-subtitle {
-        font-size: 0.92rem; color: var(--muted) !important;
-        margin-top: 10px; letter-spacing: 0.6px; font-weight: 500;
+        font-size: 0.82rem; color: var(--muted) !important;
+        margin-top: 8px; letter-spacing: 0.5px; font-weight: 500;
     }
 
     div[data-testid="stForm"] {
         background: linear-gradient(145deg, rgba(19,28,46,0.9), rgba(11,18,32,0.98)) !important;
         border: 1.5px solid rgba(34,197,94,0.2) !important;
-        border-radius: 24px !important;
-        padding: 28px 24px !important;
+        border-radius: 20px !important;
+        padding: 22px 18px !important;
         box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(34,197,94,0.05) inset !important;
         backdrop-filter: blur(16px);
     }
     div[data-testid="stForm"] label p {
-        font-size: 0.82rem !important; font-weight: 700 !important;
-        color: #cbd5e1 !important; letter-spacing: 0.4px; margin-bottom: 6px !important;
+        font-size: 0.78rem !important; font-weight: 700 !important;
+        color: #cbd5e1 !important; letter-spacing: 0.3px; margin-bottom: 5px !important;
     }
     div[data-testid="stForm"] input {
-        height: 48px !important; font-size: 0.98rem !important; padding: 0 16px !important;
+        height: 42px !important; font-size: 0.9rem !important; padding: 0 14px !important;
         background: rgba(11,18,32,0.9) !important;
         border: 1.5px solid var(--border) !important;
-        border-radius: 12px !important;
+        border-radius: 10px !important;
         transition: all 0.2s ease;
     }
     div[data-testid="stForm"] input:focus {
@@ -380,9 +417,9 @@ st.markdown("""
         outline: none !important;
     }
     div[data-testid="stForm"] button {
-        height: 48px !important; font-size: 0.98rem !important;
-        font-weight: 800 !important; border-radius: 12px !important;
-        letter-spacing: 0.4px; transition: all 0.2s ease;
+        height: 42px !important; font-size: 0.9rem !important;
+        font-weight: 800 !important; border-radius: 10px !important;
+        letter-spacing: 0.3px; transition: all 0.2s ease;
     }
     div[data-testid="stForm"] button[kind="primary"] {
         background: linear-gradient(135deg, #16a34a, #22c55e) !important;
@@ -403,9 +440,9 @@ st.markdown("""
     }
 
     .login-divider {
-        display: flex; align-items: center; gap: 14px;
-        margin: 14px 0 10px 0; color: #64748b !important;
-        font-size: 0.72rem; font-weight: 800; letter-spacing: 4px;
+        display: flex; align-items: center; gap: 12px;
+        margin: 12px 0 8px 0; color: #64748b !important;
+        font-size: 0.68rem; font-weight: 800; letter-spacing: 4px;
         justify-content: center;
     }
     .login-divider::before, .login-divider::after {
@@ -413,13 +450,13 @@ st.markdown("""
         background: linear-gradient(90deg, transparent, var(--border) 50%, transparent);
     }
 
-    .login-features { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 26px; padding: 0 10px; }
+    .login-features { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 20px; padding: 0 8px; }
     .lf-chip {
-        display: inline-block; padding: 7px 16px;
+        display: inline-block; padding: 5px 12px;
         background: rgba(34,197,94,0.08);
         border: 1px solid rgba(34,197,94,0.3);
-        border-radius: 99px; font-size: 0.78rem; font-weight: 700;
-        color: #cbd5e1 !important; letter-spacing: 0.4px;
+        border-radius: 99px; font-size: 0.7rem; font-weight: 700;
+        color: #cbd5e1 !important; letter-spacing: 0.3px;
         transition: all 0.2s ease;
     }
     .lf-chip:hover {
@@ -428,18 +465,18 @@ st.markdown("""
         transform: translateY(-2px);
     }
     .login-footer {
-        text-align: center; margin-top: 30px; font-size: 0.75rem;
-        color: #64748b !important; letter-spacing: 0.6px;
+        text-align: center; margin-top: 24px; font-size: 0.7rem;
+        color: #64748b !important; letter-spacing: 0.5px;
     }
     .login-footer b { color: var(--green) !important; font-weight: 800; }
 
     .mh-hero {
         position: relative; overflow: hidden; text-align: center;
-        padding: 36px 16px 28px 16px;
+        padding: 28px 14px 22px 14px;
         background: linear-gradient(135deg, rgba(22,35,61,0.9), rgba(15,26,46,0.95));
         border: 1.5px solid rgba(34,197,94,0.25);
-        border-radius: 24px;
-        margin: 8px 0 20px 0;
+        border-radius: 20px;
+        margin: 6px 0 16px 0;
         box-shadow: 0 16px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(34,197,94,0.06) inset;
     }
     .mh-hero::before {
@@ -455,43 +492,43 @@ st.markdown("""
         50% { opacity: 1; transform: scale(1.2) rotate(25deg); }
     }
     .mh-hero-icon {
-        font-size: 3.6rem; line-height: 1; margin-bottom: 12px;
+        font-size: 3rem; line-height: 1; margin-bottom: 10px;
         display: inline-block;
         filter: drop-shadow(0 0 24px rgba(34,197,94,0.65));
         animation: logoPulse 3s ease-in-out infinite;
         position: relative; z-index: 1;
     }
     .mh-hero-title {
-        font-size: 2rem; font-weight: 900;
+        font-size: 1.7rem; font-weight: 900;
         background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        background-clip: text; letter-spacing: 1.2px;
+        background-clip: text; letter-spacing: 1px;
         position: relative; z-index: 1; margin: 0;
     }
     .mh-hero-sub {
-        font-size: 0.88rem; color: var(--muted);
-        margin-top: 10px; letter-spacing: 0.5px;
+        font-size: 0.8rem; color: var(--muted);
+        margin-top: 8px; letter-spacing: 0.4px;
         position: relative; z-index: 1;
     }
     .mh-hero-badge {
-        display: inline-block; margin-top: 14px; padding: 5px 16px;
+        display: inline-block; margin-top: 12px; padding: 4px 14px;
         background: rgba(34,197,94,0.12);
         border: 1px solid rgba(34,197,94,0.45);
-        border-radius: 99px; font-size: 0.75rem; font-weight: 800;
-        color: var(--green) !important; letter-spacing: 1px;
+        border-radius: 99px; font-size: 0.7rem; font-weight: 800;
+        color: var(--green) !important; letter-spacing: 0.8px;
         position: relative; z-index: 1;
     }
 
     .mh-stat-grid {
         display: grid; grid-template-columns: 1fr 1fr;
-        gap: 12px; margin: 0 0 20px 0;
+        gap: 10px; margin: 0 0 16px 0;
     }
     .mh-stat {
         position: relative;
         background: linear-gradient(145deg, #16233d, #0f1a2e);
         border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 18px 10px 16px 10px;
+        border-radius: 16px;
+        padding: 14px 10px 12px 10px;
         text-align: center;
         overflow: hidden;
         transition: all 0.25s ease;
@@ -506,30 +543,30 @@ st.markdown("""
         content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
         background: linear-gradient(90deg, #22c55e, #3b82f6);
     }
-    .mh-stat-icon { font-size: 1.5rem; margin-bottom: 4px; }
+    .mh-stat-icon { font-size: 1.3rem; margin-bottom: 4px; }
     .mh-stat-num {
-        font-size: 2.1rem; font-weight: 900; color: var(--green) !important;
-        line-height: 1; letter-spacing: -1px;
+        font-size: 1.8rem; font-weight: 900; color: var(--green) !important;
+        line-height: 1; letter-spacing: -0.8px;
         text-shadow: 0 0 20px rgba(34,197,94,0.4);
     }
     .mh-stat-lbl {
-        font-size: 0.7rem; color: var(--muted) !important;
-        margin-top: 7px; letter-spacing: 0.8px;
+        font-size: 0.65rem; color: var(--muted) !important;
+        margin-top: 6px; letter-spacing: 0.7px;
         text-transform: uppercase; font-weight: 800;
     }
 
     .mh-section-title {
-        font-size: 0.8rem; color: var(--muted) !important;
-        text-transform: uppercase; letter-spacing: 1.4px;
-        font-weight: 800; margin: 6px 0 10px 4px;
+        font-size: 0.75rem; color: var(--muted) !important;
+        text-transform: uppercase; letter-spacing: 1.2px;
+        font-weight: 800; margin: 4px 0 8px 2px;
         text-align: left; border-left: 3px solid var(--green);
-        padding-left: 10px;
+        padding-left: 8px;
     }
 
     .st-key-fa_misafir_nav .stButton button {
-        height: 80px !important; font-size: 1.05rem !important;
-        font-weight: 900 !important; border-radius: 18px !important;
-        letter-spacing: 0.5px;
+        height: 68px !important; font-size: 0.95rem !important;
+        font-weight: 900 !important; border-radius: 16px !important;
+        letter-spacing: 0.4px;
         box-shadow: 0 10px 28px rgba(34,197,94,0.3) !important;
         transition: all 0.25s ease;
     }
@@ -538,21 +575,21 @@ st.markdown("""
         box-shadow: 0 16px 40px rgba(34,197,94,0.5) !important;
     }
     .st-key-fa_misafir_nav .stButton button p {
-        font-size: 1.05rem !important; font-weight: 900 !important;
+        font-size: 0.95rem !important; font-weight: 900 !important;
     }
 
     .mh-info {
         background: linear-gradient(145deg, rgba(19,28,46,0.7), rgba(11,18,32,0.9));
         border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 14px 16px;
-        margin-top: 18px;
-        font-size: 0.8rem; color: var(--muted) !important;
-        line-height: 1.7;
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin-top: 14px;
+        font-size: 0.75rem; color: var(--muted) !important;
+        line-height: 1.6;
     }
     .mh-info b { color: var(--green) !important; }
 
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
     ::-webkit-scrollbar-track { background: var(--bg-1); }
     ::-webkit-scrollbar-thumb { background: #2a3a56; border-radius: 99px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--green); }
@@ -2052,7 +2089,7 @@ def mac_karti(ev, dep, skor_belli, skor_ev, skor_dep, lam_ev, lam_dep, saat="", 
         if saat:
             parcalar.append(f"🕐 {_e(saat)}")
         if parcalar:
-            ust_bilgi = f'<div class="fa-sub" style="margin-bottom:8px;">{" • ".join(parcalar)}</div>'
+            ust_bilgi = f'<div class="fa-sub" style="margin-bottom:6px;">{" • ".join(parcalar)}</div>'
     alt = f'<div class="fa-sub">Model beklenen gol: {lam_ev:.2f} - {lam_dep:.2f}</div>'
     return (f'<div class="fa-hero">{ust_bilgi}<div class="fa-teams"><div class="fa-team">{_e(ev)}</div>'
             f'{orta}<div class="fa-team">{_e(dep)}</div></div>{alt}</div>')
@@ -2130,7 +2167,7 @@ def olasilik_paneli(a):
         + olasilik_bar("Ev Sahibi (1)", a["p1"], esik_1x2_al("1"), "#3b82f6")
         + olasilik_bar("Beraberlik (X)", a["px"], esik_1x2_al("X"), "#94a3b8")
         + olasilik_bar("Deplasman (2)", a["p2"], esik_1x2_al("2"), "#f59e0b")
-        + '<div class="fa-ttl" style="margin-top:12px">Piyasalar (çizgi = eşik)</div>'
+        + '<div class="fa-ttl" style="margin-top:10px">Piyasalar (çizgi = eşik)</div>'
         + olasilik_bar("Üst 2.5", a["ust_25"], esik_al("ust"))
         + olasilik_bar("Alt 2.5", a["alt_25"], esik_al("alt"))
         + olasilik_bar("KG Var", a["kg_var_model"], esik_al("kg_var"))
@@ -2312,13 +2349,13 @@ def ust_bar():
     with c1:
         if admin_mi():
             st.markdown(
-                '<div style="padding:8px 0; font-size:0.85rem; color:#22c55e; font-weight:700;">'
+                '<div style="padding:6px 0; font-size:0.8rem; color:#22c55e; font-weight:700;">'
                 '👑 Admin Modu</div>',
                 unsafe_allow_html=True
             )
         else:
             st.markdown(
-                '<div style="padding:8px 0; font-size:0.85rem; color:#8fa0bd; font-weight:600;">'
+                '<div style="padding:6px 0; font-size:0.8rem; color:#8fa0bd; font-weight:600;">'
                 '👤 Misafir Modu</div>',
                 unsafe_allow_html=True
             )
@@ -2536,7 +2573,7 @@ if st.session_state.sayfa == "giris":
         st.markdown("<p style='text-align:center; color:gray;'>İstatistik metnini kopyala → yapıştır → analiz et.</p>", unsafe_allow_html=True)
         st.markdown("### 📋 İstatistik Metnini Yapıştır")
 
-        yapistir_metni = st.text_area("Yapıştırma alanı", height=280, key="yapistir_input", label_visibility="collapsed", placeholder="İstatistik metnini buraya yapıştır.")
+        yapistir_metni = st.text_area("Yapıştırma alanı", height=240, key="yapistir_input", label_visibility="collapsed", placeholder="İstatistik metnini buraya yapıştır.")
         st.divider()
 
         col_bt1, col_bt2, col_bt3, col_bt4, col_bt5 = st.columns([2, 1, 1, 1, 1])
@@ -2671,13 +2708,13 @@ if st.session_state.sayfa == "giris":
                 💡 <b>İpucu:</b> Geçmiş maçlarda isabet oranlarını incele, gelecek maçlarda
                 yüksek güvenli tahminleri filtreleyerek kombine oluştur.
             </div>
-            <div class="mh-section-title" style="margin-top:20px;">BİLGİLENDİRME</div>
+            <div class="mh-section-title" style="margin-top:16px;">BİLGİLENDİRME</div>
         """, unsafe_allow_html=True)
 
         misafir_aciklama()
 
         st.markdown("""
-            <div class="login-footer" style="margin-top:24px;">
+            <div class="login-footer" style="margin-top:20px;">
                 © <b>Futbol Analiz Pro</b> • Bilgi amaçlıdır • Kesin sonuç garantisi yoktur
             </div>
         """, unsafe_allow_html=True)
