@@ -1592,6 +1592,15 @@ if st.session_state.sayfa == "giris":
                 <div class="mh-hero-sub">Akıllı maç analizi ve tahmin motoru</div>
                 <div class="mh-hero-badge">● CANLI VERİ</div>
             </div>
+            <div class="mh-info">
+                <b style="color:#22c55e;">📖 Nasıl Kullanılır?</b><br><br>
+                <b>📊 Geçmiş Maçlar:</b> Admin tarafından eklenen, skoru belli olan maçlar ve o maçlara ait tahminlerin sonuçları burada listelenir. <b>Genel Analiz</b> kartlarında her piyasanın (1X2, Üst/Alt 2.5, KG) isabet oranlarını görebilirsin.<br><br>
+                <b>🔮 Gelecek Maçlar:</b> Yaklaşan maçlar için modelin ürettiği tahminler burada gösterilir. Her maç kartında 1X2, Gol ve KG önerileri; yüzdeleri ve eşik durumları (✅ / ⚪) ile birlikte listelenir.<br><br>
+                <b>🎯 1X2:</b> Maç sonucu tahmini — Ev (1), Beraberlik (X), Deplasman (2).<br>
+                <b>⚽ Gol:</b> Toplam 2.5 gol üstü / altı tahmini.<br>
+                <b>🤝 KG:</b> Karşılıklı gol var / yok tahmini.<br><br>
+                <b>💡 İpucu:</b> Detay için her maçın altındaki <b>🔍 Detaylı</b> butonuna basabilirsin.
+            </div>
             <div class="mh-stat-grid">
                 <div class="mh-stat"><div class="mh-stat-icon">📊</div><div class="mh-stat-num">{gs}</div><div class="mh-stat-lbl">Geçmiş Maç</div></div>
                 <div class="mh-stat"><div class="mh-stat-icon">🔮</div><div class="mh-stat-num">{gl}</div><div class="mh-stat-lbl">Gelecek Maç</div></div>
