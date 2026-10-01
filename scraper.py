@@ -1,12 +1,20 @@
+"""
+Mutating.com Veri Toplayıcı Bot (PARALEL + AUTO)
+- Bugünün maçları: skor varsa Geçmiş'e, yoksa tahmin varsa Gelecek'e
+- LİGLER: son N maçı Geçmiş'e ekler
+"""
 import sys
 sys.stdout.reconfigure(line_buffering=True)
+
 import os
 import json
 import time
 import re
 import math
 import random
+import threading
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
     from playwright.sync_api import sync_playwright
@@ -17,10 +25,10 @@ except ImportError:
 # ==========================================
 # AYARLAR
 # ==========================================
+PARALEL = 3
 ANA_URL = "https://www.mutating.com/football-stats/"
 LIGLER = [
     "https://www.mutating.com/football-stats/league-uefa-champions-league-country-world-tables-stats-h2h-2/",
-    # İstediğin ligleri buraya ekle (virgülle ayır)
 ]
 LIG_BASINA_MAC = 10
 
@@ -36,6 +44,8 @@ VERI_DOSYA_GECMIS = "data/gecmis.json"
 MAX_GOL = 8
 BELIRSIZLIK = 0.20
 MONTE_CARLO_N = 10000
+
+_kilit = threading.Lock()
 
 
 # ==========================================
@@ -221,6 +231,40 @@ def kayit_olustur(v, a):
         "en_olasi_gol": a["en_olasi_gol"], "en_olasi_kg": a["en_olasi_kg"]}}
 
 
+def sonuc_hesapla(kayit):
+    v = kayit["veri"]; a = kayit.get("analiz", {})
+    if not v.get("skor_belli", False): return None
+    se = v.get("skor_ev", 0); sd = v.get("skor_dep", 0)
+    tg = se + sd
+    gu = tg > 2.5
+    gk = (se > 0 and sd > 0)
+    g1 = "1" if se > sd else ("X" if se == sd else "2")
+    u25 = a.get("ust_25", 50); alt = 100 - u25
+    kgv = a.get("kg_var_model", 50); kgy = 100 - kgv
+    p1a = a.get("p1", 33.33); pxa = a.get("px", 33.33); p2a = a.get("p2", 33.34)
+    s1x2, y1x2 = max([("1", p1a), ("X", pxa), ("2", p2a)], key=lambda x: x[1])
+    o1 = s1x2 if y1x2 >= esik_1x2_al(s1x2) else None
+    og = None
+    if u25 >= esik_al("ust") and u25 >= alt: og = "Üst"
+    elif alt >= esik_al("alt") and alt >= u25: og = "Alt"
+    okg = None
+    if kgv >= esik_al("kg_var") and kgv >= kgy: okg = "Var"
+    elif kgy >= esik_al("kg_yok") and kgy >= kgv: okg = "Yok"
+    def _t(o, g):
+        if o is None: return None, None
+        d = "tam" if o == g else "yanlis"
+        return d == "tam", d
+    t1, d1 = _t(o1, g1)
+    tg_, dg_ = _t(og, "Üst" if gu else "Alt")
+    tk, dk = _t(okg, "Var" if gk else "Yok")
+    return {
+        "oneri_1x2": {"tahmin": o1, "tuttu": t1, "durum": d1},
+        "oneri_gol": {"tahmin": og, "tuttu": tg_, "durum": dg_},
+        "oneri_kg": {"tahmin": okg, "tuttu": tk, "durum": dk},
+        "gercek_1x2": g1, "gercek_gol": "Üst" if gu else "Alt", "gercek_kg": "Var" if gk else "Yok",
+    }
+
+
 # ==========================================
 # HTML PARSE
 # ==========================================
@@ -299,46 +343,48 @@ def mac_html_parse(html, url=""):
 # ==========================================
 # PLAYWRIGHT
 # ==========================================
-def fetch_html(url, browser):
+def fetch_html_tek(url):
     try:
-        page = browser.new_page()
-        page.goto(url, timeout=90000, wait_until="domcontentloaded")
-        page.wait_for_timeout(4000)
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"])
+            page = browser.new_page()
+            page.goto(url, timeout=60000, wait_until="domcontentloaded")
+            page.wait_for_timeout(3000)
 
-        js = """
-        (function() {
-            var tum = document.querySelectorAll('label, span, div, button');
-            for (var i = 0; i < tum.length; i++) {
-                var t = (tum[i].textContent || '').trim();
-                if (t === '5' && tum[i].children.length <= 1) {
-                    try { tum[i].click(); } catch(e) {}
+            js = """
+            (function() {
+                var tum = document.querySelectorAll('label, span, div, button');
+                for (var i = 0; i < tum.length; i++) {
+                    var t = (tum[i].textContent || '').trim();
+                    if (t === '5' && tum[i].children.length <= 1) {
+                        try { tum[i].click(); } catch(e) {}
+                    }
                 }
-            }
-            var hedef = ['Home', 'Away'];
-            var els = document.querySelectorAll('label, span, div, button');
-            for (var k = 0; k < els.length; k++) {
-                var txt = (els[k].textContent || '').trim();
-                if (hedef.indexOf(txt) !== -1 && els[k].children.length <= 1) {
-                    try { els[k].click(); } catch(e) {}
+                var hedef = ['Home', 'Away'];
+                var els = document.querySelectorAll('label, span, div, button');
+                for (var k = 0; k < els.length; k++) {
+                    var txt = (els[k].textContent || '').trim();
+                    if (hedef.indexOf(txt) !== -1 && els[k].children.length <= 1) {
+                        try { els[k].click(); } catch(e) {}
+                    }
                 }
-            }
-            return true;
-        })();
-        """
-        try: page.evaluate(js)
-        except Exception: pass
-        page.wait_for_timeout(3500)
+                return true;
+            })();
+            """
+            try: page.evaluate(js)
+            except Exception: pass
+            page.wait_for_timeout(2500)
 
-        html = page.content()
-        page.close()
-        return html
+            html = page.content()
+            browser.close()
+            return html
     except Exception as e:
         print(f"    ⚠️ fetch hatası: {e}")
         return None
 
 
-def ana_sayfa_linkleri(browser):
-    html = fetch_html(ANA_URL, browser)
+def ana_sayfa_linkleri():
+    html = fetch_html_tek(ANA_URL)
     if not html: return []
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(html, "html.parser")
@@ -357,8 +403,8 @@ def ana_sayfa_linkleri(browser):
     return maclar
 
 
-def lig_linkleri(lig_url, browser, adet=10):
-    html = fetch_html(lig_url, browser)
+def lig_linkleri(lig_url, adet=10):
+    html = fetch_html_tek(lig_url)
     if not html: return []
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(html, "html.parser")
@@ -381,11 +427,51 @@ def lig_linkleri(lig_url, browser, adet=10):
 
 
 # ==========================================
+# WORKER
+# ==========================================
+def _mac_isle(mac, hedef_tip, mevcut_urls):
+    try:
+        if mac["url"] in mevcut_urls:
+            return ("atlandi", None, "Zaten var")
+
+        html = fetch_html_tek(mac["url"])
+        if not html:
+            return ("hata", mac, "HTML yok")
+
+        veri = mac_html_parse(html, mac["url"])
+        skor_var = veri.get("skor_belli", False)
+
+        if hedef_tip == "gelecek" and skor_var:
+            return ("atlandi", None, "Bitmiş maç")
+        if hedef_tip == "gecmis" and not skor_var:
+            return ("atlandi", None, "Skor yok")
+
+        if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
+        if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
+
+        if veri.get("atilan_ev", 0) == 0 or veri.get("yenen_ev", 0) == 0:
+            return ("atlandi", None, "İstatistik eksik")
+
+        if not skor_var and not tahmin_var_mi(veri):
+            return ("atlandi", None, "Tahmin yok")
+
+        kayit = kayit_olustur(veri, analiz_hesapla(veri))
+        if skor_var:
+            kayit["dogruluk"] = sonuc_hesapla(kayit)
+            return ("eklendi_gecmis", kayit, f"{veri.get('skor_ev')}-{veri.get('skor_dep')}")
+        else:
+            return ("eklendi_gelecek", kayit, "tahmin")
+    except Exception as e:
+        return ("hata", mac, str(e))
+
+
+# ==========================================
 # ANA
 # ==========================================
 def main():
     print("=" * 60)
     print(f"🤖 Bot Başladı — {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"⚡ Paralel: {PARALEL} thread")
     print("=" * 60)
 
     gelecek_mevcut = _yukle(VERI_DOSYA_GELECEK)
@@ -394,61 +480,68 @@ def main():
     gecmis_urls = set(g.get("veri", {}).get("kaynak_url", "") for g in gecmis_mevcut)
     print(f"📂 Mevcut: Gelecek={len(gelecek_mevcut)}, Geçmiş={len(gecmis_mevcut)}")
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
-        yeni_g = 0; yeni_ge = 0
+    yeni_g = 0; yeni_ge = 0
 
-        # 1) BUGÜNÜN MAÇLARI
-        print("\n🔄 Bugünün maçları...")
+    # ---- 1) BUGÜNÜN MAÇLARI (AUTO) ----
+    print("\n🔄 Bugünün maçları...")
+    try:
+        maclar = ana_sayfa_linkleri()
+        print(f"  → {len(maclar)} maç bulundu")
+
+        tum_urls = gelecek_urls | gecmis_urls
+        tamamlanan = 0
+
+        with ThreadPoolExecutor(max_workers=PARALEL) as executor:
+            futures = {executor.submit(_mac_isle, m, "auto", tum_urls): m for m in maclar}
+            for fut in as_completed(futures):
+                tamamlanan += 1
+                try:
+                    sonuc, kayit, mesaj = fut.result()
+                    if sonuc == "eklendi_gecmis":
+                        with _kilit:
+                            gecmis_mevcut.append(kayit)
+                            gecmis_urls.add(kayit["veri"].get("kaynak_url", ""))
+                        yeni_ge += 1
+                        print(f"  [{tamamlanan}/{len(maclar)}] ✅ Bitmiş → Geçmiş ({mesaj})")
+                    elif sonuc == "eklendi_gelecek":
+                        with _kilit:
+                            gelecek_mevcut.append(kayit)
+                            gelecek_urls.add(kayit["veri"].get("kaynak_url", ""))
+                        yeni_g += 1
+                        print(f"  [{tamamlanan}/{len(maclar)}] ✅ Tahmin → Gelecek")
+                    else:
+                        print(f"  [{tamamlanan}/{len(maclar)}] ⏭️  {mesaj}")
+                except Exception as e:
+                    print(f"  [{tamamlanan}/{len(maclar)}] ❌ {e}")
+    except Exception as e:
+        print(f"  ❌ Genel hata: {e}")
+
+    # ---- 2) LİGLER → GEÇMİŞ ----
+    for lig_url in LIGLER:
+        print(f"\n📜 Lig: {lig_url[:80]}...")
         try:
-            maclar = ana_sayfa_linkleri(browser)
-            print(f"  → {len(maclar)} maç")
-            for i, m in enumerate(maclar):
-                if m["url"] in gelecek_urls: continue
-                print(f"  [{i+1}] {m.get('takim_ev','')} vs {m.get('takim_dep','')}")
-                html = fetch_html(m["url"], browser)
-                if not html: continue
-                veri = mac_html_parse(html, m["url"])
-                if veri.get("skor_belli", False): continue
-                if not veri.get("takim_ev"): veri["takim_ev"] = m.get("takim_ev", "")
-                if not veri.get("takim_dep"): veri["takim_dep"] = m.get("takim_dep", "")
-                if veri.get("atilan_ev", 0) == 0: continue
-                if tahmin_var_mi(veri):
-                    kayit = kayit_olustur(veri, analiz_hesapla(veri))
-                    gelecek_mevcut.append(kayit)
-                    gelecek_urls.add(m["url"])
-                    yeni_g += 1
-                    print("     ✅ Gelecek'e eklendi")
-                time.sleep(1)
+            maclar = lig_linkleri(lig_url, adet=LIG_BASINA_MAC)
+            print(f"  → {len(maclar)} maç bulundu")
+
+            tamamlanan = 0
+            with ThreadPoolExecutor(max_workers=PARALEL) as executor:
+                futures = {executor.submit(_mac_isle, m, "gecmis", gecmis_urls): m for m in maclar}
+                for fut in as_completed(futures):
+                    tamamlanan += 1
+                    try:
+                        sonuc, kayit, mesaj = fut.result()
+                        if sonuc == "eklendi_gecmis":
+                            with _kilit:
+                                gecmis_mevcut.append(kayit)
+                                gecmis_urls.add(kayit["veri"].get("kaynak_url", ""))
+                            yeni_ge += 1
+                            print(f"  [{tamamlanan}/{len(maclar)}] ✅ {mesaj} → Geçmiş")
+                        else:
+                            print(f"  [{tamamlanan}/{len(maclar)}] ⏭️  {mesaj}")
+                    except Exception as e:
+                        print(f"  [{tamamlanan}/{len(maclar)}] ❌ {e}")
         except Exception as e:
-            print(f"  ❌ {e}")
-
-        # 2) LİGLER → GEÇMİŞ
-        for lig_url in LIGLER:
-            print(f"\n📜 {lig_url[:80]}...")
-            try:
-                maclar = lig_linkleri(lig_url, browser, adet=LIG_BASINA_MAC)
-                print(f"  → {len(maclar)} maç")
-                for i, m in enumerate(maclar):
-                    if m["url"] in gecmis_urls: continue
-                    print(f"  [{i+1}] {m.get('takim_ev','')} vs {m.get('takim_dep','')}")
-                    html = fetch_html(m["url"], browser)
-                    if not html: continue
-                    veri = mac_html_parse(html, m["url"])
-                    if not veri.get("skor_belli", False): continue
-                    if veri.get("atilan_ev", 0) == 0: continue
-                    if not veri.get("takim_ev"): veri["takim_ev"] = m.get("takim_ev", "")
-                    if not veri.get("takim_dep"): veri["takim_dep"] = m.get("takim_dep", "")
-                    kayit = kayit_olustur(veri, analiz_hesapla(veri))
-                    gecmis_mevcut.append(kayit)
-                    gecmis_urls.add(m["url"])
-                    yeni_ge += 1
-                    print(f"     ✅ {veri['skor_ev']}-{veri['skor_dep']}")
-                    time.sleep(1)
-            except Exception as e:
-                print(f"  ❌ {e}")
-
-        browser.close()
+            print(f"  ❌ Lig hatası: {e}")
 
     _kaydet(VERI_DOSYA_GELECEK, gelecek_mevcut)
     _kaydet(VERI_DOSYA_GECMIS, gecmis_mevcut)
