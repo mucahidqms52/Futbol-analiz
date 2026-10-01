@@ -38,7 +38,7 @@ ESIKLER = {
     "kg_var": 57.0, "kg_yok": 72.0,
 }
 
-VERI_DOSYA_GELECEK = "data/gelecek.json"              # Tüm oynanmamış
+VERI_DOSYA_GELECEK = "data/gelecek.json"                # Tüm oynanmamış
 VERI_DOSYA_GELECEK_TAHMIN = "data/gelecek_tahmin.json"  # Sadece eşiği geçen
 VERI_DOSYA_GECMIS = "data/gecmis.json"
 
@@ -210,14 +210,19 @@ def esik_1x2_al(secim):
 
 
 def tahmin_var_mi(v):
-    """Bu maçta eşiği geçen bir tahmin var mı?"""
+    """Bu maçta HERHANGİ bir market eşiği geçiyor mu?"""
     try:
         a = analiz_hesapla(v)
+        # 1X2
         s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
         if y1 >= esik_1x2_al(s1): return True
+        # Üst 2.5
         if a["ust_25"] >= esik_al("ust") and a["ust_25"] >= a["alt_25"]: return True
+        # Alt 2.5
         if a["alt_25"] >= esik_al("alt") and a["alt_25"] >= a["ust_25"]: return True
+        # KG Var
         if a["kg_var_model"] >= esik_al("kg_var") and a["kg_var_model"] >= a["kg_yok_model"]: return True
+        # KG Yok
         if a["kg_yok_model"] >= esik_al("kg_yok") and a["kg_yok_model"] >= a["kg_var_model"]: return True
         return False
     except Exception:
@@ -459,8 +464,6 @@ def _mac_isle(mac, hedef_tip, mevcut_urls):
             kayit["dogruluk"] = sonuc_hesapla(kayit)
             return ("eklendi_gecmis", kayit, f"{veri.get('skor_ev')}-{veri.get('skor_dep')}")
         else:
-            # Skorsuz → gelecek.json'a her zaman ekle
-            # Tahmin varsa → ayrıca gelecek_tahmin.json için işaretle
             tahmin_var = tahmin_var_mi(veri)
             return ("eklendi_gelecek", kayit, "tahminli" if tahmin_var else "tahminsiz")
     except Exception as e:
@@ -476,8 +479,8 @@ def main():
     print(f"⚡ Paralel: {PARALEL} thread")
     print("=" * 60)
 
-    gelecek_mevcut = _yukle(VERI_DOSYA_GELECEK)            # Tüm oynanmamış
-    tahmin_mevcut = _yukle(VERI_DOSYA_GELECEK_TAHMIN)       # Sadece tahmini
+    gelecek_mevcut = _yukle(VERI_DOSYA_GELECEK)
+    tahmin_mevcut = _yukle(VERI_DOSYA_GELECEK_TAHMIN)
     gecmis_mevcut = _yukle(VERI_DOSYA_GECMIS)
 
     gelecek_urls = set(g.get("veri", {}).get("kaynak_url", "") for g in gelecek_mevcut)
@@ -488,7 +491,7 @@ def main():
 
     yeni_g = 0; yeni_t = 0; yeni_ge = 0
 
-    # ---- 1) BUGÜNÜN MAÇLARI (AUTO) ----
+    # ---- 1) BUGÜNÜN MAÇLARI ----
     print("\n🔄 Bugünün maçları...")
     try:
         maclar = ana_sayfa_linkleri()
@@ -511,18 +514,16 @@ def main():
                         print(f"  [{tamamlanan}/{len(maclar)}] ✅ Bitmiş → Geçmiş ({mesaj})")
                     elif sonuc == "eklendi_gelecek":
                         with _kilit:
-                            # Her zaman gelecek.json'a ekle
                             gelecek_mevcut.append(kayit)
                             gelecek_urls.add(kayit["veri"].get("kaynak_url", ""))
                             yeni_g += 1
-                            # Tahmin varsa ayrıca tahmin.json'a ekle
                             if mesaj == "tahminli":
                                 url = kayit["veri"].get("kaynak_url", "")
                                 if url not in tahmin_urls:
                                     tahmin_mevcut.append(kayit)
                                     tahmin_urls.add(url)
                                     yeni_t += 1
-                                    print(f"  [{tamamlanan}/{len(maclar)}] ✅ Tahmin var → Gelecek + Tahmin")
+                                    print(f"  [{tamamlanan}/{len(maclar)}] ✅ TAHMİN VAR → Gelecek + Tahmin")
                                 else:
                                     print(f"  [{tamamlanan}/{len(maclar)}] ⏭️  Tahmin zaten var")
                             else:
