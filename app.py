@@ -1,3 +1,30 @@
+import streamlit as st
+import math
+import copy
+import re
+import random
+import json
+import os
+import html as _html
+import time
+import threading
+import requests
+from datetime import datetime, timedelta
+from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import subprocess, sys
+
+st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
+
+@st.cache_resource(show_spinner="Tarayıcı kuruluyor (ilk açılışta 1-2 dk sürer)...")
+def _tarayici_kur():
+    try:
+        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=False, timeout=600)
+    except Exception:
+        pass
+    return True
+
+_tarayici_kur()
 # ==========================================
 # DOSYALAR
 # ==========================================
