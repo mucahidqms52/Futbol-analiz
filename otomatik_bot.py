@@ -1,4 +1,3 @@
-
 import time
 import requests
 from bs4 import BeautifulSoup
@@ -22,7 +21,7 @@ from app import (
     esik_1x2_al
 )
 
-# 5 maçlık filtreyi garanti eden adres yapısı
+# 5 maçlık veriyi çekmek için ana sayfa isteği de 5 maç olarak ayarlanıyor
 MUTATING_URL = "https://www.mutating.com/soccer-predictions/?last=5"
 
 def headers_uret():
@@ -39,7 +38,7 @@ def json_dosyalarini_kontrol_et():
             json.dump([], f)
 
 def mutaring_calistir():
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] 5 maçlık veri ve kesin eşik filtresi başlatıldı...")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] 5 maçlık veri ve kesin biten maç filtresi başlatıldı...")
     json_dosyalarini_kontrol_et()
     
     try:
@@ -54,14 +53,13 @@ def mutaring_calistir():
         for a_tag in soup.find_all('a', href=True):
             href = a_tag['href']
             if "-vs-" in href or "match" in href:
-                # Her linkin sonuna kesinlikle ?last=5 parametresini ekliyoruz
-                if "?" in href:
-                    temiz_link = href.split("?")[0] + "?last=5"
-                else:
-                    temiz_link = href + "?last=5"
-                    
-                if temiz_link not in mac_linkleri:
-                    mac_linkleri.append(temiz_link)
+                # 5 maçlık veri filtresini (?last=5) her maç linkine kesin olarak ekliyoruz
+                temiz_url = href.split("?")[0] if "?" in href else href
+                tam_link = temiz_url if temiz_url.startswith("http") else "https://www.mutating.com" + temiz_url
+                tam_link_5_mac = tam_link + "?last=5"
+                
+                if tam_link_5_mac not in mac_linkleri:
+                    mac_linkleri.append(tam_link_5_mac)
 
         gelecek_listesi = gelecek_yukle()
         gecmis_listesi = gecmis_yukle()
@@ -71,8 +69,7 @@ def mutaring_calistir():
 
         for link in mac_linkleri[:25]:
             try:
-                tam_link = link if link.startswith("http") else "https://www.mutating.com" + link
-                detay_resp = requests.get(tam_link, headers=headers_uret(), timeout=10)
+                detay_resp = requests.get(link, headers=headers_uret(), timeout=10)
                 if detay_resp.status_code != 200:
                     continue
 
@@ -97,10 +94,19 @@ def mutaring_calistir():
                     v = copy.deepcopy(VARSAYILAN_VERI)
                     v.update(cikan_veri)
                     
-                    a = analiz_hesapla(v)
-                    yeni_kayit = kayit_olustur(v, a)
+                    # --- BİTMİŞ MAÇ (FT) KONTROLÜ ---
+                    # Metin içinde "FT" geçiyorsa veya skor kesin belliyse maç bitmiştir!
+                    if "FT" in ham_metin or "Full Time" in ham_metin:
+                        v["skor_belli"] = True
 
                     skor_belli = v.get("skor_belli", False)
+
+                    # Eğer maç bittiyse (FT ise), GELECEK MAÇLARA ASLA EKLENMEZ!
+                    if skor_belli:
+                        continue
+
+                    a = analiz_hesapla(v)
+                    yeni_kayit = kayit_olustur(v, a)
 
                     p1 = a["p1"]; px = a["px"]; p2 = a["p2"]
                     ust_25 = a["ust_25"]; alt_25 = a["alt_25"]
@@ -118,26 +124,17 @@ def mutaring_calistir():
                     kg_esik = esik_al("kg_var") if kg_var >= kg_yok else esik_al("kg_yok")
                     kg_poz = kg_yuzde >= kg_esik
 
-                    # --- KESİN EŞİK KONTROLÜ ---
-                    # Eşiği geçmeyen maçlar KESİNLİKLE reddedilir (hiçbir yere kaydedilmez)
+                    # --- KESİN EŞİK FİLTRESİ ---
+                    # Eşiği geçmeyen hiçbir maç gelecek listesine alınmaz (safdışı kalır)
                     kaydet_mi = bool(gol_poz or kg_poz or poz_1x2)
                     if not kaydet_mi:
                         continue
 
                     mac_anahtar = f"{takim_ev}-{takim_dep}"
-
-                    if skor_belli:
-                        d = sonuc_hesapla(yeni_kayit)
-                        if d: 
-                            yeni_kayit["dogruluk"] = d
-                        gecmis_keys = [f"{g['veri']['takim_ev']}-{g['veri']['takim_dep']}" for g in guncellenen_gecmis]
-                        if mac_anahtar not in gecmis_keys:
-                            guncellenen_gecmis.append(yeni_kayit)
-                    else:
-                        gelecek_keys = [f"{g['veri']['takim_ev']}-{g['veri']['takim_dep']}" for g in guncellenen_gelecek]
-                        # Sadece eşiği geçenler gelecek listesine eklenir
-                        if mac_anahtar not in gelecek_keys:
-                            guncellenen_gelecek.append(yeni_kayit)
+                    gelecek_keys = [f"{g['veri']['takim_ev']}-{g['veri']['takim_dep']}" for g in guncellenen_gelecek]
+                    
+                    if mac_anahtar not in gelecek_keys:
+                        guncellenen_gelecek.append(yeni_kayit)
 
                 time.sleep(1)
             except Exception as e:
@@ -155,8 +152,8 @@ def mutaring_calistir():
         guncellenen_gelecek.sort(key=sira_anahtari, reverse=False)
 
         gelecek_kaydet(guncellenen_gelecek)
-        gecmis_kaydet(guncellenen_gecmis)
-        print("✅ 5 maçlık veri, kesin eşik filtresi ve sıralama başarıyla tamamlandı.")
+        gecmis_kaydet(gecmis_listesi)
+        print("✅ 5 maçlık veri garantilendi, bitmiş maçlar (FT) filtrelendi ve eşik kuralları uygulandı.")
 
     except Exception as e:
         print(f"❌ Hata: {e}")
