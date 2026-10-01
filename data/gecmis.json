@@ -1,0 +1,4649 @@
+[
+  {
+    "veri": {
+      "takim_ev": "Portugal",
+      "takim_dep": "Uzbekistan",
+      "tarih": "23.06.2026",
+      "saat": "18:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.5,
+      "atilan_dep": 0.9,
+      "yenen_ev": 0.8,
+      "yenen_dep": 1.9,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 60.0,
+      "kg_siklik_ev": 60.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 70.0,
+      "ust15_dep": 70.0,
+      "lig_ort_toplam": 3.05,
+      "lig_ust25": 60.0,
+      "lig_kg": 55.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-denmark-vs-portugal-stats-h2h-preview-and-prediction-bfcijbj/"
+    },
+    "analiz": {
+      "p1": 81.62604784153076,
+      "px": 10.973347953912636,
+      "p2": 7.400604204556603,
+      "tahmini_gol": 4.211874999999999,
+      "kg_var_model": 57.990917321771214,
+      "ust_25": 78.43253532766549,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Austria",
+      "takim_dep": "Ghana",
+      "tarih": "27.03.2026",
+      "saat": "17:00",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 3.0,
+      "atilan_dep": 0.4,
+      "yenen_ev": 0.6,
+      "yenen_dep": 1.8,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 40.0,
+      "kg_siklik_ev": 60.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 30.0,
+      "ust15_ev": 70.0,
+      "ust15_dep": 70.0,
+      "lig_ort_toplam": 2.9,
+      "lig_ust25": 45.0,
+      "lig_kg": 50.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-rep.-of-ireland-vs-austria-stats-h2h-preview-and-prediction-bfcijcb/"
+    },
+    "analiz": {
+      "p1": 93.75034215565636,
+      "px": 4.980089066159237,
+      "p2": 1.2695687781844112,
+      "tahmini_gol": 4.0244100000000005,
+      "kg_var_model": 26.959611799859893,
+      "ust_25": 75.65080273357489,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Yok",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Israel",
+      "takim_dep": "Italy",
+      "tarih": "08.09.2025",
+      "saat": "19:45",
+      "skor_ev": 4,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 1.7,
+      "atilan_dep": 2.1,
+      "yenen_ev": 2.6,
+      "yenen_dep": 1.3,
+      "clean_sheets_ev": 10.0,
+      "clean_sheets_dep": 40.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 90.0,
+      "kg_siklik_ev": 80.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 90.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 70.0,
+      "lig_ort_toplam": 3.85,
+      "lig_ust25": 70.0,
+      "lig_kg": 65.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-israel-vs-kosovo-stats-h2h-preview-and-prediction-bfcijcc/"
+    },
+    "analiz": {
+      "p1": 35.22354084767036,
+      "px": 18.89779932653777,
+      "p2": 45.87865982579188,
+      "tahmini_gol": 4.7731449999999995,
+      "kg_var_model": 82.00809362248329,
+      "ust_25": 85.20775020083346,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Mexico",
+      "takim_dep": "Serbia",
+      "tarih": "05.06.2026",
+      "saat": "03:00",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 1.8,
+      "atilan_dep": 0.7,
+      "yenen_ev": 0.7,
+      "yenen_dep": 1.9,
+      "clean_sheets_ev": 50.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 50.0,
+      "kg_siklik_ev": 50.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 20.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 2.55,
+      "lig_ust25": 35.0,
+      "lig_kg": 45.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-germany-vs-serbia-stats-h2h-preview-and-prediction-bfcijbh/"
+    },
+    "analiz": {
+      "p1": 69.37522662556847,
+      "px": 19.989730433201334,
+      "p2": 10.63504294123019,
+      "tahmini_gol": 2.52987,
+      "kg_var_model": 38.221607851425006,
+      "ust_25": 46.172464013001544,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Alt",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Netherlands",
+      "takim_dep": "Sweden",
+      "tarih": "20.06.2026",
+      "saat": "18:00",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 2.2,
+      "atilan_dep": 1.1,
+      "yenen_ev": 0.9,
+      "yenen_dep": 2.2,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 70.0,
+      "kg_siklik_ev": 70.0,
+      "kg_siklik_dep": 60.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 3.2,
+      "lig_ust25": 60.0,
+      "lig_kg": 65.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-greece-vs-netherlands-stats-h2h-preview-and-prediction-bfcijbi/"
+    },
+    "analiz": {
+      "p1": 74.42719134135056,
+      "px": 13.84617689109922,
+      "p2": 11.726631767550215,
+      "tahmini_gol": 4.3691949999999995,
+      "kg_var_model": 67.40536108268562,
+      "ust_25": 80.42174037010886,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Kenya",
+      "takim_dep": "Seychelles",
+      "tarih": "09.09.2025",
+      "saat": "14:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 1.8,
+      "atilan_dep": 0.6,
+      "yenen_ev": 0.9,
+      "yenen_dep": 3.8,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 50.0,
+      "kg_siklik_ev": 60.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 50.0,
+      "ust25_dep": 80.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.55,
+      "lig_ust25": 65.0,
+      "lig_kg": 55.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-guinea-vs-kenya-stats-h2h-preview-and-prediction-bfefifb/"
+    },
+    "analiz": {
+      "p1": 82.93301824310011,
+      "px": 11.17302642699505,
+      "p2": 5.893955329904837,
+      "tahmini_gol": 3.7912500000000007,
+      "kg_var_model": 49.019248999003864,
+      "ust_25": 72.29482060449754,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "The Strongest",
+      "takim_dep": "Real Oruro",
+      "tarih": "12.09.2026",
+      "saat": "22:15",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.2,
+      "atilan_dep": 1.4,
+      "yenen_ev": 1.2,
+      "yenen_dep": 2.7,
+      "clean_sheets_ev": 10.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 90.0,
+      "kg_siklik_ev": 90.0,
+      "kg_siklik_dep": 90.0,
+      "ust25_ev": 70.0,
+      "ust25_dep": 80.0,
+      "ust15_ev": 100.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.75,
+      "lig_ust25": 75.0,
+      "lig_kg": 90.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-oriente-petrolero-vs-the-strongest-stats-h2h-preview-and-prediction-bgbjgjh/"
+    },
+    "analiz": {
+      "p1": 68.95249273365006,
+      "px": 14.380329428991681,
+      "p2": 16.66717783735826,
+      "tahmini_gol": 5.093579999999999,
+      "kg_var_model": 78.9590357346552,
+      "ust_25": 87.84794340480244,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Blooming",
+      "takim_dep": "Gualberto Villarroel SJ",
+      "tarih": "10.09.2026",
+      "saat": "01:30",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 1.9,
+      "atilan_dep": 0.7,
+      "yenen_ev": 0.9,
+      "yenen_dep": 2.3,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 50.0,
+      "kg_siklik_ev": 60.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 40.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 70.0,
+      "lig_ort_toplam": 2.8999999999999995,
+      "lig_ust25": 50.0,
+      "lig_kg": 55.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-bolívar-vs-gualberto-villarroel-sj-stats-h2h-preview-and-prediction-bgbjgji/"
+    },
+    "analiz": {
+      "p1": 68.81736393560787,
+      "px": 18.722717159905393,
+      "p2": 12.459918904486743,
+      "tahmini_gol": 2.919459999999999,
+      "kg_var_model": 47.22711769458489,
+      "ust_25": 55.72261125597063,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Picuiense",
+      "takim_dep": "EC de Patos",
+      "tarih": "19.02.2025",
+      "saat": "23:15",
+      "skor_ev": 0,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 0.5,
+      "atilan_dep": 1.6,
+      "yenen_ev": 2.0,
+      "yenen_dep": 1.4,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 30.0,
+      "team_scored_dep": 70.0,
+      "kg_siklik_ev": 20.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 30.0,
+      "ust25_dep": 70.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 2.75,
+      "lig_ust25": 50.0,
+      "lig_kg": 30.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-auto-esporte-vs-picuiense-stats-h2h-preview-and-prediction-bgbaiei/"
+    },
+    "analiz": {
+      "p1": 11.130933350807627,
+      "px": 18.923171361709244,
+      "p2": 69.94589528748313,
+      "tahmini_gol": 2.7848249999999997,
+      "kg_var_model": 43.015733171816045,
+      "ust_25": 52.24691359386418,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "X2",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Serrano PB",
+      "takim_dep": "Spartax",
+      "tarih": "21.09.2025",
+      "saat": "19:00",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 1.88,
+      "atilan_dep": 1.7,
+      "yenen_ev": 1.63,
+      "yenen_dep": 2.3,
+      "clean_sheets_ev": 0.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 100.0,
+      "kg_siklik_dep": 60.0,
+      "ust25_ev": 50.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 100.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 3.755,
+      "lig_ust25": 55.0,
+      "lig_kg": 80.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-spartax-vs-sport-pb-stats-h2h-preview-and-prediction-bgbaifc/"
+    },
+    "analiz": {
+      "p1": 46.68304661651345,
+      "px": 18.614817140972377,
+      "p2": 34.70213624251415,
+      "tahmini_gol": 4.666684999999999,
+      "kg_var_model": 81.05636493990534,
+      "ust_25": 84.21905921599692,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Guarabira",
+      "takim_dep": "Femar",
+      "tarih": "20.09.2026",
+      "saat": "19:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 1.5,
+      "atilan_dep": 0.67,
+      "yenen_ev": 0.9,
+      "yenen_dep": 3.67,
+      "clean_sheets_ev": 50.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 70.0,
+      "team_scored_dep": 66.67,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 66.67,
+      "ust25_ev": 50.0,
+      "ust25_dep": 100.0,
+      "ust15_ev": 70.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.37,
+      "lig_ust25": 75.0,
+      "lig_kg": 53.335,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-serrano-pb-vs-guarabira-stats-h2h-preview-and-prediction-bgbaifb/"
+    },
+    "analiz": {
+      "p1": 74.56201038568283,
+      "px": 15.298939392061142,
+      "p2": 10.139050222256033,
+      "tahmini_gol": 3.5252077324999997,
+      "kg_var_model": 53.96442625587028,
+      "ust_25": 67.87984156014512,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Pérolas Negras",
+      "takim_dep": "Santa Cruz RJ",
+      "tarih": "23.06.2026",
+      "saat": "18:45",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 1.3,
+      "atilan_dep": 1.4,
+      "yenen_ev": 0.9,
+      "yenen_dep": 1.4,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 60.0,
+      "team_scored_dep": 70.0,
+      "kg_siklik_ev": 50.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 30.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 60.0,
+      "lig_ort_toplam": 2.5,
+      "lig_ust25": 40.0,
+      "lig_kg": 50.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-se-belford-roxo-vs-santa-cruz-rj-stats-h2h-preview-and-prediction-bgafchc/"
+    },
+    "analiz": {
+      "p1": 34.450629538298095,
+      "px": 27.27686707820556,
+      "p2": 38.27250338349635,
+      "tahmini_gol": 2.4689499999999995,
+      "kg_var_model": 50.106884541915534,
+      "ust_25": 44.78155955750474,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Alt",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Alt",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Niteroiense",
+      "takim_dep": "Paduano",
+      "tarih": "08.11.2025",
+      "saat": "18:00",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 1.2,
+      "atilan_dep": 1.0,
+      "yenen_ev": 1.1,
+      "yenen_dep": 1.5,
+      "clean_sheets_ev": 50.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 60.0,
+      "team_scored_dep": 60.0,
+      "kg_siklik_ev": 30.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 30.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 70.0,
+      "lig_ort_toplam": 2.4000000000000004,
+      "lig_ust25": 45.0,
+      "lig_kg": 40.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-paduano-vs-campos-aa-stats-h2h-preview-and-prediction-bgafchg/"
+    },
+    "analiz": {
+      "p1": 37.18952629112385,
+      "px": 27.959164729531388,
+      "p2": 34.85130897934476,
+      "tahmini_gol": 2.3143000000000002,
+      "kg_var_model": 46.70338974641802,
+      "ust_25": 40.921507740773265,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Alt",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Alt",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Cavalry FC",
+      "takim_dep": "York United",
+      "tarih": "02.08.2026",
+      "saat": "02:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.4,
+      "atilan_dep": 1.0,
+      "yenen_ev": 0.6,
+      "yenen_dep": 2.5,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 60.0,
+      "kg_siklik_dep": 80.0,
+      "ust25_ev": 50.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.25,
+      "lig_ust25": 55.0,
+      "lig_kg": 70.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-atlético-ottawa-vs-cavalry-fc-stats-h2h-preview-and-prediction-bfbhdfh/"
+    },
+    "analiz": {
+      "p1": 75.04851792154675,
+      "px": 13.888522183771329,
+      "p2": 11.062959894681914,
+      "tahmini_gol": 4.12995,
+      "kg_var_model": 63.527418205606445,
+      "ust_25": 77.2313555548276,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Concepción",
+      "takim_dep": "OHiggins",
+      "tarih": "01.10.2026",
+      "saat": "00:00",
+      "skor_ev": 0,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 1.4,
+      "atilan_dep": 2.0,
+      "yenen_ev": 0.4,
+      "yenen_dep": 1.6,
+      "clean_sheets_ev": 60.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 20.0,
+      "kg_siklik_dep": 80.0,
+      "ust25_ev": 20.0,
+      "ust25_dep": 80.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 2.7,
+      "lig_ust25": 50.0,
+      "lig_kg": 50.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-concepción-vs-ohiggins-stats-h2h-preview-and-prediction-bgedbie/"
+    },
+    "analiz": {
+      "p1": 32.289935314724005,
+      "px": 22.200501930406976,
+      "p2": 45.509562754869016,
+      "tahmini_gol": 3.4249099999999997,
+      "kg_var_model": 66.41755088352983,
+      "ust_25": 66.43650499363994,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Alt",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Alianza Valledupar",
+      "takim_dep": "Atletico Nacional",
+      "tarih": "30.08.2026",
+      "saat": "02:30",
+      "skor_ev": 1,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 1.4,
+      "atilan_dep": 1.8,
+      "yenen_ev": 1.8,
+      "yenen_dep": 1.1,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 70.0,
+      "kg_siklik_ev": 70.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 70.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 3.05,
+      "lig_ust25": 65.0,
+      "lig_kg": 55.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-atletico-nacional-vs-junior-stats-h2h-preview-and-prediction-bfejhad/"
+    },
+    "analiz": {
+      "p1": 33.94333764880606,
+      "px": 20.457725234276065,
+      "p2": 45.59893711691789,
+      "tahmini_gol": 4.01304,
+      "kg_var_model": 74.16771196523223,
+      "ust_25": 75.94334603913657,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Alianza",
+      "takim_dep": "Platense",
+      "tarih": "01.10.2026",
+      "saat": "02:00",
+      "skor_ev": 2,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 1.0,
+      "atilan_dep": 1.0,
+      "yenen_ev": 1.8,
+      "yenen_dep": 1.4,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 60.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 80.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 40.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 2.5999999999999996,
+      "lig_ust25": 50.0,
+      "lig_kg": 60.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-alianza-vs-platense-stats-h2h-preview-and-prediction-bgaagbe/"
+    },
+    "analiz": {
+      "p1": 41.31673463320989,
+      "px": 26.478700002511758,
+      "p2": 32.20456536427836,
+      "tahmini_gol": 2.6119499999999993,
+      "kg_var_model": 52.818885790200994,
+      "ust_25": 48.270902303235644,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Alt",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Rodez",
+      "takim_dep": "Bastia",
+      "tarih": "10.07.2026",
+      "saat": "10:00",
+      "skor_ev": 5,
+      "skor_dep": 3,
+      "skor_belli": true,
+      "atilan_ev": 2.6,
+      "atilan_dep": 1.4,
+      "yenen_ev": 1.7,
+      "yenen_dep": 1.4,
+      "clean_sheets_ev": 0.0,
+      "clean_sheets_dep": 40.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 90.0,
+      "kg_siklik_ev": 90.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 90.0,
+      "ust25_dep": 30.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 50.0,
+      "lig_ort_toplam": 3.55,
+      "lig_ust25": 60.0,
+      "lig_kg": 70.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-bastia-vs-orleans-stats-h2h-preview-and-prediction-bfhehfb/"
+    },
+    "analiz": {
+      "p1": 70.764848867081,
+      "px": 14.703105870716376,
+      "p2": 14.532045262202619,
+      "tahmini_gol": 4.555899999999999,
+      "kg_var_model": 72.3564479131842,
+      "ust_25": 82.66158733628376,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Shatin",
+      "takim_dep": "North District",
+      "tarih": "06.09.2026",
+      "saat": "09:00",
+      "skor_ev": 0,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 1.3,
+      "atilan_dep": 2.6,
+      "yenen_ev": 1.3,
+      "yenen_dep": 1.5,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 60.0,
+      "team_scored_dep": 100.0,
+      "kg_siklik_ev": 30.0,
+      "kg_siklik_dep": 80.0,
+      "ust25_ev": 40.0,
+      "ust25_dep": 90.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.35,
+      "lig_ust25": 65.0,
+      "lig_kg": 55.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-north-district-vs-southern-district-stats-h2h-preview-and-prediction-bgdhjgc/"
+    },
+    "analiz": {
+      "p1": 14.397628195156631,
+      "px": 16.106897236314758,
+      "p2": 69.4954745685286,
+      "tahmini_gol": 4.01534,
+      "kg_var_model": 65.89541047781341,
+      "ust_25": 75.95755194114523,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "X2",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Eastern",
+      "takim_dep": "Hong Kong FC",
+      "tarih": "11.04.2026",
+      "saat": "11:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.1,
+      "atilan_dep": 1.3,
+      "yenen_ev": 1.1,
+      "yenen_dep": 2.9,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 60.0,
+      "kg_siklik_dep": 80.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 80.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.7,
+      "lig_ust25": 70.0,
+      "lig_kg": 70.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-shatin-vs-hong-kong-fc-stats-h2h-preview-and-prediction-bgdhjgd/"
+    },
+    "analiz": {
+      "p1": 71.40308560460589,
+      "px": 13.708841725121184,
+      "p2": 14.88807267027292,
+      "tahmini_gol": 4.967079999999999,
+      "kg_var_model": 76.60596985872257,
+      "ust_25": 86.88672074538971,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Kiryat Yam SC",
+      "takim_dep": "Hapoel Acre",
+      "tarih": "06.09.2026",
+      "saat": "17:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 1.4,
+      "atilan_dep": 0.6,
+      "yenen_ev": 0.9,
+      "yenen_dep": 1.9,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 60.0,
+      "team_scored_dep": 40.0,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 30.0,
+      "ust25_ev": 40.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 50.0,
+      "lig_ort_toplam": 2.4,
+      "lig_ust25": 45.0,
+      "lig_kg": 35.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-kiryat-yam-sc-vs-hapoel-kfar-saba-stats-h2h-preview-and-prediction-bfffbgg/"
+    },
+    "analiz": {
+      "p1": 57.68014107558472,
+      "px": 27.133630695010268,
+      "p2": 15.186228229405021,
+      "tahmini_gol": 2.0094000000000003,
+      "kg_var_model": 33.18518317930829,
+      "ust_25": 32.54756425234523,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Alt",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Alt",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Kiryat Yam SC",
+      "takim_dep": "Hapoel Acre",
+      "tarih": "06.09.2026",
+      "saat": "17:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 1.4,
+      "atilan_dep": 0.6,
+      "yenen_ev": 0.9,
+      "yenen_dep": 1.9,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 60.0,
+      "team_scored_dep": 40.0,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 30.0,
+      "ust25_ev": 40.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 50.0,
+      "lig_ort_toplam": 2.4,
+      "lig_ust25": 45.0,
+      "lig_kg": 35.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-maccabi-kabilio-jaffa-vs-hapoel-acre-stats-h2h-preview-and-prediction-bfffbgi/"
+    },
+    "analiz": {
+      "p1": 57.68014107558472,
+      "px": 27.133630695010268,
+      "p2": 15.186228229405021,
+      "tahmini_gol": 2.0094000000000003,
+      "kg_var_model": 33.18518317930829,
+      "ust_25": 32.54756425234523,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Alt",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Alt",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Maccabi K. Ata Bialik",
+      "takim_dep": "Hapoel Ihud Bnei Jatt",
+      "tarih": "24.09.2026",
+      "saat": "12:45",
+      "skor_ev": 5,
+      "skor_dep": 3,
+      "skor_belli": true,
+      "atilan_ev": 2.1,
+      "atilan_dep": 1.5,
+      "yenen_ev": 1.4,
+      "yenen_dep": 3.5,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 50.0,
+      "kg_siklik_ev": 70.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 80.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 4.25,
+      "lig_ust25": 65.0,
+      "lig_kg": 60.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-hapoel-ihud-bnei-jatt-vs-maccabi-nujeidat-ahmed-stats-h2h-preview-and-prediction-bgcbijf/"
+    },
+    "analiz": {
+      "p1": 80.4240455870386,
+      "px": 10.805871634622015,
+      "p2": 8.770082778339392,
+      "tahmini_gol": 4.912885,
+      "kg_var_model": 69.04600267522575,
+      "ust_25": 86.42417721263692,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Cañoneros Marina",
+      "takim_dep": "Héroes de Zaci",
+      "tarih": "01.04.2026",
+      "saat": "02:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 1.3,
+      "atilan_dep": 1.2,
+      "yenen_ev": 1.6,
+      "yenen_dep": 2.2,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 60.0,
+      "team_scored_dep": 50.0,
+      "kg_siklik_ev": 50.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 70.0,
+      "ust25_dep": 70.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 3.15,
+      "lig_ust25": 70.0,
+      "lig_kg": 45.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-correcaminos-uat-ii-vs-héroes-de-zaci-stats-h2h-preview-and-prediction-bgdbgjf/"
+    },
+    "analiz": {
+      "p1": 52.523186131211,
+      "px": 21.538718416507347,
+      "p2": 25.93809545228167,
+      "tahmini_gol": 3.3591500000000005,
+      "kg_var_model": 63.72852437405886,
+      "ust_25": 65.09182051017481,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Ulaangom City",
+      "takim_dep": "Deren",
+      "tarih": "20.09.2026",
+      "saat": "09:00",
+      "skor_ev": 0,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 1.3,
+      "atilan_dep": 3.2,
+      "yenen_ev": 5.4,
+      "yenen_dep": 1.1,
+      "clean_sheets_ev": 10.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 80.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 90.0,
+      "ust25_dep": 80.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 5.5,
+      "lig_ust25": 85.0,
+      "lig_kg": 65.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-khovd-western-vs-deren-stats-h2h-preview-and-prediction-bgeaebj/"
+    },
+    "analiz": {
+      "p1": 9.828474233693063,
+      "px": 9.67109239132603,
+      "p2": 80.50043337498091,
+      "tahmini_gol": 6.255705,
+      "kg_var_model": 81.33233991042043,
+      "ust_25": 94.24497015817343,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Khoromkhon",
+      "takim_dep": "Erchim",
+      "tarih": "19.06.2025",
+      "saat": "06:15",
+      "skor_ev": 5,
+      "skor_dep": 4,
+      "skor_belli": true,
+      "atilan_ev": 1.4,
+      "atilan_dep": 2.0,
+      "yenen_ev": 4.6,
+      "yenen_dep": 3.0,
+      "clean_sheets_ev": 0.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 70.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 70.0,
+      "kg_siklik_dep": 60.0,
+      "ust25_ev": 100.0,
+      "ust25_dep": 80.0,
+      "ust15_ev": 100.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 5.5,
+      "lig_ust25": 90.0,
+      "lig_kg": 65.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-erchim-vs-central-stallions-stats-h2h-preview-and-prediction-bgeaedg/"
+    },
+    "analiz": {
+      "p1": 26.739189216270066,
+      "px": 15.32689890508119,
+      "p2": 57.93391187864875,
+      "tahmini_gol": 6.34685,
+      "kg_var_model": 90.12973963580515,
+      "ust_25": 94.86483786462836,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Fauske Sprint",
+      "takim_dep": "Bodo/Glimt",
+      "tarih": "26.08.2026",
+      "saat": "17:00",
+      "skor_ev": 0,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 2.2,
+      "atilan_dep": 2.5,
+      "yenen_ev": 3.4,
+      "yenen_dep": 1.4,
+      "clean_sheets_ev": 0.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 90.0,
+      "kg_siklik_ev": 80.0,
+      "kg_siklik_dep": 60.0,
+      "ust25_ev": 100.0,
+      "ust25_dep": 90.0,
+      "ust15_ev": 100.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 4.75,
+      "lig_ust25": 95.0,
+      "lig_kg": 70.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-rana-vs-bodo/glimt-stats-h2h-preview-and-prediction-bgdhiif/"
+    },
+    "analiz": {
+      "p1": 29.57939531577375,
+      "px": 15.621299739546718,
+      "p2": 54.79930494467954,
+      "tahmini_gol": 6.364445,
+      "kg_var_model": 90.69524358001021,
+      "ust_25": 94.93031812986892,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Bærum",
+      "takim_dep": "KFUM II",
+      "tarih": "10.08.2026",
+      "saat": "18:00",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 3.4,
+      "atilan_dep": 1.6,
+      "yenen_ev": 1.7,
+      "yenen_dep": 2.7,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 70.0,
+      "kg_siklik_dep": 70.0,
+      "ust25_ev": 90.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 4.7,
+      "lig_ust25": 75.0,
+      "lig_kg": 70.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-bærum-vs-lillestrom-stats-h2h-preview-and-prediction-bgdibcj/"
+    },
+    "analiz": {
+      "p1": 75.62701819126637,
+      "px": 11.116012228653398,
+      "p2": 13.256969580080218,
+      "tahmini_gol": 6.606339999999999,
+      "kg_var_model": 86.47118439333242,
+      "ust_25": 95.55488499787579,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Madla",
+      "takim_dep": "Flekkerøy",
+      "tarih": "25.07.2026",
+      "saat": "14:00",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 2.9,
+      "atilan_dep": 1.9,
+      "yenen_ev": 1.1,
+      "yenen_dep": 2.2,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 100.0,
+      "kg_siklik_ev": 70.0,
+      "kg_siklik_dep": 90.0,
+      "ust25_ev": 80.0,
+      "ust25_dep": 80.0,
+      "ust15_ev": 100.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 4.050000000000001,
+      "lig_ust25": 80.0,
+      "lig_kg": 80.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-madla-vs-viking-stats-h2h-preview-and-prediction-bgdibda/"
+    },
+    "analiz": {
+      "p1": 67.60068768176389,
+      "px": 14.016303208353447,
+      "p2": 18.383009109882657,
+      "tahmini_gol": 5.89375,
+      "kg_var_model": 85.4422675186054,
+      "ust_25": 92.95631263337151,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Smail",
+      "takim_dep": "Dhofar",
+      "tarih": "25.09.2026",
+      "saat": "14:20",
+      "skor_ev": 5,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 0.9,
+      "atilan_dep": 0.7,
+      "yenen_ev": 1.8,
+      "yenen_dep": 1.5,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 40.0,
+      "team_scored_dep": 30.0,
+      "kg_siklik_ev": 30.0,
+      "kg_siklik_dep": 30.0,
+      "ust25_ev": 30.0,
+      "ust25_dep": 20.0,
+      "ust15_ev": 50.0,
+      "ust15_dep": 50.0,
+      "lig_ort_toplam": 2.45,
+      "lig_ust25": 25.0,
+      "lig_kg": 30.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-al-nasr-vs-smail-stats-h2h-preview-and-prediction-bgdgbjj/"
+    },
+    "analiz": {
+      "p1": 34.50379027060582,
+      "px": 33.99294028481374,
+      "p2": 31.503269444580447,
+      "tahmini_gol": 1.69167,
+      "kg_var_model": 30.767947421675938,
+      "ust_25": 22.913352730089052,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Alt",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Alt",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "X",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Cristóbal Colón JAS",
+      "takim_dep": "Olimpia",
+      "tarih": "26.08.2026",
+      "saat": "22:30",
+      "skor_ev": 3,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 1.25,
+      "atilan_dep": 1.7,
+      "yenen_ev": 3.75,
+      "yenen_dep": 1.3,
+      "clean_sheets_ev": 0.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 50.0,
+      "team_scored_dep": 70.0,
+      "kg_siklik_ev": 50.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 75.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 100.0,
+      "ust15_dep": 70.0,
+      "lig_ort_toplam": 4.0,
+      "lig_ust25": 67.5,
+      "lig_kg": 50.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-olimpia-vs-sportivo-luqueno-stats-h2h-preview-and-prediction-bgdjbhc/"
+    },
+    "analiz": {
+      "p1": 15.496638107445126,
+      "px": 15.586742190189149,
+      "p2": 68.91661970236572,
+      "tahmini_gol": 4.321412499999999,
+      "kg_var_model": 70.526519862701,
+      "ust_25": 80.23974735351578,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "X2",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Juan Pablo II College",
+      "takim_dep": "ADT",
+      "tarih": "22.08.2026",
+      "saat": "21:30",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 1.6,
+      "atilan_dep": 0.8,
+      "yenen_ev": 1.1,
+      "yenen_dep": 2.0,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 70.0,
+      "team_scored_dep": 50.0,
+      "kg_siklik_ev": 50.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 40.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 2.75,
+      "lig_ust25": 45.0,
+      "lig_kg": 50.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-sporting-cristal-vs-adt-stats-h2h-preview-and-prediction-bgdfiec/"
+    },
+    "analiz": {
+      "p1": 59.193870045960495,
+      "px": 23.42015232011805,
+      "p2": 17.385977633921463,
+      "tahmini_gol": 2.5116000000000005,
+      "kg_var_model": 44.483163447315285,
+      "ust_25": 45.74190102849368,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Alt",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Muaither SC",
+      "takim_dep": "Al Rayyan SC B",
+      "tarih": "31.08.2026",
+      "saat": "15:15",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 2.3,
+      "atilan_dep": 0.5,
+      "yenen_ev": 1.3,
+      "yenen_dep": 3.0,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 50.0,
+      "kg_siklik_ev": 70.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 50.0,
+      "lig_ort_toplam": 3.55,
+      "lig_ust25": 55.0,
+      "lig_kg": 60.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-al-shamal-vs-muaither-sc-stats-h2h-preview-and-prediction-bgdjbeh/"
+    },
+    "analiz": {
+      "p1": 87.89667134053498,
+      "px": 8.137955945112699,
+      "p2": 3.965372714352327,
+      "tahmini_gol": 4.346754999999999,
+      "kg_var_model": 50.335898753990676,
+      "ust_25": 80.07770273752365,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Al Hilal W",
+      "takim_dep": "Eastern Flames W",
+      "tarih": "23.04.2026",
+      "saat": "18:30",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 4.0,
+      "atilan_dep": 0.0,
+      "yenen_ev": 1.0,
+      "yenen_dep": 5.0,
+      "clean_sheets_ev": 66.67,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 0.0,
+      "kg_siklik_ev": 33.33,
+      "kg_siklik_dep": 0.0,
+      "ust25_ev": 100.0,
+      "ust25_dep": 100.0,
+      "ust15_ev": 100.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 5.0,
+      "lig_ust25": 100.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-al-ula-w-vs-al-hilal-w-stats-h2h-preview-and-prediction-bgbjdei/"
+    },
+    "analiz": {
+      "p1": 89.42043285686464,
+      "px": 6.466866161480025,
+      "p2": 4.112700981655343,
+      "tahmini_gol": 5.592499999999999,
+      "kg_var_model": 65.61600727470955,
+      "ust_25": 91.18697279327003,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Cultural Leonesa",
+      "takim_dep": "Salamanca UDS",
+      "tarih": "15.08.2026",
+      "saat": "10:30",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 1.5,
+      "atilan_dep": 1.3,
+      "yenen_ev": 1.4,
+      "yenen_dep": 2.2,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 60.0,
+      "kg_siklik_ev": 50.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 60.0,
+      "lig_ort_toplam": 3.1999999999999997,
+      "lig_ust25": 60.0,
+      "lig_kg": 50.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-ud-santa-marta-vs-salamanca-uds-stats-h2h-preview-and-prediction-bgebbfb/"
+    },
+    "analiz": {
+      "p1": 59.19542392693078,
+      "px": 18.784599646545825,
+      "p2": 22.019976426523403,
+      "tahmini_gol": 3.939325,
+      "kg_var_model": 69.78710747534211,
+      "ust_25": 74.83264617624344,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "New York Red Bulls",
+      "takim_dep": "St. Louis City",
+      "tarih": "01.10.2026",
+      "saat": "00:30",
+      "skor_ev": 0,
+      "skor_dep": 3,
+      "skor_belli": true,
+      "atilan_ev": 1.0,
+      "atilan_dep": 2.4,
+      "yenen_ev": 1.8,
+      "yenen_dep": 1.0,
+      "clean_sheets_ev": 0.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 60.0,
+      "team_scored_dep": 100.0,
+      "kg_siklik_ev": 60.0,
+      "kg_siklik_dep": 80.0,
+      "ust25_ev": 40.0,
+      "ust25_dep": 80.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.1,
+      "lig_ust25": 60.0,
+      "lig_kg": 70.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-new-york-red-bulls-vs-st.-louis-city-stats-h2h-preview-and-prediction-bejafaa/"
+    },
+    "analiz": {
+      "p1": 9.075220710941936,
+      "px": 13.805593060733548,
+      "p2": 77.11918622832452,
+      "tahmini_gol": 3.72426,
+      "kg_var_model": 55.241154469480634,
+      "ust_25": 71.60538141375615,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "X2",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Charleston Battery",
+      "takim_dep": "Brooklyn",
+      "tarih": "02.08.2026",
+      "saat": "00:30",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.6,
+      "atilan_dep": 1.0,
+      "yenen_ev": 0.7,
+      "yenen_dep": 2.4,
+      "clean_sheets_ev": 50.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 60.0,
+      "kg_siklik_ev": 50.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 70.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.3499999999999996,
+      "lig_ust25": 65.0,
+      "lig_kg": 50.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-brooklyn-vs-detroit-city-stats-h2h-preview-and-prediction-bejdhbg/"
+    },
+    "analiz": {
+      "p1": 84.33419049601825,
+      "px": 9.512935797941653,
+      "p2": 6.152873706040098,
+      "tahmini_gol": 4.5694099999999995,
+      "kg_var_model": 60.06161941023384,
+      "ust_25": 82.78207673916532,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Sacramento Republic",
+      "takim_dep": "Sporting JAX",
+      "tarih": "02.08.2026",
+      "saat": "04:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 1.9,
+      "atilan_dep": 1.0,
+      "yenen_ev": 0.7,
+      "yenen_dep": 2.4,
+      "clean_sheets_ev": 50.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 60.0,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 50.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.0,
+      "lig_ust25": 55.0,
+      "lig_kg": 45.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-miami-fc-vs-sporting-jax-stats-h2h-preview-and-prediction-bejdhbi/"
+    },
+    "analiz": {
+      "p1": 71.40016611979618,
+      "px": 16.21949014358393,
+      "p2": 12.380343736619896,
+      "tahmini_gol": 3.5254999999999996,
+      "kg_var_model": 56.55521114981356,
+      "ust_25": 67.99052778942394,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Rhode Island",
+      "takim_dep": "Indy Eleven",
+      "tarih": "01.10.2026",
+      "saat": "00:30",
+      "skor_ev": 1,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 0.6,
+      "atilan_dep": 1.0,
+      "yenen_ev": 1.2,
+      "yenen_dep": 1.8,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 20.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 0.0,
+      "kg_siklik_dep": 60.0,
+      "ust25_ev": 20.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 2.3,
+      "lig_ust25": 40.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-rhode-island-vs-indy-eleven-stats-h2h-preview-and-prediction-bejdhbj/"
+    },
+    "analiz": {
+      "p1": 23.67687859590393,
+      "px": 27.87662649918272,
+      "p2": 48.446494904913344,
+      "tahmini_gol": 2.2440599999999997,
+      "kg_var_model": 43.53808303755638,
+      "ust_25": 38.66648579075529,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "X2",
+      "en_olasi_gol": "Alt",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Alt",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Alt",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Monterey Bay",
+      "takim_dep": "New Mexico United",
+      "tarih": "09.08.2026",
+      "saat": "03:00",
+      "skor_ev": 2,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 1.8,
+      "atilan_dep": 1.8,
+      "yenen_ev": 1.7,
+      "yenen_dep": 1.2,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 50.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 60.0,
+      "kg_siklik_ev": 80.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 60.0,
+      "lig_ort_toplam": 3.25,
+      "lig_ust25": 55.0,
+      "lig_kg": 60.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-fc-tulsa-vs-new-mexico-united-stats-h2h-preview-and-prediction-bejdhbh/"
+    },
+    "analiz": {
+      "p1": 51.40799734414194,
+      "px": 20.223536194705403,
+      "p2": 28.368466461152636,
+      "tahmini_gol": 3.94693,
+      "kg_var_model": 72.55064378240938,
+      "ust_25": 74.84918609845133,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Sacramento Republic",
+      "takim_dep": "Sporting JAX",
+      "tarih": "02.08.2026",
+      "saat": "04:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 1.9,
+      "atilan_dep": 1.0,
+      "yenen_ev": 0.7,
+      "yenen_dep": 2.4,
+      "clean_sheets_ev": 50.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 60.0,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 50.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.0,
+      "lig_ust25": 55.0,
+      "lig_kg": 45.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-sacramento-republic-vs-las-vegas-lights-stats-h2h-preview-and-prediction-bejdhca/"
+    },
+    "analiz": {
+      "p1": 71.40016611979618,
+      "px": 16.21949014358393,
+      "p2": 12.380343736619896,
+      "tahmini_gol": 3.5254999999999996,
+      "kg_var_model": 56.55521114981356,
+      "ust_25": 67.99052778942394,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Chattanooga Red Wolves",
+      "takim_dep": "Spokane Velocity",
+      "tarih": "01.10.2026",
+      "saat": "00:00",
+      "skor_ev": 0,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 2.0,
+      "atilan_dep": 1.6,
+      "yenen_ev": 1.6,
+      "yenen_dep": 1.0,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 40.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 100.0,
+      "kg_siklik_ev": 80.0,
+      "kg_siklik_dep": 60.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 40.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 3.1,
+      "lig_ust25": 50.0,
+      "lig_kg": 70.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-chattanooga-red-wolves-vs-spokane-velocity-stats-h2h-preview-and-prediction-bejdjcd/"
+    },
+    "analiz": {
+      "p1": 56.090475942466846,
+      "px": 19.516383248652957,
+      "p2": 24.393140808880208,
+      "tahmini_gol": 3.89126,
+      "kg_var_model": 70.86297896508692,
+      "ust_25": 74.5081166397878,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Alt",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Al Ain",
+      "takim_dep": "Al-Dhafra",
+      "tarih": "10.05.2026",
+      "saat": "16:25",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.6,
+      "atilan_dep": 0.6,
+      "yenen_ev": 0.5,
+      "yenen_dep": 2.1,
+      "clean_sheets_ev": 70.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 40.0,
+      "kg_siklik_ev": 30.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 2.9000000000000004,
+      "lig_ust25": 55.0,
+      "lig_kg": 35.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-sharjah-fc-vs-al-dhafra-stats-h2h-preview-and-prediction-bgdgdgj/"
+    },
+    "analiz": {
+      "p1": 91.20976463478686,
+      "px": 6.72247490874258,
+      "p2": 2.067760456470559,
+      "tahmini_gol": 3.8925100000000006,
+      "kg_var_model": 33.53667909580433,
+      "ust_25": 73.72852068450673,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Al-Wasl FC",
+      "takim_dep": "Dubai United",
+      "tarih": "15.08.2026",
+      "saat": "17:45",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 2.4,
+      "atilan_dep": 1.6,
+      "yenen_ev": 1.4,
+      "yenen_dep": 2.1,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 60.0,
+      "kg_siklik_dep": 70.0,
+      "ust25_ev": 70.0,
+      "ust25_dep": 70.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 3.75,
+      "lig_ust25": 70.0,
+      "lig_kg": 65.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-dubai-united-vs-hatta-sc-stats-h2h-preview-and-prediction-bgdgdha/"
+    },
+    "analiz": {
+      "p1": 62.723888406203734,
+      "px": 15.81186821903631,
+      "p2": 21.46424337475996,
+      "tahmini_gol": 5.249979999999999,
+      "kg_var_model": 82.85158948001072,
+      "ust_25": 89.32156705646989,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Atletico Torque",
+      "takim_dep": "Penarol",
+      "tarih": "01.10.2026",
+      "saat": "00:00",
+      "skor_ev": 1,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 1.6,
+      "atilan_dep": 1.8,
+      "yenen_ev": 1.0,
+      "yenen_dep": 0.8,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 40.0,
+      "team_scored_ev": 60.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 60.0,
+      "ust25_ev": 40.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 2.6,
+      "lig_ust25": 50.0,
+      "lig_kg": 50.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-atletico-torque-vs-penarol-stats-h2h-preview-and-prediction-bgbbche/"
+    },
+    "analiz": {
+      "p1": 22.017912589156285,
+      "px": 21.714727810211127,
+      "p2": 56.267359600632595,
+      "tahmini_gol": 3.11327,
+      "kg_var_model": 58.50191161661695,
+      "ust_25": 59.954564256400275,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "X",
+      "gercek_gol": "Alt",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Zamora FC",
+      "takim_dep": "Real Frontera",
+      "tarih": "26.08.2026",
+      "saat": "21:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.2,
+      "atilan_dep": 0.4,
+      "yenen_ev": 1.5,
+      "yenen_dep": 3.0,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 40.0,
+      "kg_siklik_ev": 70.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 70.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 3.55,
+      "lig_ust25": 65.0,
+      "lig_kg": 55.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-deportivo-lara-vs-real-frontera-stats-h2h-preview-and-prediction-bgebigb/"
+    },
+    "analiz": {
+      "p1": 85.4680274241707,
+      "px": 9.263867972876218,
+      "p2": 5.268104602953082,
+      "tahmini_gol": 4.36011,
+      "kg_var_model": 54.89241742563336,
+      "ust_25": 80.5003112673259,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Argentina",
+      "takim_dep": "Bolivia",
+      "tarih": "01.10.2026",
+      "saat": "01:00",
+      "skor_ev": 4,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.6,
+      "atilan_dep": 0.2,
+      "yenen_ev": 0.6,
+      "yenen_dep": 2.4,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 20.0,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 20.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 2.9000000000000004,
+      "lig_ust25": 60.0,
+      "lig_kg": 30.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-argentina-vs-bolivia-stats-h2h-preview-and-prediction-bgeafbb/"
+    },
+    "analiz": {
+      "p1": 93.09663621067446,
+      "px": 5.421250123241224,
+      "p2": 1.4821136660843217,
+      "tahmini_gol": 3.9619799999999996,
+      "kg_var_model": 28.761840960662965,
+      "ust_25": 75.00019470467167,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "New Zealand",
+      "takim_dep": "Tahiti",
+      "tarih": "27.06.2024",
+      "saat": "01:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.8,
+      "atilan_dep": 1.4,
+      "yenen_ev": 1.7,
+      "yenen_dep": 1.4,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 40.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 50.0,
+      "kg_siklik_ev": 60.0,
+      "kg_siklik_dep": 20.0,
+      "ust25_ev": 80.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 3.6499999999999995,
+      "lig_ust25": 70.0,
+      "lig_kg": 40.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-cook-islands-vs-tahiti-stats-h2h-preview-and-prediction-bgeaahb/"
+    },
+    "analiz": {
+      "p1": 71.598220756315,
+      "px": 14.059790333853686,
+      "p2": 14.341988909831322,
+      "tahmini_gol": 4.8210299999999995,
+      "kg_var_model": 74.52885828757574,
+      "ust_25": 85.60228466163744,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Lebanon",
+      "takim_dep": "Brunei",
+      "tarih": "25.03.2025",
+      "saat": "18:30",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 1.8,
+      "atilan_dep": 0.4,
+      "yenen_ev": 0.8,
+      "yenen_dep": 3.6,
+      "clean_sheets_ev": 70.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 60.0,
+      "team_scored_dep": 40.0,
+      "kg_siklik_ev": 10.0,
+      "kg_siklik_dep": 30.0,
+      "ust25_ev": 50.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 70.0,
+      "ust15_dep": 70.0,
+      "lig_ort_toplam": 3.3,
+      "lig_ust25": 55.0,
+      "lig_kg": 20.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-maldives-vs-lebanon-stats-h2h-preview-and-prediction-bgeaahd/"
+    },
+    "analiz": {
+      "p1": 81.72291081116654,
+      "px": 12.75989068668593,
+      "p2": 5.517198502147513,
+      "tahmini_gol": 3.1791400000000007,
+      "kg_var_model": 38.381202818953774,
+      "ust_25": 61.12243074833293,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Pakistan",
+      "takim_dep": "Syria",
+      "tarih": "18.11.2025",
+      "saat": "09:00",
+      "skor_ev": 0,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 0.5,
+      "atilan_dep": 1.4,
+      "yenen_ev": 2.7,
+      "yenen_dep": 1.5,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 40.0,
+      "team_scored_ev": 40.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 20.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 70.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 70.0,
+      "lig_ort_toplam": 3.05,
+      "lig_ust25": 65.0,
+      "lig_kg": 30.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-uzbekistan-vs-syria-stats-h2h-preview-and-prediction-bgeafbc/"
+    },
+    "analiz": {
+      "p1": 14.02706175445603,
+      "px": 17.90791185183457,
+      "p2": 68.0650263937094,
+      "tahmini_gol": 3.3509849999999997,
+      "kg_var_model": 56.10128412726603,
+      "ust_25": 64.59336708515715,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "X2",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "United States U20",
+      "takim_dep": "Cuba U20",
+      "tarih": "01.08.2026",
+      "saat": "03:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 3.0,
+      "atilan_dep": 1.38,
+      "yenen_ev": 1.0,
+      "yenen_dep": 2.13,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 0.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 87.5,
+      "kg_siklik_ev": 50.0,
+      "kg_siklik_dep": 87.5,
+      "ust25_ev": 90.0,
+      "ust25_dep": 75.0,
+      "ust15_ev": 100.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.755,
+      "lig_ust25": 82.5,
+      "lig_kg": 68.75,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-brazil-u20-vs-united-states-u20-stats-h2h-preview-and-prediction-bgecjih/"
+    },
+    "analiz": {
+      "p1": 76.39079882216252,
+      "px": 11.795670136126308,
+      "p2": 11.813531041711165,
+      "tahmini_gol": 5.467307,
+      "kg_var_model": 78.17550281646456,
+      "ust_25": 90.469487552327,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Austria Wien W",
+      "takim_dep": "Farul Constanţa W",
+      "tarih": "08.08.2026",
+      "saat": "17:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.7,
+      "atilan_dep": 2.0,
+      "yenen_ev": 0.5,
+      "yenen_dep": 2.29,
+      "clean_sheets_ev": 60.0,
+      "clean_sheets_dep": 14.29,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 85.71,
+      "kg_siklik_ev": 30.0,
+      "kg_siklik_dep": 71.43,
+      "ust25_ev": 50.0,
+      "ust25_dep": 100.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.745,
+      "lig_ust25": 75.0,
+      "lig_kg": 50.715,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-austria-wien-w-vs-inter-milano-w-stats-h2h-preview-and-prediction-bgdicjd/"
+    },
+    "analiz": {
+      "p1": 62.06534606242122,
+      "px": 16.14769403078219,
+      "p2": 21.786959906796593,
+      "tahmini_gol": 5.095899999999999,
+      "kg_var_model": 81.74078794089115,
+      "ust_25": 87.7794517402635,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Glasgow City W",
+      "takim_dep": "Køge",
+      "tarih": "15.10.2025",
+      "saat": "19:35",
+      "skor_ev": 5,
+      "skor_dep": 3,
+      "skor_belli": true,
+      "atilan_ev": 1.9,
+      "atilan_dep": 0.89,
+      "yenen_ev": 1.4,
+      "yenen_dep": 2.33,
+      "clean_sheets_ev": 20.0,
+      "clean_sheets_dep": 33.33,
+      "team_scored_ev": 70.0,
+      "team_scored_dep": 44.44,
+      "kg_siklik_ev": 50.0,
+      "kg_siklik_dep": 11.11,
+      "ust25_ev": 60.0,
+      "ust25_dep": 55.56,
+      "ust15_ev": 100.0,
+      "ust15_dep": 66.67,
+      "lig_ort_toplam": 3.26,
+      "lig_ust25": 57.78,
+      "lig_kg": 30.555,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-køge-w-vs-servette-chênois-w-stats-h2h-preview-and-prediction-bgdidbf/"
+    },
+    "analiz": {
+      "p1": 73.2920903057432,
+      "px": 14.99200506162175,
+      "p2": 11.715904632635057,
+      "tahmini_gol": 3.7400459102399997,
+      "kg_var_model": 59.053477803733756,
+      "ust_25": 71.81412221020109,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Real Sociedad W",
+      "takim_dep": "Real Madrid W",
+      "tarih": "26.09.2026",
+      "saat": "11:00",
+      "skor_ev": 3,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 1.6,
+      "atilan_dep": 2.4,
+      "yenen_ev": 1.3,
+      "yenen_dep": 0.9,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 80.0,
+      "team_scored_ev": 70.0,
+      "team_scored_dep": 90.0,
+      "kg_siklik_ev": 30.0,
+      "kg_siklik_dep": 10.0,
+      "ust25_ev": 40.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 3.1,
+      "lig_ust25": 45.0,
+      "lig_kg": 20.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-manchester-city-w-vs-real-madrid-w-stats-h2h-preview-and-prediction-bgdidcb/"
+    },
+    "analiz": {
+      "p1": 21.83237122804956,
+      "px": 19.626138277244536,
+      "p2": 58.5414904947059,
+      "tahmini_gol": 3.5933,
+      "kg_var_model": 65.35690498638185,
+      "ust_25": 69.43264263937887,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Standard Liege W",
+      "takim_dep": "OH Leuven W",
+      "tarih": "19.09.2026",
+      "saat": "12:30",
+      "skor_ev": 0,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 1.0,
+      "atilan_dep": 2.2,
+      "yenen_ev": 1.4,
+      "yenen_dep": 0.7,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 50.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 90.0,
+      "kg_siklik_ev": 50.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 30.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 2.65,
+      "lig_ust25": 40.0,
+      "lig_kg": 50.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-paris-saint-germain-w-vs-oh-leuven-w-stats-h2h-preview-and-prediction-bgdidda/"
+    },
+    "analiz": {
+      "p1": 15.652387637165907,
+      "px": 19.455401977449878,
+      "p2": 64.8922103853842,
+      "tahmini_gol": 3.1082500000000004,
+      "kg_var_model": 53.760475365757515,
+      "ust_25": 59.74536778399895,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "X2",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Saint Martin",
+      "takim_dep": "Curaçao",
+      "tarih": "15.11.2024",
+      "saat": "23:00",
+      "skor_ev": 0,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 2.0,
+      "atilan_dep": 1.5,
+      "yenen_ev": 1.6,
+      "yenen_dep": 2.3,
+      "clean_sheets_ev": 10.0,
+      "clean_sheets_dep": 40.0,
+      "team_scored_ev": 60.0,
+      "team_scored_dep": 60.0,
+      "kg_siklik_ev": 50.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 70.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 70.0,
+      "lig_ort_toplam": 3.6999999999999997,
+      "lig_ust25": 65.0,
+      "lig_kg": 50.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-us-virgin-islands-vs-saint-martin-stats-h2h-preview-and-prediction-bgdjjgi/"
+    },
+    "analiz": {
+      "p1": 56.583948126438166,
+      "px": 18.57200935069157,
+      "p2": 24.84404252287027,
+      "tahmini_gol": 4.24235,
+      "kg_var_model": 74.59437407249325,
+      "ust_25": 79.008563650733,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Dominican Republic",
+      "takim_dep": "Dominica",
+      "tarih": "11.06.2025",
+      "saat": "00:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.6,
+      "atilan_dep": 0.8,
+      "yenen_ev": 0.6,
+      "yenen_dep": 2.2,
+      "clean_sheets_ev": 60.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 40.0,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 30.0,
+      "ust25_ev": 50.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 3.1,
+      "lig_ust25": 55.0,
+      "lig_kg": 35.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-dominica-vs-guyana-stats-h2h-preview-and-prediction-bgdjjgj/"
+    },
+    "analiz": {
+      "p1": 84.73786063536933,
+      "px": 10.320018814325161,
+      "p2": 4.942120550305498,
+      "tahmini_gol": 3.6826800000000004,
+      "kg_var_model": 44.4253472277767,
+      "ust_25": 70.58725314987493,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "South Korea",
+      "takim_dep": "Trinidad and Tobago",
+      "tarih": "31.05.2026",
+      "saat": "02:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 1.7,
+      "atilan_dep": 0.8,
+      "yenen_ev": 1.4,
+      "yenen_dep": 2.3,
+      "clean_sheets_ev": 60.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 50.0,
+      "kg_siklik_ev": 20.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 3.0999999999999996,
+      "lig_ust25": 60.0,
+      "lig_kg": 30.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-curaçao-vs-trinidad-and-tobago-stats-h2h-preview-and-prediction-bgdjjha/"
+    },
+    "analiz": {
+      "p1": 72.13798833993053,
+      "px": 15.687381162949363,
+      "p2": 12.174630497120098,
+      "tahmini_gol": 3.7608449999999998,
+      "kg_var_model": 60.516338004250784,
+      "ust_25": 72.20172346736364,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "DC United",
+      "takim_dep": "SC Paderborn 07",
+      "tarih": "01.10.2026",
+      "saat": "00:30",
+      "skor_ev": 0,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 0.6,
+      "atilan_dep": 1.6,
+      "yenen_ev": 1.2,
+      "yenen_dep": 1.4,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 40.0,
+      "team_scored_ev": 40.0,
+      "team_scored_dep": 60.0,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 2.4000000000000004,
+      "lig_ust25": 60.0,
+      "lig_kg": 40.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-dc-united-vs-sc-paderborn-07-stats-h2h-preview-and-prediction-bgdhicc/"
+    },
+    "analiz": {
+      "p1": 23.706972405756304,
+      "px": 25.384339224840026,
+      "p2": 50.90868836940366,
+      "tahmini_gol": 2.5536899999999996,
+      "kg_var_model": 48.97120983841748,
+      "ust_25": 46.63059044241679,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "X2",
+      "en_olasi_gol": "Alt",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Alt",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Palestino",
+      "takim_dep": "Huachipato",
+      "tarih": "18.08.2026",
+      "saat": "01:30",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 2.5,
+      "atilan_dep": 1.1,
+      "yenen_ev": 1.3,
+      "yenen_dep": 1.8,
+      "clean_sheets_ev": 10.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 90.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 80.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 70.0,
+      "lig_ort_toplam": 3.35,
+      "lig_ust25": 65.0,
+      "lig_kg": 70.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-alianza-lima-vs-palestino-stats-h2h-preview-and-prediction-bgedcae/"
+    },
+    "analiz": {
+      "p1": 74.52740085718163,
+      "px": 13.378634697469801,
+      "p2": 12.093964445348568,
+      "tahmini_gol": 4.533125,
+      "kg_var_model": 69.4852641570281,
+      "ust_25": 82.60686051088848,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Hrvatski Dragovoljac",
+      "takim_dep": "NK Slaven Belupo",
+      "tarih": "09.09.2026",
+      "saat": "15:30",
+      "skor_ev": 0,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 1.1,
+      "atilan_dep": 1.2,
+      "yenen_ev": 2.0,
+      "yenen_dep": 2.3,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 40.0,
+      "team_scored_dep": 50.0,
+      "kg_siklik_ev": 10.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 70.0,
+      "ust15_ev": 70.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 3.3,
+      "lig_ust25": 65.0,
+      "lig_kg": 25.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-olimpija-ljubljana-vs-nk-slaven-belupo-stats-h2h-preview-and-prediction-bgedcaf/"
+    },
+    "analiz": {
+      "p1": 41.096168785971656,
+      "px": 23.292874420643603,
+      "p2": 35.61095679338474,
+      "tahmini_gol": 3.1982649999999992,
+      "kg_var_model": 63.19347857055525,
+      "ust_25": 61.74544385250229,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "FC Viktoria Köln",
+      "takim_dep": "SSV Jahn Regensburg",
+      "tarih": "08.08.2026",
+      "saat": "13:00",
+      "skor_ev": 2,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 2.7,
+      "atilan_dep": 2.6,
+      "yenen_ev": 1.3,
+      "yenen_dep": 2.0,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 90.0,
+      "kg_siklik_ev": 60.0,
+      "kg_siklik_dep": 80.0,
+      "ust25_ev": 80.0,
+      "ust25_dep": 80.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 4.300000000000001,
+      "lig_ust25": 80.0,
+      "lig_kg": 70.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-ssv-jahn-regensburg-vs-wsg-wattens-stats-h2h-preview-and-prediction-bgecijh/"
+    },
+    "analiz": {
+      "p1": 52.472792127394804,
+      "px": 16.011919382849328,
+      "p2": 31.515288489755854,
+      "tahmini_gol": 6.292684999999999,
+      "kg_var_model": 90.71135811677784,
+      "ust_25": 94.82286416963042,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Dunajska Streda",
+      "takim_dep": "Podbrezová",
+      "tarih": "22.08.2026",
+      "saat": "17:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.1,
+      "atilan_dep": 1.4,
+      "yenen_ev": 1.1,
+      "yenen_dep": 1.8,
+      "clean_sheets_ev": 40.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 70.0,
+      "kg_siklik_ev": 50.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 70.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 3.1999999999999997,
+      "lig_ust25": 65.0,
+      "lig_kg": 45.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-dunajska-streda-vs-puskas-academy-stats-h2h-preview-and-prediction-bgedcag/"
+    },
+    "analiz": {
+      "p1": 64.21461647656933,
+      "px": 16.54080768468649,
+      "p2": 19.244575838744186,
+      "tahmini_gol": 4.398635,
+      "kg_var_model": 73.7206061404998,
+      "ust_25": 80.99811554037998,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Karlsruher SC",
+      "takim_dep": "VfL Wolfsburg",
+      "tarih": "29.08.2026",
+      "saat": "12:00",
+      "skor_ev": 2,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 1.4,
+      "atilan_dep": 2.7,
+      "yenen_ev": 2.5,
+      "yenen_dep": 1.9,
+      "clean_sheets_ev": 0.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 80.0,
+      "team_scored_dep": 90.0,
+      "kg_siklik_ev": 80.0,
+      "kg_siklik_dep": 80.0,
+      "ust25_ev": 90.0,
+      "ust25_dep": 70.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 4.25,
+      "lig_ust25": 80.0,
+      "lig_kg": 80.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-vfl-wolfsburg-vs-havelse-stats-h2h-preview-and-prediction-bgedcah/"
+    },
+    "analiz": {
+      "p1": 24.220585382947206,
+      "px": 15.65105083037265,
+      "p2": 60.12836378668015,
+      "tahmini_gol": 5.629595,
+      "kg_var_model": 86.048661603352,
+      "ust_25": 91.6143858872257,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Bayern München",
+      "takim_dep": "VfB Stuttgart",
+      "tarih": "28.08.2026",
+      "saat": "19:30",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 3.8,
+      "atilan_dep": 3.1,
+      "yenen_ev": 1.0,
+      "yenen_dep": 1.7,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 70.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 90.0,
+      "ust25_dep": 90.0,
+      "ust15_ev": 100.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 4.8,
+      "lig_ust25": 90.0,
+      "lig_kg": 60.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-vfb-stuttgart-vs-spvgg-greuther-fürth-stats-h2h-preview-and-prediction-bgeaaeh/"
+    },
+    "analiz": {
+      "p1": 60.26480457302049,
+      "px": 13.978960543469277,
+      "p2": 25.75623488351023,
+      "tahmini_gol": 7.478795,
+      "kg_var_model": 94.01835269057102,
+      "ust_25": 97.67689170089874,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Trabzonspor",
+      "takim_dep": "Gençlerbirliği S.K.",
+      "tarih": "06.09.2026",
+      "saat": "18:00",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 1.5,
+      "atilan_dep": 0.6,
+      "yenen_ev": 1.1,
+      "yenen_dep": 1.7,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 40.0,
+      "team_scored_ev": 60.0,
+      "team_scored_dep": 30.0,
+      "kg_siklik_ev": 30.0,
+      "kg_siklik_dep": 0.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 70.0,
+      "ust15_dep": 60.0,
+      "lig_ort_toplam": 2.45,
+      "lig_ust25": 55.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-trabzonspor-vs-drogheda-united-stats-h2h-preview-and-prediction-bgedcai/"
+    },
+    "analiz": {
+      "p1": 67.015847138295,
+      "px": 21.07141047455314,
+      "p2": 11.912742387151873,
+      "tahmini_gol": 2.56525,
+      "kg_var_model": 41.022727525594696,
+      "ust_25": 47.389334791202955,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Alt",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "FC Andorra",
+      "takim_dep": "AD Ceuta FC",
+      "tarih": "15.08.2026",
+      "saat": "16:00",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 1.2,
+      "atilan_dep": 1.3,
+      "yenen_ev": 1.2,
+      "yenen_dep": 2.1,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 40.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 70.0,
+      "ust25_ev": 40.0,
+      "ust25_dep": 80.0,
+      "ust15_ev": 50.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 2.9000000000000004,
+      "lig_ust25": 60.0,
+      "lig_kg": 55.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-real-betis-vs-ad-ceuta-fc-stats-h2h-preview-and-prediction-bgecijj/"
+    },
+    "analiz": {
+      "p1": 28.187270937240232,
+      "px": 24.397810940357534,
+      "p2": 47.414918122402234,
+      "tahmini_gol": 2.831715,
+      "kg_var_model": 55.96540494925996,
+      "ust_25": 53.59864757192335,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Germany U21",
+      "takim_dep": "Latvia U21",
+      "tarih": "09.09.2025",
+      "saat": "19:30",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.8,
+      "atilan_dep": 0.7,
+      "yenen_ev": 0.6,
+      "yenen_dep": 2.1,
+      "clean_sheets_ev": 70.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 40.0,
+      "kg_siklik_ev": 30.0,
+      "kg_siklik_dep": 20.0,
+      "ust25_ev": 80.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 70.0,
+      "lig_ort_toplam": 3.0999999999999996,
+      "lig_ust25": 65.0,
+      "lig_kg": 25.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-greece-u21-vs-latvia-u21-stats-h2h-preview-and-prediction-bdfabii/"
+    },
+    "analiz": {
+      "p1": 91.28677874225052,
+      "px": 6.238100160900154,
+      "p2": 2.4751210968493216,
+      "tahmini_gol": 4.15878,
+      "kg_var_model": 38.488123170046975,
+      "ust_25": 77.70979909147601,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "North Macedonia U21",
+      "takim_dep": "Morocco U20",
+      "tarih": "26.08.2026",
+      "saat": "09:30",
+      "skor_ev": 1,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 0.7,
+      "atilan_dep": 1.7,
+      "yenen_ev": 1.8,
+      "yenen_dep": 0.7,
+      "clean_sheets_ev": 10.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 50.0,
+      "team_scored_dep": 60.0,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 50.0,
+      "ust25_ev": 40.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 60.0,
+      "lig_ort_toplam": 2.45,
+      "lig_ust25": 45.0,
+      "lig_kg": 45.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-north-macedonia-u21-vs-montenegro-u21-stats-h2h-preview-and-prediction-bdfabig/"
+    },
+    "analiz": {
+      "p1": 12.248633937293828,
+      "px": 23.82627007519735,
+      "p2": 63.92509598750882,
+      "tahmini_gol": 2.215275,
+      "kg_var_model": 34.25467083414924,
+      "ust_25": 37.93316159069782,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "X2",
+      "en_olasi_gol": "Alt",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Alt",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Italy U21",
+      "takim_dep": "Armenia U21",
+      "tarih": "14.10.2025",
+      "saat": "17:15",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 2.7,
+      "atilan_dep": 0.4,
+      "yenen_ev": 0.3,
+      "yenen_dep": 2.9,
+      "clean_sheets_ev": 70.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 100.0,
+      "team_scored_dep": 40.0,
+      "kg_siklik_ev": 30.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 50.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 60.0,
+      "ust15_dep": 80.0,
+      "lig_ort_toplam": 3.15,
+      "lig_ust25": 55.0,
+      "lig_kg": 35.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-armenia-u21-vs-italy-u21-stats-h2h-preview-and-prediction-bdfabif/"
+    },
+    "analiz": {
+      "p1": 92.6123830363025,
+      "px": 5.914083521492742,
+      "p2": 1.4735334422047468,
+      "tahmini_gol": 3.74394,
+      "kg_var_model": 25.874997543070204,
+      "ust_25": 71.26229917994964,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Yok"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Yok",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "San Marino U21",
+      "takim_dep": "Cyprus U21",
+      "tarih": "18.11.2025",
+      "saat": "17:00",
+      "skor_ev": 0,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 0.1,
+      "atilan_dep": 1.2,
+      "yenen_ev": 5.3,
+      "yenen_dep": 2.5,
+      "clean_sheets_ev": 0.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 10.0,
+      "team_scored_dep": 50.0,
+      "kg_siklik_ev": 10.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 90.0,
+      "ust25_dep": 70.0,
+      "ust15_ev": 100.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 4.55,
+      "lig_ust25": 80.0,
+      "lig_kg": 25.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-san-marino-u21-vs-spain-u21-stats-h2h-preview-and-prediction-bdfabib/"
+    },
+    "analiz": {
+      "p1": 13.412326027113988,
+      "px": 14.901203506845295,
+      "p2": 71.68647046604072,
+      "tahmini_gol": 4.229815,
+      "kg_var_model": 67.5404001448509,
+      "ust_25": 78.89234554239866,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "X2",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Malta U21",
+      "takim_dep": "Georgia U21",
+      "tarih": "14.10.2025",
+      "saat": "18:00",
+      "skor_ev": 0,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 0.2,
+      "atilan_dep": 1.9,
+      "yenen_ev": 3.5,
+      "yenen_dep": 2.0,
+      "clean_sheets_ev": 0.0,
+      "clean_sheets_dep": 20.0,
+      "team_scored_ev": 20.0,
+      "team_scored_dep": 90.0,
+      "kg_siklik_ev": 20.0,
+      "kg_siklik_dep": 70.0,
+      "ust25_ev": 70.0,
+      "ust25_dep": 80.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 3.8,
+      "lig_ust25": 75.0,
+      "lig_kg": 45.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-northern-ireland-u21-vs-georgia-u21-stats-h2h-preview-and-prediction-bdfabih/"
+    },
+    "analiz": {
+      "p1": 9.585726423544358,
+      "px": 12.570665863442123,
+      "p2": 77.84360771301351,
+      "tahmini_gol": 4.216014999999999,
+      "kg_var_model": 62.618379891426414,
+      "ust_25": 78.96169853637991,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "X2",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "2",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": false,
+        "durum": "yanlis"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "New Zealand",
+      "takim_dep": "Belgium",
+      "tarih": "27.06.2026",
+      "saat": "04:00",
+      "skor_ev": 1,
+      "skor_dep": 5,
+      "skor_belli": true,
+      "atilan_ev": 2.8,
+      "atilan_dep": 3.1,
+      "yenen_ev": 1.7,
+      "yenen_dep": 1.0,
+      "clean_sheets_ev": 30.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 100.0,
+      "kg_siklik_ev": 60.0,
+      "kg_siklik_dep": 70.0,
+      "ust25_ev": 80.0,
+      "ust25_dep": 60.0,
+      "ust15_ev": 90.0,
+      "ust15_dep": 100.0,
+      "lig_ort_toplam": 4.300000000000001,
+      "lig_ust25": 70.0,
+      "lig_kg": 65.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-panama-vs-new-zealand-stats-h2h-preview-and-prediction-bgdcdfd/"
+    },
+    "analiz": {
+      "p1": 38.1241599767144,
+      "px": 16.076882847194053,
+      "p2": 45.79895717609155,
+      "tahmini_gol": 6.504745,
+      "kg_var_model": 91.91226736553931,
+      "ust_25": 95.35906634688868,
+      "en_olasi_1x2": "2",
+      "en_guvenli_cifte": "12",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "2",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Indonesia",
+      "takim_dep": "Cambodia",
+      "tarih": "27.07.2026",
+      "saat": "14:30",
+      "skor_ev": 5,
+      "skor_dep": 1,
+      "skor_belli": true,
+      "atilan_ev": 2.3,
+      "atilan_dep": 1.0,
+      "yenen_ev": 0.8,
+      "yenen_dep": 2.3,
+      "clean_sheets_ev": 60.0,
+      "clean_sheets_dep": 10.0,
+      "team_scored_ev": 70.0,
+      "team_scored_dep": 80.0,
+      "kg_siklik_ev": 20.0,
+      "kg_siklik_dep": 80.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 80.0,
+      "ust15_ev": 70.0,
+      "ust15_dep": 90.0,
+      "lig_ort_toplam": 3.1999999999999997,
+      "lig_ust25": 70.0,
+      "lig_kg": 50.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-indonesia-vs-bangladesh-stats-h2h-preview-and-prediction-bgebhbe/"
+    },
+    "analiz": {
+      "p1": 73.92713995214508,
+      "px": 14.039128447710686,
+      "p2": 12.033731600144243,
+      "tahmini_gol": 4.256724999999999,
+      "kg_var_model": 66.44366668958685,
+      "ust_25": 79.47448407719021,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": "Var",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Var"
+    }
+  },
+  {
+    "veri": {
+      "takim_ev": "Sabah FA",
+      "takim_dep": "Zira",
+      "tarih": "05.09.2026",
+      "saat": "15:30",
+      "skor_ev": 5,
+      "skor_dep": 0,
+      "skor_belli": true,
+      "atilan_ev": 2.5,
+      "atilan_dep": 1.1,
+      "yenen_ev": 0.7,
+      "yenen_dep": 1.5,
+      "clean_sheets_ev": 50.0,
+      "clean_sheets_dep": 30.0,
+      "team_scored_ev": 90.0,
+      "team_scored_dep": 60.0,
+      "kg_siklik_ev": 40.0,
+      "kg_siklik_dep": 40.0,
+      "ust25_ev": 60.0,
+      "ust25_dep": 50.0,
+      "ust15_ev": 80.0,
+      "ust15_dep": 70.0,
+      "lig_ort_toplam": 2.9,
+      "lig_ust25": 55.0,
+      "lig_kg": 40.0,
+      "format": "mutating",
+      "kaynak_url": "https://mutating.com/football-stats/match-preview-sabah-fa-vs-zira-stats-h2h-preview-and-prediction-bgabiij/"
+    },
+    "analiz": {
+      "p1": 80.12367474380211,
+      "px": 12.114429471223463,
+      "p2": 7.761895784974421,
+      "tahmini_gol": 3.9721249999999992,
+      "kg_var_model": 56.365737763239494,
+      "ust_25": 75.35008830359357,
+      "en_olasi_1x2": "1",
+      "en_guvenli_cifte": "1X",
+      "en_olasi_gol": "Üst",
+      "en_olasi_kg": "Var"
+    },
+    "dogruluk": {
+      "oneri_1x2": {
+        "tahmin": "1",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_gol": {
+        "tahmin": "Üst",
+        "tuttu": true,
+        "durum": "tam"
+      },
+      "oneri_kg": {
+        "tahmin": null,
+        "tuttu": null,
+        "durum": null
+      },
+      "gercek_1x2": "1",
+      "gercek_gol": "Üst",
+      "gercek_kg": "Yok"
+    }
+  }
+]
