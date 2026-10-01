@@ -7,8 +7,8 @@ import json
 import os
 import time
 import html as _html
-import cloudscraper
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
@@ -389,79 +389,61 @@ MANUEL_ALANLAR = {
 }
 
 # ==========================================
-# GÜNCELLENMİŞ CANLI WEB SCRAPER (403 ENGELİNİ AŞAN)
+# PLAYWRIGHT ILE CLOUDFLARE GECEN SCRAPER
 # ==========================================
 def gunun_maclarini_otomatik_cek():
     """
-    Sportytrader üzerinden günün maçlarını tarar.
-    Cloudflare 403 engellerini aşmak için gelişmiş başlıklar ve session kullanır.
+    Playwright kullanarak Cloudflare korumasını gerçek tarayıcı ile geçer.
     """
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9,tr;q=0.8",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Referer": "https://www.google.com/",
-        "Connection": "keep-alive",
-        "Sec-Ch-Ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-        "Sec-Ch-Ua-Mobile": "?0",
-        "Sec-Ch-Ua-Platform": '"Windows"',
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "cross-site",
-        "Sec-Fetch-User": "?1",
-        "Upgrade-Insecure-Requests": "1"
-    }
-
-    scraper = cloudscraper.create_scraper(
-        browser={
-            'browser': 'chrome',
-            'platform': 'windows',
-            'desktop': True
-        }
-    )
-    scraper.headers.update(headers)
-    base_url = "https://www.sportytrader.com/en/football/predictions/"
+    target_url = "https://www.sportytrader.com/en/football/predictions/"
     
     try:
-        scraper.get("https://www.sportytrader.com/en/")
-        time.sleep(1)
-        
-        response = scraper.get(base_url)
-        
-        if response.status_code != 200:
-            return [], f"Sayfa yüklenemedi. HTTP Durum Kodu: {response.status_code} (Cloudflare Koruması)"
+        with sync_playwright() as p:
+            # Gerçek bir Chromium tarayıcısı başlat
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                viewport={'width': 1280, 'height': 800}
+            )
+            page = context.new_page()
             
-        soup = BeautifulSoup(response.content, "html.parser")
-        
-        mac_linkleri = []
-        for a_tag in soup.select('a[href*="/predictions/"]'):
-            href = a_tag.get('href')
-            if href and href not in mac_linkleri and href.count("-") >= 2:
-                mac_linkleri.append(href)
+            # Ana tahminler sayfasına git ve JS kontrollerini bekle
+            page.goto(target_url, wait_until="domcontentloaded", timeout=60000)
+            time.sleep(3)
+            
+            soup = BeautifulSoup(page.content(), "html.parser")
+            
+            mac_linkleri = []
+            for a_tag in soup.select('a[href*="/predictions/"]'):
+                href = a_tag.get('href')
+                if href and href not in mac_linkleri and href.count("-") >= 2:
+                    mac_linkleri.append(href)
+                    
+            if not mac_linkleri:
+                browser.close()
+                return [], "Günün fikstüründe çekilecek uygun maç bulunamadı."
                 
-        if not mac_linkleri:
-            return [], "Günün fikstüründe çekilecek uygun maç bulunamadı."
+            cekilen_veri_listesi = []
             
-        cekilen_veri_listesi = []
-        
-        for link in mac_linkleri[:10]:
-            full_url = link if link.startswith("http") else f"https://www.sportytrader.com{link}"
-            time.sleep(1.5)
-            
-            mac_resp = scraper.get(full_url)
-            if mac_resp.status_code == 200:
-                mac_soup = BeautifulSoup(mac_resp.content, "html.parser")
+            # İlk 10 maç için detay sayfalarına git
+            for link in mac_linkleri[:10]:
+                full_url = link if link.startswith("http") else f"https://www.sportytrader.com{link}"
+                
+                page.goto(full_url, wait_until="domcontentloaded", timeout=60000)
+                time.sleep(2)
+                
+                mac_soup = BeautifulSoup(page.content(), "html.parser")
                 raw_text = mac_soup.get_text(separator="\n")
                 
                 veri, okunamayanlar = metinden_veri_cikar(raw_text)
                 if veri and veri.get("takim_ev") and veri.get("atilan_ev", 0) > 0:
                     cekilen_veri_listesi.append(veri)
                     
-        return cekilen_veri_listesi, None
+            browser.close()
+            return cekilen_veri_listesi, None
 
     except Exception as e:
-        return [], f"Veri çekme sırasında hata oluştu: {str(e)}"
+        return [], f"Playwright ile veri çekme hatası: {str(e)}"
 
 # ==========================================
 # SPORTYTRADER METİN ÇIKARICI
@@ -844,7 +826,7 @@ if st.session_state.sayfa == "giris":
     if admin_mi():
         st.markdown("### 🌐 Canlı Veri Çekme (Otomatik)")
         if st.button("🔄 Günün Maçlarını İnternetten Otomatik Çek ve Analiz Et", type="primary", use_container_width=True):
-            with st.spinner("Günün maçları taranıyor ve analiz ediliyor..."):
+            with st.spinner("Günün maçları gerçek tarayıcı (Playwright) ile taranıyor ve analiz ediliyor..."):
                 maclar, hata = gunun_maclarini_otomatik_cek()
                 if hata:
                     st.error(f"❌ {hata}")
