@@ -390,14 +390,14 @@ MANUEL_ALANLAR = {
 }
 
 # ==========================================
-# PLAYWRIGHT ILE CLOUDFLARE GECEN SCRAPER (ST CLOUD UYUMLU)
+# GÜNCELLENMİŞ PLAYWRIGHT SCRAPER (/betting-tips/football/)
 # ==========================================
 def gunun_maclarini_otomatik_cek():
     """
-    Playwright kullanarak Cloudflare korumasını geçer.
-    Streamlit Cloud ve lokal ortam uyumludur.
+    Playwright kullanarak SportyTrader'ın güncel bahis tahminleri
+    sayfasından (betting-tips/football) maç verilerini çeker.
     """
-    target_url = "https://www.sportytrader.com/en/football/predictions/"
+    target_url = "https://www.sportytrader.com/en/betting-tips/football/"
     
     try:
         # Streamlit Cloud üzerinde otomatik indirme komutunu çalıştır
@@ -407,11 +407,9 @@ def gunun_maclarini_otomatik_cek():
             pass
 
         with sync_playwright() as p:
-            # Hem lokalde hem Streamlit Cloud'da çalışabilmesi için alternatif yapı
             try:
                 browser = p.chromium.launch(headless=True)
             except Exception:
-                # Sunucuda sistem chromium'unu kullan
                 browser = p.chromium.launch(headless=True, executable_path="/usr/bin/chromium")
 
             context = browser.new_context(
@@ -420,18 +418,39 @@ def gunun_maclarini_otomatik_cek():
             )
             page = context.new_page()
             
-            # Ana tahminler sayfasına git ve JS kontrollerini bekle
+            # Sayfaya git ve yüklenmesini bekle
             page.goto(target_url, wait_until="domcontentloaded", timeout=60000)
+            
+            # Dinamik içeriğin (lazy-load) tetiklenmesi için sayfayı aşağı kaydır
+            page.evaluate("window.scrollBy(0, 1000)")
             time.sleep(3)
             
             soup = BeautifulSoup(page.content(), "html.parser")
             
             mac_linkleri = []
-            for a_tag in soup.select('a[href*="/predictions/"]'):
-                href = a_tag.get('href')
-                if href and href not in mac_linkleri and href.count("-") >= 2:
-                    mac_linkleri.append(href)
-                    
+            
+            # /betting-tips/football/ altındaki maç tahmin linklerini tara
+            for a_tag in soup.find_all('a', href=True):
+                href = a_tag['href']
+                
+                # Tahmin detay link formatı: /en/betting-tips/takim1-takim2-12345/
+                if "/betting-tips/" in href and href.count("-") >= 2:
+                    # Kategori, makale veya genel sayfaları filtrele
+                    if not any(x in href for x in ["/league/", "/championship/", "/bookmaker/", "/football/"]):
+                        if href not in mac_linkleri:
+                            mac_linkleri.append(href)
+                    elif "/betting-tips/football/" in href and href != "/en/betting-tips/football/":
+                        if href not in mac_linkleri and href.count("-") >= 3:
+                            mac_linkleri.append(href)
+
+            if not mac_linkleri:
+                # Alternatif geniş seçici kontrolü
+                for a_tag in soup.select('a[href*="-"]'):
+                    href = a_tag.get('href', '')
+                    if "/betting-tips/" in href and href not in mac_linkleri:
+                        if href != "/en/betting-tips/football/":
+                            mac_linkleri.append(href)
+
             if not mac_linkleri:
                 browser.close()
                 return [], "Günün fikstüründe çekilecek uygun maç bulunamadı."
@@ -442,15 +461,18 @@ def gunun_maclarini_otomatik_cek():
             for link in mac_linkleri[:10]:
                 full_url = link if link.startswith("http") else f"https://www.sportytrader.com{link}"
                 
-                page.goto(full_url, wait_until="domcontentloaded", timeout=60000)
-                time.sleep(2)
-                
-                mac_soup = BeautifulSoup(page.content(), "html.parser")
-                raw_text = mac_soup.get_text(separator="\n")
-                
-                veri, okunamayanlar = metinden_veri_cikar(raw_text)
-                if veri and veri.get("takim_ev") and veri.get("atilan_ev", 0) > 0:
-                    cekilen_veri_listesi.append(veri)
+                try:
+                    page.goto(full_url, wait_until="domcontentloaded", timeout=60000)
+                    time.sleep(2)
+                    
+                    mac_soup = BeautifulSoup(page.content(), "html.parser")
+                    raw_text = mac_soup.get_text(separator="\n")
+                    
+                    veri, okunamayanlar = metinden_veri_cikar(raw_text)
+                    if veri and veri.get("takim_ev") and veri.get("atilan_ev", 0) > 0:
+                        cekilen_veri_listesi.append(veri)
+                except Exception:
+                    continue
                     
             browser.close()
             return cekilen_veri_listesi, None
