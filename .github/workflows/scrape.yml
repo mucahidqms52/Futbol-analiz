@@ -1,7 +1,6 @@
 name: Mutating Veri Toplayıcı
 
 on:
-  # Her 2 saatte bir çalıştır (00:00, 02:00, 04:00...)
   schedule:
     - cron: '0 */2 * * *'
   workflow_dispatch:
