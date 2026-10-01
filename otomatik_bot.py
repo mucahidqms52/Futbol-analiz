@@ -37,14 +37,16 @@ def json_dosyalarini_kontrol_et():
             json.dump([], f)
 
 def saat_ve_tarih_ayarla(veri_sozlugu):
-    """Saat bilgisini alır ve istediğin gibi +2 saat ekleyerek günceller"""
+    """Saati alır ve hatasız bir şekilde +2 saat ekler"""
     try:
         mevcut_saat = veri_sozlugu.get("saat", "00:00")
         if ":" in mevcut_saat:
             parcalar = mevcut_saat.split(":")
-            toplam_dakika = int(parcalar[0]) * 60 + int(parcalar[1]) + 120 # +2 saat (120 dakika) ekleniyor
-            yeni_ saat_dk = divmod(toplam_dakika % 1440, 60)
-            veri_sozlugu["saat"] = f"{yeni_saat_dk[0]:02d}:{yeni_saat_dk[1]:02d}"
+            saat = int(parcalar[0]) + 2
+            dakika = int(parcalar[1])
+            if saat >= 24:
+                saat -= 24
+            veri_sozlugu["saat"] = f"{saat:02d}:{dakika:02d}"
     except Exception:
         pass
     return veri_sozlugu
@@ -83,14 +85,12 @@ def mutaring_calistir():
 
                 detay_soup = BeautifulSoup(detay_resp.text, 'html.parser')
                 
-                # Menü ve gereksiz etiketleri temizleyip model için gerekli ham metni alıyoruz
                 for element in detay_soup(["nav", "footer", "header", "aside", "script", "style", "menu", "form"]):
                     element.decompose()
 
                 ana_icerik = detay_soup.find("main") or detay_soup.find("div", class_="content") or detay_soup
                 ham_metin = ana_icerik.get_text(separator="\n")
 
-                # PPG, MPG, BBTS ve son 5 maç form verilerini içeren metni ayrıştırıcıya veriyoruz
                 cikan_veri, _ = metinden_veri_cikar(ham_metin)
 
                 if cikan_veri and cikan_veri.get("takim_ev") and cikan_veri.get("takim_dep"):
@@ -104,21 +104,18 @@ def mutaring_calistir():
                     v = copy.deepcopy(VARSAYILAN_VERI)
                     v.update(cikan_veri)
                     
-                    # Saat dilimine +2 saat ekleme kuralı uygulanıyor
                     v = saat_ve_tarih_ayarla(v)
                     
-                    # Senin matematiksel modelin (Poisson/Monte Carlo) çalışıyor
                     a = analiz_hesapla(v)
                     yeni_kayit = kayit_olustur(v, a)
 
                     skor_belli = v.get("skor_belli", False)
 
-                    # --- EŞİK KONTROLÜ (Eşiği geçmeyenler kesinlikle safdışı kalır) ---
                     p1 = a["p1"]; px = a["px"]; p2 = a["p2"]
                     ust_25 = a["ust_25"]; alt_25 = a["alt_25"]
                     kg_var = a["kg_var_model"]; kg_yok = a["kg_yok_model"]
 
-                    en_yuksek_1x2 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
+                    en_yuksek_1x2 = max([("1", p1), ("X", px), (_, p2) if False else ("2", p2)], key=lambda x: x[1])
                     sec_1x2, yuzde_1x2 = en_yuksek_1x2
                     poz_1x2 = yuzde_1x2 >= esik_1x2_al(sec_1x2)
 
@@ -130,12 +127,10 @@ def mutaring_calistir():
                     kg_esik = esik_al("kg_var") if kg_var >= kg_yok else esik_al("kg_yok")
                     kg_poz = kg_yuzde >= kg_esik
 
-                    # Şartları sağlamayan maçlar eklenmez (safdışı kalır)
                     kaydet_mi = gol_poz or kg_poz or poz_1x2
                     mac_anahtar = f"{takim_ev}-{takim_dep}"
 
                     if skor_belli:
-                        # Maç bittiyse geçmiş maçlara yollanır
                         d = sonuc_hesapla(yeni_kayit)
                         if d: 
                             yeni_kayit["dogruluk"] = d
@@ -143,7 +138,6 @@ def mutaring_calistir():
                         if mac_anahtar not in gecmis_keys:
                             guncellenen_gecmis.append(yeni_kayit)
                     else:
-                        # Henüz başlamamış ve eşiği geçmiş maçlar gelecek bölümüne eklenir
                         gelecek_keys = [f"{g['veri']['takim_ev']}-{g['veri']['takim_dep']}" for g in guncellenen_gelecek]
                         if mac_anahtar not in gelecek_keys and kaydet_mi:
                             guncellenen_gelecek.append(yeni_kayit)
@@ -152,7 +146,6 @@ def mutaring_calistir():
             except Exception as e:
                 continue
 
-        # --- GELECEK MAÇLARI EN ERKENDEN EN GEÇE DOĞRU (AŞAĞIYA DOĞRU) SIRALAMA ---
         def sira_anahtari(item):
             try:
                 tarih_str = item["veri"].get("tarih", "01.01.2026")
