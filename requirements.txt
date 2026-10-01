@@ -1,4 +1,6 @@
-streamlit
-requests
+pipinstall 
+playwright 
 beautifulsoup4
-cloudscraper
+requests
+playwright
+installchromium
