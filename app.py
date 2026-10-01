@@ -8,34 +8,17 @@ import os
 import html as _html
 import threading
 import time
-import subprocess
+import requests
+from bs4 import BeautifulSoup
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
-# Playwright tarayıcısı kurulu mu? Değilse bir kez kur.
-def _playwright_tarayici_kur():
-    try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as p:
-            try:
-                p.chromium.launch(headless=True).close()
-                return True  # Zaten kurulu
-            except Exception:
-                pass
-    except Exception:
-        pass
-    # Kurulu değil, indir
-    try:
-        subprocess.run(
-            ["playwright", "install", "chromium"],
-            check=False, timeout=300,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-        return True
-    except Exception:
-        return False
+try:
+    SCRAPINGBEE_API_KEY = st.secrets["SCRAPINGBEE_API_KEY"]
+except Exception:
+    SCRAPINGBEE_API_KEY = ""
 
-_playwright_tarayici_kur()
+PLAYWRIGHT_OK = True
 
 st.markdown("""
 <style>
