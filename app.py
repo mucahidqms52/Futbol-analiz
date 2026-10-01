@@ -7,6 +7,14 @@ import json
 import os
 import html as _html
 
+# ===== OTOMATİK VERİ ÇEKME =====
+try:
+    import requests
+    from bs4 import BeautifulSoup
+    HTTP_OK = True
+except ImportError:
+    HTTP_OK = False
+
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
 st.markdown("""
@@ -171,23 +179,18 @@ st.markdown("""
 
     /* ===== MİSAFİR ANA SAYFA MODERN ===== */
     .mh-hero {
-        position: relative;
-        overflow: hidden;
-        text-align: center;
+        position: relative; overflow: hidden; text-align: center;
         padding: 30px 14px 22px 14px;
         background: linear-gradient(135deg, rgba(22,35,61,0.85), rgba(15,26,46,0.9));
         border: 1px solid rgba(34,197,94,0.22);
-        border-radius: 22px;
-        margin: 6px 0 16px 0;
+        border-radius: 22px; margin: 6px 0 16px 0;
         box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(34,197,94,0.05) inset;
     }
     .mh-hero::before {
-        content: "";
-        position: absolute; top: -60%; left: -60%;
+        content: ""; position: absolute; top: -60%; left: -60%;
         width: 220%; height: 220%;
         background: radial-gradient(circle at 50% 50%, rgba(34,197,94,0.15), transparent 55%);
-        animation: mhGlow 5s ease-in-out infinite;
-        pointer-events: none;
+        animation: mhGlow 5s ease-in-out infinite; pointer-events: none;
     }
     @keyframes mhGlow {
         0%, 100% { opacity: 0.5; transform: scale(1) rotate(0deg); }
@@ -206,46 +209,24 @@ st.markdown("""
         background-clip: text; letter-spacing: 1px;
         position: relative; z-index: 1; margin: 0;
     }
-    .mh-hero-sub {
-        font-size: 0.84rem; color: #8fa0bd;
-        margin-top: 8px; letter-spacing: 0.4px;
-        position: relative; z-index: 1;
-    }
+    .mh-hero-sub { font-size: 0.84rem; color: #8fa0bd; margin-top: 8px; letter-spacing: 0.4px; position: relative; z-index: 1; }
     .mh-hero-badge {
-        display: inline-block;
-        margin-top: 12px;
-        padding: 4px 14px;
-        background: rgba(34,197,94,0.12);
-        border: 1px solid rgba(34,197,94,0.4);
-        border-radius: 99px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        color: #22c55e !important;
-        letter-spacing: 0.6px;
+        display: inline-block; margin-top: 12px; padding: 4px 14px;
+        background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4);
+        border-radius: 99px; font-size: 0.72rem; font-weight: 700;
+        color: #22c55e !important; letter-spacing: 0.6px;
         position: relative; z-index: 1;
     }
-
-    .mh-stat-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        margin: 0 0 16px 0;
-    }
+    .mh-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 16px 0; }
     .mh-stat {
-        position: relative;
-        background: linear-gradient(145deg, #16233d, #0f1a2e);
-        border: 1px solid #23304a;
-        border-radius: 16px;
-        padding: 14px 8px 12px 8px;
-        text-align: center;
-        overflow: hidden;
+        position: relative; background: linear-gradient(145deg, #16233d, #0f1a2e);
+        border: 1px solid #23304a; border-radius: 16px;
+        padding: 14px 8px 12px 8px; text-align: center; overflow: hidden;
         transition: transform 0.2s ease;
     }
     .mh-stat:hover { transform: translateY(-2px); }
     .mh-stat::after {
-        content: "";
-        position: absolute; top: 0; left: 0; right: 0;
-        height: 3px;
+        content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
         background: linear-gradient(90deg, #22c55e, #3b82f6);
     }
     .mh-stat-icon { font-size: 1.3rem; margin-bottom: 2px; }
@@ -253,45 +234,27 @@ st.markdown("""
     .mh-stat-lbl { font-size: 0.68rem; color: #8fa0bd !important; margin-top: 5px; letter-spacing: 0.6px; text-transform: uppercase; font-weight: 700; }
 
     .mh-section-title {
-        font-size: 0.78rem;
-        color: #8fa0bd !important;
-        text-transform: uppercase;
-        letter-spacing: 1.2px;
-        font-weight: 700;
-        margin: 4px 0 8px 4px;
-        text-align: left;
-        border-left: 3px solid #22c55e;
-        padding-left: 8px;
+        font-size: 0.78rem; color: #8fa0bd !important;
+        text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700;
+        margin: 4px 0 8px 4px; text-align: left;
+        border-left: 3px solid #22c55e; padding-left: 8px;
     }
-
-    /* Misafir nav butonları büyük */
     .st-key-fa_misafir_nav .stButton button {
-        height: 72px !important;
-        font-size: 1rem !important;
-        font-weight: 800 !important;
-        border-radius: 16px !important;
-        letter-spacing: 0.4px;
+        height: 72px !important; font-size: 1rem !important; font-weight: 800 !important;
+        border-radius: 16px !important; letter-spacing: 0.4px;
         box-shadow: 0 8px 24px rgba(34,197,94,0.25) !important;
         transition: all 0.2s ease;
     }
     .st-key-fa_misafir_nav .stButton button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 32px rgba(34,197,94,0.4) !important;
+        transform: translateY(-2px); box-shadow: 0 12px 32px rgba(34,197,94,0.4) !important;
     }
-    .st-key-fa_misafir_nav .stButton button p {
-        font-size: 1rem !important;
-        font-weight: 800 !important;
-    }
+    .st-key-fa_misafir_nav .stButton button p { font-size: 1rem !important; font-weight: 800 !important; }
 
     .mh-info {
         background: linear-gradient(145deg, rgba(19,28,46,0.6), rgba(11,18,32,0.8));
-        border: 1px solid #23304a;
-        border-radius: 14px;
-        padding: 12px 14px;
-        margin-top: 14px;
-        font-size: 0.76rem;
-        color: #8fa0bd !important;
-        line-height: 1.6;
+        border: 1px solid #23304a; border-radius: 14px;
+        padding: 12px 14px; margin-top: 14px;
+        font-size: 0.76rem; color: #8fa0bd !important; line-height: 1.6;
     }
     .mh-info b { color: #22c55e !important; }
 </style>
@@ -455,6 +418,7 @@ if "okunamayan_alanlar" not in st.session_state: st.session_state.okunamayan_ala
 if "manuel_bekleyen" not in st.session_state: st.session_state.manuel_bekleyen = []
 if "tek_silme_onay" not in st.session_state: st.session_state.tek_silme_onay = None
 if "tek_silme_gelecek" not in st.session_state: st.session_state.tek_silme_gelecek = None
+if "goster_yardim" not in st.session_state: st.session_state.goster_yardim = False
 
 if "giris_yapildi" not in st.session_state: st.session_state.giris_yapildi = False
 if "rol" not in st.session_state: st.session_state.rol = None
@@ -1091,6 +1055,79 @@ def metinden_veri_cikar(metin):
     veri = {}; okunamayanlar = []
     veri["format"] = "genel"
     return veri, okunamayanlar
+
+
+# ==========================================
+# URL'DEN OTOMATİK ÇEKME
+# ==========================================
+def html_metne_cevir(html):
+    """HTML'i parser'ın anlayacağı düz metne çevirir."""
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup(["script", "style", "noscript", "svg", "head", "meta", "link"]):
+        tag.decompose()
+    # Tabloları tab-ayrılmış metne çevir (parser tab arıyor)
+    for table in soup.find_all("table"):
+        satirlar = []
+        for tr in table.find_all("tr"):
+            hucreler = [td.get_text(strip=True) for td in tr.find_all(["td", "th"])]
+            if hucreler:
+                satirlar.append("\t".join(hucreler))
+        if satirlar:
+            table.replace_with("\n" + "\n".join(satirlar) + "\n")
+    metin = soup.get_text(separator="\n")
+    satirlar = [s.strip() for s in metin.split("\n")]
+    satirlar = [s for s in satirlar if s]
+    return "\n".join(satirlar)
+
+
+def url_den_veri_cek(url):
+    """URL'den veri çeker. Döner: (veri, okunamayanlar, hata_mesaji)"""
+    if not HTTP_OK:
+        return None, [], ("❌ 'requests' veya 'beautifulsoup4' kurulu değil.\n\n"
+                          "Terminalde şunu çalıştırın:\n"
+                          "**pip install requests beautifulsoup4**")
+    url = url.strip()
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+
+    try:
+        headers = {
+            "User-Agent": ("Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 "
+                          "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Cache-Control": "no-cache",
+        }
+        r = requests.get(url, headers=headers, timeout=15, allow_redirects=True)
+
+        if r.status_code != 200:
+            return None, [], f"❌ HTTP {r.status_code} — Sayfaya erişilemedi."
+
+        if len(r.text) < 500:
+            return None, [], "❌ Sayfa içeriği çok kısa. Muhtemelen engellendi veya boş."
+
+        metin = html_metne_cevir(r.text)
+
+        if len(metin) < 100:
+            return None, [], "❌ HTML metne çevrilemedi. Site yapısı farklı olabilir."
+
+        veri, okunamayanlar = metinden_veri_cikar(metin)
+
+        if not veri or (not veri.get("takim_ev") and not veri.get("atilan_ev")):
+            return None, [], ("⚠️ Parser veriyi tanıyamadı. Site yapısı değişmiş olabilir.\n\n"
+                             f"**Sayfadan çıkan ilk 500 karakter:**\n```\n{metin[:500]}\n```\n\n"
+                             "💡 Manuel yapıştırma modunu kullanın.")
+
+        return veri, okunamayanlar, None
+
+    except requests.exceptions.Timeout:
+        return None, [], "❌ Zaman aşımı (15 sn). Site yavaş veya erişilemiyor."
+    except requests.exceptions.ConnectionError:
+        return None, [], "❌ Bağlantı hatası. İnternet bağlantınızı kontrol edin."
+    except requests.exceptions.TooManyRedirects:
+        return None, [], "❌ Çok fazla yönlendirme. URL hatalı olabilir."
+    except Exception as e:
+        return None, [], f"❌ Beklenmeyen hata: {str(e)[:200]}"
 
 
 # ==========================================
@@ -2010,7 +2047,7 @@ def giris_ekrani():
             <span class="lf-chip">⚽ Üst / Alt 2.5</span>
             <span class="lf-chip">🤝 KG Var / Yok</span>
             <span class="lf-chip">🔬 Backtest</span>
-            <span class="lf-chip">📊 İstatistik</span>
+            <span class="lf-chip">🔗 URL Çek</span>
         </div>
         <div class="login-footer">© <b>Futbol Analiz Pro</b> • Bilgi amaçlıdır • Kesin sonuç garantisi yoktur</div>
     """, unsafe_allow_html=True)
@@ -2053,162 +2090,94 @@ Sadece **bilgilendirme amaçlıdır.** Kesin sonuç garantisi **YOKTUR.**
 
 ---
 
-### 🎯 EŞİKLER NEDİR? NEDEN KULLANILIR?
+### 🎯 EŞİKLER NEDİR?
 
 **Eşik** = Bir tahminin "oynanabilir" sayılması için geçmesi gereken minimum yüzde.
 
 **Örnek eşikler:**
-- 1X2 → %55+ (sadece yüksek olasılıklı sonuçlar)
+- 1X2 → %55+
 - Üst 2.5 → %82
 - Alt 2.5 → %74
 - KG Var → %73
 - KG Yok → %88
 
-**Neden eşik kullanılır?**
-Her maçta tahmin üretilmez. Çünkü bazı maçlar "**belirsiz**" (%50-55 civarı) olur. 
-Bu tür maçları oynamak **kumar** olur. Eşikler sayesinde sadece **YÜKSEK OLASILIKLI** 
-maçlara odaklanılır. Bu da isabet oranını yükseltir.
+Belirsiz maçlar (%50-55 civarı) oynanmaz. Eşik sayesinde sadece **yüksek olasılıklı** maçlara odaklanılır.
 
 ---
 
-### 📊 1X2 NEDİR? NASIL OKUNUR?
+### 📊 1X2 NEDİR?
 
-**1X2**, maç sonucu bahsidir:
 - **1** = Ev sahibi kazanır
 - **X** = Beraberlik
 - **2** = Deplasman kazanır
 
-**Nasıl yorumlanır?**
-Analiz sayfasında 3 bar görürsün: **p1, px, p2**. En yüksek olan **en olası** sonuçtur. 
-Ama unutma: 1X2 tahmini **en zor** markettir. Çünkü 3 seçenek vardır.
-
-**Önemli:**
-- %50+ → **Oynanabilir** (yüksek olasılık)
-- %40-50 → **Belirsiz** (riskli)
-- %40 altı → **Oynama** (kumar)
+En yüksek olasılıklı olan en olası sonuçtur. 1X2 en zor markettir.
 
 ---
 
-### 📊 GEÇMİŞ VERİLER NASIL OKUNUR?
+### 📊 GEÇMİŞ VERİLER
 
-Geçmiş sayfasında her maçın yanında **renkli ikon** vardır:
+- ✅ = Her iki tahmin de tuttu
+- 🟡 = Sadece biri tuttu
+- ❌ = İki tahmin de yanlış
+- ⚫ = Öneri yok
 
-- ✅ = Her iki tahmin de tuttu (Gol + KG)
-- 🟡 = Sadece biri tuttu (kısmi başarı)
-- ❌ = İki tahmin de yanlış çıktı
-- ⚫ = O maçta öneri verilmedi (eşik altı, oynanmadı)
-
-**Üst kısımdaki istatistikler:**
-- ✅ X doğru → Kazanılan tahmin sayısı
-- ❌ Y yanlış → Kaybedilen tahmin sayısı
-- %Z isabet → Genel başarı oranı
-
-**ÖNEMLİ:** İsabet **%100 olmaz.** %85+ çok iyi, %90+ mükemmel. 
-Ama %100 imkansızdır. Her zaman kayıp olacaktır.
+İsabet **%100 olmaz.** %85+ çok iyi.
 
 ---
 
-### 🔮 GELECEK MAÇLAR NASIL KULLANILIR?
+### 🔮 GELECEK MAÇLAR
 
-Gelecek maçlar, **henüz oynanmamış** ama analiz edilmiş maçlardır. 
-Her maçın yanında:
-- 🇹🇷 **Bayrak** → Ülke
-- 🕐 **Saat** → Maç saati
-- ⚽ **Takım isimleri**
-
-Bu maçlara tıklayarak analizi görebilirsin. Ama unutma: 
-**Gelecek maç tahminleri %100 değildir.** Kesin sonuç yoktur.
+Bayrak + saat + takım isimleri görünür. Tıklayarak detay görebilirsin. Kesin sonuç yoktur.
 
 ---
 
-### ⚡ STRATEJİ: TEKLİ Mİ, KOMBİNE Mİ?
+### ⚡ STRATEJİ
 
-#### 📌 TEKLİ BAHİS
-Her maça ayrı ayrı oyna. Risk düşük, kazanç düşük.
-Öneri: %85 isabetli tahminlere haftada 5-10 tekli.
+**TEKLİ:** Her maça ayrı. Risk düşük, kazanç düşük.
 
-#### 📌 2'Lİ KOMBİNE
-İki maçı birleştir. İsabet = **%85 × %85 = %72**.
-Ama oran 2 katına çıkar. Riskli ama kârlı.
+**2'Lİ:** İsabet = %85 × %85 = %72. Riskli ama kârlı.
 
-#### 📌 3'LÜ KOMBİNE
-Üç maçı birleştir. İsabet = **%85³ = %61**.
-Yüksek risk, yüksek kazanç. Haftada max 1-2 tane.
+**3'LÜ:** İsabet = %85³ = %61. Yüksek risk.
 
-**🎯 FORMÜL:** Kombine isabet = **Her maçın isabeti ÇARPILIR**
+**🎯 FORMÜL:** Kombine isabet = Her maçın isabeti ÇARPILIR
 
 ---
 
-### ⚠️ DİKKATLİ BAHİS KURALLARI
+### ⚠️ BAHİS KURALLARI
 
-**1. KAYBETMEYİ KABUL ET**
-Hiçbir sistem %100 değildir. 10 maçtan 1-2 tanesi kaybedilecektir. 
-Bu normaldir, panik yapma.
-
-**2. BANKANI KORU**
-Toplam paranı tek bahse **YATIRMA.**
-Kural: Her bahis, bankanın **%2-5'ini** geçmesin.
-Örnek: 5.000 TL banka → max 100-250 TL bahis
-
-**3. KAYIPTAN SONRA ARTTIRMA (Martingale YAPMA)**
-"Kaybettim, 2 katı basayım" → **BÜYÜK HATA.**
-Her zaman **sabit miktar.** Sabırlı ol.
-
-**4. SADECE ÖNERİLERE OYNA**
-Eşiği geçmeyen maçlara oynama. Kod "belirsiz" diyorsa uzak dur. 
-**Belirsiz maç = kumar.**
-
-**5. HAFTALIK LİMİT KOY**
-Örn: Haftada max 20 bahis, aylık max 80.
-Bu limiti aşma. Aşarsan **bağımlılık** başlar.
-
-**6. KAYIP SERİSİNDE ARA VER**
-3-4 üst üste kayıp gelirse 2-3 gün ara ver.
-Sinirle bahis yapma. Soğukkanlı ol.
-
-**7. KAZANCI ÇEK**
-Kazandığının %30-50'sini **hemen çek.** Kalanı bankada tut.
-Her şeyi tekrar riske atma.
-
-**8. ALKOL/SİNİR/AÇLIK DURUMUNDA OYNAMA**
-Beyin net olmalı. Duygusal kararlar **kaybettirir.**
+1. **Kaybetmeyi kabul et** — 10 maçtan 1-2 kayıp normal
+2. **Bankanı koru** — Her bahis bankanın %2-5'i
+3. **Martingale yapma** — Sabit miktar
+4. **Sadece önerilere oyna** — Belirsiz maç = kumar
+5. **Haftalık limit** — Haftada max 20 bahis
+6. **Kayıp serisinde ara ver** — 2-3 gün
+7. **Kazancı çek** — %30-50 hemen çek
+8. **Alkol/sinir/açlıkta oynama**
 
 ---
 
 ### 🚫 SORUMLULUK REDDİ
 
-- Bu uygulama **SADECE bilgi amaçlıdır.**
+- **Sadece bilgi amaçlıdır.**
 - Hiçbir kayıptan **sorumlu değiliz.**
-- Bahis oynamak **YASAL RİSK** içerir.
 - **18 yaşından küçükler** bahis oynayamaz.
-- Kaybettiğiniz parayı **geri talep etme hakkınız yok.**
-- **Bağımlılık riski** vardır. Profesyonel yardım alın.
-- **Yeşilay Danışma: 115**
+- **Bağımlılık riski** vardır. **Yeşilay: 115**
 - Kumar bağımlılığı **ciddi bir hastalıktır.**
 
 ---
 
-### 💡 ÖZET
+### 🔗 URL İLE OTOMATİK ÇEKME
 
-**✅ Yap:**
-- Eşiği geçen maçlara oyna
-- Sabit miktar bas
-- Kazancı çek
-- Sabırlı ol
-- Kaybı kabul et
+Admin modunda **🔗 URL ile Otomatik Çek** seçeneği vardır. Sportytrader maç sayfasının URL'ini yapıştır → sistem otomatik çeker → analiz eder.
 
-**❌ Yapma:**
-- Belirsiz maçlara oyna
-- Kayıptan sonra 2 katı bas
-- Tüm bankayı riske at
-- Duygusal karar ver
-- Borçla bahis yap
+Site Cloudflare kullanıyorsa çekme başarısız olabilir → **Metin Yapıştır** modunu kullan.
+
+---
 
 **🎯 HEDEF:** Uzun vadede kârlı olmak.
-Kısa vadede kayıp normal. Önemli olan **ortalamadır.**
 
-**Bol şans! Ama unutma: BU BİR KUMAR DEĞİL, ANALİZ.**
-**Ve her analiz yanılabilir.** 🍀
+**Bol şans! BU BİR KUMAR DEĞİL, ANALİZ.** 🍀
         """)
 
 
@@ -2229,86 +2198,119 @@ nav_bar()
 if st.session_state.sayfa == "giris":
     if admin_mi():
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center; color:gray;'>İstatistik metnini kopyala → yapıştır → analiz et.</p>", unsafe_allow_html=True)
-        st.markdown("### 📋 İstatistik Metnini Yapıştır")
+        st.markdown("<p style='text-align:center; color:gray;'>URL ile otomatik çek veya metni elle yapıştır.</p>", unsafe_allow_html=True)
 
-        yapistir_metni = st.text_area("Yapıştırma alanı", height=280, key="yapistir_input", label_visibility="collapsed", placeholder="İstatistik metnini buraya yapıştır.")
-        st.divider()
+        # ===== MOD SEÇİMİ =====
+        mod = st.radio(
+            "Veri giriş yöntemi",
+            ["🔗 URL ile Otomatik Çek", "📝 Metin Yapıştır"],
+            horizontal=True,
+            key="veri_mod",
+            label_visibility="collapsed"
+        )
 
-        col_bt1, col_bt2, col_bt3, col_bt4, col_bt5 = st.columns([2, 1, 1, 1, 1])
-        with col_bt1:
-            analiz_btn = st.button("🚀 ANALİZ ET", use_container_width=True, type="primary")
-        with col_bt2:
-            gecmis_btn = st.button("📊 Geçmiş", use_container_width=True)
-        with col_bt3:
-            gelecek_btn = st.button("🔮 Gelecek", use_container_width=True)
-        with col_bt4:
-            backtest_btn = st.button("🔬 Backtest", use_container_width=True)
-        with col_bt5:
-            ayarlar_btn = st.button("⚙️ Ayarlar", use_container_width=True)
+        cikan = None
+        okunamayanlar = []
 
-        if analiz_btn:
-            if not yapistir_metni.strip():
-                st.warning("⚠️ Önce metni yapıştır.")
-            else:
-                cikan, okunamayanlar = metinden_veri_cikar(yapistir_metni)
-                if not cikan:
-                    st.error("❌ Metinden hiçbir veri çıkarılamadı.")
+        # ===== URL MODU =====
+        if mod.startswith("🔗"):
+            st.caption("Sportytrader maç sayfasının URL'ini yapıştır → sistem otomatik çeker.")
+            url_input = st.text_input(
+                "Maç URL'i",
+                placeholder="https://www.sportytrader.com/...",
+                key="url_input",
+                label_visibility="collapsed"
+            )
+
+            col_u1, col_u2 = st.columns([3, 1])
+            with col_u1:
+                url_cek = st.button("🚀 URL'DEN ÇEK ve ANALİZ ET", use_container_width=True, type="primary")
+            with col_u2:
+                if st.button("❓", use_container_width=True, help="Nasıl çalışır?"):
+                    st.session_state.goster_yardim = not st.session_state.get("goster_yardim", False)
+
+            if st.session_state.get("goster_yardim", False):
+                st.info("""
+**💡 Nasıl çalışır?**
+1. Sportytrader maç sayfasını tarayıcıda aç
+2. Adres çubuğundaki URL'i kopyala
+3. Yukarıya yapıştır → **URL'DEN ÇEK** bas
+
+Sistem sayfayı sunucu tarafında çeker, HTML'i metne çevirir ve mevcut parser'a sokar.
+
+**⚠️ Not:** Site Cloudflare/anti-bot kullanıyorsa çekme başarısız olabilir. Bu durumda **Metin Yapıştır** modunu kullan.
+                """)
+
+            if url_cek:
+                if not url_input.strip():
+                    st.warning("⚠️ Önce URL yapıştır.")
                 else:
-                    yeni_veri = copy.deepcopy(VARSAYILAN_VERI)
-                    yeni_veri.update(cikan)
-                    st.session_state.form_verileri = yeni_veri
-                    st.session_state.kayit_yapildi = False
-                    st.session_state.gecmisten_gelindi = False
-                    st.session_state.gelecekten_gelindi = False
-                    st.session_state.aktif_kayit_idx = None
-                    st.session_state.aktif_gelecek_idx = None
-                    st.session_state.okunamayan_alanlar = okunamayanlar
-                    st.session_state.manuel_bekleyen = okunamayanlar.copy()
-
-                    if not veri_yeterli_mi(yeni_veri):
-                        st.error(f"⚠️ Analiz için yeterli veri yok.")
+                    with st.spinner("🌐 Sayfa çekiliyor... (5-10 saniye)"):
+                        cikan, okunamayanlar, hata = url_den_veri_cek(url_input)
+                    if hata:
+                        st.error(hata)
+                        st.info("📝 **Metin Yapıştır** modunu deneyin veya URL'i kontrol edin.")
+                        cikan = None
                     else:
+                        st.success(f"✅ URL'den veri çekildi!")
                         if okunamayanlar:
-                            st.session_state.sayfa = "manuel_giris"
-                        else:
-                            st.session_state.sayfa = "sonuc"
-                        st.rerun()
+                            st.warning(f"⚠️ {len(okunamayanlar)} alan eksik: {', '.join(okunamayanlar)}")
 
-        if gecmis_btn:
-            st.session_state.sayfa = "gecmis"
+        # ===== METİN MODU =====
+        else:
+            st.caption("Sportytrader sayfasındaki metni kopyala → buraya yapıştır.")
+            yapistir_metni = st.text_area(
+                "Yapıştırma alanı",
+                height=280,
+                key="yapistir_input",
+                label_visibility="collapsed",
+                placeholder="İstatistik metnini buraya yapıştır."
+            )
+
+            if st.button("🚀 ANALİZ ET", use_container_width=True, type="primary"):
+                if not yapistir_metni.strip():
+                    st.warning("⚠️ Önce metni yapıştır.")
+                else:
+                    cikan, okunamayanlar = metinden_veri_cikar(yapistir_metni)
+
+        # ===== ORTAK: VERİ İŞLEME =====
+        if cikan:
+            yeni_veri = copy.deepcopy(VARSAYILAN_VERI)
+            yeni_veri.update(cikan)
+            st.session_state.form_verileri = yeni_veri
             st.session_state.kayit_yapildi = False
             st.session_state.gecmisten_gelindi = False
             st.session_state.gelecekten_gelindi = False
             st.session_state.aktif_kayit_idx = None
             st.session_state.aktif_gelecek_idx = None
-            st.session_state.okunamayan_alanlar = []
-            st.session_state.manuel_bekleyen = []
-            st.session_state.tek_silme_onay = None
-            st.session_state.silme_onay = False
-            st.rerun()
+            st.session_state.okunamayan_alanlar = okunamayanlar
+            st.session_state.manuel_bekleyen = okunamayanlar.copy()
 
-        if gelecek_btn:
-            st.session_state.sayfa = "gelecek"
-            st.session_state.kayit_yapildi = False
-            st.session_state.gecmisten_gelindi = False
-            st.session_state.gelecekten_gelindi = False
-            st.session_state.aktif_kayit_idx = None
-            st.session_state.aktif_gelecek_idx = None
-            st.session_state.okunamayan_alanlar = []
-            st.session_state.manuel_bekleyen = []
-            st.session_state.tek_silme_gelecek = None
-            st.rerun()
+            if not veri_yeterli_mi(yeni_veri):
+                st.error("⚠️ Analiz için yeterli veri yok.")
+            else:
+                if okunamayanlar:
+                    st.session_state.sayfa = "manuel_giris"
+                else:
+                    st.session_state.sayfa = "sonuc"
+                st.rerun()
 
-        if backtest_btn:
-            st.session_state.sayfa = "backtest"
-            st.session_state.bt_sonuc = None
-            st.session_state.bt_detaylar = []
-            st.rerun()
+        # ===== HIZLI ERİŞİM =====
+        st.divider()
+        col_bt2, col_bt3, col_bt4, col_bt5 = st.columns(4)
+        with col_bt2:
+            if st.button("📊 Geçmiş", use_container_width=True, key="a_gecmis"):
+                nav_git("gecmis")
+        with col_bt3:
+            if st.button("🔮 Gelecek", use_container_width=True, key="a_gelecek"):
+                nav_git("gelecek")
+        with col_bt4:
+            if st.button("🔬 Backtest", use_container_width=True, key="a_backtest"):
+                nav_git("backtest")
+        with col_bt5:
+            if st.button("⚙️ Ayarlar", use_container_width=True, key="a_ayarlar"):
+                nav_git("ayarlar")
 
-        if ayarlar_btn:
-            st.session_state.sayfa = "ayarlar"
-            st.rerun()
     else:
         # ===== MODERN MİSAFİR ANA SAYFA =====
         gecmis_sayi = len(st.session_state.gecmis_analizler)
