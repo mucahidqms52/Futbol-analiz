@@ -5,6 +5,7 @@ import re
 import random
 import json
 import os
+import time
 import html as _html
 import cloudscraper
 from bs4 import BeautifulSoup
@@ -388,17 +389,48 @@ MANUEL_ALANLAR = {
 }
 
 # ==========================================
-# CANLI WEB SCRAPER & OTOMATİK VERİ ÇEKME
+# GÜNCELLENMİŞ CANLI WEB SCRAPER (403 ENGELİNİ AŞAN)
 # ==========================================
 def gunun_maclarini_otomatik_cek():
-    """Sportytrader üzerinden günün maçlarını tarar ve veri dict listesi döner."""
-    scraper = cloudscraper.create_scraper()
+    """
+    Sportytrader üzerinden günün maçlarını tarar.
+    Cloudflare 403 engellerini aşmak için gelişmiş başlıklar ve session kullanır.
+    """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9,tr;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Referer": "https://www.google.com/",
+        "Connection": "keep-alive",
+        "Sec-Ch-Ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"Windows"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "cross-site",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1"
+    }
+
+    scraper = cloudscraper.create_scraper(
+        browser={
+            'browser': 'chrome',
+            'platform': 'windows',
+            'desktop': True
+        }
+    )
+    scraper.headers.update(headers)
     base_url = "https://www.sportytrader.com/en/football/predictions/"
     
     try:
+        scraper.get("https://www.sportytrader.com/en/")
+        time.sleep(1)
+        
         response = scraper.get(base_url)
+        
         if response.status_code != 200:
-            return [], f"Sayfa yüklenemedi. HTTP Durum Kodu: {response.status_code}"
+            return [], f"Sayfa yüklenemedi. HTTP Durum Kodu: {response.status_code} (Cloudflare Koruması)"
             
         soup = BeautifulSoup(response.content, "html.parser")
         
@@ -413,11 +445,11 @@ def gunun_maclarini_otomatik_cek():
             
         cekilen_veri_listesi = []
         
-        # İlk 15 maç sınırı (hız açısından)
-        for link in mac_linkleri[:15]:
+        for link in mac_linkleri[:10]:
             full_url = link if link.startswith("http") else f"https://www.sportytrader.com{link}"
-            mac_resp = scraper.get(full_url)
+            time.sleep(1.5)
             
+            mac_resp = scraper.get(full_url)
             if mac_resp.status_code == 200:
                 mac_soup = BeautifulSoup(mac_resp.content, "html.parser")
                 raw_text = mac_soup.get_text(separator="\n")
@@ -867,7 +899,7 @@ if st.session_state.sayfa == "giris":
             if st.button("🔮 Gelecek Maçlar", use_container_width=True, type="primary"): nav_git("gelecek")
 
 # ==========================================
-# DİĞER SAYFALAR (MANUEL GİRİŞ, GEÇMİŞ, GELECEK, BACKTEST, AYARLAR, SONUÇ)
+# DİĞER SAYFALAR
 # ==========================================
 elif st.session_state.sayfa == "manuel_giris":
     st.markdown("<h1>📝 Eksik Alanları Doldur</h1>", unsafe_allow_html=True)
