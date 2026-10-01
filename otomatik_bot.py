@@ -37,11 +37,10 @@ def json_dosyalarini_kontrol_et():
             json.dump([], f)
 
 def mutaring_calistir():
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Bugün ve önümüzdeki 3 günün maçları taranıyor...")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Mutating.com kararlı tarama başlatıldı...")
     json_dosyalarini_kontrol_et()
     
     try:
-        # Önce ana sayfayı (bugün ve tarih sekmelerini içeren sayfayı) çekiyoruz
         response = requests.get(ANA_URL, headers=headers_uret(), timeout=15)
         if response.status_code != 200:
             print(f"❌ Ana sayfaya erişilemedi. HTTP Kod: {response.status_code}")
@@ -49,39 +48,19 @@ def mutaring_calistir():
 
         soup = BeautifulSoup(response.text, 'html.parser')
         
-        # 1. Adım: Sayfadaki tarih sekmelerinin linklerini (02, 03, 04 günleri vb.) buluyoruz
-        taranacak_sayfalar = [ANA_URL]
+        # Sayfadaki tüm geçerli maç ve tarih linklerini topluyoruz
+        mac_linkleri = []
+        
+        # 1. Ana sayfadaki tüm linkleri tara
         for a_tag in soup.find_all('a', href=True):
             href = a_tag['href']
-            # Tarih veya gün geçiş linklerini yakalama
-            if any(t in href for t in ["/2026-", "/soccer-predictions/"]):
-                tam_tarih_link = href if href.startswith("http") else "https://www.mutating.com" + href
-                if "?last=5" not in tam_tarih_link:
-                    tam_tarih_link += "?last=5"
-                if tam_tarih_link not in taranacak_sayfalar:
-                    taranacak_sayfalar.append(tam_tarih_link)
-
-        # Çok fazla sayfada boğulmamak için ilk 5 gün/sayfa sekmesini sınır alıyoruz
-        taranacak_sayfalar = taranacak_sayfalar[:5]
-
-        mac_linkleri = []
-        for sayfa_url in taranacak_sayfalar:
-            try:
-                s_resp = requests.get(sayfa_url, headers=headers_uret(), timeout=10)
-                if s_resp.status_code != 200:
-                    continue
-                s_soup = BeautifulSoup(s_resp.text, 'html.parser')
-                for a_tag in s_soup.find_all('a', href=True):
-                    href = a_tag['href']
-                    if "-vs-" in href or "match" in href:
-                        temiz_url = href.split("?")[0] if "?" in href else href
-                        tam_link = temiz_url if temiz_url.startswith("http") else "https://www.mutating.com" + temiz_url
-                        tam_link_5_mac = tam_link + "?last=5"
-                        
-                        if tam_link_5_mac not in mac_linkleri:
-                            mac_linkleri.append(tam_link_5_mac)
-            except Exception:
-                continue
+            if "-vs-" in href or "match" in href or "prediction" in href:
+                temiz_url = href.split("?")[0] if "?" in href else href
+                tam_link = temiz_url if temiz_url.startswith("http") else "https://www.mutating.com" + temiz_url
+                tam_link_5_mac = tam_link + "?last=5"
+                
+                if tam_link_5_mac not in mac_linkleri:
+                    mac_linkleri.append(tam_link_5_mac)
 
         gelecek_listesi = gelecek_yukle()
         gecmis_listesi = gecmis_yukle()
@@ -89,7 +68,9 @@ def mutaring_calistir():
         guncellenen_gelecek = list(gelecek_listesi) if gelecek_listesi else []
         guncellenen_gecmis = list(gecmis_listesi) if gecmis_listesi else []
 
-        for link in mac_linkleri[:40]: # Toplam taranacak maç limiti
+        print(f"🔍 Bulunan toplam maç linki sayısı: {len(mac_linkleri)}")
+
+        for link in mac_linkleri[:40]:
             try:
                 detay_resp = requests.get(link, headers=headers_uret(), timeout=10)
                 if detay_resp.status_code != 200:
@@ -116,12 +97,12 @@ def mutaring_calistir():
                     v = copy.deepcopy(VARSAYILAN_VERI)
                     v.update(cikan_veri)
                     
-                    # BİTMİŞ MAÇ (FT) FİLTRESİ: Maç bittiyse kesinlikle geleceğe eklenmez
+                    # --- BİTMİŞ MAÇ (FT) KONTROLÜ ---
                     if "FT" in ham_metin or "Full Time" in ham_metin:
                         v["skor_belli"] = True
 
                     if v.get("skor_belli", False):
-                        continue
+                        continue # Biten maçlar kesinlikle geleceğe eklenmez
 
                     a = analiz_hesapla(v)
                     yeni_kayit = kayit_olustur(v, a)
@@ -142,10 +123,10 @@ def mutaring_calistir():
                     kg_esik = esik_al("kg_var") if kg_var >= kg_yok else esik_al("kg_yok")
                     kg_poz = kg_yuzde >= kg_esik
 
-                    # KESİN EŞİK FİLTRESİ: Eşiği geçmeyenler safdışı kalır
+                    # --- KESİN EŞİK KONTROLÜ ---
                     kaydet_mi = bool(gol_poz or kg_poz or poz_1x2)
                     if not kaydet_mi:
-                        continue
+                        continue # Eşiği geçmeyenler safdışı kalır
 
                     mac_anahtar = f"{takim_ev}-{takim_dep}"
                     gelecek_keys = [f"{g['veri']['takim_ev']}-{g['veri']['takim_dep']}" for g in guncellenen_gelecek]
@@ -166,12 +147,11 @@ def mutaring_calistir():
             except Exception:
                 return datetime.max
 
-        # reverse=False ile en erken maç (ve en erken gün) en üste getirilir
         guncellenen_gelecek.sort(key=sira_anahtari, reverse=False)
 
         gelecek_kaydet(guncellenen_gelecek)
         gecmis_kaydet(gecmis_listesi)
-        print("✅ Bugün ve önümüzdeki günlerin 5 maçlık verileri, FT filtresi ve kronolojik sıralaması tamamlandı.")
+        print(f"✅ İşlem tamamlandı. Gelecek listesindeki maç sayısı: {len(guncellenen_gelecek)}")
 
     except Exception as e:
         print(f"❌ Hata: {e}")
