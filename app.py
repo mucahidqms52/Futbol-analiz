@@ -256,7 +256,7 @@ def esik_1x2_al(secim):
 # ÜLKE BAYRAK
 # ==========================================
 ULKE_BAYRAK = {
-    "switzerland": "🇨🇭", "isviçre": "🇨🇭", "england": "🏴", "ingiltere": "🏴",
+    "switzerland": "🇨🇭", "isviçre": "🇨🇭", "england": "🏴󠁧󠁢󠁥󠁮󠁧", "ingiltere": "🏴",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "italy": "🇮🇹", "italya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪", "france": "🇫🇷", "fransa": "🇫🇷",
     "netherlands": "🇳🇱", "hollanda": "🇳🇱", "portugal": "🇵🇹", "portekiz": "🇵🇹",
@@ -470,6 +470,15 @@ def analiz_hesapla(v):
     }
 
 
+def kayit_olustur(v, a):
+    return {"veri": copy.deepcopy(v), "analiz": {
+        "p1": a["p1"], "px": a["px"], "p2": a["p2"],
+        "tahmini_gol": a["lam_ev"] + a["lam_dep"],
+        "kg_var_model": a["kg_var_model"], "ust_25": a["ust_25"],
+        "en_olasi_1x2": a["en_olasi"][0], "en_guvenli_cifte": a["en_guvenli"][0],
+        "en_olasi_gol": a["en_olasi_gol"], "en_olasi_kg": a["en_olasi_kg"]}}
+
+
 def sonuc_hesapla(kayit):
     v = kayit["veri"]; a = kayit.get("analiz", {})
     if not v.get("skor_belli", False): return None
@@ -673,19 +682,51 @@ def mac_tahmin_karti(v_g, g=None):
 def okunan_veriler_paneli(v):
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown(f"**{v.get('takim_ev', 'Ev')}**")
-        st.markdown(f"- Atılan: **{v.get('atilan_ev', 0):.2f}**")
-        st.markdown(f"- Yenen: **{v.get('yenen_ev', 0):.2f}**")
-        st.markdown(f"- CS: **{v.get('clean_sheets_ev', 0):.1f}%**")
-        st.markdown(f"- KG Var: **{v.get('kg_siklik_ev', 0):.1f}%**")
-        st.markdown(f"- Üst 2.5: **{v.get('ust25_ev', 0):.1f}%**")
+        st.markdown(f"### {v.get('takim_ev', 'Ev')}")
+        st.markdown(f"**⚽ Gol İstatistikleri**")
+        st.markdown(f"- Atılan gol/maç: **{v.get('atilan_ev', 0):.2f}**")
+        st.markdown(f"- Yenen gol/maç: **{v.get('yenen_ev', 0):.2f}**")
+        st.markdown(f"- xG: **{v.get('xg_ev', 0):.2f}**")
+        st.markdown(f"**🎯 Gol Atma**")
+        st.markdown(f"- Gol atma: **%{v.get('team_scored_ev', 0):.0f}**")
+        st.markdown(f"- 2+ gol atma: **%{v.get('team_scored_2_ev', 0):.0f}**")
+        st.markdown(f"- Clean sheet: **%{v.get('clean_sheets_ev', 0):.0f}**")
+        st.markdown(f"**📊 Maç Sonuçları**")
+        st.markdown(f"- Galibiyet: **%{v.get('galibiyet_ev', 0):.0f}**")
+        st.markdown(f"- Beraberlik: **%{v.get('beraberlik_ev', 0):.0f}**")
+        st.markdown(f"- Mağlubiyet: **%{v.get('maglubiyet_ev', 0):.0f}**")
+        st.markdown(f"**⚽ Gol Piyasaları**")
+        st.markdown(f"- Üst 0.5: **%{v.get('ust05_ev', 0):.0f}**")
+        st.markdown(f"- Üst 1.5: **%{v.get('ust15_ev', 0):.0f}**")
+        st.markdown(f"- Üst 2.5: **%{v.get('ust25_ev', 0):.0f}**")
+        st.markdown(f"- Üst 3.5: **%{v.get('ust35_ev', 0):.0f}**")
+        st.markdown(f"**🤝 KG**")
+        st.markdown(f"- KG Var sıklığı: **%{v.get('kg_siklik_ev', 0):.0f}**")
+        st.markdown(f"- İY KG: **%{v.get('btts_1h_ev', 0):.0f}**")
+        st.markdown(f"- 2Y KG: **%{v.get('btts_2h_ev', 0):.0f}**")
     with c2:
-        st.markdown(f"**{v.get('takim_dep', 'Dep')}**")
-        st.markdown(f"- Atılan: **{v.get('atilan_dep', 0):.2f}**")
-        st.markdown(f"- Yenen: **{v.get('yenen_dep', 0):.2f}**")
-        st.markdown(f"- CS: **{v.get('clean_sheets_dep', 0):.1f}%**")
-        st.markdown(f"- KG Var: **{v.get('kg_siklik_dep', 0):.1f}%**")
-        st.markdown(f"- Üst 2.5: **{v.get('ust25_dep', 0):.1f}%**")
+        st.markdown(f"### {v.get('takim_dep', 'Dep')}")
+        st.markdown(f"**⚽ Gol İstatistikleri**")
+        st.markdown(f"- Atılan gol/maç: **{v.get('atilan_dep', 0):.2f}**")
+        st.markdown(f"- Yenen gol/maç: **{v.get('yenen_dep', 0):.2f}**")
+        st.markdown(f"- xG: **{v.get('xg_dep', 0):.2f}**")
+        st.markdown(f"**🎯 Gol Atma**")
+        st.markdown(f"- Gol atma: **%{v.get('team_scored_dep', 0):.0f}**")
+        st.markdown(f"- 2+ gol atma: **%{v.get('team_scored_2_dep', 0):.0f}**")
+        st.markdown(f"- Clean sheet: **%{v.get('clean_sheets_dep', 0):.0f}**")
+        st.markdown(f"**📊 Maç Sonuçları**")
+        st.markdown(f"- Galibiyet: **%{v.get('galibiyet_dep', 0):.0f}**")
+        st.markdown(f"- Beraberlik: **%{v.get('beraberlik_dep', 0):.0f}**")
+        st.markdown(f"- Mağlubiyet: **%{v.get('maglubiyet_dep', 0):.0f}**")
+        st.markdown(f"**⚽ Gol Piyasaları**")
+        st.markdown(f"- Üst 0.5: **%{v.get('ust05_dep', 0):.0f}**")
+        st.markdown(f"- Üst 1.5: **%{v.get('ust15_dep', 0):.0f}**")
+        st.markdown(f"- Üst 2.5: **%{v.get('ust25_dep', 0):.0f}**")
+        st.markdown(f"- Üst 3.5: **%{v.get('ust35_dep', 0):.0f}**")
+        st.markdown(f"**🤝 KG**")
+        st.markdown(f"- KG Var sıklığı: **%{v.get('kg_siklik_dep', 0):.0f}**")
+        st.markdown(f"- İY KG: **%{v.get('btts_1h_dep', 0):.0f}**")
+        st.markdown(f"- 2Y KG: **%{v.get('btts_2h_dep', 0):.0f}**")
 
 
 def mac_durum_etiketi(v):
@@ -719,7 +760,7 @@ def nav_bar():
         if admin_mi():
             sc = [("🏠", "giris"), ("📊 Geçmiş", "gecmis"), ("🔮 Gelecek", "gelecek"), ("🎯 Tahmin", "gelecek_tahmin"), ("🔬 Test", "backtest"), ("⚙️ Ayar", "ayarlar")]
         else:
-            sc = [("🏠 Ana", "giris"), ("📊 Geçmiş", "gecmis"), ("🎯 Tahminler", "gelecek_tahmin")]
+            sc = [("🏠 Ana", "giris"), ("📊 Geçmiş", "gecmis"), ("🔮 Gelecek", "gelecek"), ("🎯 Tahminler", "gelecek_tahmin")]
         kl = st.columns(len(sc))
         for ko, (e, h) in zip(kl, sc):
             with ko:
@@ -853,8 +894,6 @@ if not st.session_state.giris_yapildi:
 
 ust_bar()
 nav_bar()
-
-
 # ==========================================
 # ANA SAYFA
 # ==========================================
@@ -897,12 +936,15 @@ if st.session_state.sayfa == "giris":
             </div>
             <div class="mh-section-title">HIZLI ERİŞİM</div>
         """, unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
+        c1, c2, c3 = st.columns(3)
         with c1:
-            if st.button("📊  Geçmiş Maçlar", use_container_width=True, type="primary", key="m_gecmis"):
+            if st.button("📊  Geçmiş", use_container_width=True, type="primary", key="m_gecmis"):
                 st.session_state.sayfa = "gecmis"; st.rerun()
         with c2:
-            if st.button("🎯  Tahmin Edilenler", use_container_width=True, type="primary", key="m_tahmin"):
+            if st.button("🔮  Gelecek", use_container_width=True, type="primary", key="m_gelecek"):
+                st.session_state.sayfa = "gelecek"; st.rerun()
+        with c3:
+            if st.button("🎯  Tahminler", use_container_width=True, type="primary", key="m_tahmin"):
                 st.session_state.sayfa = "gelecek_tahmin"; st.rerun()
 
         st.markdown("""
@@ -976,8 +1018,12 @@ elif st.session_state.sayfa == "gecmis":
                 with ch:
                     if st.button("❌ İptal", key=f"ghayir_{ig}", use_container_width=True):
                         st.session_state.tek_silme_onay = None; st.rerun()
+        else:
+            if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gmac_m_{ig}"):
+                st.session_state.form_verileri = copy.deepcopy(v)
+                st.session_state.kayit_yapildi = True
+                st.session_state.sayfa = "sonuc"; st.rerun()
         st.divider()
-
     if admin_mi():
         st.markdown("### 💾 Yedekleme (Geçmiş)")
         cind, cyuk = st.columns(2)
@@ -1077,8 +1123,12 @@ elif st.session_state.sayfa == "gelecek":
                 with ch:
                     if st.button("❌ İptal", key=f"gghayir_{ig}", use_container_width=True):
                         st.session_state.tek_silme_gelecek = None; st.rerun()
+        else:
+            if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"ggmac_m_{ig}"):
+                st.session_state.form_verileri = copy.deepcopy(v)
+                st.session_state.kayit_yapildi = True
+                st.session_state.sayfa = "sonuc"; st.rerun()
         st.divider()
-
     if admin_mi():
         st.markdown("### 💾 Yedekleme (Gelecek)")
         cind, cyuk = st.columns(2)
@@ -1179,14 +1229,11 @@ elif st.session_state.sayfa == "gelecek_tahmin":
                     if st.button("❌ İptal", key=f"gthayir_{ig}", use_container_width=True):
                         st.session_state.tek_silme_gelecek_tahmin = None; st.rerun()
         else:
-            if st.button("🔍 Detaylı", use_container_width=True, key=f"gtmac_{ig}"):
+            if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gtmac_m_{ig}"):
                 st.session_state.form_verileri = copy.deepcopy(v)
                 st.session_state.kayit_yapildi = True
-                st.session_state.gelecekten_gelindi = True
-                st.session_state.aktif_gelecek_idx = ig
                 st.session_state.sayfa = "sonuc"; st.rerun()
         st.divider()
-
     if admin_mi():
         st.markdown("### 💾 Yedekleme (Tahmin)")
         cind, cyuk = st.columns(2)
@@ -1338,7 +1385,7 @@ elif st.session_state.sayfa == "sonuc":
     sb = v.get("skor_belli", False); se = v.get("skor_ev", 0); sd = v.get("skor_dep", 0)
     st.markdown(mac_karti(te, td, sb, se, sd, a["lam_ev"], a["lam_dep"], saat=v.get("saat", ""), ulke=v.get("ulke", ""), tarih=v.get("tarih", "")), unsafe_allow_html=True)
     st.markdown(olasilik_paneli(a), unsafe_allow_html=True)
-    with st.expander("📋 Okunan Veriler", expanded=False):
+    with st.expander("📋 Okunan Tüm Veriler", expanded=False):
         okunan_veriler_paneli(v)
     st.divider()
     st.markdown("## 🏆 FİNAL ÖNERİ")
