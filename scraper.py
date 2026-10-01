@@ -1,6 +1,6 @@
+import sys
 sys.stdout.reconfigure(line_buffering=True)
 import os
-import sys
 import json
 import time
 import re
