@@ -152,6 +152,8 @@ st.markdown("""
     .stApp .ga-iv { font-size: 1.35rem; font-weight: 900; color: var(--c) !important; line-height: 1.3; }
     .stApp .ga-in { font-size: 0.66rem; color: #64748b !important; margin-top: 2px; }
     .stApp .ga-chip { display: inline-block; margin-top: 9px; padding: 3px 11px; border-radius: 99px; font-size: 0.68rem; font-weight: 800; border: 1px solid var(--c); color: var(--c) !important; background: rgba(255,255,255,0.03); }
+    .stApp .uyari-box { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.35); border-left: 4px solid #ef4444; border-radius: 12px; padding: 12px 14px; margin: 12px 0; font-size: 0.78rem; color: #cbd5e1 !important; line-height: 1.7; }
+    .stApp .uyari-box b { color: #ef4444 !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1255,6 +1257,32 @@ def _e(x): return _html.escape(str(x))
 def rozet(m, t="gray"): return f'<span class="fa-badge fa-b-{t}">{_e(m)}</span>'
 
 
+def _saat_tr_yap(saat_str):
+    """'15:30' gibi bir saat metnini +2 saat Türkiye saatine çevirir. Bozuksa aynen döner."""
+    if not saat_str: return saat_str
+    m = re.match(r'^\s*(\d{1,2})[:.](\d{2})\s*$', str(saat_str).strip())
+    if not m:
+        return saat_str
+    try:
+        h = int(m.group(1)); dk = int(m.group(2))
+        h = (h + 2) % 24
+        return f"{h:02d}:{dk:02d}"
+    except Exception:
+        return saat_str
+
+
+def _saat_dakika(saat_str):
+    """'15:30' -> 930. Sıralama için. Geçersizse 99999 (en sona atılır)."""
+    if not saat_str: return 99999
+    m = re.match(r'^\s*(\d{1,2})[:.](\d{2})\s*$', str(saat_str).strip())
+    if not m:
+        return 99999
+    try:
+        return int(m.group(1)) * 60 + int(m.group(2))
+    except Exception:
+        return 99999
+
+
 def mac_karti(ev, dep, sb, se, sd, le, ld, saat="", ulke="", tarih=""):
     orta = f'<div class="fa-score">{int(se)} - {int(sd)}</div>' if sb else '<div class="fa-vs">VS</div>'
     b = ulke_bayrak_bul(ulke)
@@ -1595,7 +1623,7 @@ if st.session_state.sayfa == "giris":
             <div class="mh-info">
                 <b style="color:#22c55e;">📖 Nasıl Kullanılır?</b><br><br>
                 <b>📊 Geçmiş Maçlar:</b> Admin tarafından eklenen, skoru belli olan maçlar ve o maçlara ait tahminlerin sonuçları burada listelenir. <b>Genel Analiz</b> kartlarında her piyasanın (1X2, Üst/Alt 2.5, KG) isabet oranlarını görebilirsin.<br><br>
-                <b>🔮 Gelecek Maçlar:</b> Yaklaşan maçlar için modelin ürettiği tahminler burada gösterilir. Her maç kartında 1X2, Gol ve KG önerileri; yüzdeleri ve eşik durumları (✅ / ⚪) ile birlikte listelenir.<br><br>
+                <b>🔮 Gelecek Maçlar:</b> Yaklaşan maçlar için modelin ürettiği tahminler burada gösterilir. Her maç kartında 1X2, Gol ve KG önerileri; yüzdeleri ve eşik durumları (✅ / ⚪) ile birlikte listelenir. Maçlar başlama saatine göre sıralanır (Türkiye saati).<br><br>
                 <b>🎯 1X2:</b> Maç sonucu tahmini — Ev (1), Beraberlik (X), Deplasman (2).<br>
                 <b>⚽ Gol:</b> Toplam 2.5 gol üstü / altı tahmini.<br>
                 <b>🤝 KG:</b> Karşılıklı gol var / yok tahmini.<br><br>
@@ -1614,6 +1642,127 @@ if st.session_state.sayfa == "giris":
         with c2:
             if st.button("🔮  Gelecek Maçlar", use_container_width=True, type="primary", key="m_gelecek"):
                 st.session_state.sayfa = "gelecek"; st.rerun()
+
+        # ==== Nasıl Çalışır? / Nasıl Oynanır? / Sorumluluk Reddi ====
+        with st.expander("📚 Nasıl Çalışır? — Sistem Detayları", expanded=False):
+            st.markdown("""
+**🧠 Model Nasıl Çalışıyor?**
+
+Bu sistem, futbol maçlarını istatistiksel olarak analiz eden bir **Poisson dağılımı + Monte Carlo simülasyonu** tabanlı tahmin motorudur.
+
+**1️⃣ Veri Toplama**
+- Son maçlardaki takım istatistikleri toplanır: atılan gol, yenen gol, clean sheet (gol yemeden bitirilen maç), karşılıklı gol, üst/alt 2.5 oranları.
+- Ev sahibi takım için "ev sahası" performansı, deplasman takımı için "deplasman" performansı ayrı ayrı alınır.
+
+**2️⃣ Beklenen Gol (λ — Lambda) Hesaplaması**
+- Her takım için beklenen gol sayısı, hücum ve savunma gücü ağırlıklı olarak hesaplanır.
+- Ev sahibi avantajı (+%5), form, sıralama farkı, lig ortalamaları bu değere yansıtılır.
+
+**3️⃣ Poisson Matrisi**
+- 0-0'dan 7-7'ye kadar tüm olası skorlar için Poisson formülüyle olasılık hesaplanır.
+- Bu matristen **1 / X / 2**, **Üst 2.5 / Alt 2.5**, **KG Var / Yok** olasılıkları çıkarılır.
+
+**4️⃣ Monte Carlo Simülasyonu**
+- Aynı maç **10.000 kez simüle edilir** (rastgelelik + maç içi şok senaryoları ile).
+- Poisson sonuçları ile Monte Carlo sonuçları ağırlıklı ortalamayla birleştirilir → daha dengeli tahmin.
+
+**5️⃣ Eşik Karşılaştırması**
+- Her piyasa için admin panelinden ayarlanabilen bir **eşik yüzdesi** vardır.
+- Olasılık ≥ eşik → ✅ öneri olarak gösterilir.
+- Olasılık < eşik → ⚪ "eşik altı" olarak işaretlenir.
+
+**📊 Piyasalar**
+- **1X2:** Maç sonucu — Ev (1), Beraberlik (X), Deplasman (2).
+- **Gol 2.5:** Toplam gol 2.5 üstü / altı.
+- **KG:** Karşılıklı gol var / yok.
+
+**📈 İstatistik Sayfası (Genel Analiz)**
+- Geçmiş maçlardaki önerilerin ne kadarının tuttuğunu **% isabet** ve **tutan/tahmin** olarak gösterir.
+- 1X2 / Gol / KG için ayrı ayrı toplam başarı oranı verilir.
+
+**🔄 Güncelleme**
+- Sistem her gün admin tarafından güncellenen maç listesiyle çalışır.
+- Maçlar bittikçe skorlar otomatik olarak alınır ve istatistiklere eklenir.
+            """, unsafe_allow_html=True)
+
+        with st.expander("🎮 Nasıl Oynanır? — Adım Adım Rehber", expanded=False):
+            st.markdown("""
+**👤 Misafir Olarak Kullanım**
+
+**1️⃣ Gelecek Maçları İncele**
+- Üst menüden **🔮 Gelecek** sekmesine git.
+- Burada yaklaşan maçlar, başlama saatine göre sıralanmış olarak listelenir (saatler Türkiye saatidir).
+- Her maçta 3 öneri görürsün:
+  - 🎯 **1X2** — Maç sonucu
+  - ⚽ **Gol** — Üst/Alt 2.5
+  - 🤝 **KG** — Karşılıklı gol
+
+**2️⃣ Yüzdelere ve Eşiklere Bak**
+- Her önerinin yanında **yüzde** ve **eşik** değeri yazar.
+- ✅ işareti → öneri eşiği geçti (güçlü sinyal).
+- ⚪ işareti → öneri eşiğin altında (zayıf sinyal, dikkatli ol).
+
+**3️⃣ Detaylı Analiz**
+- Bir maça daha derin bakmak için **🔍 Detaylı** butonuna bas.
+- O maçın tüm olasılıkları, bar grafikleri ve model beklenen golleri gösterilir.
+
+**4️⃣ Geçmiş Performansı Kontrol Et**
+- **📊 Geçmiş** sekmesinde geçmiş maçların sonuçları ve önerilerin ne kadar tuttuğu gösterilir.
+- **Genel Analiz** kartlarından sistemin genel isabet oranını görebilirsin.
+
+**🎯 Kullanım İpuçları**
+- **Yüksek yüzde + ✅ eşik** = daha güçlü öneri.
+- **KG Var** genellikle dengeli takımlarda yüksek çıkar.
+- **Üst 2.5** yüksek çıkıyorsa maçta gol beklentisi fazladır.
+- İstatistiklere bakarak hangi piyasanın daha güvenilir olduğunu değerlendirebilirsin.
+
+**⚠️ Unutma:** Bu sistem bir tahmin aracıdır. Kesin sonuç garantisi vermez. Yatırım kararlarını **kendi araştırmanla** ve **sorumlu bir şekilde** ver.
+            """, unsafe_allow_html=True)
+
+        with st.expander("⚠️ Sorumluluk Reddi ve Yasal Uyarı", expanded=False):
+            st.markdown("""
+<div class="uyari-box">
+<b>⚠️ ÖNEMLİ YASAL UYARI VE SORUMLULUK REDDİ</b><br><br>
+Bu uygulama (<b>Futbol Analiz Pro</b>) yalnızca <b>istatistiksel analiz ve bilgilendirme amaçlıdır</b>. Sunulan tahminler, olasılıklar ve öneriler <b>kesin sonuç garantisi vermez</b> ve <b>yatırım/bahis tavsiyesi niteliği taşımaz</b>.<br><br>
+
+<b>🎯 Kullanım Sorumluluğu</b><br>
+• Sitede gösterilen tüm analiz, yüzde ve öneriler <b>yalnızca bilgilendirme amaçlıdır</b>.<br>
+• Bu bilgileri kullanarak yapacağınız her türlü işlem <b>tamamen kendi sorumluluğunuzdadır</b>.<br>
+• Sistem, sonuçların doğruluğu veya kesinliği konusunda <b>hiçbir garanti vermez</b>.<br><br>
+
+<b>⚖️ Yasal Durum</b><br>
+• Bulunduğunuz ülkenin/bölgenin yasalarına göre <b>bahis oynamak yasak veya kısıtlı olabilir</b>.<br>
+• <b>18 yaşından küçüklerin</b> bahis oynaması yasaktır.<br>
+• Yasadışı bahis oynamak veya oynatmaya aracılık etmek <b>suçtur</b>. Bu uygulama hiçbir şekilde bahis oynatmaz, aracılık etmez ve bahis sitesi değildir.<br>
+• Uygulama, herhangi bir bahis sitesiyle <b>ortaklık veya bağlantı içermez</b>.<br><br>
+
+<b>🧠 Bağımlılık Uyarısı</b><br>
+• Kumar/bahis <b>bağımlılık yapabilir</b>. Bağımlılık ciddi maddi ve manevi kayıplara yol açabilir.<br>
+• <b>Bilinçli ve sorumlu</b> davranın. Kaybetmeyi göze alamayacağınız parayla asla oynamayın.<br>
+• Kaybettiğinizde <b>"geri kazanma"</b> hırsıyla hareket etmeyin.<br>
+• Bağımlılık hissediyorsanız lütfen bir uzmandan destek alın.<br><br>
+
+<b>💡 Bilinçli Kullanım</b><br>
+• Bu uygulama, futbol istatistiklerine ilgi duyan kişiler için <b>veri analizi ve eğitim amaçlı</b> geliştirilmiştir.<br>
+• Sistemin çıktıları, profesyonel bir analistin görüşü yerine geçmez.<br>
+• Kararlarınızı verirken <b>birden fazla kaynağı</b> değerlendirin.<br><br>
+
+<b>📌 Sorumluluk Reddi</b><br>
+Bu uygulamanın geliştiricisi ve sunucusu:<br>
+• Uygulamadaki tahminlere dayanarak yapılan <b>hiçbir işlemin sonucundan sorumlu tutulamaz</b>.<br>
+• Oluşabilecek <b>doğrudan veya dolaylı zararlardan</b> sorumlu değildir.<br>
+• Uygulamanın kullanımından doğan <b>hukuki sorumluluk tamamen kullanıcıya aittir</b>.<br><br>
+
+<b>👤 Onay</b><br>
+Bu uygulamayı kullanarak yukarıdaki şartları okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan etmiş olursunuz.
+</div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("""
+            <div style="text-align:center; padding:14px 8px 6px 8px; font-size:0.72rem; color:#64748b;">
+            ⚠️ Bu uygulama <b style="color:#ef4444;">bilgi amaçlıdır</b>. Kesin sonuç garantisi vermez. Bahis oynamak <b style="color:#ef4444;">18 yaş ve üzeri</b> için olup bulunduğunuz ülkenin yasalarına tabidir.
+            </div>
+        """, unsafe_allow_html=True)
 
 
 # ==========================================
@@ -1728,14 +1877,20 @@ elif st.session_state.sayfa == "gelecek":
     toplam_g = len(gel)
     if not gel:
         st.info("ℹ️ Gelecek maç yok. Ana sayfada **Bugünün Maçlarını Çek** basınca tahmin olanlar otomatik eklenir.")
-    for i, g in enumerate(reversed(gel)):
-        ig = len(gel) - 1 - i
+    # Maç saatine göre artan sıralama (+2 TR). Saati olmayanlar en sona.
+    _gel_sirali = sorted(gel, key=lambda x: _saat_dakika(x.get("veri", {}).get("saat", "")))
+    for i, g in enumerate(_gel_sirali):
+        try:
+            ig = gel.index(g)
+        except ValueError:
+            ig = i
         v = g["veri"]
         te = v.get("takim_ev", "Ev") or "Ev"; td = v.get("takim_dep", "Dep") or "Dep"
         try:
             a = analiz_hesapla(v); le = a["lam_ev"]; ld = a["lam_dep"]
         except Exception: le = ld = 0
-        st.markdown(mac_karti(te, td, False, 0, 0, le, ld, saat=v.get("saat", ""), ulke=v.get("ulke", ""), tarih=v.get("tarih", "")), unsafe_allow_html=True)
+        _saat_tr = _saat_tr_yap(v.get("saat", ""))
+        st.markdown(mac_karti(te, td, False, 0, 0, le, ld, saat=_saat_tr, ulke=v.get("ulke", ""), tarih=v.get("tarih", "")), unsafe_allow_html=True)
         th = mac_tahmin_karti(v, g)
         if th: st.markdown(th, unsafe_allow_html=True)
         if admin_mi():
