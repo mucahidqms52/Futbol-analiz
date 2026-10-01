@@ -1,7 +1,5 @@
 """
 Mutating.com Veri Toplayıcı Bot (PARALEL + AUTO)
-- Bugünün maçları: skor varsa Geçmiş'e, yoksa hem gelecek.json hem gelecek_tahmin.json'a
-- LİGLER: son N maçı Geçmiş'e ekler
 """
 import sys
 sys.stdout.reconfigure(line_buffering=True)
@@ -38,8 +36,8 @@ ESIKLER = {
     "kg_var": 57.0, "kg_yok": 72.0,
 }
 
-VERI_DOSYA_GELECEK = "data/gelecek.json"                # Tüm oynanmamış
-VERI_DOSYA_GELECEK_TAHMIN = "data/gelecek_tahmin.json"  # Sadece eşiği geçen
+VERI_DOSYA_GELECEK = "data/gelecek.json"
+VERI_DOSYA_GELECEK_TAHMIN = "data/gelecek_tahmin.json"
 VERI_DOSYA_GECMIS = "data/gecmis.json"
 
 MAX_GOL = 8
@@ -49,9 +47,6 @@ MONTE_CARLO_N = 10000
 _kilit = threading.Lock()
 
 
-# ==========================================
-# YARDIMCILAR
-# ==========================================
 def clamp(x, lo, hi): return max(lo, min(hi, x))
 
 
@@ -210,19 +205,13 @@ def esik_1x2_al(secim):
 
 
 def tahmin_var_mi(v):
-    """Bu maçta HERHANGİ bir market eşiği geçiyor mu?"""
     try:
         a = analiz_hesapla(v)
-        # 1X2
         s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
         if y1 >= esik_1x2_al(s1): return True
-        # Üst 2.5
         if a["ust_25"] >= esik_al("ust") and a["ust_25"] >= a["alt_25"]: return True
-        # Alt 2.5
         if a["alt_25"] >= esik_al("alt") and a["alt_25"] >= a["ust_25"]: return True
-        # KG Var
         if a["kg_var_model"] >= esik_al("kg_var") and a["kg_var_model"] >= a["kg_yok_model"]: return True
-        # KG Yok
         if a["kg_yok_model"] >= esik_al("kg_yok") and a["kg_yok_model"] >= a["kg_var_model"]: return True
         return False
     except Exception:
@@ -273,7 +262,7 @@ def sonuc_hesapla(kayit):
 
 
 # ==========================================
-# HTML PARSE
+# HTML PARSE (GENİŞLETİLMİŞ)
 # ==========================================
 def mac_html_parse(html, url=""):
     from bs4 import BeautifulSoup
@@ -314,15 +303,36 @@ def mac_html_parse(html, url=""):
                 except ValueError: continue
         return None, None
 
-    for label, k_ev, k_dep in [
+    eslesmeler = [
         ("Goals scored per game", "atilan_ev", "atilan_dep"),
         ("Goals conceded per game", "yenen_ev", "yenen_dep"),
         ("Clean sheets", "clean_sheets_ev", "clean_sheets_dep"),
         ("Team scored", "team_scored_ev", "team_scored_dep"),
+        ("Team scored twice", "team_scored_2_ev", "team_scored_2_dep"),
+        ("Scored in both halves", "scored_both_halves_ev", "scored_both_halves_dep"),
+        ("Goal in both halves", "goal_both_halves_ev", "goal_both_halves_dep"),
         ("Both Teams to Score", "kg_siklik_ev", "kg_siklik_dep"),
-        ("Over 2.5 goals", "ust25_ev", "ust25_dep"),
+        ("BTTS in first-half", "btts_1h_ev", "btts_1h_dep"),
+        ("BBTS in second-half", "btts_2h_ev", "btts_2h_dep"),
+        ("Over 0.5 goals", "ust05_ev", "ust05_dep"),
         ("Over 1.5 goals", "ust15_ev", "ust15_dep"),
-    ]:
+        ("Over 2.5 goals", "ust25_ev", "ust25_dep"),
+        ("Over 3.5 goals", "ust35_ev", "ust35_dep"),
+        ("Match total goals 0", "tg_0_ev", "tg_0_dep"),
+        ("Match total goals 1", "tg_1_ev", "tg_1_dep"),
+        ("Match total goals 2", "tg_2_ev", "tg_2_dep"),
+        ("Match total goals 3", "tg_3_ev", "tg_3_dep"),
+        ("Match total goals 4", "tg_4_ev", "tg_4_dep"),
+        ("Win and Over 1.5 goals", "win_over15_ev", "win_over15_dep"),
+        ("Lose and Over 1.5 goals", "lose_over15_ev", "lose_over15_dep"),
+        ("Win and BTTS", "win_btts_ev", "win_btts_dep"),
+        ("Draw and BTTS", "draw_btts_ev", "draw_btts_dep"),
+        ("Lose and BTTS", "lose_btts_ev", "lose_btts_dep"),
+        ("Team win first half", "win_1h_ev", "win_1h_dep"),
+        ("Team draw at half time", "draw_ht_ev", "draw_ht_dep"),
+        ("Team lost first half", "lose_1h_ev", "lose_1h_dep"),
+    ]
+    for label, k_ev, k_dep in eslesmeler:
         a, b = _cift(label)
         if a is not None and veri.get(k_ev, 0) == 0:
             veri[k_ev] = a; veri[k_dep] = b
@@ -491,7 +501,6 @@ def main():
 
     yeni_g = 0; yeni_t = 0; yeni_ge = 0
 
-    # ---- 1) BUGÜNÜN MAÇLARI ----
     print("\n🔄 Bugünün maçları...")
     try:
         maclar = ana_sayfa_linkleri()
@@ -535,7 +544,6 @@ def main():
     except Exception as e:
         print(f"  ❌ Genel hata: {e}")
 
-    # ---- 2) LİGLER → GEÇMİŞ ----
     for lig_url in LIGLER:
         print(f"\n📜 Lig: {lig_url[:80]}...")
         try:
