@@ -4,9 +4,9 @@ from bs4 import BeautifulSoup
 import copy
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
-# Projedeki mevcut fonksiyonları içe aktarıyoruz
+# Senin ana dosyadaki fonksiyonlarını ve veri yapılarını içe aktarıyoruz
 from app import (
     VARSAYILAN_VERI, 
     metinden_veri_cikar, 
@@ -21,8 +21,7 @@ from app import (
     esik_1x2_al
 )
 
-# Doğru site adresi
-MUTARING_URL = "https://www.mutating.com/soccer-predictions/"
+MUTATING_URL = "https://www.mutating.com/soccer-predictions/"
 
 def headers_uret():
     return {
@@ -30,7 +29,6 @@ def headers_uret():
     }
 
 def json_dosyalarini_kontrol_et():
-    """Git hata vermemesi için dosya yoksa boş liste olarak oluşturur"""
     if not os.path.exists("gelecek.json"):
         with open("gelecek.json", "w", encoding="utf-8") as f:
             json.dump([], f)
@@ -38,21 +36,35 @@ def json_dosyalarini_kontrol_et():
         with open("gecmis.json", "w", encoding="utf-8") as f:
             json.dump([], f)
 
+def saat_ve_tarih_ayarla(veri_sozlugu):
+    """Saat bilgisini alır ve istediğin gibi +2 saat ekleyerek günceller"""
+    try:
+        mevcut_saat = veri_sozlugu.get("saat", "00:00")
+        if ":" in mevcut_saat:
+            parcalar = mevcut_saat.split(":")
+            toplam_dakika = int(parcalar[0]) * 60 + int(parcalar[1]) + 120 # +2 saat (120 dakika) ekleniyor
+            yeni_ saat_dk = divmod(toplam_dakika % 1440, 60)
+            veri_sozlugu["saat"] = f"{yeni_saat_dk[0]:02d}:{yeni_saat_dk[1]:02d}"
+    except Exception:
+        pass
+    return veri_sozlugu
+
 def mutaring_calistir():
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Mutating.com taraması ve son 5 maç analizi başlatıldı...")
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] Mutating.com tam kapsamlı veri çekme ve eşik analizi başladı...")
     json_dosyalarini_kontrol_et()
     
     try:
-        response = requests.get(MUTARING_URL, headers=headers_uret(), timeout=15)
+        response = requests.get(MUTATING_URL, headers=headers_uret(), timeout=15)
         if response.status_code != 200:
             print(f"❌ Siteye erişilemedi. HTTP Kod: {response.status_code}")
             return
 
         soup = BeautifulSoup(response.text, 'html.parser')
+        
         mac_linkleri = []
         for a_tag in soup.find_all('a', href=True):
             href = a_tag['href']
-            if "match" in href or "soccer" in href or "predict" in href:
+            if "-vs-" in href or "match" in href:
                 if href not in mac_linkleri:
                     mac_linkleri.append(href)
 
@@ -70,21 +82,38 @@ def mutaring_calistir():
                     continue
 
                 detay_soup = BeautifulSoup(detay_resp.text, 'html.parser')
-                ham_metin = detay_soup.get_text(separator="\n")
+                
+                # Menü ve gereksiz etiketleri temizleyip model için gerekli ham metni alıyoruz
+                for element in detay_soup(["nav", "footer", "header", "aside", "script", "style", "menu", "form"]):
+                    element.decompose()
 
+                ana_icerik = detay_soup.find("main") or detay_soup.find("div", class_="content") or detay_soup
+                ham_metin = ana_icerik.get_text(separator="\n")
+
+                # PPG, MPG, BBTS ve son 5 maç form verilerini içeren metni ayrıştırıcıya veriyoruz
                 cikan_veri, _ = metinden_veri_cikar(ham_metin)
 
                 if cikan_veri and cikan_veri.get("takim_ev") and cikan_veri.get("takim_dep"):
+                    takim_ev = cikan_veri.get("takim_ev")
+                    takim_dep = cikan_veri.get("takim_dep")
+
+                    yasaklar = ["Leagues", "Premier", "Bundesliga", "Serie", "Blog", "Stats", "Preview", "Prediction", "Champions"]
+                    if any(y in takim_ev for y in yasaklar) or any(y in takim_dep for y in yasaklar):
+                        continue
+
                     v = copy.deepcopy(VARSAYILAN_VERI)
                     v.update(cikan_veri)
                     
+                    # Saat dilimine +2 saat ekleme kuralı uygulanıyor
+                    v = saat_ve_tarih_ayarla(v)
+                    
+                    # Senin matematiksel modelin (Poisson/Monte Carlo) çalışıyor
                     a = analiz_hesapla(v)
                     yeni_kayit = kayit_olustur(v, a)
 
-                    takim_ev = v.get("takim_ev")
-                    takim_dep = v.get("takim_dep")
                     skor_belli = v.get("skor_belli", False)
 
+                    # --- EŞİK KONTROLÜ (Eşiği geçmeyenler kesinlikle safdışı kalır) ---
                     p1 = a["p1"]; px = a["px"]; p2 = a["p2"]
                     ust_25 = a["ust_25"]; alt_25 = a["alt_25"]
                     kg_var = a["kg_var_model"]; kg_yok = a["kg_yok_model"]
@@ -101,10 +130,12 @@ def mutaring_calistir():
                     kg_esik = esik_al("kg_var") if kg_var >= kg_yok else esik_al("kg_yok")
                     kg_poz = kg_yuzde >= kg_esik
 
+                    # Şartları sağlamayan maçlar eklenmez (safdışı kalır)
                     kaydet_mi = gol_poz or kg_poz or poz_1x2
                     mac_anahtar = f"{takim_ev}-{takim_dep}"
 
                     if skor_belli:
+                        # Maç bittiyse geçmiş maçlara yollanır
                         d = sonuc_hesapla(yeni_kayit)
                         if d: 
                             yeni_kayit["dogruluk"] = d
@@ -112,6 +143,7 @@ def mutaring_calistir():
                         if mac_anahtar not in gecmis_keys:
                             guncellenen_gecmis.append(yeni_kayit)
                     else:
+                        # Henüz başlamamış ve eşiği geçmiş maçlar gelecek bölümüne eklenir
                         gelecek_keys = [f"{g['veri']['takim_ev']}-{g['veri']['takim_dep']}" for g in guncellenen_gelecek]
                         if mac_anahtar not in gelecek_keys and kaydet_mi:
                             guncellenen_gelecek.append(yeni_kayit)
@@ -120,9 +152,20 @@ def mutaring_calistir():
             except Exception as e:
                 continue
 
+        # --- GELECEK MAÇLARI EN ERKENDEN EN GEÇE DOĞRU (AŞAĞIYA DOĞRU) SIRALAMA ---
+        def sira_anahtari(item):
+            try:
+                tarih_str = item["veri"].get("tarih", "01.01.2026")
+                saat_str = item["veri"].get("saat", "00:00")
+                return datetime.strptime(f"{tarih_str} {saat_str}", "%d.%m.%Y %H:%M")
+            except Exception:
+                return datetime.max
+
+        guncellenen_gelecek.sort(key=sira_anahtari)
+
         gelecek_kaydet(guncellenen_gelecek)
         gecmis_kaydet(guncellenen_gecmis)
-        print("✅ Güncelleme tamamlandı ve dosyalar kaydedildi.")
+        print("✅ Tüm veriler başarıyla işlendi, sıralandı ve kaydedildi.")
 
     except Exception as e:
         print(f"❌ Hata: {e}")
