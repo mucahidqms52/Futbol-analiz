@@ -1,3 +1,8 @@
+import traceback
+import sys
+
+# Hataları tam göster
+st.set_option('client.showErrorDetails', True)
 import streamlit as st
 import math
 import copy
