@@ -237,6 +237,8 @@ if "tek_silme_onay" not in st.session_state: st.session_state.tek_silme_onay = N
 if "tek_silme_gelecek" not in st.session_state: st.session_state.tek_silme_gelecek = None
 if "tek_silme_gelecek_tahmin" not in st.session_state: st.session_state.tek_silme_gelecek_tahmin = None
 if "silme_onay" not in st.session_state: st.session_state.silme_onay = False
+if "silme_onay_gelecek" not in st.session_state: st.session_state.silme_onay_gelecek = False
+if "silme_onay_gelecek_tahmin" not in st.session_state: st.session_state.silme_onay_gelecek_tahmin = False
 if "giris_yapildi" not in st.session_state: st.session_state.giris_yapildi = False
 if "rol" not in st.session_state: st.session_state.rol = None
 if "esikler" not in st.session_state: st.session_state.esikler = ayarlar_yukle()
@@ -975,8 +977,58 @@ elif st.session_state.sayfa == "gecmis":
                     if st.button("❌ İptal", key=f"ghayir_{ig}", use_container_width=True):
                         st.session_state.tek_silme_onay = None; st.rerun()
         st.divider()
-    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="g_geri"):
-        st.session_state.sayfa = "giris"; st.rerun()
+
+    if admin_mi():
+        st.markdown("### 💾 Yedekleme (Geçmiş)")
+        cind, cyuk = st.columns(2)
+        with cind:
+            st.download_button(
+                label=f"📥 Geçmişi İndir ({toplam} maç)",
+                data=json.dumps(st.session_state.gecmis_analizler, ensure_ascii=False, indent=2),
+                file_name=f"gecmis_{toplam}mac.json",
+                mime="application/json",
+                use_container_width=True,
+                key="ind_gecmis"
+            )
+        with cyuk:
+            yuk = st.file_uploader("📤 Geçmişi Yükle (JSON)", type=["json"], key="yuk_gecmis")
+            if yuk is not None:
+                try:
+                    veri = json.loads(yuk.read().decode("utf-8"))
+                    if isinstance(veri, list):
+                        st.session_state.gecmis_analizler = veri
+                        gecmis_kaydet(veri)
+                        st.success(f"✅ {len(veri)} maç yüklendi!")
+                        st.rerun()
+                    else:
+                        st.error("❌ Format hatalı.")
+                except Exception as ex:
+                    st.error(f"❌ Hata: {ex}")
+        st.divider()
+        ct, cg = st.columns(2)
+        with ct:
+            if st.button("🗑️ Tüm Geçmişi Temizle", use_container_width=True, key="g_temizle"):
+                st.session_state.silme_onay = True; st.rerun()
+        with cg:
+            if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="g_geri"):
+                st.session_state.sayfa = "giris"; st.rerun()
+        if st.session_state.silme_onay:
+            st.warning("⚠️ Tüm geçmiş silinecek. Emin misin?")
+            ce, ch = st.columns(2)
+            with ce:
+                if st.button("✅ Evet, Sil", key="g_sil_evet", use_container_width=True, type="primary"):
+                    st.session_state.gecmis_analizler = []
+                    try:
+                        if os.path.exists(GECMIS_DOSYA): os.remove(GECMIS_DOSYA)
+                    except Exception: pass
+                    st.session_state.silme_onay = False
+                    st.rerun()
+            with ch:
+                if st.button("❌ İptal", key="g_sil_hayir", use_container_width=True):
+                    st.session_state.silme_onay = False; st.rerun()
+    else:
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="g_geri_m"):
+            st.session_state.sayfa = "giris"; st.rerun()
 
 
 # ==========================================
@@ -986,6 +1038,7 @@ elif st.session_state.sayfa == "gelecek":
     st.markdown("<h1>🔮 Gelecek Maçlar</h1>", unsafe_allow_html=True)
     st.caption("Tüm oynanmamış maçlar.")
     gel = st.session_state.gelecek_analizler
+    toplam_g = len(gel)
     if not gel:
         st.info("ℹ️ Gelecek maç yok.")
     for i, g in enumerate(reversed(gel)):
@@ -1025,8 +1078,58 @@ elif st.session_state.sayfa == "gelecek":
                     if st.button("❌ İptal", key=f"gghayir_{ig}", use_container_width=True):
                         st.session_state.tek_silme_gelecek = None; st.rerun()
         st.divider()
-    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gel_geri"):
-        st.session_state.sayfa = "giris"; st.rerun()
+
+    if admin_mi():
+        st.markdown("### 💾 Yedekleme (Gelecek)")
+        cind, cyuk = st.columns(2)
+        with cind:
+            st.download_button(
+                label=f"📥 Geleceği İndir ({toplam_g} maç)",
+                data=json.dumps(st.session_state.gelecek_analizler, ensure_ascii=False, indent=2),
+                file_name=f"gelecek_{toplam_g}mac.json",
+                mime="application/json",
+                use_container_width=True,
+                key="ind_gelecek"
+            )
+        with cyuk:
+            yuk = st.file_uploader("📤 Geleceği Yükle (JSON)", type=["json"], key="yuk_gelecek")
+            if yuk is not None:
+                try:
+                    veri = json.loads(yuk.read().decode("utf-8"))
+                    if isinstance(veri, list):
+                        st.session_state.gelecek_analizler = veri
+                        gelecek_kaydet(veri)
+                        st.success(f"✅ {len(veri)} maç yüklendi!")
+                        st.rerun()
+                    else:
+                        st.error("❌ Format hatalı.")
+                except Exception as ex:
+                    st.error(f"❌ Hata: {ex}")
+        st.divider()
+        ct, cg = st.columns(2)
+        with ct:
+            if st.button("🗑️ Tüm Geleceği Temizle", use_container_width=True, key="gel_temizle"):
+                st.session_state.silme_onay_gelecek = True; st.rerun()
+        with cg:
+            if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gel_geri"):
+                st.session_state.sayfa = "giris"; st.rerun()
+        if st.session_state.silme_onay_gelecek:
+            st.warning("⚠️ Tüm gelecek silinecek. Emin misin?")
+            ce, ch = st.columns(2)
+            with ce:
+                if st.button("✅ Evet, Sil", key="gel_sil_evet", use_container_width=True, type="primary"):
+                    st.session_state.gelecek_analizler = []
+                    try:
+                        if os.path.exists(GELECEK_DOSYA): os.remove(GELECEK_DOSYA)
+                    except Exception: pass
+                    st.session_state.silme_onay_gelecek = False
+                    st.rerun()
+            with ch:
+                if st.button("❌ İptal", key="gel_sil_hayir", use_container_width=True):
+                    st.session_state.silme_onay_gelecek = False; st.rerun()
+    else:
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gel_geri_m"):
+            st.session_state.sayfa = "giris"; st.rerun()
 
 
 # ==========================================
@@ -1036,6 +1139,7 @@ elif st.session_state.sayfa == "gelecek_tahmin":
     st.markdown("<h1>🎯 Tahmin Edilen Maçlar</h1>", unsafe_allow_html=True)
     st.caption("Sadece eşikleri geçen maçlar.")
     gel = st.session_state.gelecek_tahmin_analizler
+    toplam_g = len(gel)
     if not gel:
         st.info("ℹ️ Tahmin edilen maç yok.")
     for i, g in enumerate(reversed(gel)):
@@ -1082,8 +1186,58 @@ elif st.session_state.sayfa == "gelecek_tahmin":
                 st.session_state.aktif_gelecek_idx = ig
                 st.session_state.sayfa = "sonuc"; st.rerun()
         st.divider()
-    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gt_geri"):
-        st.session_state.sayfa = "giris"; st.rerun()
+
+    if admin_mi():
+        st.markdown("### 💾 Yedekleme (Tahmin)")
+        cind, cyuk = st.columns(2)
+        with cind:
+            st.download_button(
+                label=f"📥 Tahminleri İndir ({toplam_g} maç)",
+                data=json.dumps(st.session_state.gelecek_tahmin_analizler, ensure_ascii=False, indent=2),
+                file_name=f"tahmin_{toplam_g}mac.json",
+                mime="application/json",
+                use_container_width=True,
+                key="ind_tahmin"
+            )
+        with cyuk:
+            yuk = st.file_uploader("📤 Tahminleri Yükle (JSON)", type=["json"], key="yuk_tahmin")
+            if yuk is not None:
+                try:
+                    veri = json.loads(yuk.read().decode("utf-8"))
+                    if isinstance(veri, list):
+                        st.session_state.gelecek_tahmin_analizler = veri
+                        gelecek_tahmin_kaydet(veri)
+                        st.success(f"✅ {len(veri)} maç yüklendi!")
+                        st.rerun()
+                    else:
+                        st.error("❌ Format hatalı.")
+                except Exception as ex:
+                    st.error(f"❌ Hata: {ex}")
+        st.divider()
+        ct, cg = st.columns(2)
+        with ct:
+            if st.button("🗑️ Tüm Tahminleri Temizle", use_container_width=True, key="gt_temizle"):
+                st.session_state.silme_onay_gelecek_tahmin = True; st.rerun()
+        with cg:
+            if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gt_geri"):
+                st.session_state.sayfa = "giris"; st.rerun()
+        if st.session_state.silme_onay_gelecek_tahmin:
+            st.warning("⚠️ Tüm tahminler silinecek. Emin misin?")
+            ce, ch = st.columns(2)
+            with ce:
+                if st.button("✅ Evet, Sil", key="gt_sil_evet", use_container_width=True, type="primary"):
+                    st.session_state.gelecek_tahmin_analizler = []
+                    try:
+                        if os.path.exists(GELECEK_TAHMIN_DOSYA): os.remove(GELECEK_TAHMIN_DOSYA)
+                    except Exception: pass
+                    st.session_state.silme_onay_gelecek_tahmin = False
+                    st.rerun()
+            with ch:
+                if st.button("❌ İptal", key="gt_sil_hayir", use_container_width=True):
+                    st.session_state.silme_onay_gelecek_tahmin = False; st.rerun()
+    else:
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gt_geri_m"):
+            st.session_state.sayfa = "giris"; st.rerun()
 
 
 # ==========================================
