@@ -2973,7 +2973,7 @@ elif st.session_state.sayfa == "sonuc":
     else:
         d = None
 
-    with st.expander("🔍 Geniş Kapsamlı Analiz", expanded=True):
+    with st.expander("🔍 Geniş Kapsamlı Analiz", expanded=False):
         for baslik, metin in detayli_analiz_yorumu(v):
             st.markdown(f"**{baslik}**"); st.markdown(metin); st.markdown("")
 
