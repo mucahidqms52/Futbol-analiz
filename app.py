@@ -1,8 +1,3 @@
-import traceback
-import sys
-
-# Hataları tam göster
-st.set_option('client.showErrorDetails', True)
 import streamlit as st
 import math
 import copy
@@ -15,6 +10,8 @@ import threading
 import time
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
+
+st.markdown("""<style>...tüm CSS...</style>""", unsafe_allow_html=True)
 
 st.markdown("""
 <style>
