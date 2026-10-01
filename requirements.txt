@@ -1,4 +1,5 @@
 pipinstall 
 streamlit
-cloudscraper 
+playwright 
 beautifulsoup4
+playwright install chromium
