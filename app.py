@@ -493,6 +493,7 @@ MAX_GOL = 8
 BELIRSIZLIK = 0.20
 MAX_MAC_SINIRI = 200
 _kilit = threading.Lock()
+_ESIK_CACHE = {}
 
 
 # ==========================================
@@ -535,12 +536,23 @@ def admin_mi():
 
 
 def esik_al(key):
-    return st.session_state.esikler.get(key, 50.0)
+    try:
+        v = st.session_state.esikler.get(key)
+        if v is not None: return v
+    except Exception:
+        pass
+    return _ESIK_CACHE.get(key, 50.0)
 
 
 def esik_1x2_al(secim):
     key_map = {"1": "esik_1", "X": "esik_x", "2": "esik_2"}
-    return st.session_state.esikler.get(key_map.get(secim, ""), 55.0)
+    k = key_map.get(secim, "")
+    try:
+        v = st.session_state.esikler.get(k)
+        if v is not None: return v
+    except Exception:
+        pass
+    return _ESIK_CACHE.get(k, 55.0)
 
 
 # ==========================================
@@ -919,7 +931,7 @@ def sportytrader_veri_cikar(metin):
         if v1 is not None: veri["ust35_ev"] = v1; veri["ust35_dep"] = v2
     if takim_ev:
         s, p = _sira_bul(metin, takim_ev)
-        if s is not None: veri["siralama_ev"] = s; 
+        if s is not None: veri["siralama_ev"] = s
     if takim_dep:
         s, p = _sira_bul(metin, takim_dep)
         if s is not None: veri["siralama_dep"] = s
@@ -1652,21 +1664,21 @@ def _gelecek_mac_isle(mac, mevcut_urls):
         veri, _ = mutating_mac_detay_cek(mac["url"], takim_ev=mac.get("takim_ev", ""),
                                           takim_dep=mac.get("takim_dep", ""))
         if not veri:
-            return ("hata", mac, "Sayfa çekilemedi")
+            return ("hata", mac, "Sayfa çekilemedi", None)
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
         if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
         veri["kaynak_url"] = mac["url"]
         if mac["url"] in mevcut_urls:
-            return ("zaten_var", veri, "Zaten var")
+            return ("zaten_var", veri, "Zaten var", None)
         at_e = veri.get("atilan_ev", 0); ye_e = veri.get("yenen_ev", 0)
         at_d = veri.get("atilan_dep", 0); ye_d = veri.get("yenen_dep", 0)
         if at_e == 0 and ye_e == 0 and at_d == 0 and ye_d == 0:
-            return ("veri_yok", veri, "İstatistik boş (0-0-0-0)")
+            return ("veri_yok", veri, "İstatistik boş (0-0-0-0)", None)
         try:
             a = analiz_hesapla(veri)
         except Exception as e:
-            return ("veri_yok", veri, f"Analiz hatası: {str(e)[:50]}")
+            return ("veri_yok", veri, f"Analiz hatası: {str(e)[:50]}", None)
         s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
         e1 = esik_1x2_al(s1)
         gs = "Üst" if a["ust_25"] >= a["alt_25"] else "Alt"
@@ -1678,16 +1690,16 @@ def _gelecek_mac_isle(mac, mevcut_urls):
         ozet = f"1X2:%{y1:.0f}(eşik {e1:.0f}) • {gs}:%{gy:.0f}(eşik {ge_:.0f}) • KG {ks}:%{ky:.0f}(eşik {ke:.0f})"
         if _mac_tahmin_var_mi(veri):
             kayit = kayit_olustur(veri, a)
-            with _kilit:
-                st.session_state.gelecek_analizler.append(kayit)
-                gelecek_kaydet(st.session_state.gelecek_analizler)
-            return ("eklendi", veri, f"Eklendi • {ozet}")
-        return ("esik_alti", veri, f"Eşik altı • {ozet}")
+            return ("eklendi", veri, f"Eklendi • {ozet}", kayit)
+        return ("esik_alti", veri, f"Eşik altı • {ozet}", None)
     except Exception as e:
-        return ("hata", mac, f"İstisna: {str(e)[:80]}")
+        return ("hata", mac, f"İstisna: {str(e)[:80]}", None)
 
 
 def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_workers=3):
+    _ESIK_CACHE.clear()
+    try: _ESIK_CACHE.update(dict(st.session_state.esikler))
+    except Exception: pass
     maclar, hatalar = mutating_ana_sayfa_linklerini_al(max_mac=max_mac)
     if hatalar: return [], hatalar
     if not maclar: return [], ["Ana sayfada maç linki bulunamadı."]
@@ -1704,9 +1716,16 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
             mac = futures[fut]
             isim = f"{mac.get('takim_ev','?')} - {mac.get('takim_dep','?')}"
             try:
-                sonuc, veri, mesaj = fut.result()
+                r = fut.result()
+                if len(r) == 4:
+                    sonuc, veri, mesaj, kayit = r
+                else:
+                    sonuc, veri, mesaj = r; kayit = None
                 if sonuc == "eklendi":
                     eklenen += 1; eklenen_liste.append(veri)
+                    if kayit is not None:
+                        try: st.session_state.gelecek_analizler.append(kayit)
+                        except Exception: pass
                     detay_log.append(f"✅ {isim} → {mesaj}")
                 elif sonuc == "esik_alti":
                     esik_alti += 1
@@ -1726,6 +1745,8 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
             if progress_callback:
                 try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
+    try: gelecek_kaydet(st.session_state.gelecek_analizler)
+    except Exception: pass
     st.session_state.toplu_cek_ozet = {
         "bulunan": len(maclar), "eklenen": eklenen, "esik_alti": esik_alti,
         "veri_yok": veri_yok, "zaten_var": zaten_var, "hata": hata_sayisi,
@@ -1765,31 +1786,31 @@ def _lig_son_mac_linklerini_al(lig_url, adet=10):
 def _gecmis_mac_isle(mac, mevcut_urls):
     try:
         if mac["url"] in mevcut_urls:
-            return ("atlandi", None, "Zaten var")
+            return ("atlandi", None, "Zaten var", None)
         html, hata = _scrapingbee_get(mac["url"], render_js=True, mac_sec="5",
                                        dogrula=True, takim_ev=mac.get("takim_ev", ""),
                                        takim_dep=mac.get("takim_dep", ""))
         if hata or not html:
-            return ("hata", mac, hata or "HTML yok")
+            return ("hata", mac, hata or "HTML yok", None)
         veri, _ = _mac_html_parse(html, mac["url"])
         if not veri.get("skor_belli", False):
-            return ("atlandi", None, "Skor yok (bitmemiş maç)")
+            return ("atlandi", None, "Skor yok (bitmemiş maç)", None)
         if veri.get("atilan_ev", 0) == 0 or veri.get("yenen_ev", 0) == 0:
-            return ("atlandi", None, "İstatistik eksik")
+            return ("atlandi", None, "İstatistik eksik", None)
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
         yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(veri)
         kayit = kayit_olustur(yv, analiz_hesapla(yv))
         kayit["dogruluk"] = sonuc_hesapla(kayit)
-        with _kilit:
-            st.session_state.gecmis_analizler.append(kayit)
-            gecmis_kaydet(st.session_state.gecmis_analizler)
-        return ("eklendi", veri, f"{veri['skor_ev']}-{veri['skor_dep']}")
+        return ("eklendi", veri, f"{veri['skor_ev']}-{veri['skor_dep']}", kayit)
     except Exception as e:
-        return ("hata", mac, str(e))
+        return ("hata", mac, str(e), None)
 
 
 def lig_gecmis_cek(lig_url, adet=10, max_workers=3, progress_callback=None):
+    _ESIK_CACHE.clear()
+    try: _ESIK_CACHE.update(dict(st.session_state.esikler))
+    except Exception: pass
     maclar, hatalar = _lig_son_mac_linklerini_al(lig_url, adet=adet)
     if hatalar: return [], hatalar
     if not maclar: return [], ["Lig sayfasında maç linki bulunamadı."]
@@ -1804,9 +1825,16 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=3, progress_callback=None):
             tamamlanan += 1
             mac = futures[fut]
             try:
-                sonuc, veri, mesaj = fut.result()
+                r = fut.result()
+                if len(r) == 4:
+                    sonuc, veri, mesaj, kayit = r
+                else:
+                    sonuc, veri, mesaj = r; kayit = None
                 if sonuc == "eklendi":
                     eklenen += 1; basarili.append(veri)
+                    if kayit is not None:
+                        try: st.session_state.gecmis_analizler.append(kayit)
+                        except Exception: pass
                 elif sonuc == "atlandi":
                     atlanan += 1
                 else:
@@ -1816,6 +1844,8 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=3, progress_callback=None):
             if progress_callback:
                 try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
+    try: gecmis_kaydet(st.session_state.gecmis_analizler)
+    except Exception: pass
     st.session_state.gecmis_cek_ozet = {"eklenen": eklenen, "atlanan": atlanan}
     return basarili, hatali
 
@@ -2279,9 +2309,6 @@ if st.session_state.sayfa == "giris":
             st.session_state.sayfa = "ayarlar"
             st.rerun()
 
-        # ============================================
-        # OTOMATİK VERİ ÇEKME BÖLÜMÜ
-        # ============================================
         st.divider()
         st.markdown("### 🤖 Otomatik Veri Çekme")
         st.caption("Mutating.com'dan maç verilerini otomatik çek. 5 maçlık veri, Ev=Home / Dep=Away.")
