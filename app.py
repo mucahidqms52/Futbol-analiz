@@ -6,6 +6,7 @@ import random
 import json
 import os
 import html as _html
+from datetime import datetime, timedelta
 
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
@@ -153,7 +154,6 @@ st.markdown("""
         margin-bottom: 8px !important;
     }
 
-    /* Detay özet satırı */
     div[data-testid="stExpander"] details > summary {
         display: flex !important;
         align-items: center !important;
@@ -168,7 +168,6 @@ st.markdown("""
         list-style: none !important;
     }
 
-    /* Varsayılan list-style oku (triangle) gizle */
     div[data-testid="stExpander"] details > summary::-webkit-details-marker {
         display: none !important;
     }
@@ -181,8 +180,6 @@ st.markdown("""
         background: rgba(34,197,94,0.05) !important;
     }
 
-    /* Material Icons yazı olarak görünmesin - tamamen gizle
-       (keyboard_arrow_right sorunu buradan kaynaklanıyor) */
     div[data-testid="stExpander"] details > summary > span[data-testid="stIconMaterial"],
     div[data-testid="stExpander"] details > summary > span.material-icons,
     div[data-testid="stExpander"] details > summary [data-testid="stIconMaterial"],
@@ -203,7 +200,6 @@ st.markdown("""
         pointer-events: none !important;
     }
 
-    /* Summary içindeki metin */
     div[data-testid="stExpander"] details > summary p,
     div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"],
     div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"] p {
@@ -216,7 +212,6 @@ st.markdown("""
         display: inline-block !important;
     }
 
-    /* Summary içindeki flex container */
     div[data-testid="stExpander"] details > summary > div {
         display: flex !important;
         align-items: center !important;
@@ -224,7 +219,6 @@ st.markdown("""
         flex-wrap: nowrap !important;
     }
 
-    /* SVG ok (varsa) */
     div[data-testid="stExpander"] details > summary svg {
         flex-shrink: 0 !important;
         width: 14px !important;
@@ -233,7 +227,6 @@ st.markdown("""
         transition: transform 0.2s ease !important;
     }
 
-    /* Expander içerik */
     div[data-testid="stExpander"] details > div[role="region"] {
         padding: 0.4rem 0.8rem 0.8rem 0.8rem !important;
         font-size: 0.82rem !important;
@@ -669,6 +662,54 @@ def ayarlar_kaydet(esikler):
 
 
 # ==========================================
+# SAAT İŞLEMLERİ (YENİ)
+# ==========================================
+def saat_2_saat_ileri(saat_str):
+    """Saat metnini (HH:MM) 2 saat ileri kaydırır."""
+    if not saat_str:
+        return saat_str
+    m = re.match(r'^(\d{1,2}):(\d{2})$', str(saat_str).strip())
+    if not m:
+        return saat_str
+    try:
+        saat = int(m.group(1))
+        dakika = int(m.group(2))
+        yeni_saat = (saat + 2) % 24
+        return f"{yeni_saat:02d}:{dakika:02d}"
+    except Exception:
+        return saat_str
+
+
+def saat_sirala_anahtari(g):
+    """Gelecek maçları sıralamak için (yıl, ay, gün, saat, dakika) tuple'ı üretir.
+    Tarih/saat yoksa en sona atar."""
+    try:
+        v = g.get("veri", {}) if isinstance(g, dict) else {}
+        tarih = str(v.get("tarih", "")).strip()
+        saat = str(v.get("saat", "")).strip()
+
+        gun, ay, yil = 99, 99, 9999
+        if tarih:
+            m = re.match(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', tarih)
+            if m:
+                gun = int(m.group(1))
+                ay = int(m.group(2))
+                y_raw = m.group(3)
+                yil = int(y_raw) if len(y_raw) == 4 else 2000 + int(y_raw)
+
+        sa_h, sa_m = 99, 99
+        if saat:
+            m2 = re.match(r'^(\d{1,2}):(\d{2})$', saat)
+            if m2:
+                sa_h = int(m2.group(1))
+                sa_m = int(m2.group(2))
+
+        return (yil, ay, gun, sa_h, sa_m)
+    except Exception:
+        return (9999, 99, 99, 99, 99)
+
+
+# ==========================================
 # EŞİKLER
 # ==========================================
 ESIK_YUKSEK = 65.0
@@ -768,7 +809,6 @@ if "manuel_bekleyen" not in st.session_state: st.session_state.manuel_bekleyen =
 if "tek_silme_onay" not in st.session_state: st.session_state.tek_silme_onay = None
 if "tek_silme_gelecek" not in st.session_state: st.session_state.tek_silme_gelecek = None
 
-# GİRİŞ ARTIK DEFAULT OLARAK MİSAFİR
 if "giris_yapildi" not in st.session_state: st.session_state.giris_yapildi = True
 if "rol" not in st.session_state: st.session_state.rol = "misafir"
 if "admin_login_acik" not in st.session_state: st.session_state.admin_login_acik = False
@@ -1401,6 +1441,11 @@ def metinden_veri_cikar(metin):
         veri, okunamayanlar = sportytrader_veri_cikar(metin)
         if not veri.get("takim_ev"): okunamayanlar.append("Takım isimleri (Ev)")
         if not veri.get("takim_dep"): okunamayanlar.append("Takım isimleri (Dep)")
+
+        # ✅ SAATİ +2 SAAT İLERİ KAYDIR (Türkiye saati)
+        if veri.get("saat"):
+            veri["saat"] = saat_2_saat_ileri(veri["saat"])
+
         return veri, okunamayanlar
 
     veri = {}; okunamayanlar = []
@@ -1803,7 +1848,7 @@ def sonuc_hesapla(kayit):
 
 
 # ==========================================
-# YORUM (GÜVENLİ - .get() KULLANIR)
+# YORUM
 # ==========================================
 def detayli_analiz_yorumu(v):
     yorumlar = []
@@ -2954,7 +2999,7 @@ elif st.session_state.sayfa == "gecmis":
 
 
 # ==========================================
-# GELECEK
+# GELECEK (SAAT +2 & SIRALI)
 # ==========================================
 elif st.session_state.sayfa == "gelecek":
     st.markdown("<h1>🔮 Gelecek Maçlar</h1>", unsafe_allow_html=True)
@@ -2964,8 +3009,13 @@ elif st.session_state.sayfa == "gelecek":
     if not gelecek:
         st.info("ℹ️ Gelecek maç yok.")
     else:
-        for i, g in enumerate(reversed(gelecek)):
-            idx_gercek = len(gelecek) - 1 - i
+        # ✅ SAATE GÖRE SIRALA (erken → geç) - orijinal index korunur
+        sirali = sorted(
+            enumerate(gelecek),
+            key=lambda x: saat_sirala_anahtari(x[1])
+        )
+
+        for idx_gercek, g in sirali:
             v_g = g["veri"]
             takim_ev = v_g.get("takim_ev", "Ev") or "Ev"
             takim_dep = v_g.get("takim_dep", "Dep") or "Dep"
