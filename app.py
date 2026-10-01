@@ -134,6 +134,24 @@ st.markdown("""
     .st-key-fa_misafir_nav .stButton button { height: 72px !important; font-size: 1rem !important; font-weight: 800 !important; border-radius: 16px !important; }
     .st-key-fa_misafir_nav .stButton button p { font-size: 1rem !important; font-weight: 800 !important; }
     .mh-info { background: linear-gradient(145deg, rgba(19,28,46,0.6), rgba(11,18,32,0.8)); border: 1px solid #23304a; border-radius: 14px; padding: 12px 14px; margin-top: 14px; font-size: 0.76rem; color: #8fa0bd !important; line-height: 1.6; }
+    .stApp .ga-wrap { display: flex; flex-direction: column; gap: 12px; margin: 6px 0 12px 0; }
+    .stApp .ga-card { position: relative; overflow: hidden; background: linear-gradient(150deg, #18253f 0%, #101b30 100%); border: 1px solid #26334d; border-radius: 20px; padding: 16px 16px 14px 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+    .stApp .ga-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--c); box-shadow: 0 0 18px var(--c); }
+    .stApp .ga-glow { position: absolute; right: -40px; top: -40px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, var(--c) 0%, transparent 70%); opacity: 0.13; pointer-events: none; }
+    .stApp .ga-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; z-index: 1; }
+    .stApp .ga-title { font-size: 0.8rem; font-weight: 800; color: #cbd5e1 !important; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
+    .stApp .ga-sub { font-size: 0.72rem; color: #8fa0bd !important; margin-top: 4px; }
+    .stApp .ga-big { font-size: 2.6rem; font-weight: 900; line-height: 1; color: var(--c) !important; text-shadow: 0 0 22px var(--c); }
+    .stApp .ga-pctsign { font-size: 1.1rem; font-weight: 800; color: var(--c) !important; opacity: 0.65; margin-left: 2px; }
+    .stApp .ga-bar { position: relative; height: 9px; background: #1a2439; border-radius: 99px; overflow: hidden; margin: 13px 0; box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); }
+    .stApp .ga-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 55%, #ffffff)); box-shadow: 0 0 14px var(--c); }
+    .stApp .ga-items { display: grid; gap: 9px; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); }
+    .stApp .ga-item { position: relative; background: rgba(255,255,255,0.035); border: 1px solid #232f47; border-radius: 14px; padding: 10px 6px 9px 6px; text-align: center; transition: transform 0.15s ease, border-color 0.15s ease; }
+    .stApp .ga-item:hover { transform: translateY(-2px); border-color: var(--c); }
+    .stApp .ga-il { font-size: 0.7rem; font-weight: 700; color: #93a4c1 !important; letter-spacing: 0.3px; }
+    .stApp .ga-iv { font-size: 1.35rem; font-weight: 900; color: var(--c) !important; line-height: 1.3; }
+    .stApp .ga-in { font-size: 0.66rem; color: #64748b !important; margin-top: 2px; }
+    .stApp .ga-chip { display: inline-block; margin-top: 9px; padding: 3px 11px; border-radius: 99px; font-size: 0.68rem; font-weight: 800; border: 1px solid var(--c); color: var(--c) !important; background: rgba(255,255,255,0.03); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -293,7 +311,7 @@ def esik_1x2_al(secim):
 # ==========================================
 ULKE_BAYRAK = {
     "switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭",
-    "england": "🏴", "ingiltere": "🏴", "i̇ngiltere": "🏴",
+    "england": "🏴󠁧󠁢󠁥󠁮󠁧", "ingiltere": "🏴", "i̇ngiltere": "🏴",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "italy": "🇮🇹", "italya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪", "france": "🇫🇷", "fransa": "🇫🇷",
     "netherlands": "🇳🇱", "hollanda": "🇳🇱", "portugal": "🇵🇹", "portekiz": "🇵🇹",
@@ -787,6 +805,84 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 # ==========================================
+# BİTEN MAÇLARIN SKORUNU ÇEK → GEÇMİŞE AKTAR
+# ==========================================
+def _skor_parse(html):
+    metin = _html_metne_cevir(html)
+    m = re.search(r'(?<![A-Za-z])FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    return None
+
+
+def _skor_cek(url, tarayici_yedek=False):
+    """(skor veya None, hata veya None). Önce hızlı requests, istenirse tarayıcı yedeği."""
+    html = None; hata = None
+    try:
+        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
+        if r.status_code == 200 and r.text:
+            html = r.text
+        else:
+            hata = f"HTTP {r.status_code}"
+    except Exception as e:
+        hata = f"Bağlantı: {str(e)[:80]}"
+    skor = _skor_parse(html) if html else None
+    if skor is None and tarayici_yedek:
+        h2, hata2 = _scrapingbee_get(url, render_js=True, mac_sec="5")
+        if h2:
+            skor = _skor_parse(h2); hata = None
+        elif hata2:
+            hata = hata2
+    if skor is None and html:
+        hata = None  # sayfa alındı ama skor yok = maç bitmemiş
+    return skor, hata
+
+
+def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
+    gel = st.session_state.gelecek_analizler
+    isler = [(i, g) for i, g in enumerate(gel) if g.get("veri", {}).get("kaynak_url")]
+    sonuc = {}
+    tamam = 0
+    if isler:
+        with ThreadPoolExecutor(max_workers=max_workers) as ex:
+            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], tarayici_yedek): (i, g) for i, g in isler}
+            for f in as_completed(fut):
+                i, g = fut[f]; tamam += 1
+                try: sonuc[i] = f.result()
+                except Exception as e: sonuc[i] = (None, str(e)[:80])
+                if progress_callback:
+                    try: progress_callback(tamam - 1, len(isler), g["veri"].get("takim_ev", ""))
+                    except Exception: pass
+
+    mevcut = {x.get("veri", {}).get("kaynak_url") for x in st.session_state.gecmis_analizler}
+    tasinan = 0; bitmemis = 0; hatalar = []; kalan = []
+    for i, g in enumerate(gel):
+        r = sonuc.get(i)
+        if r is None:
+            kalan.append(g); continue
+        skor, hata = r
+        v = g["veri"]; isim = f"{v.get('takim_ev', '?')} - {v.get('takim_dep', '?')}"
+        if hata:
+            hatalar.append(f"{isim}: {hata}"); kalan.append(g); continue
+        if skor is None:
+            bitmemis += 1; kalan.append(g); continue
+        v["skor_ev"], v["skor_dep"], v["skor_belli"] = skor[0], skor[1], True
+        d = sonuc_hesapla(g)
+        if d: g["dogruluk"] = d
+        if v.get("kaynak_url") not in mevcut:
+            st.session_state.gecmis_analizler.append(g)
+            mevcut.add(v.get("kaynak_url"))
+        tasinan += 1
+
+    st.session_state.gelecek_analizler = kalan
+    st.session_state.aktif_gelecek_idx = None
+    st.session_state.gelecekten_gelindi = False
+    gecmis_kaydet(st.session_state.gecmis_analizler)
+    gelecek_kaydet(st.session_state.gelecek_analizler)
+    return {"tasinan": tasinan, "bitmemis": bitmemis, "hatalar": hatalar, "toplam": len(isler)}
+
+
+# ==========================================
 # SPORTYTRADER PARSER (metin yapıştırma)
 # ==========================================
 def _cift_tab(etiket, blok):
@@ -1092,29 +1188,49 @@ def test_hesapla(kayitlar, e):
     return st_, satirlar
 
 
+def _ga_renk(pc):
+    if pc is None: return "#64748b"
+    if pc >= 70: return "#22c55e"
+    if pc >= 55: return "#f59e0b"
+    return "#ef4444"
+
+
 def ozet_html(ist):
-    """test_hesapla çıktısını (isabet % ve tutan/tahmin) kart HTML'ine çevirir."""
-    def _trow(etiket, n, h, kalin=False):
-        if n == 0:
-            pt, cls = "—", "off"
-        else:
-            pc = h / n * 100
-            pt = f"%{pc:.0f}"; cls = "pass" if pc >= 50 else "off"
-        et = f"<b>{_e(etiket)}</b>" if kalin else _e(etiket)
-        return f'<div class="fa-mk-row"><span class="fa-mk-lbl">{et}</span><span class="fa-mk-pick {cls}">{pt}</span><span class="fa-mk-pct">{h}/{n}</span></div>'
+    """test_hesapla çıktısını modern kartlara çevirir (1X2 / Gol / KG)."""
+    def _pc(n, h): return (h / n * 100) if n else None
 
-    def _topla(*ks):
-        return sum(ist[k][0] for k in ks), sum(ist[k][1] for k in ks)
+    def _yorum(pc):
+        if pc is None: return "veri yok"
+        if pc >= 80: return "Mükemmel"
+        if pc >= 70: return "Çok iyi"
+        if pc >= 60: return "İyi"
+        if pc >= 50: return "Orta"
+        return "Zayıf"
 
-    n12, h12 = _topla("1", "X", "2"); ng, hg = _topla("Üst", "Alt"); nk, hk = _topla("KG Var", "KG Yok")
-    h = '<div class="fa-mk">'
-    h += _trow("🎯 1X2 toplam", n12, h12, True)
-    h += _trow("   1", *ist["1"]) + _trow("   X", *ist["X"]) + _trow("   2", *ist["2"])
-    h += _trow("⚽ Gol toplam", ng, hg, True)
-    h += _trow("   Üst 2.5", *ist["Üst"]) + _trow("   Alt 2.5", *ist["Alt"])
-    h += _trow("🤝 KG toplam", nk, hk, True)
-    h += _trow("   KG Var", *ist["KG Var"]) + _trow("   KG Yok", *ist["KG Yok"])
-    return h + '</div>'
+    def _item(lbl, n, h):
+        pc = _pc(n, h)
+        pt = f"%{pc:.0f}" if pc is not None else "—"
+        return (f'<div class="ga-item" style="--c:{_ga_renk(pc)}"><div class="ga-il">{_e(lbl)}</div>'
+                f'<div class="ga-iv">{pt}</div><div class="ga-in">{h}/{n}</div></div>')
+
+    def _card(ikon, baslik, keys, etiketler):
+        n = sum(ist[k][0] for k in keys); h = sum(ist[k][1] for k in keys)
+        pc = _pc(n, h); renk = _ga_renk(pc)
+        pt = f"{pc:.0f}" if pc is not None else "0"
+        items = "".join(_item(et, *ist[k]) for k, et in zip(keys, etiketler))
+        return (f'<div class="ga-card" style="--c:{renk}"><div class="ga-glow"></div>'
+                f'<div class="ga-head"><div><div class="ga-title">{ikon} {_e(baslik)}</div>'
+                f'<div class="ga-sub">{h} tuttu • {n - h} tutmadı • {n} tahmin</div></div>'
+                f'<div><span class="ga-big">{pt}</span><span class="ga-pctsign">%</span></div></div>'
+                f'<div class="ga-bar"><div class="ga-fill" style="width:{pt}%"></div></div>'
+                f'<div class="ga-items">{items}</div>'
+                f'<div class="ga-chip">● {_e(_yorum(pc))}</div></div>')
+
+    return ('<div class="ga-wrap">'
+            + _card("🎯", "1X2 Toplam", ["1", "X", "2"], ["1 (Ev)", "X (Ber)", "2 (Dep)"])
+            + _card("⚽", "Gol 2.5 Toplam", ["Üst", "Alt"], ["Üst 2.5", "Alt 2.5"])
+            + _card("🤝", "Karşılıklı Gol Toplam", ["KG Var", "KG Yok"], ["KG Var", "KG Yok"])
+            + '</div>')
 
 
 def kayitli_esikler():
@@ -1311,7 +1427,36 @@ if st.session_state.sayfa == "giris":
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center; color:gray;'>Mutating.com'dan otomatik çek. Paralel + Retry aktif.</p>", unsafe_allow_html=True)
 
-        sekme1, sekme2, sekme3 = st.tabs(["🔄 Gelecek Maçlar", "📜 Lig Geçmişi", "📋 Metin Yapıştır"])
+        # ==== HIZLI SONUÇ İŞLEME (biten maçları otomatik geçmişe taşı) ====
+        st.markdown("### 🏁 Biten Maçları Otomatik Aktar")
+        st.caption("Gelecek'teki maçların skorlarını siteden okur, bitenleri skorlarıyla birlikte **Geçmiş'e** taşır. Bitmemişler Gelecek'te kalır.")
+        if st.session_state.get("skor_ozet"):
+            oz4 = st.session_state.skor_ozet
+            st.success(f"✅ Son işlem: {oz4['tasinan']} maç taşındı • {oz4['bitmemis']} maç henüz bitmemiş")
+            if oz4["hatalar"]:
+                with st.expander(f"⚠️ {len(oz4['hatalar'])} hata"):
+                    for h in oz4["hatalar"]: st.caption(h)
+        hc1, hc2, hc3 = st.columns([2, 1, 1])
+        with hc1:
+            st.markdown(f"🔮 Bekleyen maç: **{len(st.session_state.gelecek_analizler)}**")
+        with hc2:
+            _hw = st.number_input("Paralel", 1, 6, 3, 1, key="hizli_skor_w", label_visibility="collapsed")
+        with hc3:
+            if st.button("🏁 Şimdi İşle", use_container_width=True, type="primary", key="hizli_skor_btn"):
+                if not st.session_state.gelecek_analizler:
+                    st.warning("⚠️ Gelecek'te maç yok.")
+                else:
+                    _hp = st.empty()
+                    def _hp_cb(i, total, isim):
+                        try: _hp.progress(min((i + 1) / total, 1.0), text=f"{i+1}/{total}: {isim}")
+                        except Exception: pass
+                    with st.spinner("Skorlar kontrol ediliyor..."):
+                        st.session_state.skor_ozet = sonuclari_isle(tarayici_yedek=False, max_workers=int(_hw), progress_callback=_hp_cb)
+                    _hp.empty()
+                    st.rerun()
+        st.divider()
+
+        sekme1, sekme2, sekme3, sekme4 = st.tabs(["🔄 Gelecek Maçlar", "📜 Lig Geçmişi", "📋 Metin Yapıştır", "🏁 Sonuçları İşle"])
 
         with sekme1:
             st.caption("✅ Bugünün maçları çekilir, **tahmin olanlar Gelecek'e** eklenir.")
@@ -1390,6 +1535,30 @@ if st.session_state.sayfa == "giris":
                         st.session_state.form_verileri = yv
                         st.session_state.kayit_yapildi = False
                         st.session_state.sayfa = "sonuc"; st.rerun()
+
+        with sekme4:
+            st.caption("Maçlar bitince: Gelecek'teki maçların skorları siteden okunur, **biten maçlar skoruyla Geçmiş'e taşınır**. Bitmeyenler Gelecek'te kalır.")
+            if st.session_state.get("skor_ozet"):
+                oz4 = st.session_state.skor_ozet
+                st.success(f"✅ {oz4['tasinan']} maç Geçmiş'e taşındı • {oz4['bitmemis']} maç henüz bitmemiş/skor yok")
+                if oz4["hatalar"]:
+                    with st.expander(f"⚠️ {len(oz4['hatalar'])} hata"):
+                        for h in oz4["hatalar"]: st.caption(h)
+            st.markdown(f"Bekleyen maç: **{len(st.session_state.gelecek_analizler)}**")
+            skor_yedek = st.checkbox("Skor bulunamazsa tarayıcıyla da dene (yavaş, belleği zorlar)", value=False, key="skor_yedek")
+            skor_w = st.number_input("Paralel işlem", 1, 6, 3, 1, key="skor_w")
+            if st.button("🏁 Biten Maçları Geçmişe Aktar", use_container_width=True, type="primary", key="skor_btn"):
+                if not st.session_state.gelecek_analizler:
+                    st.warning("⚠️ Gelecek'te maç yok.")
+                else:
+                    prog4 = st.empty()
+                    def _prog4(i, total, isim):
+                        try: prog4.progress(min((i + 1) / total, 1.0), text=f"{i+1}/{total}: {isim}")
+                        except Exception: pass
+                    with st.spinner("Skorlar kontrol ediliyor..."):
+                        st.session_state.skor_ozet = sonuclari_isle(tarayici_yedek=bool(skor_yedek), max_workers=int(skor_w), progress_callback=_prog4)
+                    prog4.empty()
+                    st.rerun()
 
         st.divider()
         c1, c2, c3, c4 = st.columns(4)
