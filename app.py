@@ -146,7 +146,7 @@ st.markdown("""
     .stApp .ga-bar { position: relative; height: 9px; background: #1a2439; border-radius: 99px; overflow: hidden; margin: 13px 0; box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); }
     .stApp .ga-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--c), color-mix(in srgb, var(--c) 55%, #ffffff)); box-shadow: 0 0 14px var(--c); }
     .stApp .ga-items { display: grid; gap: 9px; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); }
-    .stApp .ga-item { position: relative; background: rgba(255,255,255,0.035); border: 1px solid #232f47; border-radius: 14px; padding: 10px 6px 9px 6px; text-align: center; transition: transform 0.15s ease, border-color 0.15s ease; }
+    .stApp .ga-item { position: relative; background: rgba(255,255,255,0.035); border: 1px solid #232f47; border-radius: 14px; padding: 10px 6px 99px 6px; text-align: center; transition: transform 0.15s ease, border-color 0.15s ease; }
     .stApp .ga-item:hover { transform: translateY(-2px); border-color: var(--c); }
     .stApp .ga-il { font-size: 0.7rem; font-weight: 700; color: #93a4c1 !important; letter-spacing: 0.3px; }
     .stApp .ga-iv { font-size: 1.35rem; font-weight: 900; color: var(--c) !important; line-height: 1.3; }
@@ -224,7 +224,6 @@ MAX_MAC_SINIRI = 200
 _kilit = threading.Lock()
 _ESIK_CACHE = {}
 
-# Aynı anda en fazla kaç Chromium açılabilir (RAM koruması)
 TARAYICI_ESZAMANLI = int(os.environ.get("TARAYICI_ESZAMANLI", "3"))
 _TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
 
@@ -283,7 +282,6 @@ if "giris_yapildi" not in st.session_state: st.session_state.giris_yapildi = Fal
 if "rol" not in st.session_state: st.session_state.rol = None
 if "esikler" not in st.session_state: st.session_state.esikler = ayarlar_yukle()
 
-# Global cache'e kopyala (thread'ler için)
 _ESIK_CACHE.clear()
 _ESIK_CACHE.update(st.session_state.esikler)
 
@@ -313,7 +311,7 @@ def esik_1x2_al(secim):
 # ==========================================
 ULKE_BAYRAK = {
     "switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭",
-    "england": "🏴󠁧󠁢󠁥󠁮󠁧", "ingiltere": "🏴", "i̇ngiltere": "🏴",
+    "england": "🏴", "ingiltere": "🏴", "i̇ngiltere": "🏴",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "italy": "🇮🇹", "italya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪", "france": "🇫🇷", "fransa": "🇫🇷",
     "netherlands": "🇳🇱", "hollanda": "🇳🇱", "portugal": "🇵🇹", "portekiz": "🇵🇹",
@@ -388,9 +386,6 @@ def guven_seviyesi_bul(o):
     return ("cok_dusuk", "⚫", "error", "Düşük")
 
 
-# ==========================================
-# SAYFA ÇEKİCİ (API YOK) — Playwright + requests yedek
-# ==========================================
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
 
@@ -519,6 +514,9 @@ def _html_metne_cevir(html):
     return metin
 
 
+# ==========================================
+# PARSING & SCRAPING DÜZELTMELERİ
+# ==========================================
 def mutating_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI):
     html, hata = _scrapingbee_get("https://www.mutating.com/football-stats/", render_js=True)
     if hata: return [], [hata]
@@ -532,29 +530,29 @@ def mutating_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI):
         if href.startswith("/"): href = "https://www.mutating.com" + href
         elif not href.startswith("http"): continue
         if href in gorulen: continue
+        
+        # URL Slug'ı ayrıştır
+        takim_ev, takim_dep = "", ""
+        mm = re.search(r'match-preview/([a-z0-9\-]+)-vs-([a-z0-9\-]+)', href, re.IGNORECASE)
+        if mm:
+            takim_ev = mm.group(1).replace("-", " ").strip().title()
+            takim_dep = mm.group(2).replace("-", " ").strip().title()
+        
         gorulen.add(href)
-        h2_list = link.find_all("h2")
-        takim_ev = h2_list[0].get_text(strip=True) if len(h2_list) > 0 else ""
-        takim_dep = h2_list[1].get_text(strip=True) if len(h2_list) > 1 else ""
-        # h2 yoksa URL'den çıkarmayı dene
-        if not takim_ev:
-            mm = re.search(r'match-preview/([a-z0-9\-]+)-vs-([a-z0-9\-]+)', href)
-            if mm:
-                takim_ev = mm.group(1).replace("-", " ").title()
-                takim_dep = mm.group(2).replace("-", " ").title()
-        # Saat: <time> etiketi varsa ondan, yoksa boş
+        
         saat = ""
         t_el = link.find("time")
         if t_el:
             dt_attr = t_el.get("datetime", "")
-            mm = re.search(r'T(\d{2}):(\d{2})', dt_attr)
-            if mm:
-                saat = f"{mm.group(1)}:{mm.group(2)}"
+            mm_t = re.search(r'T(\d{2}):(\d{2})', dt_attr)
+            if mm_t:
+                saat = f"{mm_t.group(1)}:{mm_t.group(2)}"
             else:
                 txt = t_el.get_text(strip=True)
-                mm = re.search(r'(\d{1,2}):(\d{2})', txt)
-                if mm:
-                    saat = f"{int(mm.group(1)):02d}:{mm.group(2)}"
+                mm_t = re.search(r'(\d{1,2}):(\d{2})', txt)
+                if mm_t:
+                    saat = f"{int(mm_t.group(1)):02d}:{mm_t.group(2)}"
+        
         maclar.append({"url": href, "takim_ev": takim_ev, "takim_dep": takim_dep, "saat": saat})
     return maclar, []
 
@@ -570,39 +568,36 @@ def _mac_html_parse(html, url=""):
     soup = BeautifulSoup(html, "html.parser")
     veri = {}; okunamayanlar = []
 
-    # === Takım isimleri: önce URL'den, sonra h1'den ===
-    if url:
+    # 1. H1 etiketinden takım isimleri
+    h1 = soup.find("h1")
+    if h1:
+        baslik = h1.get_text(strip=True)
+        baslik = re.sub(r'\s+Stats$', '', baslik, flags=re.IGNORECASE).strip()
+        if " - " in baslik:
+            p = baslik.split(" - ")
+            veri["takim_ev"] = p[0].strip()
+            veri["takim_dep"] = p[1].strip()
+        elif " vs " in baslik.lower():
+            p = re.split(r'\s+vs\s+', baslik, flags=re.IGNORECASE)
+            veri["takim_ev"] = p[0].strip()
+            veri["takim_dep"] = p[1].strip()
+
+    # 2. H1 yoksa URL Slug'ından çek
+    if not veri.get("takim_ev") and url:
         try:
-            m = re.search(r'match-preview/([^/?#]+)', url)
+            m = re.search(r'match-preview/([a-z0-9\-]+)-vs-([a-z0-9\-]+)', url, re.IGNORECASE)
             if m:
-                slug = m.group(1)
-                mm = re.search(r'([a-z0-9\-]+)-vs-([a-z0-9\-]+)', slug)
-                if mm:
-                    t1 = mm.group(1).replace("-", " ").title()
-                    t2 = mm.group(2).replace("-", " ").title()
-                    veri["takim_ev"] = t1
-                    veri["takim_dep"] = t2
+                veri["takim_ev"] = m.group(1).replace("-", " ").title().strip()
+                veri["takim_dep"] = m.group(2).replace("-", " ").title().strip()
         except Exception:
             pass
-
-    if not veri.get("takim_ev"):
-        h1 = soup.find("h1")
-        if h1:
-            baslik = h1.get_text(strip=True)
-            baslik = baslik.replace(" Stats", "").replace(" stats", "").strip()
-            if " - " in baslik:
-                p = baslik.split(" - ")
-                veri["takim_ev"] = p[0].strip()
-                if len(p) > 1: veri["takim_dep"] = p[1].strip()
 
     metin = _html_metne_cevir(html)
     veri["son_n"] = _son_n_oku(metin)
 
-    # === Tarih ===
     m = re.search(r'(\d{1,2}\.\d{1,2}\.\d{4})', metin)
     if m: veri["tarih"] = m.group(1)
 
-    # === Saat: <time> veya "Kick-off" ===
     veri["saat"] = ""
     try:
         t_el = soup.find("time")
@@ -629,7 +624,6 @@ def _mac_html_parse(html, url=""):
 
     veri["ulke"] = _ulke_bul(metin)
 
-    # === Skor ===
     skor_ev = skor_dep = None
     m = re.search(r'FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
     if m:
@@ -704,17 +698,17 @@ def _mac_tahmin_var_mi(v):
         return False
 
 
-# ==========================================
-# GELECEK MAÇ (Paralel + Retry)
-# ==========================================
 def _gelecek_mac_isle(mac, mevcut_urls):
     try:
         veri, _ = mutating_mac_detay_cek(mac["url"])
         if not veri:
             return ("hata", mac, "Veri çekilemedi")
-        if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
-        if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
+        
+        # Takım isimlerinin karışmasını önlemek için öncelik sıralaması
+        if mac.get("takim_ev"): veri["takim_ev"] = mac["takim_ev"]
+        if mac.get("takim_dep"): veri["takim_dep"] = mac["takim_dep"]
         if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
+        
         veri["kaynak_url"] = mac["url"]
         if mac["url"] in mevcut_urls:
             return ("atlandi", veri, "Zaten var")
@@ -811,8 +805,8 @@ def _gecmis_mac_isle(mac, mevcut_urls):
             return ("atlandi", None, "Skor yok (bitmemiş maç)")
         if veri.get("atilan_ev", 0) == 0 or veri.get("yenen_ev", 0) == 0:
             return ("atlandi", None, "İstatistik eksik")
-        if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
-        if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
+        if mac.get("takim_ev"): veri["takim_ev"] = mac["takim_ev"]
+        if mac.get("takim_dep"): veri["takim_dep"] = mac["takim_dep"]
 
         yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(veri)
         kayit = kayit_olustur(yv, analiz_hesapla(yv))
@@ -865,7 +859,7 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 # ==========================================
-# BİTEN MAÇLARIN SKORUNU ÇEK → GEÇMİŞE AKTAR
+# SKOR İŞLEME
 # ==========================================
 def _skor_parse(html):
     metin = _html_metne_cevir(html)
@@ -942,7 +936,7 @@ def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
 
 
 # ==========================================
-# SPORTYTRADER PARSER (metin yapıştırma)
+# SPORTYTRADER PARSER
 # ==========================================
 def _cift_tab(etiket, blok):
     for pat in [
@@ -1305,7 +1299,6 @@ def rozet(m, t="gray"): return f'<span class="fa-badge fa-b-{t}">{_e(m)}</span>'
 
 
 def _saat_tr_yap(saat_str):
-    """'15:30' gibi bir saat metnini +2 saat Türkiye saatine çevirir. Bozuksa aynen döner."""
     if not saat_str: return saat_str
     m = re.match(r'^\s*(\d{1,2})[:.](\d{2})\s*$', str(saat_str).strip())
     if not m:
@@ -1319,7 +1312,6 @@ def _saat_tr_yap(saat_str):
 
 
 def _saat_dakika(saat_str):
-    """'15:30' -> 930. Sıralama için. Geçersizse 99999 (en sona atılır)."""
     if not saat_str: return 99999
     m = re.match(r'^\s*(\d{1,2})[:.](\d{2})\s*$', str(saat_str).strip())
     if not m:
@@ -1510,7 +1502,6 @@ if st.session_state.sayfa == "giris":
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center; color:gray;'>Mutating.com'dan otomatik çek. Paralel + Retry aktif.</p>", unsafe_allow_html=True)
 
-        # ==== HIZLI SONUÇ İŞLEME ====
         st.markdown("### 🏁 Biten Maçları Otomatik Aktar")
         st.caption("Gelecek'teki maçların skorlarını siteden okur, bitenleri skorlarıyla birlikte **Geçmiş'e** taşır. Bitmemişler Gelecek'te kalır.")
         if st.session_state.get("skor_ozet"):
@@ -1680,127 +1671,6 @@ if st.session_state.sayfa == "giris":
         with c2:
             if st.button("🔮  Gelecek Maçlar", use_container_width=True, type="primary", key="m_gelecek"):
                 st.session_state.sayfa = "gelecek"; st.rerun()
-
-        # ==== Nasıl Çalışır? / Nasıl Oynanır? / Sorumluluk Reddi ====
-        with st.expander("📚 Nasıl Çalışır? — Sistem Detayları", expanded=False):
-            st.markdown("""
-**🧠 Model Nasıl Çalışıyor?**
-
-Bu sistem, futbol maçlarını istatistiksel olarak analiz eden bir **Poisson dağılımı + Monte Carlo simülasyonu** tabanlı tahmin motorudur.
-
-**1️⃣ Veri Toplama**
-- Son maçlardaki takım istatistikleri toplanır: atılan gol, yenen gol, clean sheet (gol yemeden bitirilen maç), karşılıklı gol, üst/alt 2.5 oranları.
-- Ev sahibi takım için "ev sahası" performansı, deplasman takımı için "deplasman" performansı ayrı ayrı alınır.
-
-**2️⃣ Beklenen Gol (λ — Lambda) Hesaplaması**
-- Her takım için beklenen gol sayısı, hücum ve savunma gücü ağırlıklı olarak hesaplanır.
-- Ev sahibi avantajı (+%5), form, sıralama farkı, lig ortalamaları bu değere yansıtılır.
-
-**3️⃣ Poisson Matrisi**
-- 0-0'dan 7-7'ye kadar tüm olası skorlar için Poisson formülüyle olasılık hesaplanır.
-- Bu matristen **1 / X / 2**, **Üst 2.5 / Alt 2.5**, **KG Var / Yok** olasılıkları çıkarılır.
-
-**4️⃣ Monte Carlo Simülasyonu**
-- Aynı maç **10.000 kez simüle edilir** (rastgelelik + maç içi şok senaryoları ile).
-- Poisson sonuçları ile Monte Carlo sonuçları ağırlıklı ortalamayla birleştirilir → daha dengeli tahmin.
-
-**5️⃣ Eşik Karşılaştırması**
-- Her piyasa için admin panelinden ayarlanabilen bir **eşik yüzdesi** vardır.
-- Olasılık ≥ eşik → ✅ öneri olarak gösterilir.
-- Olasılık < eşik → ⚪ "eşik altı" olarak işaretlenir.
-
-**📊 Piyasalar**
-- **1X2:** Maç sonucu — Ev (1), Beraberlik (X), Deplasman (2).
-- **Gol 2.5:** Toplam gol 2.5 üstü / altı.
-- **KG:** Karşılıklı gol var / yok.
-
-**📈 İstatistik Sayfası (Genel Analiz)**
-- Geçmiş maçlardaki önerilerin ne kadarının tuttuğunu **% isabet** ve **tutan/tahmin** olarak gösterir.
-- 1X2 / Gol / KG için ayrı ayrı toplam başarı oranı verilir.
-
-**🔄 Güncelleme**
-- Sistem her gün admin tarafından güncellenen maç listesiyle çalışır.
-- Maçlar bittikçe skorlar otomatik olarak alınır ve istatistiklere eklenir.
-            """)
-
-        with st.expander("🎮 Nasıl Oynanır? — Adım Adım Rehber", expanded=False):
-            st.markdown("""
-**👤 Misafir Olarak Kullanım**
-
-**1️⃣ Gelecek Maçları İncele**
-- Üst menüden **🔮 Gelecek** sekmesine git.
-- Burada yaklaşan maçlar, başlama saatine göre sıralanmış olarak listelenir (saatler Türkiye saatidir).
-- Her maçta 3 öneri görürsün:
-  - 🎯 **1X2** — Maç sonucu
-  - ⚽ **Gol** — Üst/Alt 2.5
-  - 🤝 **KG** — Karşılıklı gol
-
-**2️⃣ Yüzdelere ve Eşiklere Bak**
-- Her önerinin yanında **yüzde** ve **eşik** değeri yazar.
-- ✅ işareti → öneri eşiği geçti (güçlü sinyal).
-- ⚪ işareti → öneri eşiğin altında (zayıf sinyal, dikkatli ol).
-
-**3️⃣ Detaylı Analiz**
-- Bir maça daha derin bakmak için **🔍 Detaylı** butonuna bas.
-- O maçın tüm olasılıkları, bar grafikleri ve model beklenen golleri gösterilir.
-
-**4️⃣ Geçmiş Performansı Kontrol Et**
-- **📊 Geçmiş** sekmesinde geçmiş maçların sonuçları ve önerilerin ne kadar tuttuğu gösterilir.
-- **Genel Analiz** kartlarından sistemin genel isabet oranını görebilirsin.
-
-**🎯 Kullanım İpuçları**
-- **Yüksek yüzde + ✅ eşik** = daha güçlü öneri.
-- **KG Var** genellikle dengeli takımlarda yüksek çıkar.
-- **Üst 2.5** yüksek çıkıyorsa maçta gol beklentisi fazladır.
-- İstatistiklere bakarak hangi piyasanın daha güvenilir olduğunu değerlendirebilirsin.
-
-**⚠️ Unutma:** Bu sistem bir tahmin aracıdır. Kesin sonuç garantisi vermez. Yatırım kararlarını **kendi araştırmanla** ve **sorumlu bir şekilde** ver.
-            """)
-
-        with st.expander("⚠️ Sorumluluk Reddi ve Yasal Uyarı", expanded=False):
-            st.markdown("""
-<div class="uyari-box">
-<b>⚠️ ÖNEMLİ YASAL UYARI VE SORUMLULUK REDDİ</b><br><br>
-Bu uygulama (<b>Futbol Analiz Pro</b>) yalnızca <b>istatistiksel analiz ve bilgilendirme amaçlıdır</b>. Sunulan tahminler, olasılıklar ve öneriler <b>kesin sonuç garantisi vermez</b> ve <b>yatırım/bahis tavsiyesi niteliği taşımaz</b>.<br><br>
-
-<b>🎯 Kullanım Sorumluluğu</b><br>
-• Sitede gösterilen tüm analiz, yüzde ve öneriler <b>yalnızca bilgilendirme amaçlıdır</b>.<br>
-• Bu bilgileri kullanarak yapacağınız her türlü işlem <b>tamamen kendi sorumluluğunuzdadır</b>.<br>
-• Sistem, sonuçların doğruluğu veya kesinliği konusunda <b>hiçbir garanti vermez</b>.<br><br>
-
-<b>⚖️ Yasal Durum</b><br>
-• Bulunduğunuz ülkenin/bölgenin yasalarına göre <b>bahis oynamak yasak veya kısıtlı olabilir</b>.<br>
-• <b>18 yaşından küçüklerin</b> bahis oynaması yasaktır.<br>
-• Yasadışı bahis oynamak veya oynatmaya aracılık etmek <b>suçtur</b>. Bu uygulama hiçbir şekilde bahis oynatmaz, aracılık etmez ve bahis sitesi değildir.<br>
-• Uygulama, herhangi bir bahis sitesiyle <b>ortaklık veya bağlantı içermez</b>.<br><br>
-
-<b>🧠 Bağımlılık Uyarısı</b><br>
-• Kumar/bahis <b>bağımlılık yapabilir</b>. Bağımlılık ciddi maddi ve manevi kayıplara yol açabilir.<br>
-• <b>Bilinçli ve sorumlu</b> davranın. Kaybetmeyi göze alamayacağınız parayla asla oynamayın.<br>
-• Kaybettiğinizde <b>"geri kazanma"</b> hırsıyla hareket etmeyin.<br>
-• Bağımlılık hissediyorsanız lütfen bir uzmandan destek alın.<br><br>
-
-<b>💡 Bilinçli Kullanım</b><br>
-• Bu uygulama, futbol istatistiklerine ilgi duyan kişiler için <b>veri analizi ve eğitim amaçlı</b> geliştirilmiştir.<br>
-• Sistemin çıktıları, profesyonel bir analistin görüşü yerine geçmez.<br>
-• Kararlarınızı verirken <b>birden fazla kaynağı</b> değerlendirin.<br><br>
-
-<b>📌 Sorumluluk Reddi</b><br>
-Bu uygulamanın geliştiricisi ve sunucusu:<br>
-• Uygulamadaki tahminlere dayanarak yapılan <b>hiçbir işlemin sonucundan sorumlu tutulamaz</b>.<br>
-• Oluşabilecek <b>doğrudan veya dolaylı zararlardan</b> sorumlu değildir.<br>
-• Uygulamanın kullanımından doğan <b>hukuki sorumluluk tamamen kullanıcıya aittir</b>.<br><br>
-
-<b>👤 Onay</b><br>
-Bu uygulamayı kullanarak yukarıdaki şartları okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan etmiş olursunuz.
-</div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("""
-            <div style="text-align:center; padding:14px 8px 6px 8px; font-size:0.72rem; color:#64748b;">
-            ⚠️ Bu uygulama <b style="color:#ef4444;">bilgi amaçlıdır</b>. Kesin sonuç garantisi vermez. Bahis oynamak <b style="color:#ef4444;">18 yaş ve üzeri</b> için olup bulunduğunuz ülkenin yasalarına tabidir.
-            </div>
-        """, unsafe_allow_html=True)
 
 
 # ==========================================
@@ -2079,7 +1949,7 @@ elif st.session_state.sayfa == "test":
         if wk not in st.session_state:
             st.session_state[wk] = int(mv_t.get(ek, vr))
 
-    st.caption(f"{len(gec_t)} skorlu maç. Eşikleri değiştir, sonuç anında güncellenir. Burada yaptığın değişiklik **Ayarlar'ı etkilemez**, istersen aşağıdan kaydedebilirsin.")
+    st.caption(f"{len(gec_t)} skorlu maç. Eşikleri değiştir, sonuç anında güncellenir.")
 
     st.markdown("### 🎯 Maç Sonucu")
     tc1, tc2, tc3 = st.columns(3)
@@ -2104,7 +1974,7 @@ elif st.session_state.sayfa == "test":
     html_t = ozet_html(ist)
     st.markdown("### 📊 Sonuç")
     st.markdown(html_t, unsafe_allow_html=True)
-    st.caption("Format: isabet % ve tutan/tahmin sayısı. Tahmin sayısı, eşiği geçen maç sayısıdır.")
+    st.caption("Format: isabet % ve tutan/tahmin sayısı.")
 
     with st.expander("📈 Eşik taraması (her piyasa ayrı ayrı)"):
         import pandas as pd
@@ -2120,7 +1990,6 @@ elif st.session_state.sayfa == "test":
                 row[isim] = f"%{h_ / n_ * 100:.0f} ({n_})" if n_ else "—"
             rows.append(row)
         st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
-        st.caption("Hücre: isabet % (tahmin sayısı). Diğer piyasaların eşikleri yukarıdaki kaydırıcılardaki gibi kalır.")
 
     with st.expander("🔎 Maç maç detay"):
         def _ik(d): return "—" if d is None else ("✅" if d else "❌")
