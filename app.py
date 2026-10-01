@@ -311,7 +311,7 @@ def esik_1x2_al(secim):
 # ==========================================
 ULKE_BAYRAK = {
     "switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭",
-    "england": "🏴󠁧󠁢󠁥󠁮󠁧", "ingiltere": "🏴", "i̇ngiltere": "🏴",
+    "england": "🏴", "ingiltere": "🏴", "i̇ngiltere": "🏴",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "italy": "🇮🇹", "italya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪", "france": "🇫🇷", "fransa": "🇫🇷",
     "netherlands": "🇳🇱", "hollanda": "🇳🇱", "portugal": "🇵🇹", "portekiz": "🇵🇹",
@@ -666,10 +666,7 @@ def _gelecek_mac_isle(mac, mevcut_urls):
             return ("atlandi", veri, "Zaten var")
         if _mac_tahmin_var_mi(veri):
             kayit = kayit_olustur(veri, analiz_hesapla(veri))
-            with _kilit:
-                st.session_state.gelecek_analizler.append(kayit)
-                gelecek_kaydet(st.session_state.gelecek_analizler)
-            return ("eklendi", veri, "Gelecek'e eklendi")
+            return ("eklendi", kayit, "Gelecek'e eklendi")
         return ("atlandi", veri, "Tahmin yok")
     except Exception as e:
         return ("hata", mac, str(e))
@@ -687,6 +684,7 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
 
     basarili = []; hatali = []
     eklenen = 0; atlanan = 0; tamamlanan = 0
+    eklenecekler = []
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(_gelecek_mac_isle, m, mevcut_urls): m for m in maclar}
@@ -696,7 +694,7 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
             try:
                 sonuc, veri, mesaj = fut.result()
                 if sonuc == "eklendi":
-                    eklenen += 1; basarili.append(veri)
+                    eklenen += 1; basarili.append(veri); eklenecekler.append(veri)
                 elif sonuc == "atlandi":
                     atlanan += 1; basarili.append(veri)
                 else:
@@ -706,6 +704,12 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
             if progress_callback:
                 try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
+
+    # Ana thread'de session_state'e ekle
+    for kayit in eklenecekler:
+        st.session_state.gelecek_analizler.append(kayit)
+    if eklenecekler:
+        gelecek_kaydet(st.session_state.gelecek_analizler)
 
     st.session_state.toplu_cek_ozet = {"eklenen": eklenen, "atlanan": atlanan, "toplam": len(basarili)}
     return basarili, hatali
@@ -760,10 +764,7 @@ def _gecmis_mac_isle(mac, mevcut_urls):
         yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(veri)
         kayit = kayit_olustur(yv, analiz_hesapla(yv))
         kayit["dogruluk"] = sonuc_hesapla(kayit)
-        with _kilit:
-            st.session_state.gecmis_analizler.append(kayit)
-            gecmis_kaydet(st.session_state.gecmis_analizler)
-        return ("eklendi", veri, f"{veri['skor_ev']}-{veri['skor_dep']}")
+        return ("eklendi", kayit, f"{veri['skor_ev']}-{veri['skor_dep']}")
     except Exception as e:
         return ("hata", mac, str(e))
 
@@ -780,6 +781,7 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
     basarili = []; hatali = []
     eklenen = 0; atlanan = 0; tamamlanan = 0
+    eklenecekler = []
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(_gecmis_mac_isle, m, mevcut_urls): m for m in maclar}
@@ -787,9 +789,9 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
             tamamlanan += 1
             mac = futures[fut]
             try:
-                sonuc, veri, mesaj = fut.result()
+                sonuc, kayit, mesaj = fut.result()
                 if sonuc == "eklendi":
-                    eklenen += 1; basarili.append(veri)
+                    eklenen += 1; basarili.append(kayit); eklenecekler.append(kayit)
                 elif sonuc == "atlandi":
                     atlanan += 1
                 else:
@@ -799,6 +801,12 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
             if progress_callback:
                 try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
+
+    # Ana thread'de session_state'e ekle
+    for kayit in eklenecekler:
+        st.session_state.gecmis_analizler.append(kayit)
+    if eklenecekler:
+        gecmis_kaydet(st.session_state.gecmis_analizler)
 
     st.session_state.gecmis_cek_ozet = {"eklenen": eklenen, "atlanan": atlanan}
     return basarili, hatali
