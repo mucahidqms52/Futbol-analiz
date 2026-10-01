@@ -259,7 +259,7 @@ def esik_1x2_al(secim):
 # ==========================================
 ULKE_BAYRAK = {
     "switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭",
-    "england": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ingiltere": "🏴", "i̇ngiltere": "🏴",
+    "england": "🏴", "ingiltere": "🏴", "i̇ngiltere": "🏴",
     "spain": "🇪🇸", "ispanya": "🇪🇸", "italy": "🇮🇹", "italya": "🇮🇹",
     "germany": "🇩🇪", "almanya": "🇩🇪", "france": "🇫🇷", "fransa": "🇫🇷",
     "netherlands": "🇳🇱", "hollanda": "🇳🇱", "portugal": "🇵🇹", "portekiz": "🇵🇹",
