@@ -378,37 +378,43 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 
 
 def _js_tikla_kodu(mac_sec):
-    # Eski ScrapingBee senaryosundaki aynı JS: son N maç + Home/Away seçimi
+    # Filtre: Last games = mac_sec (5/10/15). Ev sahibi takım = Home, deplasman takımı = Away.
+    # Sayfada her takım için Home/Away/Overall var; sırayla ilk "Home" ve son "Away" seçilir.
+    # Tablo içindeki hücreler (puan durumu vb.) atlanır.
     return """
     (function() {
         var macSayi = "%s";
-        var tum = document.querySelectorAll('label, span, div, button');
+        function ok(el) { return el.children.length <= 1 && !el.closest('table'); }
+        function tikla(el) {
+            try { el.click(); } catch(e) {}
+            var inp = el.querySelector('input[type=radio], input[type=checkbox]');
+            if (inp && !inp.checked) { try { inp.click(); } catch(e) {} }
+        }
+        var tum = document.querySelectorAll('label, span, div, button, a, li');
+        var homes = [], aways = [];
         for (var i = 0; i < tum.length; i++) {
             var t = (tum[i].textContent || '').trim();
-            if (t === macSayi && tum[i].children.length <= 1) {
-                try { tum[i].click(); } catch(e) {}
-                var inp = tum[i].querySelector('input[type=radio], input[type=checkbox]');
-                if (inp && !inp.checked) { try { inp.click(); } catch(e) {} }
-            }
+            if (!ok(tum[i])) continue;
+            if (t === macSayi) tikla(tum[i]);
+            else if (t === 'Home') homes.push(tum[i]);
+            else if (t === 'Away') aways.push(tum[i]);
         }
-        var hedef = ['Home', 'Away'];
-        var elems = document.querySelectorAll('label, span, div, button');
-        for (var k = 0; k < elems.length; k++) {
-            var txt = (elems[k].textContent || '').trim();
-            if (hedef.indexOf(txt) !== -1 && elems[k].children.length <= 1) {
-                try { elems[k].click(); } catch(e) {}
-                var inp2 = elems[k].querySelector('input[type=radio], input[type=checkbox]');
-                if (inp2 && !inp2.checked) { try { inp2.click(); } catch(e) {} }
-            }
-        }
+        if (homes.length) tikla(homes[0]);
+        if (aways.length) tikla(aways[aways.length - 1]);
         return true;
     })()
     """ % mac_sec
 
 
-def _playwright_html(url, mac_sec, timeout):
+def _son_n_oku(metin):
+    m = re.search(r'Last\s+(\d+)\s+games', metin or "")
+    return int(m.group(1)) if m else None
+
+
+def _playwright_html(url, mac_sec, timeout, dogrula=False):
     from playwright.sync_api import sync_playwright
     js_kod = _js_tikla_kodu(mac_sec)
+    hedef = int(mac_sec) if str(mac_sec).isdigit() else None
     with _TARAYICI_SEM:
         with sync_playwright() as p:
             b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
@@ -427,13 +433,34 @@ def _playwright_html(url, mac_sec, timeout):
                 pg.wait_for_timeout(3000)
                 pg.evaluate(js_kod)
                 pg.wait_for_timeout(3500)
+
+                if dogrula and hedef:
+                    n = _son_n_oku(pg.inner_text("body"))
+                    # Sayfa "Last 10 games" diyorsa filtre uygulanmamış demektir: gerçek tıklamayla tekrar dene
+                    if n is not None and n != hedef:
+                        try:
+                            for el in pg.get_by_text(str(hedef), exact=True).all()[:20]:
+                                try:
+                                    if el.evaluate("e => !!e.closest('table')"):
+                                        continue
+                                    el.click(timeout=1500)
+                                except Exception:
+                                    pass
+                            pg.wait_for_timeout(1500)
+                            pg.evaluate(js_kod)
+                            pg.wait_for_timeout(3000)
+                        except Exception:
+                            pass
+                        n = _son_n_oku(pg.inner_text("body"))
+                    if n is not None and n != hedef:
+                        raise RuntimeError(f"{hedef} maç filtresi uygulanamadı (sayfa: Last {n} games)")
                 return pg.content()
             finally:
                 try: b.close()
                 except Exception: pass
 
 
-def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3):
+def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3, dogrula=False):
     son_hata = None
 
     # --- Aşama 1: gerçek tarayıcı (veriler eskisiyle birebir aynı) ---
@@ -447,7 +474,7 @@ def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3):
     if playwright_var:
         for deneme in range(max_retry):
             try:
-                html = _playwright_html(url, mac_sec, timeout)
+                html = _playwright_html(url, mac_sec, timeout, dogrula)
                 if html and len(html) > 500:
                     return html, None
                 son_hata = "Boş sayfa"
@@ -456,7 +483,10 @@ def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3):
             if deneme < max_retry - 1:
                 time.sleep(2 + deneme * 2)
 
-    # --- Aşama 2: yedek, düz requests (JS tıklamaları olmaz) ---
+    # --- Aşama 2: yedek, düz requests (JS tıklamaları olmaz => varsayılan 10 maç gelir) ---
+    # Maç filtresi doğrulanması istenen sayfalarda bu yedek KULLANILMAZ, yanlış veri yerine hata döner.
+    if dogrula:
+        return None, son_hata or "Filtre uygulanamadı"
     try:
         r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
         if r.status_code == 200 and r.text:
@@ -504,7 +534,7 @@ def mutating_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI):
 
 
 def mutating_mac_detay_cek(url):
-    html, hata = _scrapingbee_get(url, render_js=True, mac_sec="5")
+    html, hata = _scrapingbee_get(url, render_js=True, mac_sec="5", dogrula=True)
     if hata: return None, [hata]
     if not html: return None, ["Sayfa indirilemedi."]
     return _mac_html_parse(html, url)
@@ -521,6 +551,7 @@ def _mac_html_parse(html, url=""):
             veri["takim_ev"] = p[0].strip()
             if len(p) > 1: veri["takim_dep"] = p[1].strip()
     metin = _html_metne_cevir(html)
+    veri["son_n"] = _son_n_oku(metin)
     m = re.search(r'(\d{1,2}\.\d{1,2}\.\d{4})', metin)
     if m: veri["tarih"] = m.group(1)
     m = re.search(r'(\d{1,2}:\d{2})', metin)
@@ -697,7 +728,7 @@ def _gecmis_mac_isle(mac, mevcut_urls):
     try:
         if mac["url"] in mevcut_urls:
             return ("atlandi", None, "Zaten var")
-        html, hata = _scrapingbee_get(mac["url"], render_js=True, mac_sec="5")
+        html, hata = _scrapingbee_get(mac["url"], render_js=True, mac_sec="5", dogrula=True)
         if hata or not html:
             return ("hata", mac, hata or "HTML yok")
         veri, _ = _mac_html_parse(html, mac["url"])
