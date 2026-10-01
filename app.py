@@ -11,8 +11,117 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
+st.markdown("""
+<style>
+    .block-container { padding-top: 2rem !important; padding-bottom: 0.5rem !important; padding-left: 0.7rem !important; padding-right: 0.7rem !important; max-width: 100% !important; }
+    h1 { font-size: 1.2rem !important; margin: 0.2rem 0 !important; text-align: center; }
+    h2 { font-size: 1rem !important; margin: 0.3rem 0 !important; }
+    h3 { font-size: 0.9rem !important; margin: 0.15rem 0 !important; }
+    p { font-size: 0.85rem !important; margin: 0.2rem 0 !important; }
+    hr { margin: 0.3rem 0 !important; }
+    .stButton button { padding: 0.4rem 0.6rem !important; font-size: 0.9rem !important; height: 2.2rem !important; }
+    div[data-testid="stAlert"] { padding: 0.3rem 0.5rem !important; font-size: 0.85rem !important; }
+    textarea { font-size: 0.75rem !important; }
+    .stApp { background: #0b1220 !important; }
+    header[data-testid="stHeader"] { background: transparent !important; }
+    .stApp, .stApp p, .stApp span, .stApp label, .stApp li, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+    .stApp div[data-testid="stMarkdownContainer"] { color: #e6edf7 !important; }
+    .stApp div[data-testid="stCaptionContainer"], .stApp div[data-testid="stCaptionContainer"] *, .stApp small { color: #8fa0bd !important; }
+    hr { border-color: #23304a !important; }
+    h2, h3 { border-left: 3px solid #22c55e; padding-left: 0.45rem; }
+    .stTextArea textarea, .stTextInput input, div[data-testid="stNumberInput"] input { background: #131c2e !important; color: #e6edf7 !important; border: 1px solid #23304a !important; border-radius: 10px !important; }
+    div[data-baseweb="input"], div[data-baseweb="textarea"], div[data-baseweb="base-input"] { background: #131c2e !important; border-radius: 10px !important; }
+    .stButton button, div[data-testid="stDownloadButton"] button, div[data-testid="stFormSubmitButton"] button { background: #18233a !important; border: 1px solid #23304a !important; border-radius: 12px !important; font-weight: 600 !important; }
+    .stButton button p, div[data-testid="stDownloadButton"] button p, div[data-testid="stFormSubmitButton"] button p { color: #e6edf7 !important; }
+    .stButton button:hover, div[data-testid="stDownloadButton"] button:hover { border-color: #22c55e !important; }
+    .stButton button[kind="primary"], button[data-testid="stBaseButton-primary"], button[data-testid="stBaseButton-primaryFormSubmit"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; border: none !important; }
+    .stButton button[kind="primary"] p, button[data-testid="stBaseButton-primary"] p, button[data-testid="stBaseButton-primaryFormSubmit"] p { color: #04130a !important; }
+    div[data-testid="stExpander"] { background: #131c2e !important; border: 1px solid #23304a !important; border-radius: 14px !important; }
+    div[data-testid="stExpander"] details { border: none !important; }
+    div[data-testid="stAlert"] { border-radius: 12px !important; }
+    .st-key-fa_nav div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.3rem !important; }
+    .st-key-fa_nav div[data-testid="stColumn"], .st-key-fa_nav div[data-testid="column"] { min-width: 0 !important; flex: 1 1 0 !important; width: auto !important; }
+    .st-key-fa_nav .stButton button { padding: 0.2rem 0.2rem !important; height: 2rem !important; }
+    .st-key-fa_nav .stButton button p { font-size: 0.72rem !important; white-space: nowrap; }
+    .stApp .fa-hero { background: linear-gradient(135deg, #16233d, #0f1a2e); border: 1px solid #23304a; border-radius: 18px; padding: 14px 10px; margin: 6px 0 10px 0; text-align: center; }
+    .stApp .fa-teams { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .stApp .fa-team { flex: 1; font-weight: 700; font-size: 0.95rem; line-height: 1.2; word-break: break-word; }
+    .stApp .fa-score { font-size: 1.7rem; font-weight: 800; color: #22c55e !important; min-width: 70px; }
+    .stApp .fa-vs { font-size: 0.95rem; font-weight: 700; color: #8fa0bd !important; min-width: 50px; }
+    .stApp .fa-sub { font-size: 0.72rem; color: #8fa0bd !important; margin-top: 6px; }
+    .stApp .fa-card { background: #131c2e; border: 1px solid #23304a; border-radius: 16px; padding: 12px; margin-bottom: 10px; }
+    .stApp .fa-card.fa-pos { border-color: rgba(34,197,94,0.55); box-shadow: 0 0 0 1px rgba(34,197,94,0.15) inset; }
+    .stApp .fa-card.fa-neg { opacity: 0.92; }
+    .stApp .fa-ttl { font-size: 0.78rem; font-weight: 700; color: #8fa0bd !important; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+    .stApp .fa-pickrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .stApp .fa-pick { font-size: 1.15rem; font-weight: 800; }
+    .stApp .fa-pct { font-size: 1.5rem; font-weight: 800; color: #22c55e !important; }
+    .stApp .fa-pct.fa-off { color: #8fa0bd !important; }
+    .stApp .fa-mut { font-size: 0.74rem; color: #8fa0bd !important; margin-top: 6px; }
+    .stApp .fa-row { margin: 7px 0; }
+    .stApp .fa-row-top { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 3px; }
+    .stApp .fa-lbl { color: #cbd5e1 !important; }
+    .stApp .fa-val { font-weight: 700; }
+    .stApp .fa-bar { position: relative; height: 8px; background: #1d2940; border-radius: 99px; overflow: hidden; }
+    .stApp .fa-fill { height: 100%; border-radius: 99px; }
+    .stApp .fa-tick { position: absolute; top: 0; bottom: 0; width: 2px; background: #e6edf7; opacity: 0.7; }
+    .stApp .fa-badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+    .stApp .fa-b-green { background: rgba(34,197,94,0.15); color: #22c55e !important; border: 1px solid rgba(34,197,94,0.45); }
+    .stApp .fa-b-yellow { background: rgba(245,158,11,0.15); color: #f59e0b !important; border: 1px solid rgba(245,158,11,0.45); }
+    .stApp .fa-b-red { background: rgba(239,68,68,0.15); color: #ef4444 !important; border: 1px solid rgba(239,68,68,0.45); }
+    .stApp .fa-b-gray { background: rgba(148,163,184,0.12); color: #94a3b8 !important; border: 1px solid rgba(148,163,184,0.35); }
+    .stApp .fa-big { font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
+    .stApp .fa-g { color: #22c55e !important; }
+    .stApp .fa-y { color: #f59e0b !important; }
+    .stApp .fa-r { color: #ef4444 !important; }
+    .stApp .fa-mk { background: #131c2e; border: 1px solid #23304a; border-radius: 16px; padding: 10px 12px; margin: -4px 0 8px 0; }
+    .stApp .fa-mk-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #1d2940; }
+    .stApp .fa-mk-row:last-child { border-bottom: none; }
+    .stApp .fa-mk-lbl { font-size: 0.82rem; font-weight: 700; color: #cbd5e1 !important; min-width: 60px; }
+    .stApp .fa-mk-pick { font-size: 0.92rem; font-weight: 800; }
+    .stApp .fa-mk-pick.pass { color: #22c55e !important; }
+    .stApp .fa-mk-pick.off { color: #94a3b8 !important; }
+    .stApp .fa-mk-pct { font-size: 0.85rem; font-weight: 700; color: #e6edf7 !important; }
+    .stApp .fa-mk-badge { font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; margin-left: 6px; }
+    .stApp .fa-mk-badge.ok { background: rgba(34,197,94,0.15); color: #22c55e !important; border: 1px solid rgba(34,197,94,0.45); }
+    .stApp .fa-mk-badge.no { background: rgba(148,163,184,0.12); color: #94a3b8 !important; border: 1px solid rgba(148,163,184,0.35); }
+    .login-hero { text-align: center; padding: 40px 10px 24px 10px; }
+    .login-logo { font-size: 4.5rem; line-height: 1; margin-bottom: 12px; display: inline-block; }
+    .login-title { font-size: 2rem !important; font-weight: 900 !important; background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0 !important; padding: 0 !important; letter-spacing: 1.2px; border: none !important; text-align: center !important; }
+    .login-subtitle { font-size: 0.88rem; color: #8fa0bd !important; margin-top: 8px; }
+    div[data-testid="stForm"] { background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95)) !important; border: 1px solid rgba(34,197,94,0.18) !important; border-radius: 22px !important; padding: 24px 20px !important; }
+    div[data-testid="stForm"] label p { font-size: 0.8rem !important; font-weight: 700 !important; color: #cbd5e1 !important; }
+    div[data-testid="stForm"] input { height: 46px !important; font-size: 0.95rem !important; padding: 0 14px !important; background: rgba(11,18,32,0.85) !important; border: 1.5px solid #23304a !important; border-radius: 12px !important; }
+    div[data-testid="stForm"] input:focus { border-color: #22c55e !important; outline: none !important; }
+    div[data-testid="stForm"] button { height: 46px !important; font-size: 0.95rem !important; font-weight: 700 !important; border-radius: 12px !important; }
+    div[data-testid="stForm"] button[kind="primary"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; border: none !important; }
+    div[data-testid="stForm"] button[kind="secondary"] { background: rgba(30,41,59,0.55) !important; border: 1.5px solid #23304a !important; }
+    .login-divider { display: flex; align-items: center; gap: 12px; margin: 10px 0 6px 0; color: #64748b !important; font-size: 0.7rem; font-weight: 700; letter-spacing: 3px; justify-content: center; }
+    .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #23304a 50%, transparent); }
+    .login-features { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 22px; }
+    .lf-chip { display: inline-block; padding: 6px 14px; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); border-radius: 99px; font-size: 0.75rem; font-weight: 600; color: #cbd5e1 !important; }
+    .login-footer { text-align: center; margin-top: 26px; font-size: 0.72rem; color: #64748b !important; }
+    .login-footer b { color: #22c55e !important; font-weight: 700; }
+    .mh-hero { position: relative; overflow: hidden; text-align: center; padding: 30px 14px 22px 14px; background: linear-gradient(135deg, rgba(22,35,61,0.85), rgba(15,26,46,0.9)); border: 1px solid rgba(34,197,94,0.22); border-radius: 22px; margin: 6px 0 16px 0; }
+    .mh-hero-icon { font-size: 3.2rem; line-height: 1; margin-bottom: 10px; display: inline-block; }
+    .mh-hero-title { font-size: 1.7rem; font-weight: 900; background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: 1px; margin: 0; }
+    .mh-hero-sub { font-size: 0.84rem; color: #8fa0bd; margin-top: 8px; }
+    .mh-hero-badge { display: inline-block; margin-top: 12px; padding: 4px 14px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4); border-radius: 99px; font-size: 0.72rem; font-weight: 700; color: #22c55e !important; }
+    .mh-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 16px 0; }
+    .mh-stat { position: relative; background: linear-gradient(145deg, #16233d, #0f1a2e); border: 1px solid #23304a; border-radius: 16px; padding: 14px 8px 12px 8px; text-align: center; }
+    .mh-stat::after { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #22c55e, #3b82f6); }
+    .mh-stat-icon { font-size: 1.3rem; margin-bottom: 2px; }
+    .mh-stat-num { font-size: 1.85rem; font-weight: 900; color: #22c55e !important; line-height: 1; }
+    .mh-stat-lbl { font-size: 0.68rem; color: #8fa0bd !important; margin-top: 5px; text-transform: uppercase; font-weight: 700; }
+    .mh-section-title { font-size: 0.78rem; color: #8fa0bd !important; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; margin: 4px 0 8px 4px; text-align: left; border-left: 3px solid #22c55e; padding-left: 8px; }
+    .st-key-fa_misafir_nav .stButton button { height: 72px !important; font-size: 1rem !important; font-weight: 800 !important; border-radius: 16px !important; }
+    .st-key-fa_misafir_nav .stButton button p { font-size: 1rem !important; font-weight: 800 !important; }
+    .mh-info { background: linear-gradient(145deg, rgba(19,28,46,0.6), rgba(11,18,32,0.8)); border: 1px solid #23304a; border-radius: 14px; padding: 12px 14px; margin-top: 14px; font-size: 0.76rem; color: #8fa0bd !important; line-height: 1.6; }
+</style>
+""", unsafe_allow_html=True)
+
 # ==========================================
-# DOSYALAR (GitHub Actions botunun yazdığı)
+# DOSYALAR
 # ==========================================
 GECMIS_DOSYA = "data/gecmis.json"
 GELECEK_DOSYA = "data/gelecek.json"
@@ -511,20 +620,17 @@ def okunan_veriler_paneli(v):
 
 
 def mac_durum_etiketi(v):
-    """Maç başladı mı bitti mi kontrol eder ve HTML etiket döner."""
+    """Maç başladı mı bitti mi kontrol eder."""
     try:
         mac_tarih = (v.get("tarih", "") or "").strip()
         mac_saat = (v.get("saat", "") or "").strip()
         if not mac_tarih or not mac_saat:
             return ""
-        # "10.09.2026" + "20:00" → datetime
         mac_dt = datetime.strptime(f"{mac_tarih} {mac_saat}", "%d.%m.%Y %H:%M")
-        # TR saati = UTC + 3
         simdi_tr = datetime.utcnow() + timedelta(hours=3)
         fark_dk = (simdi_tr - mac_dt).total_seconds() / 60
-
         if fark_dk < -15:
-            return ""  # Henüz yaklaşmadı
+            return ""
         elif fark_dk < 0:
             return '<div style="background:#3b82f6;color:white;padding:6px 12px;border-radius:8px;text-align:center;font-weight:700;margin-bottom:8px;">⏰ MAÇ BAŞLAMAK ÜZERE</div>'
         elif fark_dk <= 60:
@@ -624,7 +730,7 @@ if st.session_state.sayfa == "giris":
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center; color:gray;'>Veriler GitHub Actions tarafından 2 saatte bir güncellenir.</p>", unsafe_allow_html=True)
 
-        st.info("🤖 **Bot her 2 saatte bir çalışır.** Veriler otomatik güncellenir. Hiçbir şey yapman gerekmez.")
+        st.info("🤖 **Bot her 2 saatte bir çalışır.** Veriler otomatik güncellenir.")
         st.caption(f"📊 Şu an: **{len(st.session_state.gecmis_analizler)}** geçmiş, **{len(st.session_state.gelecek_analizler)}** gelecek maç")
 
         c1, c2, c3 = st.columns(3)
@@ -774,7 +880,6 @@ elif st.session_state.sayfa == "gelecek":
             a = analiz_hesapla(v); le = a["lam_ev"]; ld = a["lam_dep"]
         except Exception: le = ld = 0
 
-        # Durum etiketi (başladı mı bitti mi)
         durum = mac_durum_etiketi(v)
         if durum:
             st.markdown(durum, unsafe_allow_html=True)
