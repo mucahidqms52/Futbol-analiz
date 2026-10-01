@@ -1277,7 +1277,7 @@ if st.session_state.sayfa == "canli":
     st.caption("LiveScore MCP ile 1000+ ligden gerçek zamanlı skorlar")
 
     if not MCP_OK:
-        st.error(""")
+        st.error("""
         if not MCP_OK:
     st.error(
         "❌ **MCP kütüphanesi kurulu değil.**\n\n"
