@@ -1464,7 +1464,7 @@ def matristen_olasilik(matris, max_gol=MAX_GOL):
 
 
 def veri_yeterli_mi(v):
-    onemli = [v["atilan_ev"], v["atilan_dep"], v["yenen_ev"], v["yenen_dep"]]
+    onemli = [v.get("atilan_ev", 0), v.get("atilan_dep", 0), v.get("yenen_ev", 0), v.get("yenen_dep", 0)]
     return sum(1 for x in onemli if x > 0) >= 2
 
 
@@ -1711,39 +1711,60 @@ def sonuc_hesapla(kayit):
 
 
 # ==========================================
-# YORUM
+# YORUM  (GÜVENLİ VERSİYON - .get() KULLANIR)
 # ==========================================
 def detayli_analiz_yorumu(v):
     yorumlar = []
-    ppg, mpg = v["ppg_ev"], v["mpg_dep"]
-    fark = ppg - mpg
-    if ppg >= 2.0 and mpg <= 1.0:
-        txt = f"Ev sahibi evinde mükemmel form (**PPG {ppg:.2f}**), deplasman zayıf (**MPG {mpg:.2f}**)."
-    elif fark >= 0.7: txt = f"Ev sahibi form olarak önde (**PPG {ppg:.2f}** vs **{mpg:.2f}**)."
-    elif fark <= -0.7: txt = f"Deplasman form olarak önde (**MPG {mpg:.2f}** vs **{ppg:.2f}**)."
-    else: txt = f"Form dengeli (**PPG {ppg:.2f}** vs **MPG {mpg:.2f}**)."
-    yorumlar.append(("📈 FORM", txt))
+    ppg = v.get("ppg_ev", 0.0)
+    mpg = v.get("mpg_dep", 0.0)
 
-    s_ev, s_dep = v["siralama_ev"], v["siralama_dep"]
+    if ppg > 0 or mpg > 0:
+        fark = ppg - mpg
+        if ppg >= 2.0 and mpg <= 1.0:
+            txt = f"Ev sahibi evinde mükemmel form (**PPG {ppg:.2f}**), deplasman zayıf (**MPG {mpg:.2f}**)."
+        elif fark >= 0.7:
+            txt = f"Ev sahibi form olarak önde (**PPG {ppg:.2f}** vs **{mpg:.2f}**)."
+        elif fark <= -0.7:
+            txt = f"Deplasman form olarak önde (**MPG {mpg:.2f}** vs **{ppg:.2f}**)."
+        else:
+            txt = f"Form dengeli (**PPG {ppg:.2f}** vs **MPG {mpg:.2f}**)."
+        yorumlar.append(("📈 FORM", txt))
+
+    s_ev = v.get("siralama_ev", 0)
+    s_dep = v.get("siralama_dep", 0)
     if s_ev > 0 and s_dep > 0:
         fark_sira = s_dep - s_ev
-        if fark_sira >= 8: txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. **{fark_sira} basamak** ciddi fark."
-        elif fark_sira >= 3: txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. Ev sahibi üstün."
-        elif fark_sira <= -8: txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman **{abs(fark_sira)} basamak** yukarıda."
-        else: txt = f"Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**)."
+        if fark_sira >= 8:
+            txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. **{fark_sira} basamak** ciddi fark."
+        elif fark_sira >= 3:
+            txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. Ev sahibi üstün."
+        elif fark_sira <= -8:
+            txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman **{abs(fark_sira)} basamak** yukarıda."
+        else:
+            txt = f"Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**)."
         yorumlar.append(("🏆 SIRALAMA", txt))
 
-    at_ev, at_dep = v["atilan_ev"], v["atilan_dep"]
-    if at_ev - at_dep >= 0.6: txt = f"Ev sahibi maç başına **{at_ev:.1f}** gol atıyor, deplasman **{at_dep:.1f}**."
-    elif at_ev - at_dep <= -0.6: txt = f"Deplasman maç başına **{at_dep:.1f}** gol atıyor, ev sahibi **{at_ev:.1f}**."
-    else: txt = f"Atılan goller benzer (Ev **{at_ev:.1f}** / Dep **{at_dep:.1f}**)."
-    yorumlar.append(("⚽ ATILAN GOL", txt))
+    at_ev = v.get("atilan_ev", 0.0)
+    at_dep = v.get("atilan_dep", 0.0)
+    if at_ev > 0 or at_dep > 0:
+        if at_ev - at_dep >= 0.6:
+            txt = f"Ev sahibi maç başına **{at_ev:.1f}** gol atıyor, deplasman **{at_dep:.1f}**."
+        elif at_ev - at_dep <= -0.6:
+            txt = f"Deplasman maç başına **{at_dep:.1f}** gol atıyor, ev sahibi **{at_ev:.1f}**."
+        else:
+            txt = f"Atılan goller benzer (Ev **{at_ev:.1f}** / Dep **{at_dep:.1f}**)."
+        yorumlar.append(("⚽ ATILAN GOL", txt))
 
-    y_ev, y_dep = v["yenen_ev"], v["yenen_dep"]
-    if y_dep - y_ev >= 0.7: txt = f"Ev sahibi savunması sağlam (**{y_ev:.1f}**), deplasman zayıf (**{y_dep:.1f}**)."
-    elif y_dep - y_ev <= -0.7: txt = f"Deplasman savunması sağlam (**{y_dep:.1f}**), ev sahibi zayıf (**{y_ev:.1f}**)."
-    else: txt = f"Savunmalar benzer (Ev **{y_ev:.1f}** / Dep **{y_dep:.1f}**)."
-    yorumlar.append(("🛡️ YENEN GOL", txt))
+    y_ev = v.get("yenen_ev", 0.0)
+    y_dep = v.get("yenen_dep", 0.0)
+    if y_ev > 0 or y_dep > 0:
+        if y_dep - y_ev >= 0.7:
+            txt = f"Ev sahibi savunması sağlam (**{y_ev:.1f}**), deplasman zayıf (**{y_dep:.1f}**)."
+        elif y_dep - y_ev <= -0.7:
+            txt = f"Deplasman savunması sağlam (**{y_dep:.1f}**), ev sahibi zayıf (**{y_ev:.1f}**)."
+        else:
+            txt = f"Savunmalar benzer (Ev **{y_ev:.1f}** / Dep **{y_dep:.1f}**)."
+        yorumlar.append(("🛡️ YENEN GOL", txt))
 
     return yorumlar
 
@@ -3204,15 +3225,22 @@ elif st.session_state.sayfa == "sonuc":
         d = None
 
     with st.expander("🔍 Geniş Kapsamlı Analiz", expanded=False):
-        for baslik, metin in detayli_analiz_yorumu(v):
-            st.markdown(f"**{baslik}**"); st.markdown(metin); st.markdown("")
+        genel_yorumlar = detayli_analiz_yorumu(v)
+        if genel_yorumlar:
+            for baslik, metin in genel_yorumlar:
+                st.markdown(f"**{baslik}**")
+                st.markdown(metin)
+                st.markdown("")
+        else:
+            st.caption("ℹ️ Genel form/sıralama verisi yok.")
 
         y1x2 = birx_iki_detayli_aciklama(v, a)
         if y1x2:
             st.markdown("---")
             for satir in y1x2:
                 if satir.startswith("🎯"):
-                    st.markdown(f"### {satir}")
+                    st.markdown(f"**{satir}**")
+                    st.markdown("")
                 else:
                     st.markdown(satir)
 
@@ -3221,7 +3249,8 @@ elif st.session_state.sayfa == "sonuc":
             st.markdown("---")
             for satir in gol_aciklama:
                 if satir.startswith("🎯"):
-                    st.markdown(f"### {satir}")
+                    st.markdown(f"**{satir}**")
+                    st.markdown("")
                 else:
                     st.markdown(satir)
 
@@ -3230,12 +3259,13 @@ elif st.session_state.sayfa == "sonuc":
             st.markdown("---")
             for satir in kg_aciklama:
                 if satir.startswith("🤝"):
-                    st.markdown(f"### {satir}")
+                    st.markdown(f"**{satir}**")
+                    st.markdown("")
                 else:
                     st.markdown(satir)
 
-        if not gol_aciklama and not kg_aciklama:
-            st.info("ℹ️ Her iki market de pozitif değil.")
+        if not y1x2 and not gol_aciklama and not kg_aciklama and not genel_yorumlar:
+            st.info("ℹ️ Gösterilecek analiz yorumu yok.")
 
     st.divider()
     st.markdown("## 🏆 FİNAL ÖNERİ")
