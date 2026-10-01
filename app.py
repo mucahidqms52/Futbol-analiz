@@ -136,17 +136,72 @@ st.markdown("""
     div[data-testid="stMetricValue"] { font-size: 1.1rem !important; font-weight: 800 !important; }
     div[data-testid="stMetricLabel"] { font-size: 0.72rem !important; }
 
+    /* ===== EXPANDER (BAŞLIK ÜST ÜSTE BİNME SORUNU DÜZELTİLDİ) ===== */
     div[data-testid="stExpander"] {
         background: linear-gradient(145deg, var(--card), #0f1829) !important;
         border: 1px solid var(--border) !important;
         border-radius: 16px !important;
         overflow: hidden;
     }
-    div[data-testid="stExpander"] summary {
-        font-size: 0.9rem !important; padding: 0.7rem 1rem !important;
+
+    div[data-testid="stExpander"] details > summary {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 0.92rem !important;
         font-weight: 700 !important;
+        line-height: 1.4 !important;
+        min-height: 48px !important;
+        overflow: hidden !important;
+        cursor: pointer !important;
     }
-    div[data-testid="stExpander"] summary:hover { background: rgba(34,197,94,0.05); }
+
+    div[data-testid="stExpander"] details > summary:hover {
+        background: rgba(34,197,94,0.05) !important;
+    }
+
+    /* Streamlit'in varsayılan ok ikonu yerine kendi okumuzu kullanmak için sıfırla */
+    div[data-testid="stExpander"] details > summary::before {
+        display: none !important;
+        content: none !important;
+    }
+
+    /* Başlık metni */
+    div[data-testid="stExpander"] details > summary p,
+    div[data-testid="stExpander"] details > summary span,
+    div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"] {
+        font-size: 0.92rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        line-height: 1.4 !important;
+        color: #eaf1fb !important;
+        white-space: normal !important;
+        display: inline-block !important;
+    }
+
+    /* Summary içindeki flex container (Streamlit bazen bir div sarar) */
+    div[data-testid="stExpander"] details > summary > div {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+    }
+
+    div[data-testid="stExpander"] details > summary > div > svg,
+    div[data-testid="stExpander"] details > summary > svg {
+        flex-shrink: 0 !important;
+        width: 16px !important;
+        height: 16px !important;
+        min-width: 16px !important;
+        transition: transform 0.2s ease !important;
+    }
+
+    /* Expander içerik */
+    div[data-testid="stExpander"] details > div[role="region"] {
+        padding: 0.5rem 1rem 1rem 1rem !important;
+    }
 
     div[data-testid="stAlert"] { padding: 0.5rem 0.8rem !important; font-size: 0.87rem !important; border-radius: 12px !important; }
 
@@ -1711,7 +1766,7 @@ def sonuc_hesapla(kayit):
 
 
 # ==========================================
-# YORUM  (GÜVENLİ VERSİYON - .get() KULLANIR)
+# YORUM (GÜVENLİ - .get() KULLANIR)
 # ==========================================
 def detayli_analiz_yorumu(v):
     yorumlar = []
@@ -2292,7 +2347,7 @@ def ust_bar():
 # MİSAFİR AÇIKLAMA BÖLÜMÜ
 # ==========================================
 def misafir_aciklama():
-    with st.expander("📖 **Uygulamayı Tanı ve Kuralları Oku**", expanded=False):
+    with st.expander("📖 Uygulamayı Tanı ve Kuralları Oku", expanded=False):
         st.markdown("""
 ### ⚽ Futbol Analiz Pro Nedir?
 
@@ -2464,12 +2519,10 @@ Kısa vadede kayıp normal. Önemli olan **ortalamadır.**
 # ==========================================
 # UYGULAMA BAŞLANGIÇ
 # ==========================================
-# Admin login ekranı açıksa onu göster
 if st.session_state.admin_login_acik and not admin_mi():
     admin_giris_ekrani()
     st.stop()
 
-# Direkt uygulamaya gir (misafir veya admin)
 ust_bar()
 nav_bar()
 
@@ -2561,7 +2614,6 @@ if st.session_state.sayfa == "giris":
             st.session_state.sayfa = "ayarlar"
             st.rerun()
     else:
-        # ===== MODERN MİSAFİR ANA SAYFA =====
         gecmis_sayi = len(st.session_state.gecmis_analizler)
         gelecek_sayi = len(st.session_state.gelecek_analizler)
 
