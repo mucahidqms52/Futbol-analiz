@@ -1053,6 +1053,75 @@ def sonuc_hesapla(kayit):
     }
 
 
+def test_hesapla(kayitlar, e):
+    """Geçmiş maçları verilen eşiklerle değerlendirir (kayıtlı analiz değerlerini kullanır)."""
+    isimler = ["1", "X", "2", "Üst", "Alt", "KG Var", "KG Yok"]
+    st_ = {k: [0, 0] for k in isimler}  # [tahmin sayısı, tutan]
+    satirlar = []
+    for g in kayitlar:
+        v = g.get("veri", {}); a = g.get("analiz", {})
+        se = v.get("skor_ev", 0); sd = v.get("skor_dep", 0)
+        g1 = "1" if se > sd else ("X" if se == sd else "2")
+        gg = "Üst" if se + sd > 2.5 else "Alt"
+        gk = "KG Var" if (se > 0 and sd > 0) else "KG Yok"
+
+        p1 = a.get("p1", 33.33); px = a.get("px", 33.33); p2 = a.get("p2", 33.34)
+        s1, y1 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
+        t1 = {"1": e["esik_1"], "X": e["esik_x"], "2": e["esik_2"]}[s1]
+        o1 = s1 if y1 >= t1 else None
+
+        u25 = a.get("ust_25", 50.0); alt = 100 - u25
+        og = None
+        if u25 >= e["ust"] and u25 >= alt: og = "Üst"
+        elif alt >= e["alt"] and alt >= u25: og = "Alt"
+
+        kgv = a.get("kg_var_model", 50.0); kgy = 100 - kgv
+        ok = None
+        if kgv >= e["kg_var"] and kgv >= kgy: ok = "KG Var"
+        elif kgy >= e["kg_yok"] and kgy >= kgv: ok = "KG Yok"
+
+        d1 = dg = dk = None
+        if o1:
+            d1 = (o1 == g1); st_[o1][0] += 1; st_[o1][1] += int(d1)
+        if og:
+            dg = (og == gg); st_[og][0] += 1; st_[og][1] += int(dg)
+        if ok:
+            dk = (ok == gk); st_[ok][0] += 1; st_[ok][1] += int(dk)
+        satirlar.append({"ev": v.get("takim_ev", "Ev"), "dep": v.get("takim_dep", "Dep"),
+                         "skor": f"{se}-{sd}", "o1": o1, "d1": d1, "og": og, "dg": dg, "ok": ok, "dk": dk})
+    return st_, satirlar
+
+
+def ozet_html(ist):
+    """test_hesapla çıktısını (isabet % ve tutan/tahmin) kart HTML'ine çevirir."""
+    def _trow(etiket, n, h, kalin=False):
+        if n == 0:
+            pt, cls = "—", "off"
+        else:
+            pc = h / n * 100
+            pt = f"%{pc:.0f}"; cls = "pass" if pc >= 50 else "off"
+        et = f"<b>{_e(etiket)}</b>" if kalin else _e(etiket)
+        return f'<div class="fa-mk-row"><span class="fa-mk-lbl">{et}</span><span class="fa-mk-pick {cls}">{pt}</span><span class="fa-mk-pct">{h}/{n}</span></div>'
+
+    def _topla(*ks):
+        return sum(ist[k][0] for k in ks), sum(ist[k][1] for k in ks)
+
+    n12, h12 = _topla("1", "X", "2"); ng, hg = _topla("Üst", "Alt"); nk, hk = _topla("KG Var", "KG Yok")
+    h = '<div class="fa-mk">'
+    h += _trow("🎯 1X2 toplam", n12, h12, True)
+    h += _trow("   1", *ist["1"]) + _trow("   X", *ist["X"]) + _trow("   2", *ist["2"])
+    h += _trow("⚽ Gol toplam", ng, hg, True)
+    h += _trow("   Üst 2.5", *ist["Üst"]) + _trow("   Alt 2.5", *ist["Alt"])
+    h += _trow("🤝 KG toplam", nk, hk, True)
+    h += _trow("   KG Var", *ist["KG Var"]) + _trow("   KG Yok", *ist["KG Yok"])
+    return h + '</div>'
+
+
+def kayitli_esikler():
+    return {"esik_1": esik_1x2_al("1"), "esik_x": esik_1x2_al("X"), "esik_2": esik_1x2_al("2"),
+            "ust": esik_al("ust"), "alt": esik_al("alt"), "kg_var": esik_al("kg_var"), "kg_yok": esik_al("kg_yok")}
+
+
 # ==========================================
 # UI YARDIMCILARI
 # ==========================================
@@ -1161,7 +1230,7 @@ def nav_bar():
     except TypeError: k = st.container()
     with k:
         if admin_mi():
-            sc = [("🏠", "giris"), ("📊 Geçmiş", "gecmis"), ("🔮 Gelecek", "gelecek"), ("⚙️ Ayar", "ayarlar")]
+            sc = [("🏠", "giris"), ("📊 Geçmiş", "gecmis"), ("🔮 Gelecek", "gelecek"), ("🧪 Test", "test"), ("⚙️", "ayarlar")]
         else:
             sc = [("🏠 Ana", "giris"), ("📊 Geçmiş", "gecmis"), ("🔮 Gelecek", "gelecek")]
         kl = st.columns(len(sc))
@@ -1323,7 +1392,7 @@ if st.session_state.sayfa == "giris":
                         st.session_state.sayfa = "sonuc"; st.rerun()
 
         st.divider()
-        c1, c2, c3 = st.columns(3)
+        c1, c2, c3, c4 = st.columns(4)
         with c1:
             if st.button("📊 Geçmiş", use_container_width=True):
                 st.session_state.sayfa = "gecmis"; st.rerun()
@@ -1331,6 +1400,9 @@ if st.session_state.sayfa == "giris":
             if st.button("🔮 Gelecek", use_container_width=True):
                 st.session_state.sayfa = "gelecek"; st.rerun()
         with c3:
+            if st.button("🧪 Test", use_container_width=True):
+                st.session_state.sayfa = "test"; st.rerun()
+        with c4:
             if st.button("⚙️ Ayarlar", use_container_width=True):
                 st.session_state.sayfa = "ayarlar"; st.rerun()
     else:
@@ -1367,6 +1439,13 @@ elif st.session_state.sayfa == "gecmis":
     toplam = len(gec)
     if not gec:
         st.info("ℹ️ Kayıt yok.")
+    gec_s = [g for g in gec if g.get("veri", {}).get("skor_belli")]
+    if gec_s:
+        ist_g, _ = test_hesapla(gec_s, kayitli_esikler())
+        st.markdown("### 📈 Genel Analiz")
+        st.markdown(ozet_html(ist_g), unsafe_allow_html=True)
+        st.caption(f"{len(gec_s)} skorlu maç • kayıtlı eşiklere göre isabet % ve tutan/tahmin sayısı")
+        st.divider()
     for i, g in enumerate(reversed(gec)):
         ig = len(gec) - 1 - i
         v = g["veri"]
@@ -1594,6 +1673,96 @@ elif st.session_state.sayfa == "ayarlar":
             st.session_state.esikler = v; ayarlar_kaydet(v); st.rerun()
     with cg:
         if st.button("⬅️ Ana Sayfa", use_container_width=True, key="aygeri"):
+            st.session_state.sayfa = "giris"; st.rerun()
+
+
+# ==========================================
+# TEST (Geçmiş maçlar üzerinde eşik testi)
+# ==========================================
+elif st.session_state.sayfa == "test":
+    if not admin_mi():
+        st.error("❌ Sadece admin."); st.stop()
+    st.markdown("<h1>🧪 Test (Geçmiş Maçlar)</h1>", unsafe_allow_html=True)
+
+    gec_t = [g for g in st.session_state.gecmis_analizler if g.get("veri", {}).get("skor_belli")]
+    if not gec_t:
+        st.info("ℹ️ Skorlu geçmiş maç yok. Önce Ana Sayfa → Lig Geçmişi ile maç ekle.")
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="t_geri0"):
+            st.session_state.sayfa = "giris"; st.rerun()
+        st.stop()
+
+    mv_t = st.session_state.esikler
+    ANAHTARLAR = [("t_1", "esik_1", 55.0), ("t_x", "esik_x", 55.0), ("t_2", "esik_2", 55.0),
+                  ("t_ust", "ust", 65.0), ("t_alt", "alt", 55.0), ("t_kgv", "kg_var", 57.0), ("t_kgy", "kg_yok", 72.0)]
+
+    def _t_sifirla():
+        for wk, ek, vr in ANAHTARLAR:
+            st.session_state[wk] = int(st.session_state.esikler.get(ek, vr))
+
+    for wk, ek, vr in ANAHTARLAR:
+        if wk not in st.session_state:
+            st.session_state[wk] = int(mv_t.get(ek, vr))
+
+    st.caption(f"{len(gec_t)} skorlu maç. Eşikleri değiştir, sonuç anında güncellenir. Burada yaptığın değişiklik **Ayarlar'ı etkilemez**, istersen aşağıdan kaydedebilirsin.")
+
+    st.markdown("### 🎯 Maç Sonucu")
+    tc1, tc2, tc3 = st.columns(3)
+    with tc1: st.slider("1 (Ev) %", 0, 100, key="t_1")
+    with tc2: st.slider("X %", 0, 100, key="t_x")
+    with tc3: st.slider("2 (Dep) %", 0, 100, key="t_2")
+    st.markdown("### ⚽ Gol")
+    tc4, tc5 = st.columns(2)
+    with tc4: st.slider("Üst 2.5 %", 0, 100, key="t_ust")
+    with tc5: st.slider("Alt 2.5 %", 0, 100, key="t_alt")
+    st.markdown("### 🤝 KG")
+    tc6, tc7 = st.columns(2)
+    with tc6: st.slider("KG Var %", 0, 100, key="t_kgv")
+    with tc7: st.slider("KG Yok %", 0, 100, key="t_kgy")
+
+    e_t = {"esik_1": float(st.session_state.t_1), "esik_x": float(st.session_state.t_x), "esik_2": float(st.session_state.t_2),
+           "ust": float(st.session_state.t_ust), "alt": float(st.session_state.t_alt),
+           "kg_var": float(st.session_state.t_kgv), "kg_yok": float(st.session_state.t_kgy)}
+
+    ist, satirlar = test_hesapla(gec_t, e_t)
+
+    html_t = ozet_html(ist)
+    st.markdown("### 📊 Sonuç")
+    st.markdown(html_t, unsafe_allow_html=True)
+    st.caption("Format: isabet % ve tutan/tahmin sayısı. Tahmin sayısı, eşiği geçen maç sayısıdır.")
+
+    with st.expander("📈 Eşik taraması (her piyasa ayrı ayrı)"):
+        import pandas as pd
+        lst = [50, 55, 60, 65, 70, 75, 80]
+        harita = [("esik_1", "1"), ("esik_x", "X"), ("esik_2", "2"), ("ust", "Üst"), ("alt", "Alt"), ("kg_var", "KG Var"), ("kg_yok", "KG Yok")]
+        rows = []
+        for t in lst:
+            row = {"Eşik": f"%{t}"}
+            for ak, isim in harita:
+                e2 = dict(e_t); e2[ak] = float(t)
+                s2, _ = test_hesapla(gec_t, e2)
+                n_, h_ = s2[isim]
+                row[isim] = f"%{h_ / n_ * 100:.0f} ({n_})" if n_ else "—"
+            rows.append(row)
+        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+        st.caption("Hücre: isabet % (tahmin sayısı). Diğer piyasaların eşikleri yukarıdaki kaydırıcılardaki gibi kalır.")
+
+    with st.expander("🔎 Maç maç detay"):
+        def _ik(d): return "—" if d is None else ("✅" if d else "❌")
+        for r in reversed(satirlar):
+            st.markdown(
+                f"**{_e(r['ev'])} {_e(r['skor'])} {_e(r['dep'])}**  \n"
+                f"1X2: {r['o1'] or '—'} {_ik(r['d1'])} • Gol: {r['og'] or '—'} {_ik(r['dg'])} • KG: {r['ok'] or '—'} {_ik(r['dk'])}"
+            )
+
+    st.divider()
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        if st.button("💾 Ayarlara Kaydet", use_container_width=True, type="primary", key="t_kaydet"):
+            st.session_state.esikler = dict(e_t); ayarlar_kaydet(dict(e_t)); st.success("✅ Eşikler Ayarlar'a kaydedildi!")
+    with b2:
+        st.button("🔄 Kayıtlıya Dön", use_container_width=True, key="t_sifirla", on_click=_t_sifirla)
+    with b3:
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, key="t_geri"):
             st.session_state.sayfa = "giris"; st.rerun()
 
 
