@@ -1,7 +1,3 @@
 streamlit
-pipinstall 
-playwright 
-beautifulsoup4
 requests
-playwright
-installchromium
+beautifulsoup4
