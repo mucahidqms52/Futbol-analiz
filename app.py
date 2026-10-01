@@ -10,6 +10,8 @@ import threading
 import time
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
+import os
+os.system("playwright install chromium")
 
 st.markdown("""<style>...tüm CSS...</style>""", unsafe_allow_html=True)
 
