@@ -9,6 +9,8 @@ import html as _html
 import time
 import threading
 import requests
+import hashlib
+import secrets as _secrets
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -261,6 +263,36 @@ st.markdown("""
     .stApp .fa-mk-badge.ok { background: rgba(34,197,94,0.15); color: var(--green) !important; border: 1px solid rgba(34,197,94,0.5); }
     .stApp .fa-mk-badge.no { background: rgba(148,163,184,0.12); color: #94a3b8 !important; border: 1px solid rgba(148,163,184,0.35); }
     .stApp .fa-mk-info { font-size: 0.66rem; color: var(--muted) !important; }
+
+    /* KİLİTLİ MAÇ KARTI */
+    .stApp .fa-locked {
+        position: relative; overflow: hidden;
+        background: linear-gradient(135deg, #14243e 0%, #0d1729 100%);
+        border: 1px solid var(--border); border-radius: 16px;
+        padding: 14px 12px; margin: 6px 0 10px 0; text-align: center;
+        opacity: 0.7;
+    }
+    .stApp .fa-locked::after {
+        content: "🔒";
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem; opacity: 0.15;
+    }
+    .stApp .fa-locked-teams { display: flex; align-items: center; justify-content: space-between; gap: 6px; filter: blur(3px); }
+    .stApp .fa-locked-overlay {
+        position: absolute; inset: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(59,130,246,0.08));
+        z-index: 2;
+    }
+    .stApp .fa-locked-text {
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        color: #04130a !important; font-weight: 900; font-size: 0.85rem;
+        padding: 10px 20px; border-radius: 99px;
+        box-shadow: 0 8px 24px rgba(34,197,94,0.4);
+        letter-spacing: 0.5px;
+    }
+
     .login-hero { text-align: center; padding: 40px 10px 24px 10px; position: relative; }
     .login-logo { font-size: 4.2rem; line-height: 1; margin-bottom: 14px; display: inline-block; filter: drop-shadow(0 0 30px rgba(34,197,94,0.6)); animation: logoPulse 3s ease-in-out infinite; }
     @keyframes logoPulse { 0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 20px rgba(34,197,94,0.5)); } 50% { transform: scale(1.08) rotate(-3deg); filter: drop-shadow(0 0 40px rgba(34,197,94,0.9)); } }
@@ -308,7 +340,7 @@ st.markdown("""
     ::-webkit-scrollbar-thumb:hover { background: var(--green); }
     section[data-testid="stSidebar"] { background: var(--bg-1) !important; border-right: 1px solid var(--border); }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    .stApp .fa-card, .stApp .fa-hero, .stApp .fa-mk, .mh-stat { animation: fadeInUp 0.4s ease-out; }
+    .stApp .fa-card, .stApp .fa-hero, .stApp .fa-mk, .mh-stat, .stApp .fa-locked { animation: fadeInUp 0.4s ease-out; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -319,7 +351,151 @@ st.markdown("""
 GECMIS_DOSYA = "gecmis.json"
 GELECEK_DOSYA = "gelecek.json"
 AYARLAR_DOSYA = "ayarlar.json"
-ADMIN_SIFRE = "Mg153759"
+KULLANICI_DOSYA = "kullanicilar.json"
+BEKLEYEN_DOSYA = "bekleyen_odemeler.json"
+
+# ==========================================
+# 🔒 GÜVENLİK — ŞİFRE HASH & ADMIN KORUMASI
+# ==========================================
+ADMIN_KULLANICI_ADI = "admin52"
+
+
+def _admin_sifre_al():
+    try:
+        if "ADMIN_SIFRE" in st.secrets:
+            return st.secrets["ADMIN_SIFRE"]
+    except Exception:
+        pass
+    return os.environ.get("ADMIN_SIFRE", "Mg153759")
+
+ADMIN_SIFRE = _admin_sifre_al()
+
+
+def sifre_hashle(sifre, salt=None):
+    if salt is None:
+        salt = _secrets.token_hex(16)
+    h = hashlib.sha256((salt + sifre).encode("utf-8")).hexdigest()
+    return salt, h
+
+
+def sifre_dogrula(sifre, salt, kayitli_hash):
+    _, h = sifre_hashle(sifre, salt)
+    return h == kayitli_hash
+
+
+def kullanicilar_yukle():
+    try:
+        if os.path.exists(KULLANICI_DOSYA):
+            with open(KULLANICI_DOSYA, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+
+def kullanicilar_kaydet(veri):
+    try:
+        with open(KULLANICI_DOSYA, "w", encoding="utf-8") as f:
+            json.dump(veri, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def bekleyen_yukle():
+    try:
+        if os.path.exists(BEKLEYEN_DOSYA):
+            with open(BEKLEYEN_DOSYA, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+
+def bekleyen_kaydet(veri):
+    try:
+        with open(BEKLEYEN_DOSYA, "w", encoding="utf-8") as f:
+            json.dump(veri, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def kullanici_ekle(kullanici_adi, sifre):
+    kullanicilar = kullanicilar_yukle()
+    if kullanici_adi in kullanicilar:
+        return False, "Bu kullanıcı adı zaten alınmış."
+    salt, s_hash = sifre_hashle(sifre)
+    kullanicilar[kullanici_adi] = {
+        "salt": salt,
+        "sifre_hash": s_hash,
+        "kayit_tarihi": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "abonelik_bitis": None,
+        "son_odeme": None,
+        "son_odeme_ay": 0,
+    }
+    kullanicilar_kaydet(kullanicilar)
+    return True, "Kayıt başarılı."
+
+
+def kullanici_dogrula(kullanici_adi, sifre):
+    kullanicilar = kullanicilar_yukle()
+    k = kullanicilar.get(kullanici_adi)
+    if not k:
+        return False
+    return sifre_dogrula(sifre, k["salt"], k["sifre_hash"])
+
+
+def abonelik_aktif_mi(kullanici_adi):
+    kullanicilar = kullanicilar_yukle()
+    k = kullanicilar.get(kullanici_adi)
+    if not k:
+        return False
+    bitis_str = k.get("abonelik_bitis")
+    if not bitis_str:
+        return False
+    try:
+        bitis = datetime.strptime(bitis_str, "%Y-%m-%d")
+        return bitis >= datetime.now()
+    except Exception:
+        return False
+
+
+def abonelik_aktif_et(kullanici_adi, ay_sayisi):
+    kullanicilar = kullanicilar_yukle()
+    if kullanici_adi not in kullanicilar:
+        return False, "Kullanıcı bulunamadı."
+    k = kullanicilar[kullanici_adi]
+    mevcut_bitis = None
+    if k.get("abonelik_bitis"):
+        try:
+            mevcut_bitis = datetime.strptime(k["abonelik_bitis"], "%Y-%m-%d")
+        except Exception:
+            mevcut_bitis = None
+    bugun = datetime.now()
+    baslangic = mevcut_bitis if (mevcut_bitis and mevcut_bitis > bugun) else bugun
+    yeni_bitis = baslangic + timedelta(days=30 * ay_sayisi)
+    k["abonelik_bitis"] = yeni_bitis.strftime("%Y-%m-%d")
+    k["son_odeme"] = bugun.strftime("%Y-%m-%d %H:%M")
+    k["son_odeme_ay"] = ay_sayisi
+    kullanicilar_kaydet(kullanicilar)
+    return True, yeni_bitis.strftime("%Y-%m-%d")
+
+
+def abonelik_iptal_et(kullanici_adi):
+    kullanicilar = kullanicilar_yukle()
+    if kullanici_adi not in kullanicilar:
+        return False
+    kullanicilar[kullanici_adi]["abonelik_bitis"] = None
+    kullanicilar_kaydet(kullanicilar)
+    return True
+
+
+def kullanici_sil(kullanici_adi):
+    kullanicilar = kullanicilar_yukle()
+    if kullanici_adi in kullanicilar:
+        del kullanicilar[kullanici_adi]
+        kullanicilar_kaydet(kullanicilar)
+        return True
+    return False
 
 
 def _yukle(dosya):
@@ -350,6 +526,11 @@ def ayarlar_yukle():
     varsayilan = {
         "ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0,
         "esik_1": 55.0, "esik_x": 55.0, "esik_2": 55.0,
+        "iban": "TR00 0000 0000 0000 0000 0000 00",
+        "hesap_sahibi": "ADINIZ SOYADINIZ",
+        "fiyat_1": 99.0, "fiyat_2": 179.0, "fiyat_3": 249.0,
+        "fiyat_6": 449.0, "fiyat_12": 799.0,
+        "ucretsiz_kotasi": 3,
     }
     try:
         if os.path.exists(AYARLAR_DOSYA):
@@ -530,9 +711,28 @@ if "toplu_cek_ozet" not in st.session_state: st.session_state.toplu_cek_ozet = N
 if "gecmis_cek_ozet" not in st.session_state: st.session_state.gecmis_cek_ozet = None
 if "skor_ozet" not in st.session_state: st.session_state.skor_ozet = None
 
+# Üye girişi
+if "aktif_kullanici" not in st.session_state: st.session_state.aktif_kullanici = None
+if "odeme_hedef_kadi" not in st.session_state: st.session_state.odeme_hedef_kadi = None
+if "admin_odeme_hedef" not in st.session_state: st.session_state.admin_odeme_hedef = None
+
 
 def admin_mi():
     return st.session_state.get("rol") == "admin"
+
+
+def uye_mi():
+    return st.session_state.get("aktif_kullanici") is not None
+
+
+def uye_adi():
+    return st.session_state.get("aktif_kullanici", "")
+
+
+def uye_premium_mu():
+    if not uye_mi():
+        return False
+    return abonelik_aktif_mi(uye_adi())
 
 
 def esik_al(key):
@@ -553,6 +753,13 @@ def esik_1x2_al(secim):
     except Exception:
         pass
     return _ESIK_CACHE.get(k, 55.0)
+
+
+def ayar_al(key, default=None):
+    try:
+        return st.session_state.esikler.get(key, default)
+    except Exception:
+        return default
 
 
 # ==========================================
@@ -1275,8 +1482,6 @@ def gol_detayli_aciklama(v, a):
     at_ev = v.get("atilan_ev", 0); at_dep = v.get("atilan_dep", 0)
     y_ev = v.get("yenen_ev", 0); y_dep = v.get("yenen_dep", 0)
     lig_ort = v.get("lig_ort_toplam", 0)
-    u15 = ort_iki(v.get("ust15_ev", 0), v.get("ust15_dep", 0))
-    u35 = ort_iki(v.get("ust35_ev", 0), v.get("ust35_dep", 0))
     yorumlar = []
     if ust_25 >= esik_al("ust"):
         yorumlar.append(f"🎯 **ÜST 2.5 NEDEN POZİTİF? (%{ust_25:.1f})**")
@@ -1945,6 +2150,30 @@ def mac_karti(ev, dep, skor_belli, skor_ev, skor_dep, lam_ev, lam_dep, saat="", 
             f'{orta}<div class="fa-team">{_e(dep)}</div></div>{alt}</div>')
 
 
+def kilitli_mac_karti(ev, dep, saat="", ulke="", tarih=""):
+    """Premium gerektiren maç kartı."""
+    bayrak = ulke_bayrak_bul(ulke)
+    ust_bilgi = ""
+    if saat or ulke or tarih:
+        parcalar = []
+        if bayrak != "🌍" or ulke: parcalar.append(f"{bayrak} {_e((ulke or '').title())}")
+        if tarih: parcalar.append(f"📅 {_e(tarih)}")
+        if saat: parcalar.append(f"🕐 {_e(saat)}")
+        if parcalar:
+            ust_bilgi = f'<div class="fa-sub" style="margin-bottom:6px;">{" • ".join(parcalar)}</div>'
+    return f'''<div class="fa-locked">
+        {ust_bilgi}
+        <div class="fa-locked-teams">
+            <div class="fa-team">{_e(ev)}</div>
+            <div class="fa-vs">VS</div>
+            <div class="fa-team">{_e(dep)}</div>
+        </div>
+        <div class="fa-locked-overlay">
+            <div class="fa-locked-text">🔒 PREMIUM'A GEÇ</div>
+        </div>
+    </div>'''
+
+
 def mac_tahmin_karti(v_g, g=None):
     try:
         try: ya = yeniden_analiz(v_g)
@@ -2099,7 +2328,10 @@ def nav_bar():
     with kutu:
         if admin_mi():
             secenekler = [("🏠", "giris"), ("📊 Geçmiş", "gecmis"), ("🔮 Gelecek", "gelecek"),
-                          ("🔬 Test", "backtest"), ("⚙️ Ayar", "ayarlar")]
+                          ("🔬 Test", "backtest"), ("💳 Ödemeler", "admin_odemeler"),
+                          ("👥 Aboneler", "admin_aboneler"), ("⚙️ Ayar", "ayarlar")]
+        elif uye_mi():
+            secenekler = [("🏠 Ana", "giris"), ("📊 Geçmiş", "gecmis"), ("🔮 Gelecek", "gelecek")]
         else:
             secenekler = [("🏠 Ana", "giris"), ("📊 Geçmiş", "gecmis"), ("🔮 Gelecek", "gelecek")]
         kolonlar = st.columns(len(secenekler))
@@ -2109,49 +2341,108 @@ def nav_bar():
                 if st.button(etiket, key=f"nav_{hedef}", use_container_width=True,
                              type="primary" if aktif else "secondary"):
                     if not aktif: nav_git(hedef)
-
-
+                        
+# ==========================================
+# ADMİN GİRİŞ EKRANI (Kullanıcı adı + Şifre)
+# ==========================================
 def admin_giris_ekrani():
     st.markdown("""
         <div class="login-hero">
-            <div class="login-logo">👑</div>
-            <h1 class="login-title">Admin Girişi</h1>
-            <p class="login-subtitle">Yönetici paneline erişim</p>
+            <div class="login-logo">🔐</div>
+            <h1 class="login-title">Giriş Yap</h1>
+            <p class="login-subtitle">Admin veya üye girişi</p>
         </div>
     """, unsafe_allow_html=True)
+
     with st.form("admin_giris_form"):
-        sifre = st.text_input("🔐 Admin Şifresi", type="password",
-                              key="admin_sifre_input", placeholder="Şifreni gir...")
+        kadi = st.text_input("👤 Kullanıcı Adı", placeholder="Kullanıcı adın...", key="admin_kadi_input")
+        sifre = st.text_input("🔐 Şifre", type="password", placeholder="Şifren...", key="admin_sifre_input")
+
         col_a, col_b = st.columns(2)
         with col_a:
             giris_btn = st.form_submit_button("✅ Giriş Yap", use_container_width=True, type="primary")
         with col_b:
             iptal_btn = st.form_submit_button("⬅️ Geri Dön", use_container_width=True)
+
         if giris_btn:
-            if sifre == ADMIN_SIFRE:
+            if not kadi.strip() or not sifre:
+                st.error("❌ Kullanıcı adı ve şifre gerekli.")
+            elif kadi.strip() == ADMIN_KULLANICI_ADI and sifre == ADMIN_SIFRE:
                 st.session_state.rol = "admin"
                 st.session_state.admin_login_acik = False
                 st.session_state.sayfa = "giris"
                 st.rerun()
+            elif kullanici_dogrula(kadi.strip(), sifre):
+                st.session_state.aktif_kullanici = kadi.strip()
+                st.session_state.admin_login_acik = False
+                st.session_state.sayfa = "giris"
+                st.success(f"✅ Hoş geldin, {kadi.strip()}!")
+                time.sleep(1)
+                st.rerun()
             else:
-                st.error("❌ Yanlış şifre. Tekrar deneyin.")
+                st.error("❌ Kullanıcı adı veya şifre hatalı.")
+
         if iptal_btn:
             st.session_state.admin_login_acik = False
             st.rerun()
-    st.markdown('<div class="login-footer">© <b>Futbol Analiz Pro</b> • Yönetici Erişimi</div>',
+
+    st.markdown('<div class="login-divider">HESABIN YOK MU?</div>', unsafe_allow_html=True)
+    cc1, cc2 = st.columns(2)
+    with cc1:
+        if st.button("✨ Üye Ol", use_container_width=True, key="admin_to_kayit", type="primary"):
+            st.session_state.admin_login_acik = False
+            st.session_state.sayfa = "kayit"
+            st.rerun()
+    with cc2:
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, key="admin_to_main"):
+            st.session_state.admin_login_acik = False
+            st.rerun()
+
+    st.markdown('<div class="login-footer">© <b>Futbol Analiz Pro</b> • Giriş Sistemi</div>',
                 unsafe_allow_html=True)
 
 
+# ==========================================
+# ÜST BAR
+# ==========================================
 def ust_bar():
-    c1, c2 = st.columns([4, 1])
+    c1, c2, c3 = st.columns([3, 1.3, 1])
+
     with c1:
         if admin_mi():
             st.markdown('<div style="padding:6px 0; font-size:0.8rem; color:#22c55e; font-weight:700;">👑 Admin Modu</div>',
                         unsafe_allow_html=True)
+        elif uye_mi():
+            premium = uye_premium_mu()
+            if premium:
+                badge = '🌟 <span style="color:#22c55e;font-weight:700;">PREMIUM</span>'
+                try:
+                    kullanicilar = kullanicilar_yukle()
+                    bitis_str = kullanicilar.get(uye_adi(), {}).get("abonelik_bitis")
+                    if bitis_str:
+                        bitis = datetime.strptime(bitis_str, "%Y-%m-%d")
+                        kalan = (bitis - datetime.now()).days
+                        if kalan >= 0:
+                            badge += f' <span style="color:#8fa0bd;font-size:0.72rem;">({kalan} gün kaldı)</span>'
+                except Exception:
+                    pass
+                st.markdown(f'<div style="padding:6px 0; font-size:0.8rem; color:#eaf1fb; font-weight:700;">👤 {_e(uye_adi())} &nbsp; {badge}</div>',
+                            unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div style="padding:6px 0; font-size:0.8rem; color:#f59e0b; font-weight:700;">👤 {_e(uye_adi())} <span style="color:#8fa0bd;font-size:0.72rem;">(abonelik yok)</span></div>',
+                            unsafe_allow_html=True)
         else:
             st.markdown('<div style="padding:6px 0; font-size:0.8rem; color:#8fa0bd; font-weight:600;">👤 Misafir Modu</div>',
                         unsafe_allow_html=True)
+
     with c2:
+        if uye_mi() and not admin_mi() and not uye_premium_mu():
+            if st.button("💳 Premium", use_container_width=True, key="ust_premium_btn", type="primary"):
+                st.session_state["odeme_hedef_kadi"] = uye_adi()
+                st.session_state.sayfa = "odeme"
+                st.rerun()
+
+    with c3:
         if admin_mi():
             if st.button("🚪 Çıkış", use_container_width=True, key="cikis_btn"):
                 st.session_state.rol = "misafir"
@@ -2165,6 +2456,11 @@ def ust_bar():
                 st.session_state.aktif_gelecek_idx = None
                 st.session_state.bt_sonuc = None
                 st.session_state.bt_detaylar = []
+                st.rerun()
+        elif uye_mi():
+            if st.button("🚪 Çıkış", use_container_width=True, key="uye_cikis_btn"):
+                st.session_state.aktif_kullanici = None
+                st.session_state.sayfa = "giris"
                 st.rerun()
         else:
             if st.button("🔐 Giriş", use_container_width=True, key="giris_btn", type="primary"):
@@ -2183,9 +2479,12 @@ Sadece **bilgilendirme amaçlıdır.** Kesin sonuç garantisi **YOKTUR.**
 
 ---
 
-### 🎯 EŞİKLER NEDİR?
+### 🌟 PREMIUM AVANTAJLAR
 
-**Eşik** = Bir tahminin "oynanabilir" sayılması için geçmesi gereken minimum yüzde.
+- Günün **TÜM** maçları için detaylı analiz
+- 1X2 / Üst-Alt / KG tahminleri
+- Yüksek güvenli maçlar filtrelenmiş
+- Öncelikli destek
 
 ---
 
@@ -2232,9 +2531,412 @@ nav_bar()
 
 
 # ==========================================
+# SAYFA: KAYIT
+# ==========================================
+if st.session_state.sayfa == "kayit":
+    st.markdown("""
+        <div class="login-hero">
+            <div class="login-logo">✨</div>
+            <h1 class="login-title">Üye Ol</h1>
+            <p class="login-subtitle">Kullanıcı adı ve şifre belirle</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    with st.form("kayit_form"):
+        yeni_kadi = st.text_input("👤 Kullanıcı Adı", placeholder="örn: ahmet34", max_chars=30)
+        yeni_sifre = st.text_input("🔐 Şifre", type="password", placeholder="En az 4 karakter")
+        yeni_sifre_tekrar = st.text_input("🔐 Şifre Tekrar", type="password", placeholder="Şifreyi tekrar gir")
+
+        c1, c2 = st.columns(2)
+        with c1:
+            kayit_btn = st.form_submit_button("✅ Kayıt Ol", use_container_width=True, type="primary")
+        with c2:
+            geri_btn = st.form_submit_button("⬅️ Geri Dön", use_container_width=True)
+
+        if kayit_btn:
+            if not yeni_kadi.strip():
+                st.error("❌ Kullanıcı adı boş olamaz.")
+            elif len(yeni_kadi.strip()) < 3:
+                st.error("❌ Kullanıcı adı en az 3 karakter olmalı.")
+            elif not yeni_kadi.replace("_", "").isalnum():
+                st.error("❌ Kullanıcı adı sadece harf, rakam ve _ içerebilir.")
+            elif yeni_kadi.strip() == ADMIN_KULLANICI_ADI:
+                st.error("❌ Bu kullanıcı adı kullanılamaz.")
+            elif len(yeni_sifre) < 4:
+                st.error("❌ Şifre en az 4 karakter olmalı.")
+            elif yeni_sifre != yeni_sifre_tekrar:
+                st.error("❌ Şifreler uyuşmuyor.")
+            else:
+                basarili, mesaj = kullanici_ekle(yeni_kadi.strip(), yeni_sifre)
+                if basarili:
+                    st.session_state["aktif_kullanici"] = yeni_kadi.strip()
+                    st.session_state["odeme_hedef_kadi"] = yeni_kadi.strip()
+                    st.success(f"✅ {mesaj} Ödeme sayfasına yönlendiriliyorsun...")
+                    time.sleep(1.5)
+                    st.session_state.sayfa = "odeme"
+                    st.rerun()
+                else:
+                    st.error(f"❌ {mesaj}")
+
+        if geri_btn:
+            st.session_state.sayfa = "giris"
+            st.rerun()
+
+    st.markdown('<div class="login-footer">© <b>Futbol Analiz Pro</b> • Üyelik</div>',
+                unsafe_allow_html=True)
+
+
+# ==========================================
+# SAYFA: ÜYE GİRİŞİ
+# ==========================================
+elif st.session_state.sayfa == "uyegirisi":
+    st.markdown("""
+        <div class="login-hero">
+            <div class="login-logo">🔑</div>
+            <h1 class="login-title">Üye Girişi</h1>
+            <p class="login-subtitle">Kullanıcı adın ve şifrenle giriş yap</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    with st.form("uye_giris_form"):
+        kadi = st.text_input("👤 Kullanıcı Adı", placeholder="Kullanıcı adın...")
+        sifre = st.text_input("🔐 Şifre", type="password", placeholder="Şifren...")
+
+        c1, c2 = st.columns(2)
+        with c1:
+            giris_btn = st.form_submit_button("🔓 Giriş Yap", use_container_width=True, type="primary")
+        with c2:
+            geri_btn = st.form_submit_button("⬅️ Geri Dön", use_container_width=True)
+
+        if giris_btn:
+            if not kadi.strip() or not sifre:
+                st.error("❌ Kullanıcı adı ve şifre gerekli.")
+            elif kullanici_dogrula(kadi.strip(), sifre):
+                st.session_state["aktif_kullanici"] = kadi.strip()
+                st.success(f"✅ Hoş geldin, {kadi.strip()}!")
+                time.sleep(1)
+                st.session_state.sayfa = "giris"
+                st.rerun()
+            else:
+                st.error("❌ Kullanıcı adı veya şifre hatalı.")
+
+        if geri_btn:
+            st.session_state.sayfa = "giris"
+            st.rerun()
+
+    st.markdown('<div class="login-footer">© <b>Futbol Analiz Pro</b> • Üye Girişi</div>',
+                unsafe_allow_html=True)
+
+
+# ==========================================
+# SAYFA: ÖDEME (IBAN + Süre Seçimi + Ödeme Bildirimi)
+# ==========================================
+elif st.session_state.sayfa == "odeme":
+    hedef = st.session_state.get("odeme_hedef_kadi") or uye_adi()
+    if not hedef:
+        st.error("❌ Kullanıcı bilgisi bulunamadı. Lütfen giriş yap.")
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary"):
+            st.session_state.sayfa = "giris"
+            st.rerun()
+        st.stop()
+
+    iban = ayar_al("iban", "TR00 0000 0000 0000 0000 0000 00")
+    hesap_sahibi = ayar_al("hesap_sahibi", "ADINIZ SOYADINIZ")
+
+    f1 = float(ayar_al("fiyat_1", 99.0))
+    f2 = float(ayar_al("fiyat_2", 179.0))
+    f3 = float(ayar_al("fiyat_3", 249.0))
+    f6 = float(ayar_al("fiyat_6", 449.0))
+    f12 = float(ayar_al("fiyat_12", 799.0))
+
+    st.markdown(f"""
+        <div class="mh-hero">
+            <div class="mh-hero-icon">💳</div>
+            <div class="mh-hero-title">Premium'a Geç</div>
+            <div class="mh-hero-sub">Havale / EFT ile ödeme yap, hemen aktif olsun</div>
+            <div class="mh-hero-badge">● GÜVENLİ ÖDEME</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+        <div class="mh-info">
+            <b>👤 Kullanıcı Adın:</b> {_e(hedef)}<br>
+            Aşağıdaki açıklama kısmına <b>MUTLAKA</b> kullanıcı adını yazman gerekiyor.<br>
+            Yoksa ödemen eşleştirilemez ve manuel onaylanmaz.
+        </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 📆 Süre Seç")
+    sure = st.radio(
+        "Kaç aylık abonelik?",
+        options=[1, 2, 3, 6, 12],
+        format_func=lambda x: f"{x} Ay — {f1 if x==1 else f2 if x==2 else f3 if x==3 else f6 if x==6 else f12:.0f} ₺",
+        index=0,
+        key="odeme_sure_sec",
+    )
+
+    fiyat = f1 if sure == 1 else f2 if sure == 2 else f3 if sure == 3 else f6 if sure == 6 else f12
+
+    st.markdown(f"""
+        <div class="fa-card fa-pos">
+            <div class="fa-ttl">Seçilen Paket</div>
+            <div class="fa-pickrow">
+                <div class="fa-pick">{sure} Aylık Premium</div>
+                <div class="fa-pct">{fiyat:.0f} ₺</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 🏦 Havale / EFT Bilgileri")
+    st.markdown(f"""
+        <div class="fa-card">
+            <div class="fa-ttl">Alıcı</div>
+            <div class="fa-pick" style="margin-bottom:10px;">{_e(hesap_sahibi)}</div>
+            <div class="fa-ttl">IBAN</div>
+            <div class="fa-pick" style="margin-bottom:10px; font-family: monospace; letter-spacing: 1px;">{_e(iban)}</div>
+            <div class="fa-ttl">Açıklama (ZORUNLU)</div>
+            <div class="fa-pick" style="color:#22c55e; font-weight:900;">{_e(hedef)}</div>
+            <div class="fa-mut" style="margin-top:10px;">
+                ⚠️ Yukarıdaki açıklamayı aynen yazmadan ödeme yapmayın. 
+                Yoksa ödeme eşleştirilemez.
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # --- Ödeme Bildirimi ---
+    st.markdown("### ✅ Ödemeyi Yaptım")
+    st.caption("Havale/EFT yaptıktan sonra aşağıdaki butona bas.")
+
+    bekleyen = bekleyen_yukle()
+    zaten_bekliyor = hedef in bekleyen and bekleyen[hedef].get("durum") == "bekliyor"
+
+    if zaten_bekliyor:
+        st.warning("⏳ Zaten bekleyen bir ödeme bildirimin var. Admin onayı bekleniyor.")
+    else:
+        if st.button("📤 Ödeme Yaptım — Bildir", use_container_width=True, type="primary", key="odeme_bildir_btn"):
+            bekleyen[hedef] = {
+                "tarih": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "sure_ay": int(sure),
+                "fiyat": float(fiyat),
+                "durum": "bekliyor",
+            }
+            bekleyen_kaydet(bekleyen)
+            st.success("✅ Bildirimin alındı! Admin kontrol edip aktif edecek.")
+            st.info("📞 Genellikle birkaç saat içinde aktif olur. Sabırlı ol.")
+            time.sleep(2)
+            st.rerun()
+
+    st.divider()
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, key="odeme_geri"):
+            st.session_state.sayfa = "giris"
+            st.rerun()
+    with c2:
+        if st.button("🔄 Bildirimimi Kontrol Et", use_container_width=True, key="odeme_kontrol"):
+            if abonelik_aktif_mi(hedef):
+                st.success("✅ Aboneliğin aktif! Ana sayfaya dönüp maçları görebilirsin.")
+                time.sleep(1.5)
+                st.session_state.sayfa = "giris"
+                st.rerun()
+            else:
+                st.info("⏳ Henüz onaylanmamış. Lütfen bekle.")
+
+
+# ==========================================
+# SAYFA: ADMİN — ÖDEMELER
+# ==========================================
+elif st.session_state.sayfa == "admin_odemeler":
+    if not admin_mi():
+        st.error("❌ Bu sayfa sadece admin içindir.")
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary"):
+            st.session_state.sayfa = "giris"
+            st.rerun()
+        st.stop()
+
+    st.markdown("<h1>💳 Bekleyen Ödemeler</h1>", unsafe_allow_html=True)
+    st.caption("Kullanıcıların gönderdiği ödeme bildirimleri. Havaleyi kontrol edip onayla.")
+
+    bekleyen = bekleyen_yukle()
+
+    if not bekleyen:
+        st.info("ℹ️ Şu an bekleyen ödeme yok.")
+    else:
+        for kadi, b in list(bekleyen.items()):
+            tarih = b.get("tarih", "?")
+            sure = b.get("sure_ay", 0)
+            fiyat = b.get("fiyat", 0)
+            durum = b.get("durum", "bekliyor")
+
+            st.markdown(f"""
+                <div class="fa-card">
+                    <div class="fa-ttl">👤 {_e(kadi)}</div>
+                    <div class="fa-pickrow">
+                        <div>
+                            <div class="fa-pick">{sure} Aylık — {fiyat:.0f} ₺</div>
+                            <div class="fa-mut">📅 Bildirim: {_e(tarih)}</div>
+                        </div>
+                        <div class="fa-pct" style="font-size: 1rem;">{_e(durum.upper())}</div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                if st.button(f"✅ Onayla ({kadi})", use_container_width=True, type="primary", key=f"onay_{kadi}"):
+                    basarili, yeni_bitis = abonelik_aktif_et(kadi, sure)
+                    if basarili:
+                        del bekleyen[kadi]
+                        bekleyen_kaydet(bekleyen)
+                        st.success(f"✅ {kadi} için {sure} aylık abonelik aktif edildi! Bitiş: {yeni_bitis}")
+                        time.sleep(2)
+                        st.rerun()
+                    else:
+                        st.error(f"❌ {yeni_bitis}")
+            with c2:
+                if st.button(f"❌ Reddet ({kadi})", use_container_width=True, key=f"red_{kadi}"):
+                    del bekleyen[kadi]
+                    bekleyen_kaydet(bekleyen)
+                    st.info(f"🗑️ {kadi} için bildirim silindi.")
+                    time.sleep(1.5)
+                    st.rerun()
+            with c3:
+                if st.button(f"🗑️ Sil ({kadi})", use_container_width=True, key=f"sil_{kadi}"):
+                    del bekleyen[kadi]
+                    bekleyen_kaydet(bekleyen)
+                    st.rerun()
+
+            st.divider()
+
+    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="odemeler_geri"):
+        st.session_state.sayfa = "giris"
+        st.rerun()
+
+
+# ==========================================
+# SAYFA: ADMİN — ABONELER
+# ==========================================
+elif st.session_state.sayfa == "admin_aboneler":
+    if not admin_mi():
+        st.error("❌ Bu sayfa sadece admin içindir.")
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary"):
+            st.session_state.sayfa = "giris"
+            st.rerun()
+        st.stop()
+
+    st.markdown("<h1>👥 Aboneler</h1>", unsafe_allow_html=True)
+    st.caption("Kayıtlı tüm kullanıcılar. Süre ekle, abonelik iptal et, kullanıcı sil.")
+
+    kullanicilar = kullanicilar_yukle()
+
+    if not kullanicilar:
+        st.info("ℹ️ Henüz kayıtlı kullanıcı yok.")
+    else:
+        # Toplam istatistik
+        toplam = len(kullanicilar)
+        aktif_sayisi = sum(1 for k in kullanicilar if abonelik_aktif_mi(k))
+        pasif_sayisi = toplam - aktif_sayisi
+        st.markdown(f"""
+            <div class="mh-stat-grid">
+                <div class="mh-stat">
+                    <div class="mh-stat-icon">👥</div>
+                    <div class="mh-stat-num">{toplam}</div>
+                    <div class="mh-stat-lbl">Toplam Üye</div>
+                </div>
+                <div class="mh-stat">
+                    <div class="mh-stat-icon">🌟</div>
+                    <div class="mh-stat-num">{aktif_sayisi}</div>
+                    <div class="mh-stat-lbl">Aktif Premium</div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        st.caption(f"({pasif_sayisi} abonesiz kullanıcı)")
+
+        st.divider()
+
+        for kadi, k in list(kullanicilar.items()):
+            kayit_t = k.get("kayit_tarihi", "?")
+            bitis_str = k.get("abonelik_bitis")
+            aktif = abonelik_aktif_mi(kadi)
+            if bitis_str:
+                try:
+                    bitis = datetime.strptime(bitis_str, "%Y-%m-%d")
+                    kalan = (bitis - datetime.now()).days
+                except Exception:
+                    bitis = None
+                    kalan = 0
+            else:
+                bitis = None
+                kalan = 0
+
+            if aktif:
+                durum_renk = "#22c55e"
+                durum_txt = f"🌟 AKTİF ({kalan} gün kaldı)"
+                ekstra = f"Bitiş: {bitis_str}"
+            elif bitis_str:
+                durum_renk = "#ef4444"
+                durum_txt = "⛔ SÜRESİ DOLMUŞ"
+                ekstra = f"Bitiş: {bitis_str}"
+            else:
+                durum_renk = "#94a3b8"
+                durum_txt = "⚪ ABONELİK YOK"
+                ekstra = ""
+
+            st.markdown(f"""
+                <div class="fa-card">
+                    <div class="fa-pickrow">
+                        <div>
+                            <div class="fa-pick">👤 {_e(kadi)}</div>
+                            <div class="fa-mut">📅 Kayıt: {_e(kayit_t)} &nbsp; {_e(ekstra)}</div>
+                        </div>
+                        <div style="color:{durum_renk}; font-weight: 800; font-size: 0.85rem;">{_e(durum_txt)}</div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+            # Aksiyon butonları
+            ca, cb, cc, cd = st.columns([1, 1, 1, 1])
+            with ca:
+                if st.button("+1 Ay", use_container_width=True, key=f"plus1_{kadi}"):
+                    basarili, yeni = abonelik_aktif_et(kadi, 1)
+                    if basarili:
+                        st.success(f"✅ {kadi} +1 ay. Yeni bitiş: {yeni}")
+                        time.sleep(1.5)
+                        st.rerun()
+            with cb:
+                if st.button("+3 Ay", use_container_width=True, key=f"plus3_{kadi}"):
+                    basarili, yeni = abonelik_aktif_et(kadi, 3)
+                    if basarili:
+                        st.success(f"✅ {kadi} +3 ay. Yeni bitiş: {yeni}")
+                        time.sleep(1.5)
+                        st.rerun()
+            with cc:
+                if st.button("İptal Et", use_container_width=True, key=f"iptal_{kadi}"):
+                    abonelik_iptal_et(kadi)
+                    st.warning(f"⛔ {kadi} aboneliği iptal edildi.")
+                    time.sleep(1.5)
+                    st.rerun()
+            with cd:
+                if st.button("🗑️ Sil", use_container_width=True, key=f"ksil_{kadi}"):
+                    kullanici_sil(kadi)
+                    st.error(f"🗑️ {kadi} silindi.")
+                    time.sleep(1.5)
+                    st.rerun()
+
+            st.markdown("")
+
+    st.divider()
+    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="aboneler_geri"):
+        st.session_state.sayfa = "giris"
+        st.rerun()
+
+
+# ==========================================
 # SAYFA: ANA SAYFA
 # ==========================================
-if st.session_state.sayfa == "giris":
+elif st.session_state.sayfa == "giris":
     if admin_mi():
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center; color:gray;'>İstatistik metnini kopyala → yapıştır → analiz et.</p>", unsafe_allow_html=True)
@@ -2280,40 +2982,10 @@ if st.session_state.sayfa == "giris":
                         else: st.session_state.sayfa = "sonuc"
                         st.rerun()
 
-        if gecmis_btn:
-            st.session_state.sayfa = "gecmis"
-            st.session_state.kayit_yapildi = False
-            st.session_state.gecmisten_gelindi = False
-            st.session_state.gelecekten_gelindi = False
-            st.session_state.aktif_kayit_idx = None
-            st.session_state.aktif_gelecek_idx = None
-            st.session_state.okunamayan_alanlar = []
-            st.session_state.manuel_bekleyen = []
-            st.session_state.tek_silme_onay = None
-            st.session_state.silme_onay = False
-            st.rerun()
-
-        if gelecek_btn:
-            st.session_state.sayfa = "gelecek"
-            st.session_state.kayit_yapildi = False
-            st.session_state.gecmisten_gelindi = False
-            st.session_state.gelecekten_gelindi = False
-            st.session_state.aktif_kayit_idx = None
-            st.session_state.aktif_gelecek_idx = None
-            st.session_state.okunamayan_alanlar = []
-            st.session_state.manuel_bekleyen = []
-            st.session_state.tek_silme_gelecek = None
-            st.rerun()
-
-        if backtest_btn:
-            st.session_state.sayfa = "backtest"
-            st.session_state.bt_sonuc = None
-            st.session_state.bt_detaylar = []
-            st.rerun()
-
-        if ayarlar_btn:
-            st.session_state.sayfa = "ayarlar"
-            st.rerun()
+        if gecmis_btn: nav_git("gecmis")
+        if gelecek_btn: nav_git("gelecek")
+        if backtest_btn: nav_git("backtest")
+        if ayarlar_btn: nav_git("ayarlar")
 
         st.divider()
         st.markdown("### 🤖 Otomatik Veri Çekme")
@@ -2417,62 +3089,121 @@ if st.session_state.sayfa == "giris":
                     st.rerun()
 
     else:
-        gecmis_sayi = len(st.session_state.gecmis_analizler)
-        gelecek_sayi = len(st.session_state.gelecek_analizler)
+        # MİSAFİR / ÜYE GÖRÜNÜMÜ — Maç listesi
+        gelecek = st.session_state.gelecek_analizler
+        toplam = len(gelecek)
+        premium = uye_premium_mu()
+        ucretsiz_kota = int(ayar_al("ucretsiz_kotasi", 3))
 
-        st.markdown(f"""
-            <div class="mh-hero">
-                <div class="mh-hero-icon">⚽</div>
-                <div class="mh-hero-title">Futbol Analiz Pro</div>
-                <div class="mh-hero-sub">Akıllı maç analizi ve tahmin motoru</div>
-                <div class="mh-hero-badge">● CANLI VERİ</div>
-            </div>
-            <div class="mh-stat-grid">
-                <div class="mh-stat">
-                    <div class="mh-stat-icon">📊</div>
-                    <div class="mh-stat-num">{gecmis_sayi}</div>
-                    <div class="mh-stat-lbl">Geçmiş Maç</div>
+        # Üst bilgi kartı
+        if premium:
+            kalan_txt = ""
+            try:
+                kullanicilar = kullanicilar_yukle()
+                bitis_str = kullanicilar.get(uye_adi(), {}).get("abonelik_bitis")
+                if bitis_str:
+                    kalan = (datetime.strptime(bitis_str, "%Y-%m-%d") - datetime.now()).days
+                    if kalan >= 0:
+                        kalan_txt = f'<div class="mh-hero-badge">🌟 PREMIUM — {kalan} gün kaldı</div>'
+            except Exception:
+                pass
+            st.markdown(f"""
+                <div class="mh-hero">
+                    <div class="mh-hero-icon">🌟</div>
+                    <div class="mh-hero-title">Hoş Geldin, {_e(uye_adi())}</div>
+                    <div class="mh-hero-sub">Premium üyeliğin aktif — tüm analizler açık</div>
+                    {kalan_txt}
                 </div>
-                <div class="mh-stat">
-                    <div class="mh-stat-icon">🔮</div>
-                    <div class="mh-stat-num">{gelecek_sayi}</div>
-                    <div class="mh-stat-lbl">Gelecek Maç</div>
+            """, unsafe_allow_html=True)
+        elif uye_mi():
+            st.markdown(f"""
+                <div class="mh-hero">
+                    <div class="mh-hero-icon">👤</div>
+                    <div class="mh-hero-title">Hoş Geldin, {_e(uye_adi())}</div>
+                    <div class="mh-hero-sub">Premium üyeliğin yok — sadece ilk {ucretsiz_kota} maçı görebilirsin</div>
+                    <div class="mh-hero-badge" style="background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.5); color: #f59e0b !important;">⚠️ ABONELİK YOK</div>
                 </div>
-            </div>
-            <div class="mh-section-title">HIZLI ERİŞİM</div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+            if st.button("💳 Premium'a Geç", use_container_width=True, type="primary", key="ana_premium_btn"):
+                st.session_state["odeme_hedef_kadi"] = uye_adi()
+                st.session_state.sayfa = "odeme"
+                st.rerun()
+        else:
+            st.markdown(f"""
+                <div class="mh-hero">
+                    <div class="mh-hero-icon">⚽</div>
+                    <div class="mh-hero-title">Futbol Analiz Pro</div>
+                    <div class="mh-hero-sub">Bugünün {toplam} maçı — ilk {ucretsiz_kota} maç açık</div>
+                    <div class="mh-hero-badge">● CANLI VERİ</div>
+                </div>
+            """, unsafe_allow_html=True)
+            cA, cB = st.columns(2)
+            with cA:
+                if st.button("💳 Premium'a Geç", use_container_width=True, type="primary", key="misafir_premium_btn"):
+                    st.session_state.admin_login_acik = False
+                    st.session_state.sayfa = "kayit"
+                    st.rerun()
+            with cB:
+                if st.button("🔑 Giriş Yap", use_container_width=True, key="misafir_giris_btn"):
+                    st.session_state.sayfa = "uyegirisi"
+                    st.rerun()
 
-        try: kutu = st.container(key="fa_misafir_nav")
-        except TypeError: kutu = st.container()
-        with kutu:
-            col_bt2, col_bt3 = st.columns(2)
-            with col_bt2:
-                gecmis_btn = st.button("📊  Geçmiş Maçlar", use_container_width=True, type="primary", key="m_gecmis")
-            with col_bt3:
-                gelecek_btn = st.button("🔮  Gelecek Maçlar", use_container_width=True, type="primary", key="m_gelecek")
+        st.divider()
 
-        if gecmis_btn:
-            st.session_state.sayfa = "gecmis"
-            st.session_state.kayit_yapildi = False
-            st.session_state.aktif_kayit_idx = None
-            st.session_state.aktif_gelecek_idx = None
-            st.session_state.tek_silme_onay = None
-            st.rerun()
-        if gelecek_btn:
-            st.session_state.sayfa = "gelecek"
-            st.session_state.kayit_yapildi = False
-            st.session_state.aktif_kayit_idx = None
-            st.session_state.aktif_gelecek_idx = None
-            st.session_state.tek_silme_gelecek = None
-            st.rerun()
+        if not gelecek:
+            st.info("ℹ️ Henüz maç yok. Admin panelinden maç çekilebilir.")
+        else:
+            sirali = sorted(enumerate(gelecek), key=lambda x: saat_sirala_anahtari(x[1]))
+            acik_sayac = 0
+            for idx_gercek, g in sirali:
+                v_g = g["veri"]
+                takim_ev = v_g.get("takim_ev", "Ev") or "Ev"
+                takim_dep = v_g.get("takim_dep", "Dep") or "Dep"
+                ulke = v_g.get("ulke", ""); saat = v_g.get("saat", ""); tarih = v_g.get("tarih", "")
 
-        st.markdown("""
-            <div class="mh-info">
-                💡 <b>İpucu:</b> Geçmiş maçlarda isabet oranlarını incele, gelecek maçlarda
-                yüksek güvenli tahminleri filtreleyerek kombine oluştur.
-            </div>
-            <div class="mh-section-title" style="margin-top:16px;">BİLGİLENDİRME</div>
-        """, unsafe_allow_html=True)
+                if premium or acik_sayac < ucretsiz_kota:
+                    # AÇIK
+                    try:
+                        analiz_full = analiz_hesapla(v_g)
+                        lam_ev_h = analiz_full["lam_ev"]; lam_dep_h = analiz_full["lam_dep"]
+                    except Exception:
+                        lam_ev_h = lam_dep_h = 0
+                    hero = mac_karti(takim_ev, takim_dep, False, 0, 0, lam_ev_h, lam_dep_h,
+                                     saat=saat, ulke=ulke, tarih=tarih)
+                    st.markdown(hero, unsafe_allow_html=True)
+                    tahmin_html = mac_tahmin_karti(v_g, g)
+                    if tahmin_html:
+                        st.markdown(tahmin_html, unsafe_allow_html=True)
+                    if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gmac_{idx_gercek}"):
+                        st.session_state.form_verileri = copy.deepcopy(v_g)
+                        st.session_state.kayit_yapildi = True
+                        st.session_state.gecmisten_gelindi = False
+                        st.session_state.gelecekten_gelindi = True
+                        st.session_state.aktif_kayit_idx = None
+                        st.session_state.aktif_gelecek_idx = idx_gercek
+                        st.session_state.okunamayan_alanlar = []
+                        st.session_state.sayfa = "sonuc"
+                        st.rerun()
+                    acik_sayac += 1
+                else:
+                    # KİLİTLİ
+                    st.markdown(kilitli_mac_karti(takim_ev, takim_dep, saat=saat, ulke=ulke, tarih=tarih),
+                                unsafe_allow_html=True)
+                    ck1, ck2 = st.columns(2)
+                    with ck1:
+                        if st.button("💳 Premium'a Geç", use_container_width=True, key=f"kilit_prem_{idx_gercek}", type="primary"):
+                            if uye_mi():
+                                st.session_state["odeme_hedef_kadi"] = uye_adi()
+                                st.session_state.sayfa = "odeme"
+                            else:
+                                st.session_state.sayfa = "kayit"
+                            st.rerun()
+                    with ck2:
+                        if st.button("🔑 Giriş Yap", use_container_width=True, key=f"kilit_giris_{idx_gercek}"):
+                            st.session_state.sayfa = "uyegirisi"
+                            st.rerun()
+
+                st.divider()
 
         misafir_aciklama()
 
@@ -2487,6 +3218,9 @@ if st.session_state.sayfa == "giris":
 # MANUEL GİRİŞ
 # ==========================================
 elif st.session_state.sayfa == "manuel_giris":
+    if not admin_mi():
+        st.error("❌ Sadece admin.")
+        st.stop()
     st.markdown("<h1>📝 Eksik Alanları Doldur</h1>", unsafe_allow_html=True)
     st.warning(f"Aşağıdaki **{len(st.session_state.manuel_bekleyen)}** alan metinden çıkarılamadı:")
     v = st.session_state.form_verileri
@@ -2653,7 +3387,7 @@ elif st.session_state.sayfa == "gecmis":
                         st.success(f"✅ {len(veri)} maç yüklendi! Sayfa yenileniyor...")
                         st.rerun()
                     else:
-                        st.error("❌ Dosya formatı hatalı. Liste bekleniyordu.")
+                        st.error("❌ Dosya formatı hatalı.")
                 except Exception as e:
                     st.error(f"❌ Yükleme hatası: {e}")
     st.divider()
@@ -2699,71 +3433,76 @@ elif st.session_state.sayfa == "gelecek":
     st.markdown("<h1>🔮 Gelecek Maçlar</h1>", unsafe_allow_html=True)
     gelecek = st.session_state.gelecek_analizler
     toplam_g = len(gelecek)
+    premium = admin_mi() or uye_premium_mu()
+    ucretsiz_kota = int(ayar_al("ucretsiz_kotasi", 3))
+
     if not gelecek:
         st.info("ℹ️ Gelecek maç yok.")
     else:
         sirali = sorted(enumerate(gelecek), key=lambda x: saat_sirala_anahtari(x[1]))
+        acik_sayac = 0
         for idx_gercek, g in sirali:
             v_g = g["veri"]
             takim_ev = v_g.get("takim_ev", "Ev") or "Ev"
             takim_dep = v_g.get("takim_dep", "Dep") or "Dep"
             ulke = v_g.get("ulke", ""); saat = v_g.get("saat", ""); tarih = v_g.get("tarih", "")
-            try:
-                analiz_full = analiz_hesapla(v_g)
-                lam_ev_h = analiz_full["lam_ev"]; lam_dep_h = analiz_full["lam_dep"]
-            except Exception:
-                lam_ev_h = lam_dep_h = 0
-            hero = mac_karti(takim_ev, takim_dep, False, 0, 0, lam_ev_h, lam_dep_h,
-                             saat=saat, ulke=ulke, tarih=tarih)
-            st.markdown(hero, unsafe_allow_html=True)
-            tahmin_html = mac_tahmin_karti(v_g, g)
-            if tahmin_html: st.markdown(tahmin_html, unsafe_allow_html=True)
-            if admin_mi():
-                col_detay, col_sil = st.columns([5, 1])
-                with col_detay:
+
+            if premium or acik_sayac < ucretsiz_kota:
+                try:
+                    analiz_full = analiz_hesapla(v_g)
+                    lam_ev_h = analiz_full["lam_ev"]; lam_dep_h = analiz_full["lam_dep"]
+                except Exception:
+                    lam_ev_h = lam_dep_h = 0
+                hero = mac_karti(takim_ev, takim_dep, False, 0, 0, lam_ev_h, lam_dep_h,
+                                 saat=saat, ulke=ulke, tarih=tarih)
+                st.markdown(hero, unsafe_allow_html=True)
+                tahmin_html = mac_tahmin_karti(v_g, g)
+                if tahmin_html: st.markdown(tahmin_html, unsafe_allow_html=True)
+
+                if admin_mi():
+                    col_detay, col_sil = st.columns([5, 1])
+                    with col_detay:
+                        if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gmac_{idx_gercek}"):
+                            st.session_state.form_verileri = copy.deepcopy(v_g)
+                            st.session_state.kayit_yapildi = True
+                            st.session_state.gelecekten_gelindi = True
+                            st.session_state.aktif_gelecek_idx = idx_gercek
+                            st.session_state.sayfa = "sonuc"
+                            st.rerun()
+                    with col_sil:
+                        if st.button("🗑️", key=f"gsil_{idx_gercek}"):
+                            if st.session_state.tek_silme_gelecek == idx_gercek:
+                                st.session_state.tek_silme_gelecek = None
+                            else:
+                                st.session_state.tek_silme_gelecek = idx_gercek
+                            st.rerun()
+                else:
                     if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gmac_{idx_gercek}"):
                         st.session_state.form_verileri = copy.deepcopy(v_g)
                         st.session_state.kayit_yapildi = True
-                        st.session_state.gecmisten_gelindi = False
                         st.session_state.gelecekten_gelindi = True
-                        st.session_state.aktif_kayit_idx = None
                         st.session_state.aktif_gelecek_idx = idx_gercek
-                        st.session_state.okunamayan_alanlar = []
                         st.session_state.sayfa = "sonuc"
                         st.rerun()
-                with col_sil:
-                    if st.button("🗑️", key=f"gsil_{idx_gercek}"):
-                        if st.session_state.tek_silme_gelecek == idx_gercek:
-                            st.session_state.tek_silme_gelecek = None
-                        else:
-                            st.session_state.tek_silme_gelecek = idx_gercek
-                        st.rerun()
-                if st.session_state.tek_silme_gelecek == idx_gercek:
-                    st.warning(f"⚠️ **{takim_ev} vs {takim_dep}** silinsin mi?")
-                    c_e, c_h = st.columns(2)
-                    with c_e:
-                        if st.button("✅ Sil", key=f"evet_g_{idx_gercek}", use_container_width=True, type="primary"):
-                            if 0 <= idx_gercek < len(st.session_state.gelecek_analizler):
-                                st.session_state.gelecek_analizler.pop(idx_gercek)
-                                gelecek_kaydet(st.session_state.gelecek_analizler)
-                            st.session_state.tek_silme_gelecek = None
-                            st.rerun()
-                    with c_h:
-                        if st.button("❌ İptal", key=f"hayir_g_{idx_gercek}", use_container_width=True):
-                            st.session_state.tek_silme_gelecek = None
-                            st.rerun()
+                acik_sayac += 1
             else:
-                if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gmac_{idx_gercek}"):
-                    st.session_state.form_verileri = copy.deepcopy(v_g)
-                    st.session_state.kayit_yapildi = True
-                    st.session_state.gecmisten_gelindi = False
-                    st.session_state.gelecekten_gelindi = True
-                    st.session_state.aktif_kayit_idx = None
-                    st.session_state.aktif_gelecek_idx = idx_gercek
-                    st.session_state.okunamayan_alanlar = []
-                    st.session_state.sayfa = "sonuc"
-                    st.rerun()
+                st.markdown(kilitli_mac_karti(takim_ev, takim_dep, saat=saat, ulke=ulke, tarih=tarih),
+                            unsafe_allow_html=True)
+                ck1, ck2 = st.columns(2)
+                with ck1:
+                    if st.button("💳 Premium'a Geç", use_container_width=True, key=f"gkil_{idx_gercek}", type="primary"):
+                        if uye_mi():
+                            st.session_state["odeme_hedef_kadi"] = uye_adi()
+                            st.session_state.sayfa = "odeme"
+                        else:
+                            st.session_state.sayfa = "kayit"
+                        st.rerun()
+                with ck2:
+                    if st.button("🔑 Giriş Yap", use_container_width=True, key=f"ggir_{idx_gercek}"):
+                        st.session_state.sayfa = "uyegirisi"
+                        st.rerun()
             st.divider()
+
     if admin_mi():
         st.markdown("### 💾 Yedekleme (Gelecek Maçlar)")
         c_ind2, c_yuk2 = st.columns(2)
@@ -2780,16 +3519,14 @@ elif st.session_state.sayfa == "gelecek":
                     if isinstance(veri2, list):
                         st.session_state.gelecek_analizler = veri2
                         gelecek_kaydet(veri2)
-                        st.success(f"✅ {len(veri2)} maç yüklendi! Sayfa yenileniyor...")
+                        st.success(f"✅ {len(veri2)} maç yüklendi!")
                         st.rerun()
-                    else:
-                        st.error("❌ Dosya formatı hatalı.")
                 except Exception as e:
                     st.error(f"❌ Yükleme hatası: {e}")
         st.divider()
+
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="g_geri"):
         st.session_state.sayfa = "giris"
-        st.session_state.tek_silme_gelecek = None
         st.rerun()
 
 
@@ -2841,18 +3578,12 @@ elif st.session_state.sayfa == "backtest":
     bolme = toplam_mac // 2
     if mod != "Tümü" and toplam_mac >= 4:
         bolme = st.slider("N", 1, toplam_mac - 1, max(1, toplam_mac // 2), 1, key="bt_bolme")
-        if mod.startswith("Ayar"):
-            st.caption(f"Test edilecek: ilk **{bolme}** maç")
-        else:
-            st.caption(f"Test edilecek: **{bolme + 1}.** maçtan sonuncuya, **{toplam_mac - bolme}** maç")
-    else:
-        st.caption(f"Test edilecek: tüm **{toplam_mac}** maç")
     if mod == "Tümü" or toplam_mac < 4:
         secili_gecmis = tum_gecmis; mod_etiket = f"Tümü ({toplam_mac} maç)"
     elif mod.startswith("Ayar"):
         secili_gecmis = tum_gecmis[:bolme]; mod_etiket = f"Ayar seti: ilk {bolme} maç"
     else:
-        secili_gecmis = tum_gecmis[bolme:]; mod_etiket = f"Test seti: {bolme + 1}. maçtan sonrası ({toplam_mac - bolme} maç)"
+        secili_gecmis = tum_gecmis[bolme:]; mod_etiket = f"Test seti: {bolme + 1}. maçtan sonrası"
     st.divider()
     if st.button("🚀 TEST ET", use_container_width=True, type="primary"):
         if not any(secenekler.values()):
@@ -2882,8 +3613,7 @@ elif st.session_state.sayfa == "backtest":
         with st.expander(f"📋 Maç Detayları ({len(st.session_state.bt_detaylar)} maç)"):
             for m in st.session_state.bt_detaylar:
                 st.markdown(f"**{m['takim_ev']} {m['skor']} {m['takim_dep']}**")
-                gercek_1x2 = m.get("gercek_1x2", "?")
-                st.caption(f"Gerçek: 1X2={gercek_1x2} / Gol={m['gercek_gol']} / KG={m['gercek_kg']}")
+                st.caption(f"Gerçek: 1X2={m.get('gercek_1x2','?')} / Gol={m['gercek_gol']} / KG={m['gercek_kg']}")
                 for dd in m["detaylar"]:
                     st.markdown(f" • {dd}")
                 st.markdown("")
@@ -2901,69 +3631,110 @@ elif st.session_state.sayfa == "ayarlar":
         if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary"):
             st.session_state.sayfa = "giris"; st.rerun()
         st.stop()
-    st.markdown("<h1>⚙️ Eşik Ayarları</h1>", unsafe_allow_html=True)
-    st.caption("Ana analiz için eşikleri buradan değiştirebilirsin.")
+    st.markdown("<h1>⚙️ Ayarlar</h1>", unsafe_allow_html=True)
+    st.caption("Eşikler, IBAN bilgileri ve fiyatlar.")
     st.divider()
+
     mevcut = st.session_state.esikler.copy()
-    st.markdown("### 🎯 Maç Sonucu Eşikleri (1 / X / 2)")
-    st.caption("Her seçim için ayrı eşik. En yüksek olasılıklı sonuç, kendi eşiğini geçerse öneri verilir.")
+
+    st.markdown("### 🏦 Ödeme Bilgileri")
+    c_iban, c_hesap = st.columns(2)
+    with c_iban:
+        yeni_iban = st.text_input("IBAN", value=mevcut.get("iban", "TR00 0000 0000 0000 0000 0000 00"))
+    with c_hesap:
+        yeni_hesap = st.text_input("Hesap Sahibi (Ad Soyad)", value=mevcut.get("hesap_sahibi", ""))
+
+    st.markdown("### 💰 Fiyatlar (₺)")
+    cfa, cfb, cfc, cfd, cfe = st.columns(5)
+    with cfa:
+        yeni_f1 = st.number_input("1 Ay", min_value=1.0, value=float(mevcut.get("fiyat_1", 99.0)), step=10.0, key="ay_f1")
+    with cfb:
+        yeni_f2 = st.number_input("2 Ay", min_value=1.0, value=float(mevcut.get("fiyat_2", 179.0)), step=10.0, key="ay_f2")
+    with cfc:
+        yeni_f3 = st.number_input("3 Ay", min_value=1.0, value=float(mevcut.get("fiyat_3", 249.0)), step=10.0, key="ay_f3")
+    with cfd:
+        yeni_f6 = st.number_input("6 Ay", min_value=1.0, value=float(mevcut.get("fiyat_6", 449.0)), step=10.0, key="ay_f6")
+    with cfe:
+        yeni_f12 = st.number_input("12 Ay", min_value=1.0, value=float(mevcut.get("fiyat_12", 799.0)), step=10.0, key="ay_f12")
+
+    st.markdown("### 🔓 Ücretsiz Maç Kotası")
+    yeni_kota = st.number_input("Misafir/üye kaç maçı ücretsiz görsün?", min_value=0, max_value=50, value=int(mevcut.get("ucretsiz_kotasi", 3)), step=1, key="ay_kota")
+
+    st.divider()
+    st.markdown("### 🎯 Maç Sonucu Eşikleri")
     c1x2_a, c1x2_b, c1x2_c = st.columns(3)
     with c1x2_a:
-        yeni_esik_1 = st.slider("1 (Ev Sahibi) eşiği (%)", 0, 100, int(mevcut.get("esik_1", 55.0)), 1, key="ay_esik_1")
+        yeni_esik_1 = st.slider("1 (Ev) %", 0, 100, int(mevcut.get("esik_1", 55.0)), 1, key="ay_esik_1")
     with c1x2_b:
-        yeni_esik_x = st.slider("X (Beraberlik) eşiği (%)", 0, 100, int(mevcut.get("esik_x", 55.0)), 1, key="ay_esik_x")
+        yeni_esik_x = st.slider("X %", 0, 100, int(mevcut.get("esik_x", 55.0)), 1, key="ay_esik_x")
     with c1x2_c:
-        yeni_esik_2 = st.slider("2 (Deplasman) eşiği (%)", 0, 100, int(mevcut.get("esik_2", 55.0)), 1, key="ay_esik_2")
+        yeni_esik_2 = st.slider("2 (Dep) %", 0, 100, int(mevcut.get("esik_2", 55.0)), 1, key="ay_esik_2")
     st.markdown("### ⚽ Gol Eşikleri")
     c1, c2 = st.columns(2)
     with c1:
-        yeni_ust = st.slider("Üst 2.5 eşiği (%)", 0, 100, int(mevcut["ust"]), 1, key="ay_ust")
+        yeni_ust = st.slider("Üst 2.5 %", 0, 100, int(mevcut["ust"]), 1, key="ay_ust")
     with c2:
-        yeni_alt = st.slider("Alt 2.5 eşiği (%)", 0, 100, int(mevcut["alt"]), 1, key="ay_alt")
+        yeni_alt = st.slider("Alt 2.5 %", 0, 100, int(mevcut["alt"]), 1, key="ay_alt")
     st.markdown("### 🤝 KG Eşikleri")
     c3, c4 = st.columns(2)
     with c3:
-        yeni_kg_var = st.slider("KG Var eşiği (%)", 0, 100, int(mevcut["kg_var"]), 1, key="ay_kg_var")
+        yeni_kg_var = st.slider("KG Var %", 0, 100, int(mevcut["kg_var"]), 1, key="ay_kg_var")
     with c4:
-        yeni_kg_yok = st.slider("KG Yok eşiği (%)", 0, 100, int(mevcut["kg_yok"]), 1, key="ay_kg_yok")
+        yeni_kg_yok = st.slider("KG Yok %", 0, 100, int(mevcut["kg_yok"]), 1, key="ay_kg_yok")
+
     st.divider()
     c_kaydet, c_sifirla, c_geri = st.columns(3)
     with c_kaydet:
         if st.button("💾 Kaydet", use_container_width=True, type="primary"):
-            yeni_esikler = {
+            yeni = dict(mevcut)
+            yeni.update({
+                "iban": yeni_iban, "hesap_sahibi": yeni_hesap,
+                "fiyat_1": float(yeni_f1), "fiyat_2": float(yeni_f2), "fiyat_3": float(yeni_f3),
+                "fiyat_6": float(yeni_f6), "fiyat_12": float(yeni_f12),
+                "ucretsiz_kotasi": int(yeni_kota),
                 "esik_1": float(yeni_esik_1), "esik_x": float(yeni_esik_x), "esik_2": float(yeni_esik_2),
                 "ust": float(yeni_ust), "alt": float(yeni_alt),
                 "kg_var": float(yeni_kg_var), "kg_yok": float(yeni_kg_yok),
-            }
-            st.session_state.esikler = yeni_esikler
-            ayarlar_kaydet(yeni_esikler)
-            st.success("✅ Eşikler kaydedildi!")
+            })
+            st.session_state.esikler = yeni
+            ayarlar_kaydet(yeni)
+            st.success("✅ Ayarlar kaydedildi!")
     with c_sifirla:
         if st.button("🔄 Sıfırla", use_container_width=True):
-            varsayilan = {"ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0,
-                          "esik_1": 55.0, "esik_x": 55.0, "esik_2": 55.0}
+            varsayilan = {
+                "ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0,
+                "esik_1": 55.0, "esik_x": 55.0, "esik_2": 55.0,
+                "iban": "TR00 0000 0000 0000 0000 0000 00",
+                "hesap_sahibi": "ADINIZ SOYADINIZ",
+                "fiyat_1": 99.0, "fiyat_2": 179.0, "fiyat_3": 249.0,
+                "fiyat_6": 449.0, "fiyat_12": 799.0,
+                "ucretsiz_kotasi": 3,
+            }
             st.session_state.esikler = varsayilan
             ayarlar_kaydet(varsayilan)
-            st.success("✅ Varsayılan eşiklere dönüldü!")
+            st.success("✅ Varsayılan ayarlar yüklendi!")
             st.rerun()
     with c_geri:
         if st.button("⬅️ Ana Sayfa", use_container_width=True, key="ay_geri"):
             st.session_state.sayfa = "giris"; st.rerun()
-    st.divider()
-    st.info(f"""
-    **Şu anki aktif eşikler:**
-    - 1X2 → 1: **%{st.session_state.esikler.get('esik_1', 55.0):.0f}** • X: **%{st.session_state.esikler.get('esik_x', 55.0):.0f}** • 2: **%{st.session_state.esikler.get('esik_2', 55.0):.0f}**
-    - Üst 2.5: **%{st.session_state.esikler['ust']:.0f}**
-    - Alt 2.5: **%{st.session_state.esikler['alt']:.0f}**
-    - KG Var: **%{st.session_state.esikler['kg_var']:.0f}**
-    - KG Yok: **%{st.session_state.esikler['kg_yok']:.0f}**
-    """)
 
 
 # ==========================================
 # ANALİZ SONUÇ
 # ==========================================
 elif st.session_state.sayfa == "sonuc":
+    # Premium kontrolü: sadece admin veya premium üye detay görebilir
+    if not admin_mi() and not uye_premium_mu():
+        st.warning("⚠️ Bu sayfayı görmek için premium üyelik gerekli.")
+        if st.button("💳 Premium'a Geç", use_container_width=True, type="primary"):
+            if uye_mi():
+                st.session_state["odeme_hedef_kadi"] = uye_adi()
+                st.session_state.sayfa = "odeme"
+            else:
+                st.session_state.sayfa = "kayit"
+            st.rerun()
+        st.stop()
+
     v = st.session_state.form_verileri
     a = analiz_hesapla(v)
     ust_25 = a["ust_25"]; alt_25 = a["alt_25"]
@@ -2983,7 +3754,6 @@ elif st.session_state.sayfa == "sonuc":
         d = sonuc_hesapla({"veri": v, "analiz": a})
         with st.expander("✅ Tahmin Doğruluğu", expanded=True):
             st.markdown("**🎯 Öneri Tahminleri**")
-            st.caption(f"1X2: 1=%{esik_1x2_al('1'):.0f} • X=%{esik_1x2_al('X'):.0f} • 2=%{esik_1x2_al('2'):.0f} | Üst %{esik_al('ust'):.0f} • Alt %{esik_al('alt'):.0f} • KG Var %{esik_al('kg_var'):.0f} • KG Yok %{esik_al('kg_yok'):.0f}")
             c1, c2, c3 = st.columns(3)
             for col, key in zip([c1, c2, c3], ["oneri_1x2", "oneri_gol", "oneri_kg"]):
                 o = d[key]
@@ -2995,8 +3765,6 @@ elif st.session_state.sayfa == "sonuc":
                         ikon = "✅" if o["tuttu"] else "❌"
                         st.markdown(rozet(f"{ikon} {etiket}", "green" if o["tuttu"] else "red"), unsafe_allow_html=True)
                         st.markdown(f"{o['tahmin']}")
-            gercek_1x2 = d.get("gercek_1x2", "?")
-            st.caption(f"Gerçek sonuç: **{gercek_1x2}**")
     else:
         d = None
     with st.expander("🔍 Geniş Kapsamlı Analiz", expanded=False):
@@ -3004,8 +3772,6 @@ elif st.session_state.sayfa == "sonuc":
         if genel_yorumlar:
             for baslik, metin in genel_yorumlar:
                 st.markdown(f"**{baslik}**"); st.markdown(metin); st.markdown("")
-        else:
-            st.caption("ℹ️ Genel form/sıralama verisi yok.")
         y1x2 = birx_iki_detayli_aciklama(v, a)
         if y1x2:
             st.markdown("---")
@@ -3024,8 +3790,6 @@ elif st.session_state.sayfa == "sonuc":
             for satir in kg_aciklama:
                 if satir.startswith("🤝"): st.markdown(f"**{satir}**"); st.markdown("")
                 else: st.markdown(satir)
-        if not y1x2 and not gol_aciklama and not kg_aciklama and not genel_yorumlar:
-            st.info("ℹ️ Gösterilecek analiz yorumu yok.")
     st.divider()
     st.markdown("## 🏆 FİNAL ÖNERİ")
     en_yuksek_1x2 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
@@ -3049,6 +3813,7 @@ elif st.session_state.sayfa == "sonuc":
     kg_poz = kg_yuzde >= kg_esik
     st.markdown(oneri_karti("🤝 Karşılıklı Gol", kg_secim, kg_yuzde, kg_esik, kg_poz,
                             f"Var %{kg_var_model:.1f} • Yok %{kg_yok_model:.1f}"), unsafe_allow_html=True)
+
     if st.session_state.gelecekten_gelindi and admin_mi():
         idx_g = st.session_state.aktif_gelecek_idx
         if idx_g is not None and 0 <= idx_g < len(st.session_state.gelecek_analizler):
@@ -3076,6 +3841,7 @@ elif st.session_state.sayfa == "sonuc":
                     st.session_state.aktif_gelecek_idx = None
                     st.session_state.sayfa = "gelecek"
                     st.rerun()
+
     kaydet_mi = gol_poz or kg_poz or poz_1x2
     if not st.session_state.kayit_yapildi and admin_mi():
         yeni_kayit = kayit_olustur(v, a)
@@ -3084,15 +3850,16 @@ elif st.session_state.sayfa == "sonuc":
             st.session_state.gecmis_analizler.append(yeni_kayit)
             gecmis_kaydet(st.session_state.gecmis_analizler)
             if kaydet_mi: st.success("📊 Geçmişe kaydedildi. (öneri vardı)")
-            else: st.info("📊 Geçmişe kaydedildi. (öneri yoktu ama backtest için kaydedildi)")
+            else: st.info("📊 Geçmişe kaydedildi.")
         else:
             if kaydet_mi:
                 st.session_state.gelecek_analizler.append(yeni_kayit)
                 gelecek_kaydet(st.session_state.gelecek_analizler)
                 st.info("🔮 Gelecek Maçlar'a kaydedildi.")
             else:
-                st.warning("⚠️ Hiçbir market pozitif değil. Bu maç geleceğe **kaydedilmedi**.")
+                st.warning("⚠️ Hiçbir market pozitif değil.")
         st.session_state.kayit_yapildi = True
+
     st.divider()
     if st.button("🔄 Yeni Maç Analizi", use_container_width=True, type="primary"):
         st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
