@@ -1844,7 +1844,6 @@ def okunan_veriler_paneli(v):
 
 
 def _form_detay(form_str):
-    """Form string'ini W/D/L sayılarına çevirir."""
     if not form_str: return None
     s = str(form_str).upper().replace(" ", "").strip()
     s = "".join(c for c in s if c in "WDL")
@@ -1853,7 +1852,6 @@ def _form_detay(form_str):
 
 
 def _form_hikaye(form_str, takim, ev_mi=True):
-    """Formu hikayeli bir cümleye çevirir."""
     f = _form_detay(form_str)
     if not f: return None
     n, w, d, l = f["n"], f["W"], f["D"], f["L"]
@@ -1875,7 +1873,6 @@ def _form_hikaye(form_str, takim, ev_mi=True):
 
 
 def _trend_cumleleri(v, taraf):
-    """Trend listesini okunabilir hale getirir."""
     key = f"trends_{taraf}"
     trends = v.get(key, [])
     if not trends: return []
@@ -1924,11 +1921,9 @@ def ai_yorum_olustur(v, a):
     bolumler = []
 
     # ============================================================
-    # 1. MAÇIN TABLOSU (Hikaye)
+    # 1. MAÇIN TABLOSU
     # ============================================================
     hp = []
-
-    # Sıralama
     if s_ev and s_dep:
         if s_ev < s_dep:
             fark = s_dep - s_ev
@@ -1949,7 +1944,6 @@ def ai_yorum_olustur(v, a):
         else:
             hp.append(f"İki takım da ligde {V(f'{s_ev}.')} sırada — tam anlamıyla dengeli bir eşleşme.")
 
-    # Form
     f_ev_c = _form_hikaye(form_ev, te, ev_mi=True)
     f_dep_c = _form_hikaye(form_dep, td, ev_mi=False)
     if f_ev_c:
@@ -1957,51 +1951,31 @@ def ai_yorum_olustur(v, a):
     if f_dep_c:
         hp.append(f_dep_c + ".")
 
-    # Ev/deplasman performansı (asıl kritik nokta)
     if ae > 0 and ye > 0 and ad > 0 and yd > 0:
         if ye <= 0.8 and yd >= 1.5:
-            hp.append(
-                f"Asıl kritik nokta ev/deplasman performansı: {EV(te)} evinde maç başına {V(f'{ae:.2f}')} gol atıp sadece {V(f'{ye:.2f}')} gol yiyor. "
-                f"{DP(td)} ise deplasmanda maç başına {V(f'{ad:.2f}')} gol atarken {K(f'{yd:.2f}')} gol yiyor — yani dış sahada adeta bir savunma faciası yaşıyor."
-            )
+            hp.append(f"Asıl kritik nokta ev/deplasman performansı: {EV(te)} evinde maç başına {V(f'{ae:.2f}')} gol atıp sadece {V(f'{ye:.2f}')} gol yiyor. {DP(td)} ise deplasmanda maç başına {V(f'{ad:.2f}')} gol atarken {K(f'{yd:.2f}')} gol yiyor — yani dış sahada adeta bir savunma faciası yaşıyor.")
         elif yd <= 0.8 and ye >= 1.5:
-            hp.append(
-                f"Ev/deplasman tablosu tersine: {DP(td)} deplasmanda maç başına {V(f'{ad:.2f}')} gol atıp sadece {V(f'{yd:.2f}')} gol yiyor. "
-                f"{EV(te)} ise evinde {K(f'{ye:.2f}')} gol yiyor — savunma anlamında ciddi sıkıntıda."
-            )
+            hp.append(f"Ev/deplasman tablosu tersine: {DP(td)} deplasmanda maç başına {V(f'{ad:.2f}')} gol atıp sadece {V(f'{yd:.2f}')} gol yiyor. {EV(te)} ise evinde {K(f'{ye:.2f}')} gol yiyor — savunma anlamında ciddi sıkıntıda.")
         elif ye <= 1.0 and yd <= 1.0:
-            hp.append(
-                f"Savunma tarafında iki takım da sağlam: {EV(te)} {V(f'{ye:.2f}')}, {DP(td)} {V(f'{yd:.2f}')} gol yiyor. "
-                "Bu da gol sayısının düşük kalma ihtimalini artırıyor."
-            )
+            hp.append(f"Savunma tarafında iki takım da sağlam: {EV(te)} {V(f'{ye:.2f}')}, {DP(td)} {V(f'{yd:.2f}')} gol yiyor. Bu da gol sayısının düşük kalma ihtimalini artırıyor.")
         elif ye >= 1.8 and yd >= 1.8:
-            hp.append(
-                f"İki takımın da savunması sıkıntılı — {EV(te)} {K(f'{ye:.2f}')}, {DP(td)} {K(f'{yd:.2f}')} gol yiyor. "
-                "Bu tabloda karşılıklı goller sürpriz olmaz."
-            )
+            hp.append(f"İki takımın da savunması sıkıntılı — {EV(te)} {K(f'{ye:.2f}')}, {DP(td)} {K(f'{yd:.2f}')} gol yiyor. Bu tabloda karşılıklı goller sürpriz olmaz.")
         else:
-            hp.append(
-                f"Ev sahibi {EV(te)} kendi sahasında maç başına {V(f'{ae:.2f}')} gol atıp {V(f'{ye:.2f}')} yiyor. "
-                f"Deplasman {DP(td)} ise dışarıda {V(f'{ad:.2f}')} gol atıp {U(f'{yd:.2f}')} yiyor."
-            )
+            hp.append(f"Ev sahibi {EV(te)} kendi sahasında maç başına {V(f'{ae:.2f}')} gol atıp {V(f'{ye:.2f}')} yiyor. Deplasman {DP(td)} ise dışarıda {V(f'{ad:.2f}')} gol atıp {U(f'{yd:.2f}')} yiyor.")
 
-    # Clean sheet & team scored
     if cs_ev or cs_dep:
         cs_list = []
         if cs_ev: cs_list.append(f"{EV(te)} evinde %{V(f'{cs_ev:.0f}')} clean sheet")
         if cs_dep: cs_list.append(f"{DP(td)} deplasmanda %{K(f'{cs_dep:.0f}')} clean sheet")
         if cs_list:
-            hp.append("Kale performansına bakınca " + ", ".join(cs_list) + ". " +
-                     ("Bu tablo deplasmanın kendi kalesini korumakta ne kadar zorlandığını açıkça gösteriyor." if cs_ev > cs_dep else "Ev sahibi savunmada ciddi sorun yaşıyor."))
+            hp.append("Kale performansına bakınca " + ", ".join(cs_list) + ". " + ("Bu tablo deplasmanın kendi kalesini korumakta ne kadar zorlandığını açıkça gösteriyor." if cs_ev > cs_dep else "Ev sahibi savunmada ciddi sorun yaşıyor."))
 
-    # xG
     if xg_ev > 0 or xg_dep > 0:
         xs = []
         if xg_ev > 0: xs.append(f"{EV(te)} {V(f'{xg_ev:.2f}')}")
         if xg_dep > 0: xs.append(f"{DP(td)} {V(f'{xg_dep:.2f}')}")
         hp.append("Beklenen gol (xG) verileri de bu tabloyu destekliyor: " + ", ".join(xs) + ".")
 
-    # Trends
     if trends_ev:
         hp.append(f"<b>📈 {te} trendleri:</b> " + " ".join(trends_ev[:3]))
     if trends_dep:
@@ -2014,7 +1988,7 @@ def ai_yorum_olustur(v, a):
     # 2. 1X2 NEDEN BU?
     # ============================================================
     s1, y1 = max([("1", p1v), ("X", pxv), ("2", p2v)], key=lambda x: x[1])
-    p1, px, p2 = p1v, pxv, p2v
+    p1 = p1v; px = pxv; p2 = p2v
     kp = []
 
     if s1 == "1":
@@ -2079,7 +2053,7 @@ def ai_yorum_olustur(v, a):
             kp.append("Ancak " + " ve ".join(karsi) + ". Yani bu maçta kesin bir şey söylemek zor, fakat tüm veriler deplasman lehine eğiliyor.")
         kp.append(f"Bu veriler ışığında <b>2 ({td} Kazanır)</b> en mantıklı tercih olarak öne çıkıyor.")
 
-    else:  # X
+    else:
         kp.append(f"Model bu maçta beraberliği yaklaşık {V(f'%{px:.0f}')} olasılıkla işaret ediyor. Bu tip maçlarda genelde iki takım birbirini nötralize eder. Neden böyle düşündük:")
         nedenler = []
         if ppg_ev > 0 and mpg_dep > 0 and abs(ppg_ev - mpg_dep) < 0.4:
@@ -2194,7 +2168,7 @@ def ai_yorum_olustur(v, a):
         bolumler.append(("🤝", "KARŞILIKLI GOL (KG)", " ".join(kgp)))
 
     # ============================================================
-    # 5. GERÇEKÇİ SENARYO (yorumcu gözüyle)
+    # 5. GERÇEKÇİ SENARYO
     # ============================================================
     sn = []
     yorum_ev = []
@@ -2214,7 +2188,6 @@ def ai_yorum_olustur(v, a):
     if yorum_dep:
         sn.append(" ".join(yorum_dep).capitalize() + ".")
 
-    # Skor tahmini
     se_t = int(round(lam_ev)); sd_t = int(round(lam_dep))
     if se_t == sd_t: skor_t = f"{se_t}-{sd_t}"
     elif s1 == "1": skor_t = f"{max(1, se_t)}-{max(0, sd_t)}"
@@ -2228,7 +2201,6 @@ def ai_yorum_olustur(v, a):
 
 
 def ai_yorum_paneli(v, a):
-    """AI yorumunu HTML kart olarak döner."""
     bolumler = ai_yorum_olustur(v, a)
     if not bolumler:
         return ""
@@ -2242,7 +2214,6 @@ def ai_yorum_paneli(v, a):
             f'</div>'
         )
 
-    # Karar özeti
     s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
     te = v.get("takim_ev", "Ev"); td = v.get("takim_dep", "Dep")
     karar_isim = {"1": f"1 ({te} Kazanır)", "X": "X (Beraberlik)", "2": f"2 ({td} Kazanır)"}[s1]
@@ -2582,7 +2553,6 @@ elif st.session_state.sayfa == "giris":
                         st.rerun()
 
     else:
-        # MİSAFİR / ÜYE GÖRÜNÜMÜ
         gelecek = st.session_state.gelecek_analizler
         toplam = len(gelecek)
         premium = uye_premium_mu()
@@ -2789,7 +2759,7 @@ elif st.session_state.sayfa == "admin_odemeler":
 
 
 # ==========================================
-# SAYFA: ADMIN ABONELER (Sadece GÖRÜNTÜLE)
+# SAYFA: ADMIN ABONELER
 # ==========================================
 elif st.session_state.sayfa == "admin_aboneler":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
