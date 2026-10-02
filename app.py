@@ -337,6 +337,39 @@ st.markdown("""
     .stApp .fa-bildirim-ttl { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
     .stApp .fa-bildirim-msg { font-size: 0.85rem; color: #eaf1fb !important; line-height: 1.5; margin: 6px 0; }
     .stApp .fa-bildirim-meta { font-size: 0.68rem; color: var(--muted) !important; }
+
+    /* NAV BUTONLARI BÜYÜK */
+    .st-key-fa_nav .stButton button { min-height: 2.9rem !important; padding: 0.55rem 0.4rem !important; }
+    .st-key-fa_nav .stButton button p { font-size: 0.88rem !important; font-weight: 800 !important; }
+
+    /* MODERN DONUT GRAFİK */
+    .stApp .fa-donut-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0 8px 0; }
+    .stApp .fa-donut-kart {
+        background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95));
+        border: 1px solid #1d2940;
+        border-radius: 16px;
+        padding: 12px 6px 10px 6px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+    .stApp .fa-donut-kart:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-3px); box-shadow: 0 10px 28px rgba(34,197,94,0.15); }
+    .stApp .fa-donut-kart::before {
+        content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: var(--c);
+    }
+    .stApp .fa-donut-ttl { font-size: 0.62rem; color: #8fa0bd !important; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; }
+    .stApp .fa-donut-svg { width: 100%; max-width: 82px; height: auto; margin: 0 auto; display: block; }
+    .stApp .fa-donut-sub { font-size: 0.62rem; color: #64748b !important; margin-top: 8px; font-weight: 700; }
+    .stApp .fa-donut-sub b { color: #eaf1fb !important; }
+
+    .stApp .mh-hero-ust { font-size: 0.7rem; color: #8fa0bd !important; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; margin-bottom: 8px; opacity: 0.7; }
+
+    /* ÜYE OL MİNİ LİNK */
+    .stApp .fa-uye-link { text-align: center; font-size: 0.78rem; color: #8fa0bd !important; margin-top: 8px; }
+    .stApp .fa-uye-link b { color: #22c55e !important; font-weight: 800; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1611,6 +1644,22 @@ def _e(x): return _html.escape(str(x))
 def rozet(m, t="gray"): return f'<span class="fa-badge fa-b-{t}">{_e(m)}</span>'
 
 
+def _donut_svg(yuzde, renk, boyut=82):
+    """Modern SVG donut grafik."""
+    y = max(0.0, min(100.0, yuzde))
+    r = 38
+    cevre = 2 * 3.14159265 * r
+    offset = cevre * (1 - y / 100)
+    return f'''<svg class="fa-donut-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<circle cx="50" cy="50" r="{r}" fill="none" stroke="#1a2438" stroke-width="8"/>
+<circle cx="50" cy="50" r="{r}" fill="none" stroke="{renk}" stroke-width="8"
+    stroke-dasharray="{cevre:.2f}" stroke-dashoffset="{offset:.2f}"
+    stroke-linecap="round" transform="rotate(-90 50 50)"/>
+<text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+    fill="{renk}" font-size="22" font-weight="900" font-family="Rajdhani, Inter, sans-serif">%{y:.0f}</text>
+</svg>'''
+
+
 def mac_karti(ev, dep, sb, se, sd, le, ld, saat="", ulke="", tarih=""):
     orta = f'<div class="fa-score">{int(se)} - {int(sd)}</div>' if sb else '<div class="fa-vs">VS</div>'
     br = ulke_bayrak_bul(ulke); ust = ""
@@ -1714,6 +1763,57 @@ def yasal_metin_goster():
         st.markdown(YASAL_METIN)
 
 
+def gecmis_istatistik_hesapla():
+    """Geçmiş maçlardan 1X2, Gol, KG isabet yüzdelerini hesaplar."""
+    gecmis_g = st.session_state.gecmis_analizler
+    g_1x2 = g_gol = g_kg = 0
+    g_1x2_t = g_gol_t = g_kg_t = 0
+    for gg in gecmis_g:
+        try:
+            vv = gg["veri"]
+            if not vv.get("skor_belli", False): continue
+            dd = sonuc_hesapla(gg)
+            if not dd: continue
+            o = dd["oneri_1x2"]
+            if o.get("tuttu") is not None:
+                g_1x2_t += 1
+                if o["tuttu"]: g_1x2 += 1
+            o = dd["oneri_gol"]
+            if o.get("tuttu") is not None:
+                g_gol_t += 1
+                if o["tuttu"]: g_gol += 1
+            o = dd["oneri_kg"]
+            if o.get("tuttu") is not None:
+                g_kg_t += 1
+                if o["tuttu"]: g_kg += 1
+        except Exception: continue
+    p1 = (g_1x2 / g_1x2_t * 100) if g_1x2_t > 0 else 0
+    pg = (g_gol / g_gol_t * 100) if g_gol_t > 0 else 0
+    pk = (g_kg / g_kg_t * 100) if g_kg_t > 0 else 0
+    return p1, g_1x2, g_1x2_t, pg, g_gol, g_gol_t, pk, g_kg, g_kg_t
+
+
+def modern_istatistik_grafik():
+    p1, t1, s1, pg, tg, sg, pk, tk, sk = gecmis_istatistik_hesapla()
+    st.markdown(f'''<div class="fa-donut-grid">
+    <div class="fa-donut-kart" style="--c:#22c55e;">
+        <div class="fa-donut-ttl">🎯 1X2</div>
+        {_donut_svg(p1, "#22c55e")}
+        <div class="fa-donut-sub"><b>{t1}</b> / {s1}</div>
+    </div>
+    <div class="fa-donut-kart" style="--c:#3b82f6;">
+        <div class="fa-donut-ttl">⚽ GOL</div>
+        {_donut_svg(pg, "#3b82f6")}
+        <div class="fa-donut-sub"><b>{tg}</b> / {sg}</div>
+    </div>
+    <div class="fa-donut-kart" style="--c:#f59e0b;">
+        <div class="fa-donut-ttl">🤝 KG</div>
+        {_donut_svg(pk, "#f59e0b")}
+        <div class="fa-donut-sub"><b>{tk}</b> / {sk}</div>
+    </div>
+    </div>''', unsafe_allow_html=True)
+
+
 # ==========================================
 # ADMİN GİRİŞ EKRANI
 # ==========================================
@@ -1777,6 +1877,9 @@ def ust_bar():
         elif uye_mi():
             if st.button("🚪 Çıkış", use_container_width=True, key="uye_cikis_btn"):
                 st.session_state.aktif_kullanici = None; st.session_state.sayfa = "giris"; st.rerun()
+        else:
+            if st.button("🔐 Giriş", use_container_width=True, key="misafir_girisi_btn", type="primary"):
+                st.session_state.sayfa = "giris_yap"; st.rerun()
 
 
 def misafir_aciklama():
@@ -1819,18 +1922,14 @@ def nav_bar():
         elif uye_mi():
             sec = [("🏠 Ana Sayfa", "giris"), ("📊 Geçmiş Maçlar", "gecmis"), ("📬 Bildirim", "kullanici_bildirim")]
         else:
-            sec = [("🏠 Ana Sayfa", "giris"), ("📊 Geçmiş Maçlar", "gecmis"), ("✨ Üye Ol", "kayit"), ("🔑 Giriş", "giris_yap")]
+            sec = [("🏠 Ana Sayfa", "giris"), ("📊 Geçmiş Maçlar", "gecmis")]
         kl = st.columns(len(sec))
         for k, (e, h) in zip(kl, sec):
             with k:
                 aktif = st.session_state.sayfa == h
                 if st.button(e, key=f"nav_{h}", use_container_width=True, type="primary" if aktif else "secondary"):
                     if not aktif:
-                        if h == "giris_yap":
-                            st.session_state.sayfa = "giris_yap"
-                            st.rerun()
-                        else:
-                            nav_git(h)
+                        nav_git(h)
 
 
 # ==========================================
@@ -1973,20 +2072,22 @@ elif st.session_state.sayfa == "giris":
                     kk = (datetime.strptime(bs, "%Y-%m-%d") - datetime.now()).days
                     if kk >= 0: kl = f'<div class="mh-hero-badge">🌟 PREMIUM — {kk} gün kaldı</div>'
             except Exception: pass
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-icon">🌟</div><div class="mh-hero-title">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">Premium aktif — tüm analizler açık</div>{kl}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">Premium aktif — tüm analizler açık</div>{kl}</div>', unsafe_allow_html=True)
+            # Modern istatistik grafikleri
+            modern_istatistik_grafik()
         elif uye_mi():
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-icon">👤</div><div class="mh-hero-title">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">İlk {kota} maç açık</div><div class="mh-hero-badge" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.5);color:#f59e0b !important;">⚠️ ABONELİK YOK</div></div>', unsafe_allow_html=True)
-            if st.button("💳 Premium'a Geç", use_container_width=True, type="primary", key="ana_premium_btn"):
+            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz açık</div><div class="mh-hero-badge" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.5);color:#f59e0b !important;">⚠️ ABONELİK YOK</div></div>', unsafe_allow_html=True)
+            modern_istatistik_grafik()
+            if st.button("💳 Premium'a Geç  •  ✨ Üye Ol", use_container_width=True, type="primary", key="ana_premium_btn"):
                 st.session_state["odeme_hedef_kadi"] = uye_adi(); st.session_state.sayfa = "odeme"; st.rerun()
+            st.markdown('<div class="fa-uye-link">Hesabın yok mu? Yukarıdaki butona bas <b>↑</b></div>', unsafe_allow_html=True)
         else:
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-icon">⚽</div><div class="mh-hero-title">Futbol Analiz Pro</div><div class="mh-hero-sub">Bugünün {toplam} maçı — ilk {kota} maç açık</div><div class="mh-hero-badge">● CANLI VERİ</div></div>', unsafe_allow_html=True)
-            cA, cB = st.columns(2)
-            with cA:
-                if st.button("💳 Premium'a Geç", use_container_width=True, type="primary", key="mis_prem"):
-                    st.session_state.sayfa = "kayit"; st.rerun()
-            with cB:
-                if st.button("🔑 Giriş Yap", use_container_width=True, key="mis_gir"):
-                    st.session_state.sayfa = "giris_yap"; st.rerun()
+            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Bugün {toplam} Maç</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz açık</div></div>', unsafe_allow_html=True)
+            # Modern donut grafikleri
+            modern_istatistik_grafik()
+            if st.button("💳 Premium'a Geç  •  ✨ Üye Ol", use_container_width=True, type="primary", key="mis_prem"):
+                st.session_state.sayfa = "kayit"; st.rerun()
+            st.markdown('<div class="fa-uye-link">Zaten üye misin? Sağ üstteki <b>🔐 Giriş</b> butonuna bas</div>', unsafe_allow_html=True)
 
         st.divider()
         if not gelecek: st.info("ℹ️ Henüz maç yok.")
@@ -2093,7 +2194,7 @@ elif st.session_state.sayfa == "odeme":
     iban = ayar_al("iban", "TR00 0000 0000 0000 0000 0000 00")
     hs = ayar_al("hesap_sahibi", "ADINIZ SOYADINIZ")
     fh = float(ayar_al("fiyat_haftalik", 49.0)); fa = float(ayar_al("fiyat_aylik", 149.0)); fy = float(ayar_al("fiyat_yillik", 999.0))
-    st.markdown(f'''<div class="mh-hero"><div class="mh-hero-icon">💳</div><div class="mh-hero-title">Premium'a Geç</div><div class="mh-hero-sub">Havale / EFT ile ödeme</div><div class="mh-hero-badge">● GÜVENLİ ÖDEME</div></div>''', unsafe_allow_html=True)
+    st.markdown(f'''<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-icon">💳</div><div class="mh-hero-title">Premium'a Geç</div><div class="mh-hero-sub">Havale / EFT ile ödeme</div><div class="mh-hero-badge">● GÜVENLİ ÖDEME</div></div>''', unsafe_allow_html=True)
     st.markdown(f'''<div class="mh-info"><b>👤 Kullanıcı:</b> {_e(hedef)}<br>Açıklama kısmına <b>MUTLAKA</b> kullanıcı adını yaz.</div>''', unsafe_allow_html=True)
     st.markdown("### 📆 Paket Seç")
     sec = st.radio("Süre?", ["haftalik", "aylik", "yillik"], format_func=lambda x: {"haftalik": f"📅 Haftalık — {fh:.0f} ₺", "aylik": f"📆 Aylık — {fa:.0f} ₺", "yillik": f"🎯 Yıllık — {fy:.0f} ₺"}[x], index=1, key="odeme_sure_sec")
@@ -2344,6 +2445,8 @@ elif st.session_state.sayfa == "gecmis":
     gc = st.session_state.gecmis_analizler; top = len(gc)
     if top == 0: st.info("Henüz kayıt yok.")
     else:
+        # Modern donut grafikleri
+        modern_istatistik_grafik()
         st.markdown(f"### Toplam: {top} maç")
         for i, g in enumerate(reversed(gc)):
             idx = len(gc) - 1 - i; v = g["veri"]
