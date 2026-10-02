@@ -1508,7 +1508,7 @@ def admin_giris_ekrani():
                 st.success(f"✅ Hoş geldin, {kadi.strip()}!"); time.sleep(1); st.rerun()
             else: st.error("❌ Kullanıcı adı veya şifre hatalı.")
         if iptal_btn:
-            st.session_state.admin_login_acik = False; st.rerun()
+            st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"; st.rerun()
     st.markdown('<div class="login-divider">HESABIN YOK MU?</div>', unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
@@ -1516,7 +1516,7 @@ def admin_giris_ekrani():
             st.session_state.admin_login_acik = False; st.session_state.sayfa = "kayit"; st.rerun()
     with c2:
         if st.button("⬅️ Ana Sayfa", use_container_width=True, key="admin_to_main"):
-            st.session_state.admin_login_acik = False; st.rerun()
+            st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"; st.rerun()
 
 
 # ==========================================
@@ -1601,7 +1601,7 @@ def nav_bar():
                 if st.button(e, key=f"nav_{h}", use_container_width=True, type="primary" if aktif else "secondary"):
                     if not aktif:
                         if h == "giris_yap":
-                            st.session_state.admin_login_acik = True
+                            st.session_state.sayfa = "giris_yap"
                             st.rerun()
                         else:
                             nav_git(h)
@@ -1621,9 +1621,16 @@ nav_bar()
 
 
 # ==========================================
+# SAYFA: GİRİŞ YAP (YENİ EKLENDİ)
+# ==========================================
+if st.session_state.sayfa == "giris_yap":
+    admin_giris_ekrani()
+
+
+# ==========================================
 # SAYFA: ANA SAYFA
 # ==========================================
-if st.session_state.sayfa == "giris":
+elif st.session_state.sayfa == "giris":
     if admin_mi():
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:gray;'>Admin Paneli</p>", unsafe_allow_html=True)
@@ -1651,17 +1658,7 @@ if st.session_state.sayfa == "giris":
         if analiz_btn:
             if not ym.strip(): st.warning("⚠️ Metin yapıştır.")
             else:
-                cikan, okunamayanlar = metinden_veri_cikar(ym) if 'metinden_veri_cikar' in dir() else ({}, [])
-                if not cikan: st.error("❌ Veri çıkarılamadı.")
-                else:
-                    yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(cikan)
-                    st.session_state.form_verileri = yv; st.session_state.kayit_yapildi = False
-                    st.session_state.manuel_bekleyen = okunamayanlar.copy() if okunamayanlar else []
-                    if not veri_yeterli_mi(yv): st.error("⚠️ Yetersiz veri.")
-                    else:
-                        if okunamayanlar: st.session_state.sayfa = "manuel_giris"
-                        else: st.session_state.sayfa = "sonuc"
-                        st.rerun()
+                st.info("Metin analiz özelliği için PARÇA 2'ye yardımcı fonksiyonlar eklenecek. Şu an veri çekme kullanabilirsin.")
         if gecmis_btn: nav_git("gecmis")
         if gelecek_btn: nav_git("gelecek_admin")
         if backtest_btn: nav_git("backtest")
@@ -1690,14 +1687,7 @@ if st.session_state.sayfa == "giris":
                         mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=_p, max_workers=int(w))
                     ph.empty(); st.rerun()
         with vs2:
-            lurl = st.text_input("Lig URL", key="lig_url_input")
-            c1, c2 = st.columns(2)
-            with c1: la = st.number_input("Kaç maç?", 5, 30, 10, 1, key="lig_adet")
-            with c2: lw = st.number_input("Paralel", 1, 8, 3, 1, key="lig_workers")
-            if st.button("📜 Ligi Çek", use_container_width=True, type="primary", key="lig_cek_btn"):
-                if not lurl.strip(): st.warning("URL gerekli")
-                else:
-                    st.info("Lig geçmişi için ayrı bir modül gerekli")
+            st.info("ℹ️ Lig geçmişi özelliği sonraki sürümde eklenecek.")
         with vs3:
             if st.session_state.skor_ozet:
                 oz = st.session_state.skor_ozet
@@ -1741,7 +1731,7 @@ if st.session_state.sayfa == "giris":
                     st.session_state.sayfa = "kayit"; st.rerun()
             with cB:
                 if st.button("🔑 Giriş Yap", use_container_width=True, key="mis_gir"):
-                    st.session_state.sayfa = "uyegirisi"; st.rerun()
+                    st.session_state.sayfa = "giris_yap"; st.rerun()
 
         st.divider()
         if not gelecek: st.info("ℹ️ Henüz maç yok.")
@@ -1773,7 +1763,7 @@ if st.session_state.sayfa == "giris":
                             st.rerun()
                     with c2:
                         if st.button("🔑 Giriş", use_container_width=True, key=f"kg_{idx}"):
-                            st.session_state.sayfa = "uyegirisi"; st.rerun()
+                            st.session_state.sayfa = "giris_yap"; st.rerun()
                 st.divider()
 
         yasal_metin_goster()
