@@ -1910,6 +1910,11 @@ def ai_yorum_olustur(v, a):
     trends_ev = _trend_cumleleri(v, "ev")
     trends_dep = _trend_cumleleri(v, "dep")
 
+    lam_ev = a["lam_ev"]; lam_dep = a["lam_dep"]
+    ust25 = a["ust_25"]; alt25 = a["alt_25"]
+    kgvar = a["kg_var_model"]; kgyok = a["kg_yok_model"]
+    p1v = a["p1"]; pxv = a["px"]; p2v = a["p2"]
+
     def V(x): return f"<span class='vurgu'>{x}</span>"
     def U(x): return f"<span class='uyari'>{x}</span>"
     def K(x): return f"<span class='kotu'>{x}</span>"
@@ -2008,8 +2013,8 @@ def ai_yorum_olustur(v, a):
     # ============================================================
     # 2. 1X2 NEDEN BU?
     # ============================================================
-    s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
-    p1, px, p2 = a["p1"], a["px"], a["p2"]
+    s1, y1 = max([("1", p1v), ("X", pxv), ("2", p2v)], key=lambda x: x[1])
+    p1, px, p2 = p1v, pxv, p2v
     kp = []
 
     if s1 == "1":
@@ -2097,10 +2102,10 @@ def ai_yorum_olustur(v, a):
     # 3. GOL BEKLENTİSİ
     # ============================================================
     gp = []
-    u25 = a["ust_25"]; a25 = a["alt_25"]
+    u25 = ust25; a25 = alt25
     top_at = ae + ad
     top_ye = ye + yd
-    lam_top = a["lam_ev"] + a["lam_dep"]
+    lam_top = lam_ev + lam_dep
 
     if u25 >= a25:
         gp.append(f"Bu maçta <b>Üst 2.5</b> tarafı ağır basıyor (%{u25:.1f}). Neden mi?")
@@ -2117,7 +2122,7 @@ def ai_yorum_olustur(v, a):
             gn.append(f"{DP(td)} maçlarının %{V(f'{u25_dep:.0f}')}'inde 2.5 üstü görmüş")
         if gn:
             gp.append("Çünkü " + ", ".join(gn[:3]) + ".")
-        gp.append(f"Modelin beklediği toplam gol sayısı {V(f'{lam_top:.2f}')} seviyesinde — ev sahibi {V(f'{a[\"lam_ev\"]:.2f}')}, deplasman {V(f'{a[\"lam_dep\"]:.2f}')} gol beklentisiyle oynuyor.")
+        gp.append(f"Modelin beklediği toplam gol sayısı {V(f'{lam_top:.2f}')} seviyesinde — ev sahibi {V(f'{lam_ev:.2f}')}, deplasman {V(f'{lam_dep:.2f}')} gol beklentisiyle oynuyor.")
         gp.append("Bu yüzden <b>Üst 2.5</b> demek daha mantıklı.")
     else:
         gp.append(f"Bu maçta <b>Alt 2.5</b> tarafı öne çıkıyor (%{a25:.1f}). Sebeplerine bakalım:")
@@ -2148,8 +2153,8 @@ def ai_yorum_olustur(v, a):
     # 4. KG
     # ============================================================
     kgp = []
-    if a["kg_var_model"] >= a["kg_yok_model"]:
-        kgp.append(f"<b>Karşılıklı Gol Var</b> tarafı ağır basıyor (%{a[\"kg_var_model\"]:.1f}). Neden böyle düşünüyoruz:")
+    if kgvar >= kgyok:
+        kgp.append(f"<b>Karşılıklı Gol Var</b> tarafı ağır basıyor (%{kgvar:.1f}). Neden böyle düşünüyoruz:")
         kn = []
         if kg_ev >= 60:
             kn.append(f"{EV(te)} maçlarının %{V(f'{kg_ev:.0f}')}'inde karşılıklı gol görmüş")
@@ -2167,7 +2172,7 @@ def ai_yorum_olustur(v, a):
             kgp.append("Çünkü " + ", ".join(kn[:3]) + ".")
         kgp.append("Yani hem ev sahibi hem deplasman gol atma eğiliminde. Bu durumda <b>KG Var</b> tercihi mantıklı.")
     else:
-        kgp.append(f"<b>Karşılıklı Gol Yok</b> tarafı açık ara öne çıkıyor (%{a[\"kg_yok_model\"]:.1f}). Neden böyle düşünüyoruz:")
+        kgp.append(f"<b>Karşılıklı Gol Yok</b> tarafı açık ara öne çıkıyor (%{kgyok:.1f}). Neden böyle düşünüyoruz:")
         kn = []
         if kg_ev <= 40 and kg_ev > 0:
             kn.append(f"{EV(te)} maçlarının yalnızca %{K(f'{kg_ev:.0f}')}'inde iki takım da gol atmış")
@@ -2210,8 +2215,7 @@ def ai_yorum_olustur(v, a):
         sn.append(" ".join(yorum_dep).capitalize() + ".")
 
     # Skor tahmini
-    lam_e = a["lam_ev"]; lam_d = a["lam_dep"]
-    se_t = int(round(lam_e)); sd_t = int(round(lam_d))
+    se_t = int(round(lam_ev)); sd_t = int(round(lam_dep))
     if se_t == sd_t: skor_t = f"{se_t}-{sd_t}"
     elif s1 == "1": skor_t = f"{max(1, se_t)}-{max(0, sd_t)}"
     else: skor_t = f"{max(0, se_t)}-{max(1, sd_t)}"
