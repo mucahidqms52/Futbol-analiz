@@ -1147,174 +1147,242 @@ def metinden_veri_cikar(metin):
 # ==========================================
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
-
-def _son_n_oku(m):
-    x = re.search(r'Last\s+(\d+)\s+games', m or "")
-    return int(x.group(1)) if x else None
-
-
-def _tikla_mac_sayisi(pg, ms):
-    h = str(ms)
-    try:
-        for el in pg.locator(f'xpath=//*[normalize-space(text())="{h}"]').all()[:20]:
-            try:
-                if el.evaluate("e => !!e.closest('table')"): continue
-                if el.evaluate("e => e.children.length > 1"): continue
-                el.click(timeout=1500); return True
-            except Exception: continue
-    except Exception: pass
-    js = '''(function(h){var t=document.querySelectorAll('label,span,div,button,a,li');for(var i=0;i<t.length;i++){var e=t[i];if(e.children.length>1)continue;if(e.closest('table'))continue;if((e.textContent||'').trim()===h){try{e.click()}catch(x){};var p=e.querySelector('input[type=radio],input[type=checkbox]');if(p&&!p.checked){try{p.click()}catch(x){}};return true}}return false})("%s")''' % h
-    try: return bool(pg.evaluate(js))
-    except Exception: return False
+# Aynı anda en fazla kaç Chromium açılabilir (RAM koruması)
+TARAYICI_ESZAMANLI = int(os.environ.get("TARAYICI_ESZAMANLI", "3"))
+_TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
 
 
-def _tikla_takim_sekmesi(pg, tadi, sekme):
-    if not tadi: return False
-    js = r'''(function(ta,sa){var t=document.querySelectorAll('h1,h2,h3,h4,h5,strong,b,span,div,a,p');var el=null;for(var i=0;i<t.length;i++){var e=t[i];if(e.children.length>1)continue;var x=(e.textContent||'').trim();if(x===ta){el=e;break}}if(!el){for(var i=0;i<t.length;i++){var e=t[i];if(e.children.length>1)continue;var x=(e.textContent||'').trim();if(x.indexOf(ta)===0&&x.length<ta.length+5){el=e;break}}}if(!el)return false;var cur=el;for(var k=0;k<12&&cur.parentElement;k++){cur=cur.parentElement;var sm=cur.querySelectorAll('label,span,div,a,button,li');for(var j=0;j<sm.length;j++){var s=sm[j];if(s.children.length>1)continue;if(s.closest('table'))continue;if((s.textContent||'').trim()===sa){try{s.click()}catch(x){};var p=s.querySelector('input[type=radio],input[type=checkbox]');if(p&&!p.checked){try{p.click()}catch(x){}};return true}}}return false})("%s","%s")''' % (tadi.replace('"', '\\"'), sekme)
-    try: return bool(pg.evaluate(js))
-    except Exception: return False
+def _js_tikla_kodu(mac_sec):
+    return """
+    (function() {
+        var macSayi = "%s";
+        function ok(el) { return el.children.length <= 1 && !el.closest('table'); }
+        function tikla(el) {
+            try { el.click(); } catch(e) {}
+            var inp = el.querySelector('input[type=radio], input[type=checkbox]');
+            if (inp && !inp.checked) { try { inp.click(); } catch(e) {} }
+        }
+        var tum = document.querySelectorAll('label, span, div, button, a, li');
+        var homes = [], aways = [];
+        for (var i = 0; i < tum.length; i++) {
+            var t = (tum[i].textContent || '').trim();
+            if (!ok(tum[i])) continue;
+            if (t === macSayi) tikla(tum[i]);
+            else if (t === 'Home') homes.push(tum[i]);
+            else if (t === 'Away') aways.push(tum[i]);
+        }
+        if (homes.length) tikla(homes[0]);
+        if (aways.length) tikla(aways[aways.length - 1]);
+        return true;
+    })()
+    """ % mac_sec
 
 
-def _playwright_html(url, ms, timeout, dogrula=False, tev="", tdep=""):
+def _son_n_oku(metin):
+    m = re.search(r'Last\s+(\d+)\s+games', metin or "")
+    return int(m.group(1)) if m else None
+
+
+def _playwright_html(url, mac_sec, timeout, dogrula=False):
     from playwright.sync_api import sync_playwright
-    hedef = int(ms) if str(ms).isdigit() else None
-    with sync_playwright() as p:
-        b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
-        try:
-            ctx = b.new_context(user_agent=UA, locale="en-US")
-            pg = ctx.new_page()
-            pg.route("**/*", lambda r: r.abort() if r.request.resource_type in ("image", "media", "font") else r.continue_())
-            pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-            try: pg.wait_for_load_state("networkidle", timeout=15000)
-            except Exception: pass
-            pg.wait_for_timeout(2500)
-            _tikla_mac_sayisi(pg, ms); pg.wait_for_timeout(3500)
-            if tev: _tikla_takim_sekmesi(pg, tev, "Home"); pg.wait_for_timeout(3500)
-            if tdep: _tikla_takim_sekmesi(pg, tdep, "Away"); pg.wait_for_timeout(3500)
-            if dogrula and hedef:
-                try: m = pg.inner_text("body")
-                except Exception: m = ""
-                n = _son_n_oku(m)
-                if n is not None and n != hedef:
-                    _tikla_mac_sayisi(pg, ms); pg.wait_for_timeout(3000)
-                    try: m = pg.inner_text("body")
-                    except Exception: m = ""
-                    n = _son_n_oku(m)
-                    if n is not None and n != hedef: raise RuntimeError(f"{hedef} filtresi uygulanamadı")
-            return pg.content()
-        finally:
-            try: b.close()
-            except Exception: pass
-
-
-def _scrapingbee_get(url, render_js=True, timeout=90, ms="5", max_retry=3, dogrula=False, tev="", tdep=""):
-    hata = None
-    try:
-        import playwright
-        pv = True
-    except ImportError:
-        pv = False; hata = "playwright yok"
-    if pv:
-        for d in range(max_retry):
+    js_kod = _js_tikla_kodu(mac_sec)
+    hedef = int(mac_sec) if str(mac_sec).isdigit() else None
+    with _TARAYICI_SEM:
+        with sync_playwright() as p:
+            b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
             try:
-                h = _playwright_html(url, ms, timeout, dogrula, tev, tdep)
-                if h and len(h) > 500: return h, None
-                hata = "Boş sayfa"
+                ctx = b.new_context(user_agent=UA, locale="en-US")
+                pg = ctx.new_page()
+                pg.route("**/*", lambda route: route.abort()
+                         if route.request.resource_type in ("image", "media", "font")
+                         else route.continue_())
+                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+                try:
+                    pg.wait_for_load_state("networkidle", timeout=15000)
+                except Exception:
+                    pass
+                pg.wait_for_timeout(3000)
+                pg.evaluate(js_kod)
+                pg.wait_for_timeout(3500)
+
+                if dogrula and hedef:
+                    n = _son_n_oku(pg.inner_text("body"))
+                    if n is not None and n != hedef:
+                        try:
+                            for el in pg.get_by_text(str(hedef), exact=True).all()[:20]:
+                                try:
+                                    if el.evaluate("e => !!e.closest('table')"):
+                                        continue
+                                    el.click(timeout=1500)
+                                except Exception:
+                                    pass
+                            pg.wait_for_timeout(1500)
+                            pg.evaluate(js_kod)
+                            pg.wait_for_timeout(3000)
+                        except Exception:
+                            pass
+                        n = _son_n_oku(pg.inner_text("body"))
+                    if n is not None and n != hedef:
+                        raise RuntimeError(f"{hedef} maç filtresi uygulanamadı (sayfa: Last {n} games)")
+                return pg.content()
+            finally:
+                try: b.close()
+                except Exception: pass
+
+
+def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3, dogrula=False):
+    son_hata = None
+
+    try:
+        import playwright  # noqa: F401
+        playwright_var = True
+    except ImportError:
+        playwright_var = False
+        son_hata = "playwright kurulu değil"
+
+    if playwright_var:
+        for deneme in range(max_retry):
+            try:
+                html = _playwright_html(url, mac_sec, timeout, dogrula)
+                if html and len(html) > 500:
+                    return html, None
+                son_hata = "Boş sayfa"
             except Exception as e:
-                hata = f"Tarayıcı: {str(e)[:150]}"
-            if d < max_retry - 1: time.sleep(2 + d * 2)
-    if dogrula: return None, hata or "Filtre uygulanamadı"
+                son_hata = f"Tarayıcı hatası: {str(e)[:150]}"
+            if deneme < max_retry - 1:
+                time.sleep(2 + deneme * 2)
+
+    if dogrula:
+        return None, son_hata or "Filtre uygulanamadı"
     try:
         r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
-        if r.status_code == 200 and r.text: return r.text, None
-        hata = f"HTTP {r.status_code}"
-    except Exception as e: hata = f"Bağlantı: {str(e)[:100]}"
-    return None, hata or "Sayfa alınamadı"
+        if r.status_code == 200 and r.text:
+            return r.text, None
+        son_hata = f"HTTP {r.status_code}" + (f" | {son_hata}" if son_hata else "")
+    except Exception as e:
+        son_hata = f"Bağlantı hatası: {str(e)[:100]}" + (f" | {son_hata}" if son_hata else "")
+
+    return None, son_hata or "Sayfa alınamadı."
 
 
 def _html_metne_cevir(html):
     soup = BeautifulSoup(html, "html.parser")
-    for t in soup(["script", "style", "noscript", "svg", "iframe"]): t.decompose()
+    for tag in soup(["script", "style", "noscript", "svg", "iframe"]): tag.decompose()
     for td in soup.find_all(["td", "th"]): td.insert_after("\t")
     for tr in soup.find_all("tr"): tr.insert_after("\n")
     for e in soup.find_all(["div", "p", "li", "h1", "h2", "h3", "h4", "br"]): e.insert_after("\n")
-    m = soup.get_text(separator="", strip=False)
-    m = re.sub(r'[ \t]+\n', '\n', m); m = re.sub(r'\n{3,}', '\n\n', m)
-    return m
+    metin = soup.get_text(separator="", strip=False)
+    metin = re.sub(r'[ \t]+\n', '\n', metin)
+    metin = re.sub(r'\n{3,}', '\n\n', metin)
+    return metin
 
 
 def mutating_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI):
     html, hata = _scrapingbee_get("https://www.mutating.com/football-stats/", render_js=True)
     if hata: return [], [hata]
-    if not html: return [], ["Ana sayfa indirilemedi"]
+    if not html: return [], ["Ana sayfa indirilemedi."]
     soup = BeautifulSoup(html, "html.parser")
-    maclar = []; gor = set()
+    maclar = []; gorulen = set()
     for link in soup.find_all("a", href=True):
         if len(maclar) >= max_mac: break
         href = link.get("href", "")
         if not any(x in href for x in ["match-preview", "match/", "/stats/"]): continue
         if href.startswith("/"): href = "https://www.mutating.com" + href
         elif not href.startswith("http"): continue
-        if href in gor: continue
-        gor.add(href)
-        h2 = link.find_all("h2")
-        tev = h2[0].get_text(strip=True) if len(h2) > 0 else ""
-        tdep = h2[1].get_text(strip=True) if len(h2) > 1 else ""
-        s_el = link.find(class_=re.compile(r"nostart|time|match-time"))
-        saat = s_el.get_text(strip=True) if s_el else ""
-        if saat: saat = saat_2_saat_ileri(saat)
-        maclar.append({"url": href, "takim_ev": tev, "takim_dep": tdep, "saat": saat})
+        if href in gorulen: continue
+        gorulen.add(href)
+        h2_list = link.find_all("h2")
+        takim_ev = h2_list[0].get_text(strip=True) if len(h2_list) > 0 else ""
+        takim_dep = h2_list[1].get_text(strip=True) if len(h2_list) > 1 else ""
+        saat_el = link.find(class_=re.compile(r"nostart|time|match-time"))
+        saat = saat_el.get_text(strip=True) if saat_el else ""
+        maclar.append({"url": href, "takim_ev": takim_ev, "takim_dep": takim_dep, "saat": saat})
     return maclar, []
+
+
+def mutating_mac_detay_cek(url):
+    html, hata = _scrapingbee_get(url, render_js=True, mac_sec="5", dogrula=True)
+    if hata: return None, [hata]
+    if not html: return None, ["Sayfa indirilemedi."]
+    return _mac_html_parse(html, url)
 
 
 def _mac_html_parse(html, url=""):
     soup = BeautifulSoup(html, "html.parser")
-    veri = {}
+    veri = {}; okunamayanlar = []
     h1 = soup.find("h1")
     if h1:
-        b = h1.get_text(strip=True)
-        if " - " in b:
-            p = b.replace(" Stats", "").replace(" stats", "").split(" - ")
+        baslik = h1.get_text(strip=True)
+        if " - " in baslik:
+            p = baslik.replace(" Stats", "").replace(" stats", "").split(" - ")
             veri["takim_ev"] = p[0].strip()
             if len(p) > 1: veri["takim_dep"] = p[1].strip()
-    m = _html_metne_cevir(html)
-    m1 = re.search(r'(\d{1,2}\.\d{1,2}\.\d{4})', m)
-    if m1: veri["tarih"] = m1.group(1)
-    m1 = re.search(r'(\d{1,2}:\d{2})', m)
-    if m1: veri["saat"] = saat_2_saat_ileri(m1.group(1))
-    veri["ulke"] = _ulke_bul(m)
-    sk_e = sk_d = None
-    m1 = re.search(r'FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', m)
-    if m1: sk_e = int(m1.group(1)); sk_d = int(m1.group(2))
-    if sk_e is not None:
-        veri["skor_ev"] = sk_e; veri["skor_dep"] = sk_d; veri["skor_belli"] = True
-    else: veri["skor_belli"] = False
+    metin = _html_metne_cevir(html)
+    veri["son_n"] = _son_n_oku(metin)
+    m = re.search(r'(\d{1,2}\.\d{1,2}\.\d{4})', metin)
+    if m: veri["tarih"] = m.group(1)
+    m = re.search(r'(\d{1,2}:\d{2})', metin)
+    if m: veri["saat"] = m.group(1)
+    veri["ulke"] = _ulke_bul(metin)
 
-    def cf(label):
-        for pat in [r'([\d.,]+)\s*%?\s*\t\s*' + re.escape(label) + r'\s*\t\s*([\d.,]+)', r'([\d.,]+)\s*%?\s*\|\s*' + re.escape(label) + r'\s*\|\s*([\d.,]+)', r'([\d.,]+)\s*%?\s+' + re.escape(label) + r'\s+([\d.,]+)\s*%?', r'([\d.,]+)\s*%?\s*\n\s*' + re.escape(label) + r'\s*\n\s*([\d.,]+)']:
-            x = re.search(pat, m, re.IGNORECASE)
-            if x:
-                try: return float(x.group(1).replace(",", ".")), float(x.group(2).replace(",", "."))
+    skor_ev = skor_dep = None
+    m = re.search(r'FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
+    if m:
+        skor_ev = int(m.group(1)); skor_dep = int(m.group(2))
+    if skor_ev is not None:
+        veri["skor_ev"] = skor_ev; veri["skor_dep"] = skor_dep; veri["skor_belli"] = True
+    else:
+        veri["skor_belli"] = False
+
+    def _cift(label):
+        for pat in [
+            r'([\d.,]+)\s*%?\s*\t\s*' + re.escape(label) + r'\s*\t\s*([\d.,]+)',
+            r'([\d.,]+)\s*%?\s*\|\s*' + re.escape(label) + r'\s*\|\s*([\d.,]+)',
+            r'([\d.,]+)\s*%?\s+' + re.escape(label) + r'\s+([\d.,]+)\s*%?',
+            r'([\d.,]+)\s*%?\s*\n\s*' + re.escape(label) + r'\s*\n\s*([\d.,]+)',
+        ]:
+            mm = re.search(pat, metin, re.IGNORECASE)
+            if mm:
+                try: return float(mm.group(1).replace(",", ".")), float(mm.group(2).replace(",", "."))
                 except ValueError: continue
         return None, None
 
-    for lb, ke, kd in [("Goals scored per game", "atilan_ev", "atilan_dep"), ("Goals conceded per game", "yenen_ev", "yenen_dep"), ("Clean sheets", "clean_sheets_ev", "clean_sheets_dep"), ("Team scored", "team_scored_ev", "team_scored_dep"), ("Both Teams to Score", "kg_siklik_ev", "kg_siklik_dep"), ("Over 2.5 goals", "ust25_ev", "ust25_dep"), ("Over 1.5 goals", "ust15_ev", "ust15_dep"), ("Over 3.5 goals", "ust35_ev", "ust35_dep")]:
-        a, b = cf(lb)
-        if a is not None and veri.get(ke, 0) == 0: veri[ke] = a; veri[kd] = b
-    for lb, ke, kd in [("Win", "galibiyet_ev", "galibiyet_dep"), ("Draw", "beraberlik_ev", "beraberlik_dep"), ("Lose", "maglubiyet_ev", "maglubiyet_dep")]:
-        x = re.search(r'([\d.,]+)\s*%\s*\t\s*' + lb + r'\s*\t\s*([\d.,]+)\s*%', m, re.MULTILINE)
-        if x:
-            try: veri[ke] = float(x.group(1).replace(",", ".")); veri[kd] = float(x.group(2).replace(",", "."))
+    for label, k_ev, k_dep in [
+        ("Goals scored per game", "atilan_ev", "atilan_dep"),
+        ("Goals conceded per game", "yenen_ev", "yenen_dep"),
+        ("Clean sheets", "clean_sheets_ev", "clean_sheets_dep"),
+        ("Team scored", "team_scored_ev", "team_scored_dep"),
+        ("Both Teams to Score", "kg_siklik_ev", "kg_siklik_dep"),
+        ("Over 2.5 goals", "ust25_ev", "ust25_dep"),
+        ("Over 1.5 goals", "ust15_ev", "ust15_dep"),
+        ("Over 3.5 goals", "ust35_ev", "ust35_dep"),
+    ]:
+        a, b = _cift(label)
+        if a is not None and veri.get(k_ev, 0) == 0:
+            veri[k_ev] = a; veri[k_dep] = b
+
+    for label, k_ev, k_dep in [("Win", "galibiyet_ev", "galibiyet_dep"), ("Draw", "beraberlik_ev", "beraberlik_dep"), ("Lose", "maglubiyet_ev", "maglubiyet_dep")]:
+        mm = re.search(r'([\d.,]+)\s*%\s*\t\s*' + label + r'\s*\t\s*([\d.,]+)\s*%', metin, re.MULTILINE)
+        if mm:
+            try:
+                veri[k_ev] = float(mm.group(1).replace(",", "."))
+                veri[k_dep] = float(mm.group(2).replace(",", "."))
             except ValueError: pass
+
     if veri.get("atilan_ev", 0) > 0 and veri.get("yenen_ev", 0) > 0:
         veri["lig_ort_toplam"] = (veri.get("atilan_ev", 0) + veri.get("atilan_dep", 0) + veri.get("yenen_ev", 0) + veri.get("yenen_dep", 0)) / 2
     if veri.get("ust25_ev", 0) > 0 and veri.get("ust25_dep", 0) > 0:
         veri["lig_ust25"] = (veri["ust25_ev"] + veri["ust25_dep"]) / 2
     if veri.get("kg_siklik_ev", 0) > 0 and veri.get("kg_siklik_dep", 0) > 0:
         veri["lig_kg"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
+
     veri["format"] = "mutating"
     if url: veri["kaynak_url"] = url
-    return veri, []
+    if not veri.get("takim_ev"): okunamayanlar.append("Takım isimleri (Ev)")
+    if not veri.get("takim_dep"): okunamayanlar.append("Takım isimleri (Dep)")
+    if veri.get("atilan_ev", 0) == 0: okunamayanlar.append("Atılan Gol (Ev)")
+    if veri.get("yenen_ev", 0) == 0: okunamayanlar.append("Yenen Gol (Ev)")
+    return veri, okunamayanlar
 
 
 def _mac_tahmin_var_mi(v):
@@ -1327,102 +1395,81 @@ def _mac_tahmin_var_mi(v):
         if a["kg_var_model"] >= esik_al("kg_var") and a["kg_var_model"] >= a["kg_yok_model"]: return True
         if a["kg_yok_model"] >= esik_al("kg_yok") and a["kg_yok_model"] >= a["kg_var_model"]: return True
         return False
-    except Exception: return False
+    except Exception:
+        return False
 
 
-def mutating_mac_detay_cek(url, tev="", tdep=""):
-    h, hata = _scrapingbee_get(url, render_js=True, ms="5", dogrula=True, tev=tev, tdep=tdep)
-    if hata: return None, [hata]
-    if not h: return None, ["Sayfa indirilemedi"]
-    return _mac_html_parse(h, url)
-
-
-def _gelecek_mac_isle(mac, mevcut):
+def _gelecek_mac_isle(mac, mevcut_urls):
     try:
-        veri, _ = mutating_mac_detay_cek(mac["url"], mac.get("takim_ev", ""), mac.get("takim_dep", ""))
-        if not veri: return ("hata", mac, "Veri yok", None)
+        veri, _ = mutating_mac_detay_cek(mac["url"])
+        if not veri:
+            return ("hata", mac, "Veri çekilemedi")
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
-        if not veri.get("saat"): veri["saat"] = saat_2_saat_ileri(mac.get("saat", ""))
+        if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
         veri["kaynak_url"] = mac["url"]
-        if mac["url"] in mevcut: return ("zaten_var", veri, "Zaten var", None)
-        ae = veri.get("atilan_ev", 0); ye = veri.get("yenen_ev", 0)
-        ad = veri.get("atilan_dep", 0); yd = veri.get("yenen_dep", 0)
-        if ae == 0 and ye == 0 and ad == 0 and yd == 0: return ("veri_yok", veri, "Boş veri", None)
-        try: a = analiz_hesapla(veri)
-        except Exception as e: return ("veri_yok", veri, f"Hata: {str(e)[:50]}", None)
-        s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
-        e1 = esik_1x2_al(s1)
-        gs = "Üst" if a["ust_25"] >= a["alt_25"] else "Alt"
-        gy = a["ust_25"] if gs == "Üst" else a["alt_25"]
-        ge_ = esik_al("ust") if gs == "Üst" else esik_al("alt")
-        ks = "Var" if a["kg_var_model"] >= a["kg_yok_model"] else "Yok"
-        ky = a["kg_var_model"] if ks == "Var" else a["kg_yok_model"]
-        ke = esik_al("kg_var") if ks == "Var" else esik_al("kg_yok")
-        ozet = f"1X2:%{y1:.0f}(eşik {e1:.0f}) • {gs}:%{gy:.0f}(eşik {ge_:.0f}) • KG {ks}:%{ky:.0f}(eşik {ke:.0f})"
+        if mac["url"] in mevcut_urls:
+            return ("atlandi", veri, "Zaten var")
         if _mac_tahmin_var_mi(veri):
-            kayit = kayit_olustur(veri, a)
-            return ("eklendi", veri, f"Eklendi • {ozet}", kayit)
-        return ("esik_alti", veri, f"Eşik altı • {ozet}", None)
+            kayit = kayit_olustur(veri, analiz_hesapla(veri))
+            with _kilit:
+                st.session_state.gelecek_analizler.append(kayit)
+                gelecek_kaydet(st.session_state.gelecek_analizler)
+            return ("eklendi", veri, "Gelecek'e eklendi")
+        return ("atlandi", veri, "Tahmin yok")
     except Exception as e:
-        return ("hata", mac, f"İstisna: {str(e)[:80]}", None)
+        return ("hata", mac, str(e))
 
 
-def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_workers=3):
-    _ESIK_CACHE.clear()
-    try: _ESIK_CACHE.update(dict(st.session_state.esikler))
-    except Exception: pass
+def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_workers=2):
     maclar, hatalar = mutating_ana_sayfa_linklerini_al(max_mac=max_mac)
     if hatalar: return [], hatalar
-    if not maclar: return [], ["Maç linki yok"]
-    mevcut = set()
+    if not maclar: return [], ["Ana sayfada maç linki bulunamadı."]
+
+    mevcut_urls = set()
     for g in st.session_state.gelecek_analizler:
         u = g.get("veri", {}).get("kaynak_url", "")
-        if u: mevcut.add(u)
-    ek = 0; ea = 0; vy = 0; zv = 0; ht = 0; ekl = []; log = []; tam = 0
-    with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futs = {ex.submit(_gelecek_mac_isle, m, mevcut): m for m in maclar}
-        for f in as_completed(futs):
-            tam += 1; mac = futs[f]
-            isim = f"{mac.get('takim_ev', '?')} - {mac.get('takim_dep', '?')}"
+        if u: mevcut_urls.add(u)
+
+    basarili = []; hatali = []
+    eklenen = 0; atlanan = 0; tamamlanan = 0
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(_gelecek_mac_isle, m, mevcut_urls): m for m in maclar}
+        for fut in as_completed(futures):
+            tamamlanan += 1
+            mac = futures[fut]
             try:
-                r = f.result()
-                if len(r) == 4: sonuc, veri, mesaj, kayit = r
-                else: sonuc, veri, mesaj = r; kayit = None
+                sonuc, veri, mesaj = fut.result()
                 if sonuc == "eklendi":
-                    ek += 1; ekl.append(veri)
-                    if kayit is not None:
-                        try: st.session_state.gelecek_analizler.append(kayit)
-                        except Exception: pass
-                    log.append(f"✅ {isim} → {mesaj}")
-                elif sonuc == "esik_alti": ea += 1; log.append(f"⚠️ {isim} → {mesaj}")
-                elif sonuc == "veri_yok": vy += 1; log.append(f"🚫 {isim} → {mesaj}")
-                elif sonuc == "zaten_var": zv += 1; log.append(f"↩️ {isim} → Zaten var")
-                else: ht += 1; log.append(f"❌ {isim} → {mesaj}")
+                    eklenen += 1; basarili.append(veri)
+                elif sonuc == "atlandi":
+                    atlanan += 1; basarili.append(veri)
+                else:
+                    hatali.append(f"{mac.get('takim_ev','?')}: {mesaj}")
             except Exception as e:
-                ht += 1; log.append(f"❌ {isim} → {str(e)[:80]}")
+                hatali.append(f"{mac.get('takim_ev','?')}: {e}")
             if progress_callback:
-                try: progress_callback(tam - 1, len(maclar), mac.get("takim_ev", ""))
+                try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
-    try: gelecek_kaydet(st.session_state.gelecek_analizler)
-    except Exception: pass
-    st.session_state.toplu_cek_ozet = {"bulunan": len(maclar), "eklenen": ek, "esik_alti": ea, "veri_yok": vy, "zaten_var": zv, "hata": ht, "detay_log": log[:300]}
-    return ekl, []
+
+    st.session_state.toplu_cek_ozet = {"eklenen": eklenen, "atlanan": atlanan, "toplam": len(basarili)}
+    return basarili, hatali
 
 
 def _lig_son_mac_linklerini_al(lig_url, adet=10):
-    html, hata = _scrapingbee_get(lig_url, render_js=True, ms="10")
+    html, hata = _scrapingbee_get(lig_url, render_js=True, mac_sec="10")
     if hata: return [], [hata]
-    if not html: return [], ["Lig sayfası indirilemedi"]
+    if not html: return [], ["Lig sayfası indirilemedi."]
     soup = BeautifulSoup(html, "html.parser")
-    maclar = []; gor = set()
+    maclar = []; gorulen = set()
     for link in soup.find_all("a", href=True):
         href = link.get("href", "")
         if "match-preview" not in href: continue
         if href.startswith("/"): href = "https://www.mutating.com" + href
         elif not href.startswith("http"): continue
-        if href in gor: continue
-        gor.add(href)
+        if href in gorulen: continue
+        gorulen.add(href)
         takim_ev = ""; takim_dep = ""
         img = link.find_all("img", alt=True)
         if len(img) >= 2:
@@ -1441,117 +1488,140 @@ def _lig_son_mac_linklerini_al(lig_url, adet=10):
 def _gecmis_mac_isle(mac, mevcut_urls):
     try:
         if mac["url"] in mevcut_urls:
-            return ("atlandi", None, "Zaten var", None)
-        html, hata = _scrapingbee_get(mac["url"], render_js=True, ms="5", dogrula=True, tev=mac.get("takim_ev", ""), tdep=mac.get("takim_dep", ""))
-        if hata or not html: return ("hata", mac, hata or "HTML yok", None)
+            return ("atlandi", None, "Zaten var")
+        html, hata = _scrapingbee_get(mac["url"], render_js=True, mac_sec="5", dogrula=True)
+        if hata or not html:
+            return ("hata", mac, hata or "HTML yok")
         veri, _ = _mac_html_parse(html, mac["url"])
-        if not veri.get("skor_belli", False): return ("atlandi", None, "Skor yok (bitmemiş)", None)
-        if veri.get("atilan_ev", 0) == 0 or veri.get("yenen_ev", 0) == 0: return ("atlandi", None, "İstatistik eksik", None)
+        if not veri.get("skor_belli", False):
+            return ("atlandi", None, "Skor yok (bitmemiş maç)")
+        if veri.get("atilan_ev", 0) == 0 or veri.get("yenen_ev", 0) == 0:
+            return ("atlandi", None, "İstatistik eksik")
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
+
         yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(veri)
         kayit = kayit_olustur(yv, analiz_hesapla(yv))
         kayit["dogruluk"] = sonuc_hesapla(kayit)
-        return ("eklendi", veri, f"{veri['skor_ev']}-{veri['skor_dep']}", kayit)
+        with _kilit:
+            st.session_state.gecmis_analizler.append(kayit)
+            gecmis_kaydet(st.session_state.gecmis_analizler)
+        return ("eklendi", veri, f"{veri['skor_ev']}-{veri['skor_dep']}")
     except Exception as e:
-        return ("hata", mac, str(e)[:80], None)
+        return ("hata", mac, str(e))
 
 
-def lig_gecmis_cek(lig_url, adet=10, max_workers=3, progress_callback=None):
-    _ESIK_CACHE.clear()
-    try: _ESIK_CACHE.update(dict(st.session_state.esikler))
-    except Exception: pass
+def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
     maclar, hatalar = _lig_son_mac_linklerini_al(lig_url, adet=adet)
     if hatalar: return [], hatalar
-    if not maclar: return [], ["Lig sayfasında maç linki bulunamadı"]
+    if not maclar: return [], ["Lig sayfasında maç linki bulunamadı."]
+
     mevcut_urls = set()
     for g in st.session_state.gecmis_analizler:
         u = g.get("veri", {}).get("kaynak_url", "")
         if u: mevcut_urls.add(u)
-    bas = []; hat = []; ek = 0; at = 0; tam = 0
-    with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futs = {ex.submit(_gecmis_mac_isle, m, mevcut_urls): m for m in maclar}
-        for f in as_completed(futs):
-            tam += 1; mac = futs[f]
+
+    basarili = []; hatali = []
+    eklenen = 0; atlanan = 0; tamamlanan = 0
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(_gecmis_mac_isle, m, mevcut_urls): m for m in maclar}
+        for fut in as_completed(futures):
+            tamamlanan += 1
+            mac = futures[fut]
             try:
-                r = f.result()
-                sonuc, veri, mesaj, kayit = r if len(r) == 4 else (r[0], r[1], r[2], None)
+                sonuc, veri, mesaj = fut.result()
                 if sonuc == "eklendi":
-                    ek += 1; bas.append(veri)
-                    if kayit is not None:
-                        try: st.session_state.gecmis_analizler.append(kayit)
-                        except Exception: pass
-                elif sonuc == "atlandi": at += 1
-                else: hat.append(f"{mac.get('takim_ev','?')}: {mesaj}")
+                    eklenen += 1; basarili.append(veri)
+                elif sonuc == "atlandi":
+                    atlanan += 1
+                else:
+                    hatali.append(f"{mac.get('takim_ev','?')}: {mesaj}")
             except Exception as e:
-                hat.append(f"{mac.get('takim_ev','?')}: {e}")
+                hatali.append(f"{mac.get('takim_ev','?')}: {e}")
             if progress_callback:
-                try: progress_callback(tam - 1, len(maclar), mac.get("takim_ev", ""))
+                try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
-    try: gecmis_kaydet(st.session_state.gecmis_analizler)
-    except Exception: pass
-    return bas, hat
+
+    st.session_state.gecmis_cek_ozet = {"eklenen": eklenen, "atlanan": atlanan}
+    return basarili, hatali
 
 
 # ==========================================
 # SKOR ÇEKME
 # ==========================================
 def _skor_parse(html):
-    m = _html_metne_cevir(html)
-    x = re.search(r'(?<![A-Za-z])FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', m)
-    if x: return int(x.group(1)), int(x.group(2))
+    metin = _html_metne_cevir(html)
+    m = re.search(r'(?<![A-Za-z])FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
+    if m:
+        return int(m.group(1)), int(m.group(2))
     return None
 
 
-def _skor_cek(url, yedek=False):
-    h = None; hata = None
+def _skor_cek(url, tarayici_yedek=False):
+    html = None; hata = None
     try:
         r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
-        if r.status_code == 200 and r.text: h = r.text
-        else: hata = f"HTTP {r.status_code}"
-    except Exception as e: hata = f"Bağlantı: {str(e)[:80]}"
-    skor = _skor_parse(h) if h else None
-    if skor is None and yedek:
-        h2, _ = _scrapingbee_get(url, render_js=True, ms="5")
-        if h2: skor = _skor_parse(h2); hata = None
-    if skor is None and h: hata = None
+        if r.status_code == 200 and r.text:
+            html = r.text
+        else:
+            hata = f"HTTP {r.status_code}"
+    except Exception as e:
+        hata = f"Bağlantı: {str(e)[:80]}"
+    skor = _skor_parse(html) if html else None
+    if skor is None and tarayici_yedek:
+        h2, hata2 = _scrapingbee_get(url, render_js=True, mac_sec="5")
+        if h2:
+            skor = _skor_parse(h2); hata = None
+        elif hata2:
+            hata = hata2
+    if skor is None and html:
+        hata = None
     return skor, hata
 
 
 def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
     gel = st.session_state.gelecek_analizler
     isler = [(i, g) for i, g in enumerate(gel) if g.get("veri", {}).get("kaynak_url")]
-    sonuc = {}; tam = 0
+    sonuc = {}
+    tamam = 0
     if isler:
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            futs = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], tarayici_yedek): (i, g) for i, g in isler}
-            for f in as_completed(futs):
-                i, g = futs[f]; tam += 1
+            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], tarayici_yedek): (i, g) for i, g in isler}
+            for f in as_completed(fut):
+                i, g = fut[f]; tamam += 1
                 try: sonuc[i] = f.result()
                 except Exception as e: sonuc[i] = (None, str(e)[:80])
                 if progress_callback:
-                    try: progress_callback(tam - 1, len(isler), g["veri"].get("takim_ev", ""))
+                    try: progress_callback(tamam - 1, len(isler), g["veri"].get("takim_ev", ""))
                     except Exception: pass
+
     mevcut = {x.get("veri", {}).get("kaynak_url") for x in st.session_state.gecmis_analizler}
-    tas = 0; bm = 0; ht = []; kalan = []
+    tasinan = 0; bitmemis = 0; hatalar = []; kalan = []
     for i, g in enumerate(gel):
         r = sonuc.get(i)
-        if r is None: kalan.append(g); continue
+        if r is None:
+            kalan.append(g); continue
         skor, hata = r
         v = g["veri"]; isim = f"{v.get('takim_ev', '?')} - {v.get('takim_dep', '?')}"
-        if hata: ht.append(f"{isim}: {hata}"); kalan.append(g); continue
-        if skor is None: bm += 1; kalan.append(g); continue
-        v["skor_ev"] = skor[0]; v["skor_dep"] = skor[1]; v["skor_belli"] = True
+        if hata:
+            hatalar.append(f"{isim}: {hata}"); kalan.append(g); continue
+        if skor is None:
+            bitmemis += 1; kalan.append(g); continue
+        v["skor_ev"], v["skor_dep"], v["skor_belli"] = skor[0], skor[1], True
         d = sonuc_hesapla(g)
         if d: g["dogruluk"] = d
         if v.get("kaynak_url") not in mevcut:
             st.session_state.gecmis_analizler.append(g)
             mevcut.add(v.get("kaynak_url"))
-        tas += 1
+        tasinan += 1
+
     st.session_state.gelecek_analizler = kalan
+    st.session_state.aktif_gelecek_idx = None
+    st.session_state.gelecekten_gelindi = False
     gecmis_kaydet(st.session_state.gecmis_analizler)
     gelecek_kaydet(st.session_state.gelecek_analizler)
-    return {"tasinan": tas, "bitmemis": bm, "hatalar": ht, "toplam": len(isler)}
+    return {"tasinan": tasinan, "bitmemis": bitmemis, "hatalar": hatalar, "toplam": len(isler)}
 
 
 # ==========================================
@@ -1751,9 +1821,7 @@ def ai_yorum_olustur(v, a):
 
     bolumler = []
 
-    # ============================================================
     # 1. MAÇIN TABLOSU
-    # ============================================================
     hp = []
     if s_ev and s_dep:
         if s_ev < s_dep:
@@ -1815,9 +1883,7 @@ def ai_yorum_olustur(v, a):
     if hp:
         bolumler.append(("📖", "MAÇIN TABLOSU", " ".join(hp)))
 
-    # ============================================================
     # 2. 1X2 NEDEN BU?
-    # ============================================================
     s1, y1 = max([("1", p1v), ("X", pxv), ("2", p2v)], key=lambda x: x[1])
     p1 = p1v; px = pxv; p2 = p2v
     kp = []
@@ -1854,7 +1920,6 @@ def ai_yorum_olustur(v, a):
         if karsi:
             kp.append("Elbette " + " ve ".join(karsi) + " — futbol sürprizlere açık bir oyun. Ama mevcut veriler ışığında ev sahibinin kazanması en olası senaryo olarak öne çıkıyor.")
         kp.append(f"Tüm bunları birleştirdiğimizde <b>1 ({te} Kazanır)</b> demek en mantıklısı oldu.")
-
     elif s1 == "2":
         kp.append(f"Model bu maçta {DP(td)} tarafını yaklaşık {V(f'%{p2:.0f}')} olasılıkla öne çıkarıyor. Bunu söylerken şu noktalara baktık:")
         nedenler = []
@@ -1883,7 +1948,6 @@ def ai_yorum_olustur(v, a):
         if karsi:
             kp.append("Ancak " + " ve ".join(karsi) + ". Yani bu maçta kesin bir şey söylemek zor, fakat tüm veriler deplasman lehine eğiliyor.")
         kp.append(f"Bu veriler ışığında <b>2 ({td} Kazanır)</b> en mantıklı tercih olarak öne çıkıyor.")
-
     else:
         kp.append(f"Model bu maçta beraberliği yaklaşık {V(f'%{px:.0f}')} olasılıkla işaret ediyor. Bu tip maçlarda genelde iki takım birbirini nötralize eder. Neden böyle düşündük:")
         nedenler = []
@@ -1903,9 +1967,7 @@ def ai_yorum_olustur(v, a):
     if kp:
         bolumler.append(("🎯", "NEDEN BU SONUÇ?", " ".join(kp)))
 
-    # ============================================================
     # 3. GOL BEKLENTİSİ
-    # ============================================================
     gp = []
     u25 = ust25; a25 = alt25
     top_at = ae + ad
@@ -1954,9 +2016,7 @@ def ai_yorum_olustur(v, a):
     if gp:
         bolumler.append(("⚽", "GOL BEKLENTİSİ", " ".join(gp)))
 
-    # ============================================================
     # 4. KG
-    # ============================================================
     kgp = []
     if kgvar >= kgyok:
         kgp.append(f"<b>Karşılıklı Gol Var</b> tarafı ağır basıyor (%{kgvar:.1f}). Neden böyle düşünüyoruz:")
@@ -1998,9 +2058,7 @@ def ai_yorum_olustur(v, a):
     if kgp:
         bolumler.append(("🤝", "KARŞILIKLI GOL (KG)", " ".join(kgp)))
 
-    # ============================================================
     # 5. GERÇEKÇİ SENARYO
-    # ============================================================
     sn = []
     yorum_ev = []
     yorum_dep = []
@@ -2312,17 +2370,14 @@ elif st.session_state.sayfa == "giris":
         if ayarlar_btn: nav_git("ayarlar")
 
         st.divider()
-        st.markdown("### 🤖 Manuel Veri Çekme")
-        vs1, vs2, vs3 = st.tabs(["🔄 Bugünün Maçları", "📜 Lig Geçmişi", "🏁 Sonuçları İşle"])
+        st.markdown("### 🤖 Otomatik Veri Çekme")
+        vs1, vs2, vs3 = st.tabs(["🔄 Gelecek Maçlar", "📜 Lig Geçmişi", "🏁 Sonuçları İşle"])
         with vs1:
             if st.session_state.toplu_cek_ozet:
                 oz = st.session_state.toplu_cek_ozet
-                st.markdown(f"**Son:** Bulunan: **{oz.get('bulunan', 0)}** | Eklenen: **{oz.get('eklenen', 0)}** | Eşik altı: **{oz.get('esik_alti', 0)}** | Veri yok: **{oz.get('veri_yok', 0)}** | Zaten vardı: **{oz.get('zaten_var', 0)}** | Hata: **{oz.get('hata', 0)}**")
-                if oz.get("detay_log"):
-                    with st.expander(f"🔎 Detay"):
-                        for s in oz["detay_log"]: st.text(s)
+                st.markdown(f"**Son çekim:** Eklenen: **{oz.get('eklenen', 0)}** | Atlanan: **{oz.get('atlanan', 0)}** | Toplam: **{oz.get('toplam', 0)}**")
             c1, c2 = st.columns(2)
-            with c1: w = st.number_input("Paralel", 1, 4, 3, 1, key="fw")
+            with c1: w = st.number_input("Paralel", 1, 6, 2, 1, key="fw")
             with c2:
                 st.markdown("")
                 if st.button("🚀 Bugünün Maçlarını Çek", use_container_width=True, type="primary", key="mbtn"):
@@ -2331,13 +2386,20 @@ elif st.session_state.sayfa == "giris":
                         try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
                         except Exception: pass
                     with st.spinner("Çekiliyor..."):
-                        mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=_p, max_workers=int(w))
-                    ph.empty(); st.rerun()
+                        bas, hat = mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=_p, max_workers=int(w))
+                    ph.empty()
+                    if hat:
+                        with st.expander(f"⚠️ {len(hat)} hata"):
+                            for h in hat: st.caption(h)
+                    if not bas: st.error("❌ Hiçbir maç çekilemedi.")
+                    else:
+                        st.success(f"✅ {len(bas)} maç işlendi.")
+                        time.sleep(2); st.rerun()
         with vs2:
             lurl = st.text_input("Lig URL", key="lig_url_input", placeholder="https://www.mutating.com/football-stats/league-...")
             c1, c2 = st.columns(2)
             with c1: la = st.number_input("Kaç maç?", 5, 30, 10, 1, key="lig_adet")
-            with c2: lw = st.number_input("Paralel", 1, 4, 3, 1, key="lig_workers")
+            with c2: lw = st.number_input("Paralel", 1, 6, 2, 1, key="lig_workers")
             if st.button("📜 Ligi Çek", use_container_width=True, type="primary", key="lig_cek_btn"):
                 if not lurl.strip(): st.warning("URL gerekli")
                 else:
@@ -2357,13 +2419,18 @@ elif st.session_state.sayfa == "giris":
         with vs3:
             if st.session_state.skor_ozet:
                 oz = st.session_state.skor_ozet
-                st.success(f"✅ {oz['tasinan']} taşındı • {oz['bitmemis']} bitmemiş")
+                hata_say = len(oz.get("hatalar", []))
+                st.success(f"✅ {oz['tasinan']} taşındı • {oz['bitmemis']} bitmemiş • {hata_say} hata")
+                if oz.get("hatalar"):
+                    with st.expander(f"⚠️ {hata_say} hata detayı"):
+                        for _h in oz["hatalar"][:50]:
+                            st.caption(_h)
             st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}**")
             sy = st.checkbox("Tarayıcı ile dene", value=False, key="skor_yedek")
             c1, c2 = st.columns(2)
-            with c1: sw = st.number_input("Paralel", 1, 4, 3, 1, key="skor_w")
+            with c1: sw = st.number_input("Paralel", 1, 6, 3, 1, key="skor_w")
             with c2:
-                if st.button("🏁 Skorları Çek", use_container_width=True, type="primary", key="skor_btn"):
+                if st.button("🏁 Biten Maçları Geçmişe Aktar", use_container_width=True, type="primary", key="skor_btn"):
                     if not st.session_state.gelecek_analizler: st.warning("Gelecek'te maç yok")
                     else:
                         with st.spinner("Kontrol..."):
