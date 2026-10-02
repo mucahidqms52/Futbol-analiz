@@ -1,0 +1,17 @@
+# Gizli veriler
+kullanicilar.json
+bekleyen_odemeler.json
+abonelikler.json
+.env
+.streamlit/secrets.toml
+
+# Python önbelleği
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Sistem dosyaları
+.DS_Store
+Thumbs.db
