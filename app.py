@@ -1229,6 +1229,26 @@ def _playwright_html(url, mac_sec, timeout, dogrula=False):
                 except Exception: pass
 
 
+def _playwright_skor_cek(url, timeout=25):
+    """Sadece FT skoru okumak için minimal tarayıcı çekimi. Filtre yapmaz, hızlıdır."""
+    from playwright.sync_api import sync_playwright
+    with _TARAYICI_SEM:
+        with sync_playwright() as p:
+            b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
+            try:
+                ctx = b.new_context(user_agent=UA, locale="en-US")
+                pg = ctx.new_page()
+                pg.route("**/*", lambda route: route.abort()
+                         if route.request.resource_type in ("image", "media", "font", "stylesheet")
+                         else route.continue_())
+                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+                pg.wait_for_timeout(2000)
+                return pg.content()
+            finally:
+                try: b.close()
+                except Exception: pass
+
+
 def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3, dogrula=False):
     son_hata = None
 
@@ -1547,56 +1567,67 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 # ==========================================
-# SKOR ÇEKME (DÜZELTİLMİŞ)
+# SKOR ÇEKME (DÜZELTİLMİŞ — requests hızlı, tarayıcı opsiyonel)
 # ==========================================
 def _skor_parse(html):
     if not html: return None
     metin = _html_metne_cevir(html)
     if not metin: return None
-    for pat in [
-        r'(?<![A-Za-z])FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})',
-        r'(?<![A-Za-z])FT\s+(\d{1,2})\s*[-:]\s*(\d{1,2})',
-        r'Full[\s\-]*Time\s*\n*\s*(\d{1,2})\s*[-:]\s*(\d{1,2})',
-        r'\bFT\b[^\d\n]{0,30}(\d{1,2})\s*[-:]\s*(\d{1,2})',
-        r'(?:^|\n)\s*(\d{1,2})\s*[-:]\s*(\d{1,2})\s*\n',
-    ]:
-        m = re.search(pat, metin, re.IGNORECASE)
-        if m:
-            try:
-                a = int(m.group(1)); b = int(m.group(2))
-                if 0 <= a <= 20 and 0 <= b <= 20:
-                    return a, b
-            except Exception:
-                pass
+    m = re.search(r'(?<![A-Za-z])FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
+    if m:
+        try:
+            a = int(m.group(1)); b = int(m.group(2))
+            if 0 <= a <= 20 and 0 <= b <= 20:
+                return a, b
+        except Exception: pass
+    m = re.search(r'(?<![A-Za-z])FT\s+(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
+    if m:
+        try:
+            a = int(m.group(1)); b = int(m.group(2))
+            if 0 <= a <= 20 and 0 <= b <= 20:
+                return a, b
+        except Exception: pass
+    m = re.search(r'Full[\s\-]*Time[^\d]{0,30}(\d{1,2})\s*[-:]\s*(\d{1,2})', metin, re.IGNORECASE)
+    if m:
+        try:
+            a = int(m.group(1)); b = int(m.group(2))
+            if 0 <= a <= 20 and 0 <= b <= 20:
+                return a, b
+        except Exception: pass
     return None
 
 
-def _skor_cek(url, tarayici_yedek=True):
-    """Önce hızlı requests, skoru bulamazsa HER ZAMAN tarayıcı ile dener."""
+def _skor_cek(url, tarayici_yedek=False):
+    """Önce hızlı requests (varsayılan). Skor bulunamazsa ve tarayici_yedek=True ise tarayıcı dener."""
     if not url:
         return None, "URL yok"
-    html = None
+    html = None; hata = None
     try:
         r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=15)
         if r.status_code == 200 and r.text:
             html = r.text
-    except Exception:
-        pass
+        else:
+            hata = f"HTTP {r.status_code}"
+    except Exception as e:
+        hata = f"Bağlantı: {str(e)[:80]}"
     skor = _skor_parse(html) if html else None
     if skor:
         return skor, None
-    h2, hata2 = _scrapingbee_get(url, render_js=True, mac_sec="5", max_retry=2, timeout=45)
-    if h2:
-        skor = _skor_parse(h2)
-        if skor:
-            return skor, None
-        return None, "Sayfa alındı ama FT skoru bulunamadı (maç bitmemiş olabilir)"
+    if tarayici_yedek:
+        try:
+            h2 = _playwright_skor_cek(url, timeout=25)
+            if h2:
+                skor = _skor_parse(h2)
+                if skor:
+                    return skor, None
+        except Exception as e:
+            hata = f"Tarayıcı: {str(e)[:60]}"
     if html:
         return None, None
-    return None, hata2 or "Sayfa alınamadı"
+    return None, hata or "Sayfa alınamadı"
 
 
-def sonuclari_isle(tarayici_yedek=True, max_workers=3, progress_callback=None):
+def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
     gel = st.session_state.gelecek_analizler
     isler = [(i, g) for i, g in enumerate(gel) if g.get("veri", {}).get("kaynak_url")]
     sonuc = {}
@@ -2448,19 +2479,21 @@ elif st.session_state.sayfa == "giris":
                         for _h in oz["hatalar"][:50]:
                             st.caption(_h)
             st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}**")
+            sy = st.checkbox("Skor bulunamazsa tarayıcıyla da dene (yavaş)", value=False, key="skor_yedek")
             c1, c2 = st.columns(2)
-            with c1: sw = st.number_input("Paralel", 1, 6, 3, 1, key="skor_w")
+            with c1: sw = st.number_input("Paralel", 1, 8, 4, 1, key="skor_w")
             with c2:
                 st.markdown("")
                 if st.button("🏁 Biten Maçları Geçmişe Aktar", use_container_width=True, type="primary", key="skor_btn"):
-                    if not st.session_state.gelecek_analizler: st.warning("Gelecek'te maç yok")
+                    if not st.session_state.gelecek_analizler:
+                        st.warning("Gelecek'te maç yok")
                     else:
                         ph = st.empty()
                         def _p3(i, t, n):
                             try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
                             except Exception: pass
-                        with st.spinner(f"{len(st.session_state.gelecek_analizler)} maç kontrol ediliyor (biraz sürebilir)..."):
-                            st.session_state.skor_ozet = sonuclari_isle(True, int(sw), _p3)
+                        with st.spinner("Skorlar kontrol ediliyor..."):
+                            st.session_state.skor_ozet = sonuclari_isle(bool(sy), int(sw), _p3)
                         ph.empty()
                         st.rerun()
 
