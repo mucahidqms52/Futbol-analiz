@@ -1528,9 +1528,6 @@ def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
 # ==========================================
 # OTOMATİK ZAMANLAYICI
 # ==========================================
-_OTOMATIK_BASLATILDI = False
-
-
 def _otomatik_worker():
     son_veri_tarih = None
     son_skor_saat = None
@@ -1627,9 +1624,9 @@ def _otomatik_skor_cek():
 
 
 def _otomatik_baslat():
-    global _OTOMATIK_BASLATILDI
-    if _OTOMATIK_BASLATILDI: return
-    _OTOMATIK_BASLATILDI = True
+    if st.session_state.get("_otomatik_thread_basladi", False):
+        return
+    st.session_state["_otomatik_thread_basladi"] = True
     t = threading.Thread(target=_otomatik_worker, daemon=True)
     t.start()
 
@@ -1759,13 +1756,13 @@ def yasal_metin_goster():
         st.markdown(YASAL_METIN)
 
 
-def gecmis_istatistik_hesapla():
-    gecmis_g = st.session_state.gecmis_analizler
+@st.cache_data(ttl=60, show_spinner=False)
+def gecmis_istatistik_hesapla_cached(gecmis_hash, _gecmis_ref, e1, ex, e2, eu, ea, ekv, eky):
     g_1x2 = g_gol = g_kg = 0
     g_1x2_t = g_gol_t = g_kg_t = 0
-    for gg in gecmis_g:
+    for gg in _gecmis_ref:
         try:
-            vv = gg["veri"]
+            vv = gg.get("veri", {})
             if not vv.get("skor_belli", False): continue
             dd = sonuc_hesapla(gg)
             if not dd: continue
@@ -1786,6 +1783,22 @@ def gecmis_istatistik_hesapla():
     pg = (g_gol / g_gol_t * 100) if g_gol_t > 0 else 0
     pk = (g_kg / g_kg_t * 100) if g_kg_t > 0 else 0
     return p1, g_1x2, g_1x2_t, pg, g_gol, g_gol_t, pk, g_kg, g_kg_t
+
+
+def gecmis_istatistik_hesapla():
+    try:
+        gc = st.session_state.gecmis_analizler
+        # Cache anahtarı: maç sayısı + son maç URL + eşikler
+        son_url = gc[-1].get("veri", {}).get("kaynak_url", "") if gc else ""
+        e = st.session_state.esikler
+        anahtar = f"{len(gc)}_{son_url}_{e.get('esik_1',55)}_{e.get('esik_x',55)}_{e.get('esik_2',55)}_{e.get('ust',65)}_{e.get('alt',55)}_{e.get('kg_var',57)}_{e.get('kg_yok',72)}"
+        return gecmis_istatistik_hesapla_cached(
+            anahtar, gc,
+            e.get("esik_1", 55.0), e.get("esik_x", 55.0), e.get("esik_2", 55.0),
+            e.get("ust", 65.0), e.get("alt", 55.0), e.get("kg_var", 57.0), e.get("kg_yok", 72.0),
+        )
+    except Exception:
+        return 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 
 def modern_istatistik_grafik(baslik="📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ"):
@@ -2002,7 +2015,7 @@ elif st.session_state.sayfa == "giris":
                     with st.expander(f"🔎 Detay"):
                         for s in oz["detay_log"]: st.text(s)
             c1, c2 = st.columns(2)
-            with c1: w = st.number_input("Paralel", 1, 8, 3, 1, key="fw")
+            with c1: w = st.number_input("Paralel", 1, 4, 3, 1, key="fw")
             with c2:
                 st.markdown("")
                 if st.button("🚀 Bugünün Maçlarını Çek", use_container_width=True, type="primary", key="mbtn"):
@@ -2017,7 +2030,7 @@ elif st.session_state.sayfa == "giris":
             lurl = st.text_input("Lig URL", key="lig_url_input", placeholder="https://www.mutating.com/football-stats/league-...")
             c1, c2 = st.columns(2)
             with c1: la = st.number_input("Kaç maç?", 5, 30, 10, 1, key="lig_adet")
-            with c2: lw = st.number_input("Paralel", 1, 8, 3, 1, key="lig_workers")
+            with c2: lw = st.number_input("Paralel", 1, 4, 3, 1, key="lig_workers")
             if st.button("📜 Ligi Çek", use_container_width=True, type="primary", key="lig_cek_btn"):
                 if not lurl.strip(): st.warning("URL gerekli")
                 else:
@@ -2041,7 +2054,7 @@ elif st.session_state.sayfa == "giris":
             st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}**")
             sy = st.checkbox("Tarayıcı ile dene", value=False, key="skor_yedek")
             c1, c2 = st.columns(2)
-            with c1: sw = st.number_input("Paralel", 1, 8, 3, 1, key="skor_w")
+            with c1: sw = st.number_input("Paralel", 1, 4, 3, 1, key="skor_w")
             with c2:
                 if st.button("🏁 Skorları Çek", use_container_width=True, type="primary", key="skor_btn"):
                     if not st.session_state.gelecek_analizler: st.warning("Gelecek'te maç yok")
@@ -2260,13 +2273,15 @@ elif st.session_state.sayfa == "admin_odemeler":
 
 
 # ==========================================
-# SAYFA: ADMIN ABONELER
+# SAYFA: ADMIN ABONELER (Sadece GÖRÜNTÜLE)
 # ==========================================
 elif st.session_state.sayfa == "admin_aboneler":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>👥 Aboneler</h1>", unsafe_allow_html=True)
+    st.caption("Abonelik süresi ekleme sadece 💳 Ödemeler sayfasından yapılır.")
     kl = kullanicilar_yukle()
-    if not kl: st.info("ℹ️ Kayıtlı kullanıcı yok.")
+    if not kl:
+        st.info("ℹ️ Kayıtlı kullanıcı yok.")
     else:
         top = len(kl); ak = sum(1 for k in kl if abonelik_aktif_mi(k))
         st.markdown(f'<div class="mh-stat-grid"><div class="mh-stat"><div class="mh-stat-icon">👥</div><div class="mh-stat-num">{top}</div><div class="mh-stat-lbl">Toplam</div></div><div class="mh-stat"><div class="mh-stat-icon">🌟</div><div class="mh-stat-num">{ak}</div><div class="mh-stat-lbl">Aktif</div></div></div>', unsafe_allow_html=True)
@@ -2281,23 +2296,11 @@ elif st.session_state.sayfa == "admin_aboneler":
             elif bs: dr = "#ef4444"; dt = "⛔ SÜRESİ DOLMUŞ"; ek = f"Bitiş: {bs}"
             else: dr = "#94a3b8"; dt = "⚪ YOK"; ek = ""
             st.markdown(f'<div class="fa-card"><div class="fa-pickrow"><div><div class="fa-pick">👤 {_e(k)}</div><div class="fa-mut">📅 {_e(kt)} &nbsp; {_e(ek)}</div></div><div style="color:{dr};font-weight:800;font-size:0.85rem;">{_e(dt)}</div></div></div>', unsafe_allow_html=True)
-            ca, cb, cc, cd, ce = st.columns([1, 1, 1, 1, 1])
+            ca, cb = st.columns(2)
             with ca:
-                if st.button("+1H", use_container_width=True, key=f"ph_{k}"):
-                    b_, y = abonelik_aktif_et(k, 7)
-                    if b_: st.success(f"+1 hafta → {y}"); time.sleep(1.5); st.rerun()
-            with cb:
-                if st.button("+1A", use_container_width=True, key=f"p1_{k}"):
-                    b_, y = abonelik_aktif_et(k, 30)
-                    if b_: st.success(f"+1 ay → {y}"); time.sleep(1.5); st.rerun()
-            with cc:
-                if st.button("+1Y", use_container_width=True, key=f"py_{k}"):
-                    b_, y = abonelik_aktif_et(k, 365)
-                    if b_: st.success(f"+1 yıl → {y}"); time.sleep(1.5); st.rerun()
-            with cd:
-                if st.button("İptal", use_container_width=True, key=f"ip_{k}"):
+                if st.button("🚫 İptal Et", use_container_width=True, key=f"ip_{k}"):
                     abonelik_iptal_et(k); st.warning("İptal edildi."); time.sleep(1.5); st.rerun()
-            with ce:
+            with cb:
                 if st.button("🗑️ Sil", use_container_width=True, key=f"ks_{k}"):
                     st.session_state.sil_onay_kadi = k
             if st.session_state.sil_onay_kadi == k:
@@ -2392,7 +2395,6 @@ elif st.session_state.sayfa == "gelecek_admin":
     gel = st.session_state.gelecek_analizler
     toplam_g = len(gel)
 
-    # Yedekleme
     st.markdown("### 💾 Yedekleme")
     c1, c2 = st.columns(2)
     with c1:
@@ -2487,7 +2489,6 @@ elif st.session_state.sayfa == "gecmis":
     st.markdown("<h1>📊 Geçmiş Maçlar</h1>", unsafe_allow_html=True)
     gc = st.session_state.gecmis_analizler; top = len(gc)
 
-    # Admin yedekleme
     if admin_mi():
         st.markdown("### 💾 Yedekleme")
         c1, c2 = st.columns(2)
@@ -2560,7 +2561,6 @@ elif st.session_state.sayfa == "gecmis":
                     st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
             st.divider()
 
-    # Hepsini temizle (admin)
     if admin_mi():
         st.divider()
         if st.button("🗑️ Tüm Geçmişi Temizle", use_container_width=True, key="temizle_g"):
