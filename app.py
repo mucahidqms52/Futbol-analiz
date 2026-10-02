@@ -1381,9 +1381,6 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
     return ekl, []
 
 
-# ==========================================
-# LİG GEÇMİŞİ ÇEKME
-# ==========================================
 def _lig_son_mac_linklerini_al(lig_url, adet=10):
     html, hata = _scrapingbee_get(lig_url, render_js=True, ms="10")
     if hata: return [], [hata]
@@ -1645,7 +1642,6 @@ def rozet(m, t="gray"): return f'<span class="fa-badge fa-b-{t}">{_e(m)}</span>'
 
 
 def _donut_svg(yuzde, renk, boyut=82):
-    """Modern SVG donut grafik."""
     y = max(0.0, min(100.0, yuzde))
     r = 38
     cevre = 2 * 3.14159265 * r
@@ -1764,7 +1760,6 @@ def yasal_metin_goster():
 
 
 def gecmis_istatistik_hesapla():
-    """Geçmiş maçlardan 1X2, Gol, KG isabet yüzdelerini hesaplar."""
     gecmis_g = st.session_state.gecmis_analizler
     g_1x2 = g_gol = g_kg = 0
     g_1x2_t = g_gol_t = g_kg_t = 0
@@ -1793,8 +1788,9 @@ def gecmis_istatistik_hesapla():
     return p1, g_1x2, g_1x2_t, pg, g_gol, g_gol_t, pk, g_kg, g_kg_t
 
 
-def modern_istatistik_grafik():
+def modern_istatistik_grafik(baslik="📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ"):
     p1, t1, s1, pg, tg, sg, pk, tk, sk = gecmis_istatistik_hesapla()
+    st.markdown(f'<div class="mh-hero-ust" style="text-align:center;margin-top:14px;">{_e(baslik)}</div>', unsafe_allow_html=True)
     st.markdown(f'''<div class="fa-donut-grid">
     <div class="fa-donut-kart" style="--c:#22c55e;">
         <div class="fa-donut-ttl">🎯 1X2</div>
@@ -1877,9 +1873,6 @@ def ust_bar():
         elif uye_mi():
             if st.button("🚪 Çıkış", use_container_width=True, key="uye_cikis_btn"):
                 st.session_state.aktif_kullanici = None; st.session_state.sayfa = "giris"; st.rerun()
-        else:
-            if st.button("🔐 Giriş", use_container_width=True, key="misafir_girisi_btn", type="primary"):
-                st.session_state.sayfa = "giris_yap"; st.rerun()
 
 
 def misafir_aciklama():
@@ -1918,7 +1911,7 @@ def nav_bar():
     except TypeError: kutu = st.container()
     with kutu:
         if admin_mi():
-            sec = [("🏠 Ana Sayfa", "giris"), ("📊 Geçmiş Maçlar", "gecmis"), ("🔬 Test", "backtest"), ("💳 Ödemeler", "admin_odemeler"), ("👥 Aboneler", "admin_aboneler"), ("📬 Bildirimler", "admin_bildirimler"), ("⚙️ Ayar", "ayarlar")]
+            sec = [("🏠 Ana Sayfa", "giris"), ("🔮 Gelecek", "gelecek_admin"), ("📊 Geçmiş", "gecmis"), ("🔬 Test", "backtest"), ("💳 Ödemeler", "admin_odemeler"), ("👥 Aboneler", "admin_aboneler"), ("📬 Bildirimler", "admin_bildirimler"), ("⚙️ Ayar", "ayarlar")]
         elif uye_mi():
             sec = [("🏠 Ana Sayfa", "giris"), ("📊 Geçmiş Maçlar", "gecmis"), ("📬 Bildirim", "kullanici_bildirim")]
         else:
@@ -1928,8 +1921,7 @@ def nav_bar():
             with k:
                 aktif = st.session_state.sayfa == h
                 if st.button(e, key=f"nav_{h}", use_container_width=True, type="primary" if aktif else "secondary"):
-                    if not aktif:
-                        nav_git(h)
+                    if not aktif: nav_git(h)
 
 
 # ==========================================
@@ -2059,6 +2051,7 @@ elif st.session_state.sayfa == "giris":
                         st.rerun()
 
     else:
+        # MİSAFİR / ÜYE GÖRÜNÜMÜ
         gelecek = st.session_state.gelecek_analizler
         toplam = len(gelecek)
         premium = uye_premium_mu()
@@ -2073,21 +2066,19 @@ elif st.session_state.sayfa == "giris":
                     if kk >= 0: kl = f'<div class="mh-hero-badge">🌟 PREMIUM — {kk} gün kaldı</div>'
             except Exception: pass
             st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">Premium aktif — tüm analizler açık</div>{kl}</div>', unsafe_allow_html=True)
-            # Modern istatistik grafikleri
-            modern_istatistik_grafik()
+            modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ")
         elif uye_mi():
             st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz açık</div><div class="mh-hero-badge" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.5);color:#f59e0b !important;">⚠️ ABONELİK YOK</div></div>', unsafe_allow_html=True)
-            modern_istatistik_grafik()
+            modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ")
             if st.button("💳 Premium'a Geç  •  ✨ Üye Ol", use_container_width=True, type="primary", key="ana_premium_btn"):
                 st.session_state["odeme_hedef_kadi"] = uye_adi(); st.session_state.sayfa = "odeme"; st.rerun()
-            st.markdown('<div class="fa-uye-link">Hesabın yok mu? Yukarıdaki butona bas <b>↑</b></div>', unsafe_allow_html=True)
         else:
             st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Bugün {toplam} Maç</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz açık</div></div>', unsafe_allow_html=True)
-            # Modern donut grafikleri
-            modern_istatistik_grafik()
+            modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ")
             if st.button("💳 Premium'a Geç  •  ✨ Üye Ol", use_container_width=True, type="primary", key="mis_prem"):
                 st.session_state.sayfa = "kayit"; st.rerun()
-            st.markdown('<div class="fa-uye-link">Zaten üye misin? Sağ üstteki <b>🔐 Giriş</b> butonuna bas</div>', unsafe_allow_html=True)
+            if st.button("🔐 Giriş Yap", use_container_width=True, key="mis_giris_btn"):
+                st.session_state.sayfa = "giris_yap"; st.rerun()
 
         st.divider()
         if not gelecek: st.info("ℹ️ Henüz maç yok.")
@@ -2393,13 +2384,45 @@ elif st.session_state.sayfa == "kullanici_bildirim":
 
 
 # ==========================================
-# SAYFA: GELECEK (ADMİN)
+# SAYFA: GELECEK MAÇLAR (ADMİN)
 # ==========================================
 elif st.session_state.sayfa == "gelecek_admin":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
-    st.markdown("<h1>🔮 Gelecek Maçlar (Admin)</h1>", unsafe_allow_html=True)
+    st.markdown("<h1>🔮 Gelecek Maçlar</h1>", unsafe_allow_html=True)
     gel = st.session_state.gelecek_analizler
-    if not gel: st.info("Maç yok.")
+    toplam_g = len(gel)
+
+    # Yedekleme
+    st.markdown("### 💾 Yedekleme")
+    c1, c2 = st.columns(2)
+    with c1:
+        json_str2 = json.dumps(st.session_state.gelecek_analizler, ensure_ascii=False, indent=2)
+        st.download_button(
+            label=f"📥 Geleceği İndir ({toplam_g} maç)",
+            data=json_str2,
+            file_name=f"gelecek_{toplam_g}mac.json",
+            mime="application/json",
+            use_container_width=True,
+            key="ind_gelecek"
+        )
+    with c2:
+        yuk2 = st.file_uploader("📤 Geleceği Yükle (JSON)", type=["json"], key="yuk_gelecek")
+        if yuk2 is not None:
+            try:
+                veri2 = json.loads(yuk2.read().decode("utf-8"))
+                if isinstance(veri2, list):
+                    st.session_state.gelecek_analizler = veri2
+                    gelecek_kaydet(veri2)
+                    st.success(f"✅ {len(veri2)} maç yüklendi!")
+                    st.rerun()
+                else:
+                    st.error("❌ Dosya formatı hatalı.")
+            except Exception as e:
+                st.error(f"❌ Hata: {e}")
+    st.divider()
+
+    if not gel:
+        st.info("ℹ️ Gelecek maç yok. Admin ana sayfadan maç çekebilirsin.")
     else:
         sirali = sorted(enumerate(gel), key=lambda x: saat_sirala_anahtari(x[1]))
         for idx, g in sirali:
@@ -2433,21 +2456,73 @@ elif st.session_state.sayfa == "gelecek_admin":
                     if st.button("❌ İptal", key=f"gh_{idx}", use_container_width=True):
                         st.session_state.tek_silme_gelecek = None; st.rerun()
             st.divider()
+
+    st.divider()
+    if st.button("🗑️ Tüm Geleceği Temizle", use_container_width=True, key="temizle_gel"):
+        st.session_state.silme_onay_gelecek = True; st.rerun()
+    if st.session_state.get("silme_onay_gelecek"):
+        st.warning("⚠️ Tüm gelecek silinecek. Emin misin?")
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("✅ Evet, Sil", key="sil_gel_evet", use_container_width=True, type="primary"):
+                st.session_state.gelecek_analizler = []
+                try:
+                    if os.path.exists(GELECEK_DOSYA): os.remove(GELECEK_DOSYA)
+                except Exception: pass
+                st.session_state.silme_onay_gelecek = False
+                st.session_state.tek_silme_gelecek = None
+                st.rerun()
+        with c2:
+            if st.button("❌ İptal", key="sil_gel_iptal", use_container_width=True):
+                st.session_state.silme_onay_gelecek = False; st.rerun()
+
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gg_geri"):
         st.session_state.sayfa = "giris"; st.rerun()
 
 
 # ==========================================
-# SAYFA: GEÇMİŞ
+# SAYFA: GEÇMİŞ MAÇLAR
 # ==========================================
 elif st.session_state.sayfa == "gecmis":
     st.markdown("<h1>📊 Geçmiş Maçlar</h1>", unsafe_allow_html=True)
     gc = st.session_state.gecmis_analizler; top = len(gc)
-    if top == 0: st.info("Henüz kayıt yok.")
+
+    # Admin yedekleme
+    if admin_mi():
+        st.markdown("### 💾 Yedekleme")
+        c1, c2 = st.columns(2)
+        with c1:
+            json_str = json.dumps(st.session_state.gecmis_analizler, ensure_ascii=False, indent=2)
+            st.download_button(
+                label=f"📥 Geçmişi İndir ({top} maç)",
+                data=json_str,
+                file_name=f"gecmis_{top}mac.json",
+                mime="application/json",
+                use_container_width=True,
+                key="ind_gecmis"
+            )
+        with c2:
+            yuk = st.file_uploader("📤 Geçmişi Yükle (JSON)", type=["json"], key="yuk_gecmis")
+            if yuk is not None:
+                try:
+                    veri = json.loads(yuk.read().decode("utf-8"))
+                    if isinstance(veri, list):
+                        st.session_state.gecmis_analizler = veri
+                        gecmis_kaydet(veri)
+                        st.success(f"✅ {len(veri)} maç yüklendi!")
+                        st.rerun()
+                    else:
+                        st.error("❌ Dosya formatı hatalı (liste bekleniyor).")
+                except Exception as e:
+                    st.error(f"❌ Hata: {e}")
+        st.divider()
+
+    if top == 0:
+        st.info("Henüz kayıt yok.")
     else:
-        # Modern donut grafikleri
-        modern_istatistik_grafik()
-        st.markdown(f"### Toplam: {top} maç")
+        modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ")
+        st.divider()
+        st.markdown(f"### 📋 Toplam: {top} maç")
         for i, g in enumerate(reversed(gc)):
             idx = len(gc) - 1 - i; v = g["veri"]
             te = v.get("takim_ev", "Ev"); td = v.get("takim_dep", "Dep")
@@ -2484,6 +2559,28 @@ elif st.session_state.sayfa == "gecmis":
                     st.session_state.kayit_yapildi = True; st.session_state.gecmisten_gelindi = True
                     st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
             st.divider()
+
+    # Hepsini temizle (admin)
+    if admin_mi():
+        st.divider()
+        if st.button("🗑️ Tüm Geçmişi Temizle", use_container_width=True, key="temizle_g"):
+            st.session_state.silme_onay = True; st.rerun()
+        if st.session_state.silme_onay:
+            st.warning("⚠️ Tüm geçmiş silinecek. Emin misin?")
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("✅ Evet, Sil", key="sil_g_evet", use_container_width=True, type="primary"):
+                    st.session_state.gecmis_analizler = []
+                    try:
+                        if os.path.exists(GECMIS_DOSYA): os.remove(GECMIS_DOSYA)
+                    except Exception: pass
+                    st.session_state.silme_onay = False
+                    st.session_state.tek_silme_onay = None
+                    st.rerun()
+            with c2:
+                if st.button("❌ İptal", key="sil_g_iptal", use_container_width=True):
+                    st.session_state.silme_onay = False; st.rerun()
+
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gc_geri"):
         st.session_state.sayfa = "giris"; st.rerun()
 
