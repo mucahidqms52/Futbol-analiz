@@ -944,6 +944,143 @@ def backtest_hesapla(gecmis, ms, me):
         except Exception: continue
     return sonuc, detaylar
     # ==========================================
+# METİN PARSER (Sportytrader)
+# ==========================================
+MANUEL_ALANLAR = {
+    "Sıralama": [("siralama_ev", "Ev Sıralaması", "int", 1), ("siralama_dep", "Dep Sıralaması", "int", 1)],
+    "Takım isimleri (Ev)": [("takim_ev", "Ev Takım Adı", "str", "")],
+    "Takım isimleri (Dep)": [("takim_dep", "Dep Takım Adı", "str", "")],
+    "PPG (Ev Form)": [("ppg_ev", "PPG (Ev)", "float", 0.0)],
+    "MPG (Dep Form)": [("mpg_dep", "MPG (Dep)", "float", 0.0)],
+    "xG": [("xg_ev", "xG (Ev)", "float", 0.0), ("xg_dep", "xG (Dep)", "float", 0.0)],
+    "Atılan Gol": [("atilan_ev", "Atılan Gol (Ev)", "float", 0.0), ("atilan_dep", "Atılan Gol (Dep)", "float", 0.0)],
+    "Yenen Gol": [("yenen_ev", "Yenen Gol (Ev)", "float", 0.0), ("yenen_dep", "Yenen Gol (Dep)", "float", 0.0)],
+}
+
+
+def _cift_tab(etiket, blok):
+    pattern = r'([\d.,]+)%?\s*\t\s*' + re.escape(etiket) + r'\s*\t\s*([\d.,]+)%?'
+    m = re.search(pattern, blok, re.IGNORECASE)
+    if m:
+        try: return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
+        except ValueError: pass
+    pattern2 = r'([\d.,]+)%?\s{1,4}' + re.escape(etiket) + r'\s{1,4}([\d.,]+)%?'
+    m = re.search(pattern2, blok, re.IGNORECASE)
+    if m:
+        try: return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
+        except ValueError: pass
+    return None, None
+
+
+def _sira_bul(metin, takim_adi):
+    if not takim_adi: return None, None
+    pattern = (r'(?:^|\n)\s*(\d{1,2})\s*\r?\n\s*' + re.escape(takim_adi) + r'\s*\r?\n\s*' + re.escape(takim_adi) + r'\s*\r?\n' r'\s*(\d+)\s*\t')
+    m = re.search(pattern, metin, re.MULTILINE)
+    if m:
+        try:
+            sira = int(m.group(1))
+            if 1 <= sira <= 30:
+                devam = metin[m.end()-1:]
+                m_puan = re.match(r'[\s\S]{0,80}?\r?\n\s*(\d{1,2})\s*\r?\n', devam)
+                puan = int(m_puan.group(1)) if m_puan else 0
+                return sira, puan
+        except (ValueError, AttributeError): pass
+    return None, None
+
+
+def sportytrader_veri_cikar(metin):
+    veri = {}; okunamayanlar = []
+    m = re.search(r'^([A-ZÇĞİÖŞÜ][\w\s\.\-]+?)\s*-\s*([A-ZÇĞİÖŞÜ][\w\s\.\-]+?)\s+Stats', metin, re.MULTILINE)
+    if m:
+        veri["takim_ev"] = m.group(1).strip(); veri["takim_dep"] = m.group(2).strip()
+    m = re.search(r'Time\s*\t\s*(\d{1,2}:\d{2})', metin)
+    if m: veri["saat"] = m.group(1).strip()
+    else:
+        m = re.search(r'\d{1,2}\.\d{1,2}\.\d{2,4}\s+(\d{1,2}:\d{2})', metin)
+        if m: veri["saat"] = m.group(1).strip()
+    m = re.search(r'Date\s*\t\s*(\d{1,2}\.\d{1,2}\.\d{2,4})', metin)
+    if m: veri["tarih"] = m.group(1).strip()
+    else:
+        m = re.search(r'(\d{1,2}\.\d{1,2}\.\d{2,4})\s+\d{1,2}:\d{2}', metin)
+        if m: veri["tarih"] = m.group(1).strip()
+    veri["ulke"] = _ulke_bul(metin)
+    m = re.search(r'FT\s*\r?\n\s*(\d+)\s*-\s*(\d+)', metin)
+    if m:
+        veri["skor_ev"] = int(m.group(1)); veri["skor_dep"] = int(m.group(2)); veri["skor_belli"] = True
+    else: veri["skor_belli"] = False
+    takim_ev = veri.get("takim_ev", ""); takim_dep = veri.get("takim_dep", "")
+    idx = metin.find("Main Stats")
+    if idx != -1:
+        blok = metin[idx:idx+1500]
+        v1, v2 = _cift_tab("Goals scored per game", blok)
+        if v1 is not None: veri["atilan_ev"] = v1; veri["atilan_dep"] = v2
+        v1, v2 = _cift_tab("Goals conceded per game", blok)
+        if v1 is not None: veri["yenen_ev"] = v1; veri["yenen_dep"] = v2
+        v1, v2 = _cift_tab("Clean sheets", blok)
+        if v1 is not None: veri["clean_sheets_ev"] = v1; veri["clean_sheets_dep"] = v2
+        v1, v2 = _cift_tab("Team scored", blok)
+        if v1 is not None: veri["team_scored_ev"] = v1; veri["team_scored_dep"] = v2
+    idx = metin.find("Win Draw Lose")
+    if idx != -1:
+        blok = metin[idx:idx+1500]
+        for etiket, key_ev, key_dep in [("Win", "galibiyet_ev", "galibiyet_dep"), ("Draw", "beraberlik_ev", "beraberlik_dep"), ("Lose", "maglubiyet_ev", "maglubiyet_dep")]:
+            pattern = r'(?:^|\n)\s*([\d.,]+)%\s*\t\s*' + etiket + r'\s*\t\s*([\d.,]+)%'
+            mm = re.search(pattern, blok, re.MULTILINE)
+            if mm:
+                try:
+                    veri[key_ev] = float(mm.group(1).replace(",", "."))
+                    veri[key_dep] = float(mm.group(2).replace(",", "."))
+                except ValueError: pass
+    idx = metin.find("Both Teams to Score")
+    if idx != -1:
+        blok = metin[idx:idx+1500]
+        m = re.search(r'(?:^|\n)\s*([\d.,]+)%\s*\t\s*Both Teams to Score\s*\t\s*([\d.,]+)%', blok, re.MULTILINE)
+        if m:
+            try:
+                veri["kg_siklik_ev"] = float(m.group(1).replace(",", "."))
+                veri["kg_siklik_dep"] = float(m.group(2).replace(",", "."))
+            except ValueError: pass
+    idx = metin.find("Over Under Goals")
+    if idx != -1:
+        blok = metin[idx:idx+1500]
+        v1, v2 = _cift_tab("Over 1.5 goals", blok)
+        if v1 is not None: veri["ust15_ev"] = v1; veri["ust15_dep"] = v2
+        v1, v2 = _cift_tab("Over 2.5 goals", blok)
+        if v1 is not None: veri["ust25_ev"] = v1; veri["ust25_dep"] = v2
+        v1, v2 = _cift_tab("Over 3.5 goals", blok)
+        if v1 is not None: veri["ust35_ev"] = v1; veri["ust35_dep"] = v2
+    if takim_ev:
+        s, p = _sira_bul(metin, takim_ev)
+        if s is not None: veri["siralama_ev"] = s
+    if takim_dep:
+        s, p = _sira_bul(metin, takim_dep)
+        if s is not None: veri["siralama_dep"] = s
+    if veri.get("siralama_ev", 0) == 0: okunamayanlar.append("Sıralama (Ev)")
+    if veri.get("siralama_dep", 0) == 0: okunamayanlar.append("Sıralama (Dep)")
+    if veri.get("atilan_ev", 0) > 0 and veri.get("yenen_ev", 0) > 0:
+        veri["lig_ort_toplam"] = (veri.get("atilan_ev", 0) + veri.get("atilan_dep", 0) + veri.get("yenen_ev", 0) + veri.get("yenen_dep", 0)) / 2
+    if veri.get("ust25_ev", 0) > 0 and veri.get("ust25_dep", 0) > 0:
+        veri["lig_ust25"] = (veri["ust25_ev"] + veri["ust25_dep"]) / 2
+    if veri.get("kg_siklik_ev", 0) > 0 and veri.get("kg_siklik_dep", 0) > 0:
+        veri["lig_kg"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
+    veri["format"] = "sportytrader"
+    return veri, okunamayanlar
+
+
+def metinden_veri_cikar(metin):
+    metin = metin.replace(",", ".")
+    if "Main Stats" in metin and "Goals scored per game" in metin:
+        veri, okunamayanlar = sportytrader_veri_cikar(metin)
+        if not veri.get("takim_ev"): okunamayanlar.append("Takım isimleri (Ev)")
+        if not veri.get("takim_dep"): okunamayanlar.append("Takım isimleri (Dep)")
+        if veri.get("saat"): veri["saat"] = saat_2_saat_ileri(veri["saat"])
+        return veri, okunamayanlar
+    veri = {}; okunamayanlar = []
+    veri["format"] = "genel"
+    return veri, okunamayanlar
+
+
+# ==========================================
 # VERİ ÇEKME MOTORU
 # ==========================================
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
@@ -1211,6 +1348,95 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
     return ekl, []
 
 
+# ==========================================
+# LİG GEÇMİŞİ ÇEKME
+# ==========================================
+def _lig_son_mac_linklerini_al(lig_url, adet=10):
+    html, hata = _scrapingbee_get(lig_url, render_js=True, ms="10")
+    if hata: return [], [hata]
+    if not html: return [], ["Lig sayfası indirilemedi"]
+    soup = BeautifulSoup(html, "html.parser")
+    maclar = []; gor = set()
+    for link in soup.find_all("a", href=True):
+        href = link.get("href", "")
+        if "match-preview" not in href: continue
+        if href.startswith("/"): href = "https://www.mutating.com" + href
+        elif not href.startswith("http"): continue
+        if href in gor: continue
+        gor.add(href)
+        takim_ev = ""; takim_dep = ""
+        img = link.find_all("img", alt=True)
+        if len(img) >= 2:
+            takim_ev = img[0].get("alt", "").strip()
+            takim_dep = img[1].get("alt", "").strip()
+        if not takim_ev:
+            txt = link.get_text(" ", strip=True)
+            if " - " in txt:
+                p = txt.split(" - ")
+                takim_ev = p[0].strip(); takim_dep = p[1].strip() if len(p) > 1 else ""
+        maclar.append({"url": href, "takim_ev": takim_ev, "takim_dep": takim_dep})
+        if len(maclar) >= adet: break
+    return maclar, []
+
+
+def _gecmis_mac_isle(mac, mevcut_urls):
+    try:
+        if mac["url"] in mevcut_urls:
+            return ("atlandi", None, "Zaten var", None)
+        html, hata = _scrapingbee_get(mac["url"], render_js=True, ms="5", dogrula=True, tev=mac.get("takim_ev", ""), tdep=mac.get("takim_dep", ""))
+        if hata or not html: return ("hata", mac, hata or "HTML yok", None)
+        veri, _ = _mac_html_parse(html, mac["url"])
+        if not veri.get("skor_belli", False): return ("atlandi", None, "Skor yok (bitmemiş)", None)
+        if veri.get("atilan_ev", 0) == 0 or veri.get("yenen_ev", 0) == 0: return ("atlandi", None, "İstatistik eksik", None)
+        if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
+        if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
+        yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(veri)
+        kayit = kayit_olustur(yv, analiz_hesapla(yv))
+        kayit["dogruluk"] = sonuc_hesapla(kayit)
+        return ("eklendi", veri, f"{veri['skor_ev']}-{veri['skor_dep']}", kayit)
+    except Exception as e:
+        return ("hata", mac, str(e)[:80], None)
+
+
+def lig_gecmis_cek(lig_url, adet=10, max_workers=3, progress_callback=None):
+    _ESIK_CACHE.clear()
+    try: _ESIK_CACHE.update(dict(st.session_state.esikler))
+    except Exception: pass
+    maclar, hatalar = _lig_son_mac_linklerini_al(lig_url, adet=adet)
+    if hatalar: return [], hatalar
+    if not maclar: return [], ["Lig sayfasında maç linki bulunamadı"]
+    mevcut_urls = set()
+    for g in st.session_state.gecmis_analizler:
+        u = g.get("veri", {}).get("kaynak_url", "")
+        if u: mevcut_urls.add(u)
+    bas = []; hat = []; ek = 0; at = 0; tam = 0
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        futs = {ex.submit(_gecmis_mac_isle, m, mevcut_urls): m for m in maclar}
+        for f in as_completed(futs):
+            tam += 1; mac = futs[f]
+            try:
+                r = f.result()
+                sonuc, veri, mesaj, kayit = r if len(r) == 4 else (r[0], r[1], r[2], None)
+                if sonuc == "eklendi":
+                    ek += 1; bas.append(veri)
+                    if kayit is not None:
+                        try: st.session_state.gecmis_analizler.append(kayit)
+                        except Exception: pass
+                elif sonuc == "atlandi": at += 1
+                else: hat.append(f"{mac.get('takim_ev','?')}: {mesaj}")
+            except Exception as e:
+                hat.append(f"{mac.get('takim_ev','?')}: {e}")
+            if progress_callback:
+                try: progress_callback(tam - 1, len(maclar), mac.get("takim_ev", ""))
+                except Exception: pass
+    try: gecmis_kaydet(st.session_state.gecmis_analizler)
+    except Exception: pass
+    return bas, hat
+
+
+# ==========================================
+# SKOR ÇEKME
+# ==========================================
 def _skor_parse(html):
     m = _html_metne_cevir(html)
     x = re.search(r'(?<![A-Za-z])FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', m)
@@ -1621,7 +1847,7 @@ nav_bar()
 
 
 # ==========================================
-# SAYFA: GİRİŞ YAP (YENİ EKLENDİ)
+# SAYFA: GİRİŞ YAP
 # ==========================================
 if st.session_state.sayfa == "giris_yap":
     admin_giris_ekrani()
@@ -1658,7 +1884,17 @@ elif st.session_state.sayfa == "giris":
         if analiz_btn:
             if not ym.strip(): st.warning("⚠️ Metin yapıştır.")
             else:
-                st.info("Metin analiz özelliği için PARÇA 2'ye yardımcı fonksiyonlar eklenecek. Şu an veri çekme kullanabilirsin.")
+                cikan, okunamayanlar = metinden_veri_cikar(ym)
+                if not cikan: st.error("❌ Veri çıkarılamadı.")
+                else:
+                    yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(cikan)
+                    st.session_state.form_verileri = yv; st.session_state.kayit_yapildi = False
+                    st.session_state.manuel_bekleyen = okunamayanlar.copy() if okunamayanlar else []
+                    if not veri_yeterli_mi(yv): st.error("⚠️ Yetersiz veri.")
+                    else:
+                        if okunamayanlar: st.session_state.sayfa = "manuel_giris"
+                        else: st.session_state.sayfa = "sonuc"
+                        st.rerun()
         if gecmis_btn: nav_git("gecmis")
         if gelecek_btn: nav_git("gelecek_admin")
         if backtest_btn: nav_git("backtest")
@@ -1687,7 +1923,26 @@ elif st.session_state.sayfa == "giris":
                         mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=_p, max_workers=int(w))
                     ph.empty(); st.rerun()
         with vs2:
-            st.info("ℹ️ Lig geçmişi özelliği sonraki sürümde eklenecek.")
+            lurl = st.text_input("Lig URL", key="lig_url_input", placeholder="https://www.mutating.com/football-stats/league-...")
+            c1, c2 = st.columns(2)
+            with c1: la = st.number_input("Kaç maç?", 5, 30, 10, 1, key="lig_adet")
+            with c2: lw = st.number_input("Paralel", 1, 8, 3, 1, key="lig_workers")
+            if st.button("📜 Ligi Çek", use_container_width=True, type="primary", key="lig_cek_btn"):
+                if not lurl.strip(): st.warning("URL gerekli")
+                else:
+                    ph = st.empty()
+                    def _p2(i, t, n):
+                        try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
+                        except Exception: pass
+                    with st.spinner(f"Son {la} maç..."):
+                        bas, hat = lig_gecmis_cek(lurl.strip(), int(la), int(lw), _p2)
+                    ph.empty()
+                    if hat:
+                        with st.expander(f"⚠️ {len(hat)} hata"):
+                            for h in hat: st.caption(h)
+                    if bas:
+                        st.success(f"✅ {len(bas)} maç eklendi!"); time.sleep(2); st.rerun()
+                    else: st.error("Hiçbir maç eklenemedi.")
         with vs3:
             if st.session_state.skor_ozet:
                 oz = st.session_state.skor_ozet
@@ -2217,12 +2472,8 @@ elif st.session_state.sayfa == "ayarlar":
 elif st.session_state.sayfa == "manuel_giris":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>📝 Eksik Alanlar</h1>", unsafe_allow_html=True)
+    st.warning(f"Metinden çıkarılamayan **{len(st.session_state.manuel_bekleyen)}** alan:")
     v = st.session_state.form_verileri
-    MANUEL_ALANLAR = {
-        "Sıralama": [("siralama_ev", "Ev Sıralaması", "int", 1), ("siralama_dep", "Dep Sıralaması", "int", 1)],
-        "Takım isimleri (Ev)": [("takim_ev", "Ev Takım Adı", "str", "")],
-        "Takım isimleri (Dep)": [("takim_dep", "Dep Takım Adı", "str", "")],
-    }
     with st.form("mf"):
         yd = {}
         for a in st.session_state.manuel_bekleyen:
@@ -2250,7 +2501,7 @@ elif st.session_state.sayfa == "manuel_giris":
 
 
 # ==========================================
-# SAYFA: SONUÇ (PREMIUM ENGELLİ DEĞİL)
+# SAYFA: SONUÇ
 # ==========================================
 elif st.session_state.sayfa == "sonuc":
     v = st.session_state.form_verileri; a = analiz_hesapla(v)
