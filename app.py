@@ -1561,6 +1561,8 @@ def mutating_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI):
         takim_dep = h2_list[1].get_text(strip=True) if len(h2_list) > 1 else ""
         saat_el = link.find(class_=re.compile(r"nostart|time|match-time"))
         saat = saat_el.get_text(strip=True) if saat_el else ""
+        if saat:
+            saat = saat_2_saat_ileri(saat)
         maclar.append({"url": href, "takim_ev": takim_ev, "takim_dep": takim_dep, "saat": saat})
     return maclar, []
 
@@ -1587,7 +1589,8 @@ def _mac_html_parse(html, url=""):
     m = re.search(r'(\d{1,2}\.\d{1,2}\.\d{4})', metin)
     if m: veri["tarih"] = m.group(1)
     m = re.search(r'(\d{1,2}:\d{2})', metin)
-    if m: veri["saat"] = m.group(1)
+    if m:
+        veri["saat"] = saat_2_saat_ileri(m.group(1))
     veri["ulke"] = _ulke_bul(metin)
     skor_ev = skor_dep = None
     m = re.search(r'FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
@@ -1667,7 +1670,8 @@ def _gelecek_mac_isle(mac, mevcut_urls):
             return ("hata", mac, "Sayfa çekilemedi", None)
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
-        if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
+        if not veri.get("saat"):
+            veri["saat"] = saat_2_saat_ileri(mac.get("saat", ""))
         veri["kaynak_url"] = mac["url"]
         if mac["url"] in mevcut_urls:
             return ("zaten_var", veri, "Zaten var", None)
@@ -1799,6 +1803,8 @@ def _gecmis_mac_isle(mac, mevcut_urls):
             return ("atlandi", None, "İstatistik eksik", None)
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
+        if not veri.get("saat"):
+            veri["saat"] = saat_2_saat_ileri(mac.get("saat", ""))
         yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(veri)
         kayit = kayit_olustur(yv, analiz_hesapla(yv))
         kayit["dogruluk"] = sonuc_hesapla(kayit)
@@ -2311,7 +2317,7 @@ if st.session_state.sayfa == "giris":
 
         st.divider()
         st.markdown("### 🤖 Otomatik Veri Çekme")
-        st.caption("Mutating.com'dan maç verilerini otomatik çek. 5 maçlık veri, Ev=Home / Dep=Away.")
+        st.caption("Mutating.com'dan maç verilerini otomatik çek. 5 maçlık veri, Ev=Home / Dep=Away. Saatler +2 uygulanır.")
 
         veri_sekme1, veri_sekme2, veri_sekme3 = st.tabs([
             "🔄 Bugünün Maçları", "📜 Lig Geçmişi", "🏁 Sonuçları İşle"
