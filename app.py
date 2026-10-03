@@ -1,3 +1,4 @@
+
 import streamlit as st
 import math
 import copy
@@ -6,255 +7,307 @@ import random
 import json
 import os
 import html as _html
-import time
-import threading
-import requests
-import hashlib
-import secrets as _secrets
 from datetime import datetime, timedelta
-from bs4 import BeautifulSoup
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import subprocess, sys
-
-
-# ==========================================
-# YASAL METİN — Tam Sorumluluk Reddi
-# ==========================================
-YASAL_METIN = """
-# ⚖️ KULLANIM ŞARTLARI VE SORUMLULUK REDDİ
-
-**Yürürlük Tarihi:** Hizmete kayıt olduğunuz tarih itibariyle geçerlidir.
-
----
-
-## 1. TARAFLAR VE KAPSAM
-
-Bu Kullanım Şartları, **"Futbol Analiz Pro"** (bundan sonra **"Uygulama"** veya **"Hizmet"** olarak anılacaktır) ile bu hizmete kayıt olan kullanıcı (bundan sonra **"Kullanıcı"** olarak anılacaktır) arasında akdedilmiştir. Kullanıcı, Uygulama'ya kayıt olmak, giriş yapmak veya herhangi bir şekilde hizmeti kullanmakla bu şartları **okuduğunu, anladığını ve kabul ettiğini** beyan ve taahhüt eder.
-
----
-
-## 2. HİZMETİN TANIMI
-
-Uygulama, futbol maçlarına ilişkin olarak **geçmiş istatistiklere dayalı matematiksel ve istatistiksel analizler** üreterek kullanıcıya **bilgilendirme amaçlı tahminler** sunar.
-
-**KESİNLİKLE BELİRTİLİR Kİ:**
-
-- Sunulan içerikler **bahis, yatırım, finansal veya hukuki tavsiye** niteliği taşımaz.
-- Uygulama, **hiçbir bahis sitesiyle ortaklık, iş ortaklığı, bayilik veya acentelik ilişkisi içinde değildir.**
-- Uygulama, **kullanıcı adına bahis oynamaz, bahis kuponu düzenlemez veya bahis hizmeti sunmaz.**
-- Uygulama bir **sosyal medya, sohbet veya para transfer platformu değildir.**
-
----
-
-## 3. YAŞ SINIRI VE EHLİYET
-
-Uygulama'yı kullanabilmek için:
-
-- **18 (on sekiz) yaşından büyük olmanız**,
-- **Fiil ehliyetine sahip olmanız** (TMK m.10 ve devamı),
-- **Yasal olarak bahis oynamanın yasak olmadığı bir ülkede bulunmanız** gerekmektedir.
-
-Kullanıcı, bu şartları sağladığını beyan eder. Aksi halde doğacak her türlü hukuki, cezai ve idari sorumluluk **münhasıran Kullanıcı'ya aittir.**
-
----
-
-## 4. HİZMETİN "OLDUĞU GİBİ" SUNULMASI
-
-Uygulama, **"AS IS" (olduğu gibi)** ve **"AS AVAILABLE" (mevcut olduğu şekilde)** esasına göre sunulmaktadır. Uygulama, aşağıdakiler dahil ancak bunlarla sınırlı olmamak üzere **hiçbir açık veya zımni garanti vermez:**
-
-- Hizmetin kesintisiz, hatasız, virüssüz veya güvenli olacağı,
-- Sunulan tahminlerin **doğru, güncel, eksiksiz veya güvenilir** olacağı,
-- Hizmetin **belirli bir amaca uygun** olacağı,
-- Hizmet sonucunda **herhangi bir kazanç elde edileceği.**
-
----
-
-## 5. TAHMİN GARANTİSİ YOKTUR
-
-**BU HİZMETTE SUNULAN TÜM TAHMİN, ANALİZ, İSTATİSTİK VE YORUMLAR;**
-
-- Geçmiş verilerin matematiksel modellenmesine dayanır,
-- **Gelecekteki sonuçları garanti etmez**,
-- **Doğruluk oranı %100 değildir ve hiçbir zaman olamaz**,
-- **Kayıp veya kazanç garantisi içermez.**
-
-**Kullanıcı, hiçbir tahmine güvenerek hareket etmemesi, bahis oynamaması ve maddi kayba uğramaması gerektiğini kabul eder.** Tahminler yalnızca **eğitim ve bilgi amaçlıdır.**
-
----
-
-## 6. SORUMLULUĞUN SINIRLANDIRILMASI VE İBRA
-
-Kullanıcı, Uygulama'yı kullanması nedeniyle veya kullanımıyla bağlantılı olarak doğrudan veya dolaylı olarak ortaya çıkabilecek;
-
-- Maddi ve manevi zararlar,
-- Kâr kaybı, veri kaybı, itibar kaybı,
-- Üçüncü kişilerden gelecek her türlü talep, dava, icra takibi ve cezai sorumluluk,
-- Yasadışı bahis, kumar, dolandırıcılık veya benzeri suçlardan doğan her türlü hukuki ve cezai yaptırım,
-
-için **Uygulama'yı işleten gerçek/tüzel kişiyi, geliştiricileri, iş ortaklarını, tedarikçileri ve çalışanlarını tamamen ibra ettiğini** kabul, beyan ve taahhüt eder.
-
-**Uygulama, hiçbir durumda Kullanıcı'nın uğradığı zararlardan sorumlu tutulamaz.** Kullanıcı, olası bir uyuşmazlıkta Uygulama'ya karşı **hiçbir tazminat, iade, cezai şart veya faiz talebinde bulunamaz.**
-
----
-
-## 7. YASADIŞI BAHİS VE KUMAR UYARISI
-
-Türkiye Cumhuriyeti mevzuatı uyarınca **yasadışı bahis oynamak, oynatmak, yer temin etmek, para transferi yapmak ve reklamını yapmak suçtur** (7258 sayılı Kanun ve ilgili mevzuat).
-
-**KULLANICI:**
-
-- Bu Uygulama'yı **yasadışı bahis oynamak için kullanamaz**,
-- Uygulama'da sunulan tahminleri **yasadışı bahis sitelerine aktaramaz, kopyalayamaz, dağıtamaz**,
-- Uygulama'yı **kumar bağımlılığını teşvik edici** bir şekilde kullanamaz.
-
-Bu kurala aykırılık tespit edilmesi halinde **Kullanıcı'nın üyeliği derhal iptal edilir ve yasal mercilere bildirilir.**
-
----
-
-## 8. ÖDEME, ABONELİK VE İADE KOŞULLARI
-
-**Ödeme Yöntemi:** Ödemeler yalnızca **havale / EFT** yoluyla yapılır.
-
-**Abonelik Süreleri:** Haftalık, Aylık ve Yıllık olmak üzere üç paket sunulmaktadır.
-
-**Abonelik Aktivasyonu:** Ödeme yapıldıktan sonra Kullanıcı'nın **"Ödeme Yaptım"** bildirimi üzerine, ödeme kontrol edilerek **manuel olarak** aktive edilir. Aktivasyon **birkaç saat ile 24 saat** arasında tamamlanır.
-
-**İADE KOŞULLARI:**
-
-- **Aboneliği aktive edilmiş hiçbir kullanıcı için iade yapılmaz.**
-- Yanlış/fazla/mükerrer ödemede **10 iş günü içinde** iade yapılır.
-- **Hizmet memnuniyetsizliği, tahminlerin tutmaması, kayıplar veya benzeri nedenlerle iade talep edilemez.**
-- Abonelik aktivasyonundan sonra **hiçbir koşulda para iadesi talep edilemez.**
-
----
-
-## 9. ABONELİK İPTALİ
-
-- Kullanıcı, aboneliğini **Uygulama içindeki "Bildirim"** bölümünden iptal talebi oluşturabilir.
-- İptal talebi onaylandığında abonelik **bir sonraki yenilenme tarihine kadar** aktif kalır.
-- **İptal edilen abonelikler için kısmi iade yapılmaz.**
-
----
-
-## 10. KİŞİSEL VERİLERİN KORUNMASI (KVKK)
-
-6698 sayılı KVKK'ya uygun olarak:
-
-- **Kullanıcı adı, şifre (hash'lenmiş), ödeme bildirim bilgileri** toplanır.
-- Veriler **yalnızca hizmetin ifası ve abonelik yönetimi** amacıyla kullanılır.
-- Veriler **hiçbir üçüncü taraf ile paylaşılmaz, satılmaz.**
-- Şifreler **tek yönlü hash** ile saklanır, geri çevrilemez.
-- Kullanıcı **dilediği zaman hesabını sildirebilir**; veriler **7 iş günü içinde** silinir.
-
----
-
-## 11. FİKRİ MÜLKİYET
-
-Uygulama'daki **tüm analizler, modeller, algoritmalar, tahminler, tasarımlar, kodlar, logolar ve metinler** telif hakkı ile korunmaktadır. Kullanıcı bunları **kopyalayamaz, dağıtamaz, satamaz, değiştiremez**.
-
----
-
-## 12. HİZMET DEĞİŞİKLİKLERİ
-
-Uygulama, önceden bildirimde bulunmaksızın **hizmeti değiştirme, askıya alma, sonlandırma, fiyatları güncelleme, kullanım şartlarını değiştirme, kullanıcı hesaplarını askıya alma** hakkını saklı tutar.
-
----
-
-## 13. UYUŞMAZLIK VE YETKİLİ MAHKEME
-
-Bu şartlardan doğan uyuşmazlıklarda **Türkiye Cumhuriyeti hukuku** uygulanır. Yetkili mahkemeler, Uygulama'yı işleten kişinin yerleşim yeri mahkemeleridir.
-
----
-
-## 14. YÜRÜRLÜK VE KABUL
-
-Kullanıcı, bu şartları **okuduğunu, anladığını ve kabul ettiğini** beyan eder. Kayıt işlemini tamamlamak veya abonelik satın almak, bu şartların kabulü anlamına gelir.
-
----
-
-## 15. İLETİŞİM
-
-Her türlü soru, görüş, şikayet, iptal ve iade talepleri için Uygulama içindeki **"Bildirim"** bölümünden iletişime geçebilirsiniz.
-
----
-
-**SON SÖZ:** Bu uygulama **SADECE bilgilendirme ve analiz amaçlıdır**. Bahis oynamak **yasal risk**, **maddi kayıp riski** ve **bağımlılık riski** içerir. **YEDAM: 115**
-"""
 
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
 
-@st.cache_resource(show_spinner="Tarayıcı kuruluyor (ilk açılışta 1-2 dk sürer)...")
-def _tarayici_kur():
-    try:
-        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=False, timeout=600)
-    except Exception:
-        pass
-    return True
-
-
-_tarayici_kur()
-
-
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <style>
+    /* ===== GLOBAL FONT KÜÇÜLTME ===== */
     html { font-size: 13px !important; }
     body, .stApp { font-size: 0.85rem !important; }
+
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
-    h1, h2, h3, h4, .fa-score, .fa-big, .mh-stat-num, .login-title, .mh-hero-title { font-family: 'Rajdhani', 'Inter', sans-serif !important; letter-spacing: 0.4px; }
-    .block-container { padding-top: 0.8rem !important; padding-bottom: 0.8rem !important; padding-left: 0.8rem !important; padding-right: 0.8rem !important; max-width: 100% !important; }
-    :root { --bg-0: #060a14; --bg-1: #0b1220; --card: #131c2e; --border: #1f2c44; --text: #eaf1fb; --muted: #7f92b3; --green: #22c55e; --blue: #3b82f6; --yellow: #f59e0b; --red: #ef4444; }
-    .stApp { background: radial-gradient(1200px 600px at 10% -10%, rgba(34,197,94,0.08), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(59,130,246,0.07), transparent 60%), linear-gradient(180deg, #060a14 0%, #0b1220 100%) !important; }
+    h1, h2, h3, h4, .fa-score, .fa-big, .mh-stat-num, .login-title, .mh-hero-title {
+        font-family: 'Rajdhani', 'Inter', sans-serif !important;
+        letter-spacing: 0.4px;
+    }
+
+    .block-container {
+        padding-top: 0.8rem !important;
+        padding-bottom: 0.8rem !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+        max-width: 100% !important;
+    }
+
+    :root {
+        --bg-0: #060a14;
+        --bg-1: #0b1220;
+        --bg-2: #101a2e;
+        --card: #131c2e;
+        --card-2: #16223a;
+        --border: #1f2c44;
+        --border-glow: rgba(34,197,94,0.35);
+        --text: #eaf1fb;
+        --muted: #7f92b3;
+        --green: #22c55e;
+        --green-dark: #15803d;
+        --blue: #3b82f6;
+        --yellow: #f59e0b;
+        --red: #ef4444;
+    }
+
+    .stApp {
+        background:
+            radial-gradient(1200px 600px at 10% -10%, rgba(34,197,94,0.08), transparent 60%),
+            radial-gradient(900px 500px at 100% 0%, rgba(59,130,246,0.07), transparent 60%),
+            linear-gradient(180deg, #060a14 0%, #0b1220 100%) !important;
+    }
     header[data-testid="stHeader"] { background: transparent !important; }
-    .stApp, .stApp p, .stApp span, .stApp label, .stApp li, .stApp div[data-testid="stMarkdownContainer"] { color: var(--text) !important; }
+
+    .stApp, .stApp p, .stApp span, .stApp label, .stApp li,
+    .stApp div[data-testid="stMarkdownContainer"] { color: var(--text) !important; }
     .stApp div[data-testid="stCaptionContainer"], .stApp small { color: var(--muted) !important; }
     hr { border-color: var(--border) !important; margin: 0.5rem 0 !important; }
-    h1 { font-size: 1.35rem !important; font-weight: 800 !important; margin: 0.4rem 0 !important; text-align: center; background: linear-gradient(135deg, #eaf1fb 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.4px; }
+
+    h1 {
+        font-size: 1.35rem !important; font-weight: 800 !important;
+        margin: 0.4rem 0 !important; text-align: center;
+        background: linear-gradient(135deg, #eaf1fb 0%, #94a3b8 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        letter-spacing: 0.4px;
+    }
     h2 { font-size: 1rem !important; font-weight: 700 !important; margin: 0.4rem 0 !important; }
-    h3 { font-size: 0.88rem !important; font-weight: 700 !important; margin: 0.25rem 0 !important; border-left: 3px solid var(--green); padding-left: 0.5rem; }
+    h3 {
+        font-size: 0.88rem !important; font-weight: 700 !important;
+        margin: 0.25rem 0 !important; border-left: 3px solid var(--green);
+        padding-left: 0.5rem;
+    }
     p { font-size: 0.8rem !important; margin: 0.2rem 0 !important; line-height: 1.45; }
+
     div[data-testid="stNumberInput"] label p { font-size: 0.72rem !important; margin: 0 !important; font-weight: 600; }
-    div[data-testid="stNumberInput"] input { font-size: 0.85rem !important; padding: 0.35rem 0.5rem !important; height: 2rem !important; }
+    div[data-testid="stNumberInput"] input {
+        font-size: 0.85rem !important; padding: 0.35rem 0.5rem !important;
+        height: 2rem !important;
+    }
     div[data-testid="stNumberInput"] button { height: 2rem !important; }
     div[data-testid="stNumberInput"] > div { margin-bottom: 0.25rem !important; }
-    .stTextArea textarea, .stTextInput input, div[data-testid="stNumberInput"] input { background: var(--card) !important; color: var(--text) !important; border: 1.5px solid var(--border) !important; border-radius: 10px !important; transition: all 0.2s ease !important; }
-    .stTextArea textarea:focus, .stTextInput input:focus, div[data-testid="stNumberInput"] input:focus { border-color: var(--green) !important; box-shadow: 0 0 0 4px rgba(34,197,94,0.12) !important; }
-    div[data-baseweb="input"], div[data-baseweb="textarea"], div[data-baseweb="base-input"] { background: var(--card) !important; border-radius: 10px !important; }
-    .stButton button, div[data-testid="stDownloadButton"] button, div[data-testid="stFormSubmitButton"] button { background: linear-gradient(145deg, #18233a, #131c2e) !important; border: 1.5px solid var(--border) !important; border-radius: 10px !important; font-weight: 700 !important; font-size: 0.8rem !important; color: var(--text) !important; transition: all 0.2s ease !important; box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important; padding: 0.35rem 0.5rem !important; }
-    .stButton button p, div[data-testid="stDownloadButton"] button p, div[data-testid="stFormSubmitButton"] button p { color: var(--text) !important; font-weight: 700 !important; font-size: 0.8rem !important; }
-    .stButton button:hover, div[data-testid="stDownloadButton"] button:hover { border-color: var(--green) !important; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,0.2) !important; }
-    .stButton button[kind="primary"], button[data-testid="stBaseButton-primary"], button[data-testid="stBaseButton-primaryFormSubmit"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; border: none !important; box-shadow: 0 6px 20px rgba(34,197,94,0.35) !important; color: #04130a !important; }
-    .stButton button[kind="primary"] p, button[data-testid="stBaseButton-primary"] p, button[data-testid="stBaseButton-primaryFormSubmit"] p { color: #04130a !important; }
-    div[data-testid="stExpander"] { background: linear-gradient(145deg, var(--card), #0f1829) !important; border: 1px solid var(--border) !important; border-radius: 12px !important; overflow: hidden; margin-bottom: 8px !important; }
-    div[data-testid="stExpander"] details > summary { display: flex !important; align-items: center !important; gap: 6px !important; padding: 0.5rem 0.8rem !important; font-size: 0.82rem !important; font-weight: 700 !important; line-height: 1.3 !important; min-height: 38px !important; overflow: hidden !important; cursor: pointer !important; list-style: none !important; }
-    div[data-testid="stExpander"] details > summary::-webkit-details-marker { display: none !important; }
-    div[data-testid="stExpander"] details > summary::marker { display: none !important; content: "" !important; }
-    div[data-testid="stExpander"] details > summary:hover { background: rgba(34,197,94,0.05) !important; }
-    div[data-testid="stExpander"] details > summary > span[data-testid="stIconMaterial"], div[data-testid="stExpander"] details > summary > span.material-icons, div[data-testid="stExpander"] details > summary [data-testid="stIconMaterial"], div[data-testid="stExpander"] details > summary .material-icons, div[data-testid="stExpander"] details > summary [class*="material-symbols"], div[data-testid="stExpander"] details > summary [class*="Material"], div[data-testid="stExpander"] details > summary > svg + span, div[data-testid="stExpander"] details > summary > span[aria-hidden="true"] { display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; font-size: 0 !important; overflow: hidden !important; position: absolute !important; left: -9999px !important; opacity: 0 !important; pointer-events: none !important; }
-    div[data-testid="stExpander"] details > summary p, div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"], div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"] p { font-size: 0.82rem !important; font-weight: 700 !important; margin: 0 !important; line-height: 1.3 !important; color: #eaf1fb !important; white-space: normal !important; display: inline-block !important; }
-    div[data-testid="stExpander"] details > summary > div { display: flex !important; align-items: center !important; gap: 6px !important; flex-wrap: nowrap !important; }
-    div[data-testid="stExpander"] details > summary svg { flex-shrink: 0 !important; width: 14px !important; height: 14px !important; min-width: 14px !important; transition: transform 0.2s ease !important; }
-    div[data-testid="stExpander"] details > div[role="region"] { padding: 0.4rem 0.8rem 0.8rem 0.8rem !important; font-size: 0.82rem !important; }
+
+    .stTextArea textarea, .stTextInput input, div[data-testid="stNumberInput"] input {
+        background: var(--card) !important;
+        color: var(--text) !important;
+        border: 1.5px solid var(--border) !important;
+        border-radius: 10px !important;
+        transition: all 0.2s ease !important;
+    }
+    .stTextArea textarea:focus, .stTextInput input:focus,
+    div[data-testid="stNumberInput"] input:focus {
+        border-color: var(--green) !important;
+        box-shadow: 0 0 0 4px rgba(34,197,94,0.12) !important;
+    }
+    div[data-baseweb="input"], div[data-baseweb="textarea"], div[data-baseweb="base-input"] {
+        background: var(--card) !important; border-radius: 10px !important;
+    }
+
+    .stButton button, div[data-testid="stDownloadButton"] button,
+    div[data-testid="stFormSubmitButton"] button {
+        background: linear-gradient(145deg, #18233a, #131c2e) !important;
+        border: 1.5px solid var(--border) !important;
+        border-radius: 10px !important;
+        font-weight: 700 !important;
+        font-size: 0.8rem !important;
+        color: var(--text) !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
+        padding: 0.35rem 0.5rem !important;
+    }
+    .stButton button p, div[data-testid="stDownloadButton"] button p,
+    div[data-testid="stFormSubmitButton"] button p { color: var(--text) !important; font-weight: 700 !important; font-size: 0.8rem !important; }
+
+    .stButton button:hover, div[data-testid="stDownloadButton"] button:hover {
+        border-color: var(--green) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(34,197,94,0.2) !important;
+    }
+
+    .stButton button[kind="primary"],
+    button[data-testid="stBaseButton-primary"],
+    button[data-testid="stBaseButton-primaryFormSubmit"] {
+        background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+        border: none !important;
+        box-shadow: 0 6px 20px rgba(34,197,94,0.35) !important;
+        color: #04130a !important;
+    }
+    .stButton button[kind="primary"] p,
+    button[data-testid="stBaseButton-primary"] p,
+    button[data-testid="stBaseButton-primaryFormSubmit"] p { color: #04130a !important; }
+
+    div[data-testid="stMetric"] {
+        padding: 0.4rem !important;
+        background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    }
+    div[data-testid="stMetricValue"] { font-size: 1rem !important; font-weight: 800 !important; }
+    div[data-testid="stMetricLabel"] { font-size: 0.68rem !important; }
+
+    /* ============================================
+       EXPANDER — TAM DÜZELTİLDİ
+       keyboard_arrow_right ikonu gizlendi
+       ============================================ */
+    div[data-testid="stExpander"] {
+        background: linear-gradient(145deg, var(--card), #0f1829) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        overflow: hidden;
+        margin-bottom: 8px !important;
+    }
+
+    div[data-testid="stExpander"] details > summary {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        padding: 0.5rem 0.8rem !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        line-height: 1.3 !important;
+        min-height: 38px !important;
+        overflow: hidden !important;
+        cursor: pointer !important;
+        list-style: none !important;
+    }
+
+    div[data-testid="stExpander"] details > summary::-webkit-details-marker {
+        display: none !important;
+    }
+    div[data-testid="stExpander"] details > summary::marker {
+        display: none !important;
+        content: "" !important;
+    }
+
+    div[data-testid="stExpander"] details > summary:hover {
+        background: rgba(34,197,94,0.05) !important;
+    }
+
+    div[data-testid="stExpander"] details > summary > span[data-testid="stIconMaterial"],
+    div[data-testid="stExpander"] details > summary > span.material-icons,
+    div[data-testid="stExpander"] details > summary [data-testid="stIconMaterial"],
+    div[data-testid="stExpander"] details > summary .material-icons,
+    div[data-testid="stExpander"] details > summary [class*="material-symbols"],
+    div[data-testid="stExpander"] details > summary [class*="Material"],
+    div[data-testid="stExpander"] details > summary > svg + span,
+    div[data-testid="stExpander"] details > summary > span[aria-hidden="true"] {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        font-size: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+
+    div[data-testid="stExpander"] details > summary p,
+    div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"],
+    div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"] p {
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        line-height: 1.3 !important;
+        color: #eaf1fb !important;
+        white-space: normal !important;
+        display: inline-block !important;
+    }
+
+    div[data-testid="stExpander"] details > summary > div {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-wrap: nowrap !important;
+    }
+
+    div[data-testid="stExpander"] details > summary svg {
+        flex-shrink: 0 !important;
+        width: 14px !important;
+        height: 14px !important;
+        min-width: 14px !important;
+        transition: transform 0.2s ease !important;
+    }
+
+    div[data-testid="stExpander"] details > div[role="region"] {
+        padding: 0.4rem 0.8rem 0.8rem 0.8rem !important;
+        font-size: 0.82rem !important;
+    }
+
     div[data-testid="stAlert"] { padding: 0.4rem 0.7rem !important; font-size: 0.8rem !important; border-radius: 10px !important; }
-    div[data-testid="stFileUploader"] section { background: var(--card) !important; border: 1.5px dashed var(--border) !important; border-radius: 12px !important; }
+
+    div[data-testid="stFileUploader"] section {
+        background: var(--card) !important;
+        border: 1.5px dashed var(--border) !important;
+        border-radius: 12px !important;
+    }
+
     .st-key-fa_nav div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.3rem !important; }
-    .st-key-fa_nav div[data-testid="stColumn"], .st-key-fa_nav div[data-testid="column"] { min-width: 0 !important; flex: 1 1 0 !important; width: auto !important; }
-    .st-key-fa_nav .stButton button { padding: 0.3rem 0.25rem !important; height: 2.1rem !important; background: rgba(19,28,46,0.6) !important; backdrop-filter: blur(8px); border: 1px solid var(--border) !important; }
+    .st-key-fa_nav div[data-testid="stColumn"], .st-key-fa_nav div[data-testid="column"] {
+        min-width: 0 !important; flex: 1 1 0 !important; width: auto !important;
+    }
+    .st-key-fa_nav .stButton button {
+        padding: 0.3rem 0.25rem !important; height: 2.1rem !important;
+        background: rgba(19,28,46,0.6) !important;
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--border) !important;
+    }
     .st-key-fa_nav .stButton button p { font-size: 0.72rem !important; white-space: nowrap; font-weight: 700 !important; }
-    .st-key-fa_nav .stButton button[kind="primary"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; box-shadow: 0 4px 16px rgba(34,197,94,0.4) !important; }
-    .stApp .fa-hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #14243e 0%, #0d1729 100%); border: 1px solid var(--border); border-radius: 16px; padding: 14px 12px; margin: 6px 0 10px 0; text-align: center; box-shadow: 0 10px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(34,197,94,0.05) inset; }
-    .stApp .fa-hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 0%, rgba(34,197,94,0.15), transparent 60%); pointer-events: none; }
-    .stApp .fa-teams { display: flex; align-items: center; justify-content: space-between; gap: 6px; position: relative; z-index: 1; }
-    .stApp .fa-team { flex: 1; font-weight: 800; font-size: 0.9rem; line-height: 1.2; word-break: break-word; letter-spacing: 0.2px; }
-    .stApp .fa-score { font-size: 1.6rem; font-weight: 900; color: var(--green) !important; min-width: 80px; letter-spacing: 0.5px; text-shadow: 0 0 20px rgba(34,197,94,0.5); }
+    .st-key-fa_nav .stButton button[kind="primary"] {
+        background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+        box-shadow: 0 4px 16px rgba(34,197,94,0.4) !important;
+    }
+
+    .stApp .fa-hero {
+        position: relative; overflow: hidden;
+        background: linear-gradient(135deg, #14243e 0%, #0d1729 100%);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 14px 12px;
+        margin: 6px 0 10px 0;
+        text-align: center;
+        box-shadow: 0 10px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(34,197,94,0.05) inset;
+    }
+    .stApp .fa-hero::before {
+        content: "";
+        position: absolute; inset: 0;
+        background: radial-gradient(circle at 50% 0%, rgba(34,197,94,0.15), transparent 60%);
+        pointer-events: none;
+    }
+    .stApp .fa-teams {
+        display: flex; align-items: center; justify-content: space-between; gap: 6px;
+        position: relative; z-index: 1;
+    }
+    .stApp .fa-team {
+        flex: 1; font-weight: 800; font-size: 0.9rem; line-height: 1.2;
+        word-break: break-word; letter-spacing: 0.2px;
+    }
+    .stApp .fa-score {
+        font-size: 1.6rem; font-weight: 900; color: var(--green) !important;
+        min-width: 80px; letter-spacing: 0.5px;
+        text-shadow: 0 0 20px rgba(34,197,94,0.5);
+    }
     .stApp .fa-vs { font-size: 0.9rem; font-weight: 800; color: var(--muted) !important; min-width: 50px; letter-spacing: 1px; }
     .stApp .fa-sub { font-size: 0.68rem; color: var(--muted) !important; margin-top: 6px; letter-spacing: 0.2px; }
-    .stApp .fa-card { background: linear-gradient(145deg, var(--card), #0f1829); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; margin-bottom: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.25); transition: all 0.25s ease; }
+
+    .stApp .fa-card {
+        background: linear-gradient(145deg, var(--card), #0f1829);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        transition: all 0.25s ease;
+    }
     .stApp .fa-card:hover { border-color: rgba(34,197,94,0.3); transform: translateY(-1px); }
-    .stApp .fa-card.fa-pos { border-color: rgba(34,197,94,0.55); box-shadow: 0 8px 28px rgba(34,197,94,0.15), 0 0 0 1px rgba(34,197,94,0.15) inset; }
-    .stApp .fa-ttl { font-size: 0.68rem; font-weight: 800; color: var(--muted) !important; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+    .stApp .fa-card.fa-pos {
+        border-color: rgba(34,197,94,0.55);
+        box-shadow: 0 8px 28px rgba(34,197,94,0.15), 0 0 0 1px rgba(34,197,94,0.15) inset;
+    }
+    .stApp .fa-card.fa-neg { opacity: 0.9; }
+    .stApp .fa-ttl {
+        font-size: 0.68rem; font-weight: 800; color: var(--muted) !important;
+        text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;
+    }
     .stApp .fa-pickrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .stApp .fa-pick { font-size: 1rem; font-weight: 800; letter-spacing: 0.2px; }
     .stApp .fa-pct { font-size: 1.35rem; font-weight: 900; color: var(--green) !important; text-shadow: 0 0 16px rgba(34,197,94,0.4); }
@@ -267,13 +320,39 @@ st.markdown("""
     .stApp .fa-bar { position: relative; height: 8px; background: #1a2438; border-radius: 99px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); }
     .stApp .fa-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
     .stApp .fa-tick { position: absolute; top: 0; bottom: 0; width: 2px; background: #eaf1fb; opacity: 0.8; }
-    .stApp .fa-badge { display: inline-block; padding: 3px 9px; border-radius: 99px; font-size: 0.65rem; font-weight: 800; white-space: nowrap; letter-spacing: 0.3px; text-transform: uppercase; }
+
+    .stApp .fa-badge {
+        display: inline-block; padding: 3px 9px; border-radius: 99px;
+        font-size: 0.65rem; font-weight: 800; white-space: nowrap;
+        letter-spacing: 0.3px; text-transform: uppercase;
+    }
     .stApp .fa-b-green { background: rgba(34,197,94,0.15); color: var(--green) !important; border: 1px solid rgba(34,197,94,0.5); }
     .stApp .fa-b-yellow { background: rgba(245,158,11,0.15); color: var(--yellow) !important; border: 1px solid rgba(245,158,11,0.5); }
     .stApp .fa-b-red { background: rgba(239,68,68,0.15); color: var(--red) !important; border: 1px solid rgba(239,68,68,0.5); }
     .stApp .fa-b-gray { background: rgba(148,163,184,0.12); color: #94a3b8 !important; border: 1px solid rgba(148,163,184,0.35); }
-    .stApp .fa-mk { background: linear-gradient(145deg, var(--card), #0f1829); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; margin: -4px 0 8px 0; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
-    .stApp .fa-mk-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #1d2940; gap: 6px; flex-wrap: wrap; }
+
+    .stApp .fa-big { font-size: 1.6rem; font-weight: 900; line-height: 1.05; letter-spacing: -0.4px; }
+    .stApp .fa-g { color: var(--green) !important; }
+    .stApp .fa-y { color: var(--yellow) !important; }
+    .stApp .fa-r { color: var(--red) !important; }
+
+    .stApp .fa-ci { position: relative; height: 8px; background: #1a2438; border-radius: 99px; margin-top: 8px; }
+    .stApp .fa-ci-fill { position: absolute; top: 0; bottom: 0; background: rgba(148,163,184,0.4); border-radius: 99px; }
+    .stApp .fa-ci-dot { position: absolute; top: -3px; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid #0b1220; margin-left: -7px; box-shadow: 0 0 12px currentColor; }
+
+    .stApp .fa-mk {
+        background: linear-gradient(145deg, var(--card), #0f1829);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 8px 12px;
+        margin: -4px 0 8px 0;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    .stApp .fa-mk-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 6px 0; border-bottom: 1px dashed #1d2940;
+        gap: 6px; flex-wrap: wrap;
+    }
     .stApp .fa-mk-row:last-child { border-bottom: none; }
     .stApp .fa-mk-lbl { font-size: 0.75rem; font-weight: 800; color: #cbd5e1 !important; min-width: 55px; }
     .stApp .fa-mk-pick { font-size: 0.86rem; font-weight: 800; }
@@ -283,87 +362,241 @@ st.markdown("""
     .stApp .fa-mk-badge { font-size: 0.6rem; font-weight: 800; padding: 2px 7px; border-radius: 99px; margin-left: 4px; letter-spacing: 0.2px; }
     .stApp .fa-mk-badge.ok { background: rgba(34,197,94,0.15); color: var(--green) !important; border: 1px solid rgba(34,197,94,0.5); }
     .stApp .fa-mk-badge.no { background: rgba(148,163,184,0.12); color: #94a3b8 !important; border: 1px solid rgba(148,163,184,0.35); }
-    .stApp .fa-locked { position: relative; overflow: hidden; background: linear-gradient(135deg, #14243e 0%, #0d1729 100%); border: 1px solid var(--border); border-radius: 16px; padding: 14px 12px; margin: 6px 0 10px 0; text-align: center; opacity: 0.7; }
-    .stApp .fa-locked::after { content: "🔒"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; opacity: 0.15; }
-    .stApp .fa-locked-teams { display: flex; align-items: center; justify-content: space-between; gap: 6px; filter: blur(3px); }
-    .stApp .fa-locked-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(59,130,246,0.08)); z-index: 2; }
-    .stApp .fa-locked-text { background: linear-gradient(135deg, #16a34a, #22c55e); color: #04130a !important; font-weight: 900; font-size: 0.85rem; padding: 10px 20px; border-radius: 99px; box-shadow: 0 8px 24px rgba(34,197,94,0.4); letter-spacing: 0.5px; }
+    .stApp .fa-mk-info { font-size: 0.66rem; color: var(--muted) !important; }
+
     .login-hero { text-align: center; padding: 40px 10px 24px 10px; position: relative; }
-    .login-logo { font-size: 4.2rem; line-height: 1; margin-bottom: 14px; display: inline-block; filter: drop-shadow(0 0 30px rgba(34,197,94,0.6)); animation: logoPulse 3s ease-in-out infinite; }
-    @keyframes logoPulse { 0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 20px rgba(34,197,94,0.5)); } 50% { transform: scale(1.08) rotate(-3deg); filter: drop-shadow(0 0 40px rgba(34,197,94,0.9)); } }
-    .login-title { font-size: 2rem !important; font-weight: 900 !important; background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0 !important; padding: 0 !important; letter-spacing: 1.2px; border: none !important; text-align: center !important; }
-    .login-subtitle { font-size: 0.82rem; color: var(--muted) !important; margin-top: 8px; letter-spacing: 0.5px; font-weight: 500; }
-    div[data-testid="stForm"] { background: linear-gradient(145deg, rgba(19,28,46,0.9), rgba(11,18,32,0.98)) !important; border: 1.5px solid rgba(34,197,94,0.2) !important; border-radius: 20px !important; padding: 22px 18px !important; box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(34,197,94,0.05) inset !important; backdrop-filter: blur(16px); }
-    div[data-testid="stForm"] label p { font-size: 0.78rem !important; font-weight: 700 !important; color: #cbd5e1 !important; letter-spacing: 0.3px; margin-bottom: 5px !important; }
-    div[data-testid="stForm"] input { height: 42px !important; font-size: 0.9rem !important; padding: 0 14px !important; background: rgba(11,18,32,0.9) !important; border: 1.5px solid var(--border) !important; border-radius: 10px !important; transition: all 0.2s ease; }
-    div[data-testid="stForm"] input:focus { border-color: var(--green) !important; box-shadow: 0 0 0 4px rgba(34,197,94,0.15) !important; outline: none !important; }
-    div[data-testid="stForm"] button { height: 42px !important; font-size: 0.9rem !important; font-weight: 800 !important; border-radius: 10px !important; letter-spacing: 0.3px; transition: all 0.2s ease; }
-    div[data-testid="stForm"] button[kind="primary"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; box-shadow: 0 8px 24px rgba(34,197,94,0.4) !important; border: none !important; }
-    div[data-testid="stForm"] button[kind="primary"]:hover { box-shadow: 0 12px 32px rgba(34,197,94,0.55) !important; transform: translateY(-2px); }
-    div[data-testid="stForm"] button[kind="secondary"] { background: rgba(30,41,59,0.6) !important; border: 1.5px solid var(--border) !important; }
-    div[data-testid="stForm"] button[kind="secondary"]:hover { border-color: var(--blue) !important; background: rgba(59,130,246,0.1) !important; }
-    .login-divider { display: flex; align-items: center; gap: 12px; margin: 12px 0 8px 0; color: #64748b !important; font-size: 0.68rem; font-weight: 800; letter-spacing: 4px; justify-content: center; }
-    .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border) 50%, transparent); }
-    .login-footer { text-align: center; margin-top: 24px; font-size: 0.7rem; color: #64748b !important; letter-spacing: 0.5px; }
+    .login-logo {
+        font-size: 4.2rem; line-height: 1; margin-bottom: 14px; display: inline-block;
+        filter: drop-shadow(0 0 30px rgba(34,197,94,0.6));
+        animation: logoPulse 3s ease-in-out infinite;
+    }
+    @keyframes logoPulse {
+        0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 20px rgba(34,197,94,0.5)); }
+        50% { transform: scale(1.08) rotate(-3deg); filter: drop-shadow(0 0 40px rgba(34,197,94,0.9)); }
+    }
+    .login-title {
+        font-size: 2rem !important; font-weight: 900 !important;
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; margin: 0 !important; padding: 0 !important;
+        letter-spacing: 1.2px; border: none !important; text-align: center !important;
+    }
+    .login-subtitle {
+        font-size: 0.82rem; color: var(--muted) !important;
+        margin-top: 8px; letter-spacing: 0.5px; font-weight: 500;
+    }
+
+    div[data-testid="stForm"] {
+        background: linear-gradient(145deg, rgba(19,28,46,0.9), rgba(11,18,32,0.98)) !important;
+        border: 1.5px solid rgba(34,197,94,0.2) !important;
+        border-radius: 20px !important;
+        padding: 22px 18px !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(34,197,94,0.05) inset !important;
+        backdrop-filter: blur(16px);
+    }
+    div[data-testid="stForm"] label p {
+        font-size: 0.78rem !important; font-weight: 700 !important;
+        color: #cbd5e1 !important; letter-spacing: 0.3px; margin-bottom: 5px !important;
+    }
+    div[data-testid="stForm"] input {
+        height: 42px !important; font-size: 0.9rem !important; padding: 0 14px !important;
+        background: rgba(11,18,32,0.9) !important;
+        border: 1.5px solid var(--border) !important;
+        border-radius: 10px !important;
+        transition: all 0.2s ease;
+    }
+    div[data-testid="stForm"] input:focus {
+        border-color: var(--green) !important;
+        box-shadow: 0 0 0 4px rgba(34,197,94,0.15) !important;
+        outline: none !important;
+    }
+    div[data-testid="stForm"] button {
+        height: 42px !important; font-size: 0.9rem !important;
+        font-weight: 800 !important; border-radius: 10px !important;
+        letter-spacing: 0.3px; transition: all 0.2s ease;
+    }
+    div[data-testid="stForm"] button[kind="primary"] {
+        background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+        box-shadow: 0 8px 24px rgba(34,197,94,0.4) !important;
+        border: none !important;
+    }
+    div[data-testid="stForm"] button[kind="primary"]:hover {
+        box-shadow: 0 12px 32px rgba(34,197,94,0.55) !important;
+        transform: translateY(-2px);
+    }
+    div[data-testid="stForm"] button[kind="secondary"] {
+        background: rgba(30,41,59,0.6) !important;
+        border: 1.5px solid var(--border) !important;
+    }
+    div[data-testid="stForm"] button[kind="secondary"]:hover {
+        border-color: var(--blue) !important;
+        background: rgba(59,130,246,0.1) !important;
+    }
+
+    .login-divider {
+        display: flex; align-items: center; gap: 12px;
+        margin: 12px 0 8px 0; color: #64748b !important;
+        font-size: 0.68rem; font-weight: 800; letter-spacing: 4px;
+        justify-content: center;
+    }
+    .login-divider::before, .login-divider::after {
+        content: ""; flex: 1; height: 1px;
+        background: linear-gradient(90deg, transparent, var(--border) 50%, transparent);
+    }
+
+    .login-features { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 20px; padding: 0 8px; }
+    .lf-chip {
+        display: inline-block; padding: 5px 12px;
+        background: rgba(34,197,94,0.08);
+        border: 1px solid rgba(34,197,94,0.3);
+        border-radius: 99px; font-size: 0.7rem; font-weight: 700;
+        color: #cbd5e1 !important; letter-spacing: 0.3px;
+        transition: all 0.2s ease;
+    }
+    .lf-chip:hover {
+        background: rgba(34,197,94,0.15);
+        border-color: var(--green);
+        transform: translateY(-2px);
+    }
+    .login-footer {
+        text-align: center; margin-top: 24px; font-size: 0.7rem;
+        color: #64748b !important; letter-spacing: 0.5px;
+    }
     .login-footer b { color: var(--green) !important; font-weight: 800; }
-    .mh-hero { position: relative; overflow: hidden; text-align: center; padding: 28px 14px 22px 14px; background: linear-gradient(135deg, rgba(22,35,61,0.9), rgba(15,26,46,0.95)); border: 1.5px solid rgba(34,197,94,0.25); border-radius: 20px; margin: 6px 0 16px 0; box-shadow: 0 16px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(34,197,94,0.06) inset; }
-    .mh-hero::before { content: ""; position: absolute; top: -60%; left: -60%; width: 220%; height: 220%; background: radial-gradient(circle at 50% 50%, rgba(34,197,94,0.18), transparent 55%); animation: mhGlow 6s ease-in-out infinite; pointer-events: none; }
-    @keyframes mhGlow { 0%, 100% { opacity: 0.5; transform: scale(1) rotate(0deg); } 50% { opacity: 1; transform: scale(1.2) rotate(25deg); } }
-    .mh-hero-icon { font-size: 3rem; line-height: 1; margin-bottom: 10px; display: inline-block; filter: drop-shadow(0 0 24px rgba(34,197,94,0.65)); animation: logoPulse 3s ease-in-out infinite; position: relative; z-index: 1; }
-    .mh-hero-title { font-size: 1.7rem; font-weight: 900; background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: 1px; position: relative; z-index: 1; margin: 0; }
-    .mh-hero-sub { font-size: 0.8rem; color: var(--muted); margin-top: 8px; letter-spacing: 0.4px; position: relative; z-index: 1; }
-    .mh-hero-badge { display: inline-block; margin-top: 12px; padding: 4px 14px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.45); border-radius: 99px; font-size: 0.7rem; font-weight: 800; color: var(--green) !important; letter-spacing: 0.8px; position: relative; z-index: 1; }
-    .mh-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 16px 0; }
-    .mh-stat { position: relative; background: linear-gradient(145deg, #16233d, #0f1a2e); border: 1px solid var(--border); border-radius: 16px; padding: 14px 10px 12px 10px; text-align: center; overflow: hidden; transition: all 0.25s ease; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
-    .mh-stat::after { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #22c55e, #3b82f6); }
+
+    .mh-hero {
+        position: relative; overflow: hidden; text-align: center;
+        padding: 28px 14px 22px 14px;
+        background: linear-gradient(135deg, rgba(22,35,61,0.9), rgba(15,26,46,0.95));
+        border: 1.5px solid rgba(34,197,94,0.25);
+        border-radius: 20px;
+        margin: 6px 0 16px 0;
+        box-shadow: 0 16px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(34,197,94,0.06) inset;
+    }
+    .mh-hero::before {
+        content: "";
+        position: absolute; top: -60%; left: -60%;
+        width: 220%; height: 220%;
+        background: radial-gradient(circle at 50% 50%, rgba(34,197,94,0.18), transparent 55%);
+        animation: mhGlow 6s ease-in-out infinite;
+        pointer-events: none;
+    }
+    @keyframes mhGlow {
+        0%, 100% { opacity: 0.5; transform: scale(1) rotate(0deg); }
+        50% { opacity: 1; transform: scale(1.2) rotate(25deg); }
+    }
+    .mh-hero-icon {
+        font-size: 3rem; line-height: 1; margin-bottom: 10px;
+        display: inline-block;
+        filter: drop-shadow(0 0 24px rgba(34,197,94,0.65));
+        animation: logoPulse 3s ease-in-out infinite;
+        position: relative; z-index: 1;
+    }
+    .mh-hero-title {
+        font-size: 1.7rem; font-weight: 900;
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; letter-spacing: 1px;
+        position: relative; z-index: 1; margin: 0;
+    }
+    .mh-hero-sub {
+        font-size: 0.8rem; color: var(--muted);
+        margin-top: 8px; letter-spacing: 0.4px;
+        position: relative; z-index: 1;
+    }
+    .mh-hero-badge {
+        display: inline-block; margin-top: 12px; padding: 4px 14px;
+        background: rgba(34,197,94,0.12);
+        border: 1px solid rgba(34,197,94,0.45);
+        border-radius: 99px; font-size: 0.7rem; font-weight: 800;
+        color: var(--green) !important; letter-spacing: 0.8px;
+        position: relative; z-index: 1;
+    }
+
+    .mh-stat-grid {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 10px; margin: 0 0 16px 0;
+    }
+    .mh-stat {
+        position: relative;
+        background: linear-gradient(145deg, #16233d, #0f1a2e);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 14px 10px 12px 10px;
+        text-align: center;
+        overflow: hidden;
+        transition: all 0.25s ease;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    }
+    .mh-stat:hover {
+        transform: translateY(-3px);
+        border-color: rgba(34,197,94,0.4);
+        box-shadow: 0 12px 32px rgba(34,197,94,0.15);
+    }
+    .mh-stat::after {
+        content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, #22c55e, #3b82f6);
+    }
     .mh-stat-icon { font-size: 1.3rem; margin-bottom: 4px; }
-    .mh-stat-num { font-size: 1.8rem; font-weight: 900; color: var(--green) !important; line-height: 1; letter-spacing: -0.8px; }
-    .mh-stat-lbl { font-size: 0.65rem; color: var(--muted) !important; margin-top: 6px; letter-spacing: 0.7px; text-transform: uppercase; font-weight: 800; }
-    .mh-info { background: linear-gradient(145deg, rgba(19,28,46,0.7), rgba(11,18,32,0.9)); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; margin-top: 14px; font-size: 0.75rem; color: var(--muted) !important; line-height: 1.6; }
+    .mh-stat-num {
+        font-size: 1.8rem; font-weight: 900; color: var(--green) !important;
+        line-height: 1; letter-spacing: -0.8px;
+        text-shadow: 0 0 20px rgba(34,197,94,0.4);
+    }
+    .mh-stat-lbl {
+        font-size: 0.65rem; color: var(--muted) !important;
+        margin-top: 6px; letter-spacing: 0.7px;
+        text-transform: uppercase; font-weight: 800;
+    }
+
+    .mh-section-title {
+        font-size: 0.75rem; color: var(--muted) !important;
+        text-transform: uppercase; letter-spacing: 1.2px;
+        font-weight: 800; margin: 4px 0 8px 2px;
+        text-align: left; border-left: 3px solid var(--green);
+        padding-left: 8px;
+    }
+
+    .st-key-fa_misafir_nav .stButton button {
+        height: 68px !important; font-size: 0.95rem !important;
+        font-weight: 900 !important; border-radius: 16px !important;
+        letter-spacing: 0.4px;
+        box-shadow: 0 10px 28px rgba(34,197,94,0.3) !important;
+        transition: all 0.25s ease;
+    }
+    .st-key-fa_misafir_nav .stButton button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 40px rgba(34,197,94,0.5) !important;
+    }
+    .st-key-fa_misafir_nav .stButton button p {
+        font-size: 0.95rem !important; font-weight: 900 !important;
+    }
+
+    .mh-info {
+        background: linear-gradient(145deg, rgba(19,28,46,0.7), rgba(11,18,32,0.9));
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px 14px;
+        margin-top: 14px;
+        font-size: 0.75rem; color: var(--muted) !important;
+        line-height: 1.6;
+    }
     .mh-info b { color: var(--green) !important; }
+
     ::-webkit-scrollbar { width: 7px; height: 7px; }
     ::-webkit-scrollbar-track { background: var(--bg-1); }
     ::-webkit-scrollbar-thumb { background: #2a3a56; border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--green); }
+
     section[data-testid="stSidebar"] { background: var(--bg-1) !important; border-right: 1px solid var(--border); }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    .stApp .fa-card, .stApp .fa-hero, .stApp .fa-mk, .mh-stat, .stApp .fa-locked { animation: fadeInUp 0.4s ease-out; }
-    .stApp div[data-testid="stCheckbox"] { background: linear-gradient(145deg, rgba(19,28,46,0.6), rgba(11,18,32,0.8)); border: 1.5px solid var(--border); border-radius: 12px; padding: 10px 12px; margin: 10px 0; }
-    .stApp div[data-testid="stCheckbox"] label p { font-size: 0.78rem !important; line-height: 1.5 !important; }
-    .stApp .fa-bildirim { background: linear-gradient(145deg, var(--card), #0f1829); border-left: 4px solid var(--green); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
-    .stApp .fa-bildirim.fa-bildirim-iptal { border-left-color: #ef4444; }
-    .stApp .fa-bildirim.fa-bildirim-sikayet { border-left-color: #f59e0b; }
-    .stApp .fa-bildirim.fa-bildirim-gorus { border-left-color: #3b82f6; }
-    .stApp .fa-bildirim.fa-bildirim-diger { border-left-color: #94a3b8; }
-    .stApp .fa-bildirim-ttl { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .stApp .fa-bildirim-msg { font-size: 0.85rem; color: #eaf1fb !important; line-height: 1.5; margin: 6px 0; }
-    .stApp .fa-bildirim-meta { font-size: 0.68rem; color: var(--muted) !important; }
-    .st-key-fa_nav .stButton button { min-height: 2.9rem !important; padding: 0.55rem 0.4rem !important; }
-    .st-key-fa_nav .stButton button p { font-size: 0.88rem !important; font-weight: 800 !important; }
-    .stApp .fa-donut-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0 8px 0; }
-    .stApp .fa-donut-kart { background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95)); border: 1px solid #1d2940; border-radius: 16px; padding: 12px 6px 10px 6px; text-align: center; position: relative; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
-    .stApp .fa-donut-kart:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-3px); box-shadow: 0 10px 28px rgba(34,197,94,0.15); }
-    .stApp .fa-donut-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c); }
-    .stApp .fa-donut-ttl { font-size: 0.62rem; color: #8fa0bd !important; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; }
-    .stApp .fa-donut-svg { width: 100%; max-width: 82px; height: auto; margin: 0 auto; display: block; }
-    .stApp .fa-donut-sub { font-size: 0.62rem; color: #64748b !important; margin-top: 8px; font-weight: 700; }
-    .stApp .fa-donut-sub b { color: #eaf1fb !important; }
-    .stApp .mh-hero-ust { font-size: 0.7rem; color: #8fa0bd !important; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; margin-bottom: 8px; opacity: 0.7; }
-    .stApp .fa-uye-link { text-align: center; font-size: 0.78rem; color: #8fa0bd !important; margin-top: 8px; }
-    .stApp .fa-uye-link b { color: #22c55e !important; font-weight: 800; }
-    .stApp .fa-ai-kart { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid rgba(59,130,246,0.35); border-radius: 16px; padding: 16px 16px 12px 16px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(59,130,246,0.06) inset; animation: fadeInUp 0.4s ease-out; }
-    .stApp .fa-ai-baslik { font-size: 0.78rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #3b82f6 !important; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(59,130,246,0.3); }
-    .stApp .fa-ai-bolum { margin-bottom: 14px; }
-    .stApp .fa-ai-bolum:last-child { margin-bottom: 4px; }
-    .stApp .fa-ai-bolum-baslik { font-size: 0.72rem; font-weight: 900; letter-spacing: 0.8px; color: #8fa0bd !important; text-transform: uppercase; margin-bottom: 6px; }
-    .stApp .fa-ai-bolum-metin { font-size: 0.86rem; line-height: 1.7; color: #eaf1fb !important; text-align: justify; letter-spacing: 0.1px; }
-    .stApp .fa-ai-bolum-metin b { color: #22c55e !important; font-weight: 800; }
-    .stApp .fa-ai-bolum-metin .ev { color: #3b82f6 !important; font-weight: 800; }
-    .stApp .fa-ai-bolum-metin .dep { color: #f59e0b !important; font-weight: 800; }
-    .stApp .fa-ai-bolum-metin .vurgu { color: #22c55e !important; font-weight: 800; }
-    .stApp .fa-ai-bolum-metin .uyari { color: #f59e0b !important; font-weight: 800; }
-    .stApp .fa-ai-bolum-metin .kotu { color: #ef4444 !important; font-weight: 800; }
-    .stApp .fa-ai-karar { background: rgba(34,197,94,0.08); border-left: 3px solid #22c55e; border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: 0.84rem; line-height: 1.55; color: #eaf1fb !important; }
-    .stApp .fa-ai-karar b { color: #22c55e !important; font-weight: 900; }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .stApp .fa-card, .stApp .fa-hero, .stApp .fa-mk, .mh-stat {
+        animation: fadeInUp 0.4s ease-out;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -374,48 +607,20 @@ st.markdown("""
 GECMIS_DOSYA = "gecmis.json"
 GELECEK_DOSYA = "gelecek.json"
 AYARLAR_DOSYA = "ayarlar.json"
-KULLANICI_DOSYA = "kullanicilar.json"
-BEKLEYEN_DOSYA = "bekleyen_odemeler.json"
-BILDIRIM_DOSYA = "bildirimler.json"
-OTOMATIK_LOG_DOSYA = "otomatik_log.json"
-
-ADMIN_KULLANICI_ADI = "admin52"
+ADMIN_SIFRE = "Mg153759"
 
 
-def _admin_sifre_al():
-    try:
-        if "ADMIN_SIFRE" in st.secrets:
-            return st.secrets["ADMIN_SIFRE"]
-    except Exception:
-        pass
-    return os.environ.get("ADMIN_SIFRE", "Mg153759")
-
-ADMIN_SIFRE = _admin_sifre_al()
-
-
-def sifre_hashle(sifre, salt=None):
-    if salt is None:
-        salt = _secrets.token_hex(16)
-    h = hashlib.sha256((salt + sifre).encode("utf-8")).hexdigest()
-    return salt, h
-
-
-def sifre_dogrula(sifre, salt, kayitli_hash):
-    _, h = sifre_hashle(sifre, salt)
-    return h == kayitli_hash
-
-
-def _yukle_json(dosya, varsayilan):
+def _yukle(dosya):
     try:
         if os.path.exists(dosya):
             with open(dosya, "r", encoding="utf-8") as f:
                 return json.load(f)
     except Exception:
         pass
-    return varsayilan
+    return []
 
 
-def _kaydet_json(dosya, veri):
+def _kaydet(dosya, veri):
     try:
         with open(dosya, "w", encoding="utf-8") as f:
             json.dump(veri, f, ensure_ascii=False, indent=2)
@@ -423,214 +628,173 @@ def _kaydet_json(dosya, veri):
         pass
 
 
-def kullanicilar_yukle(): return _yukle_json(KULLANICI_DOSYA, {})
-def kullanicilar_kaydet(v): _kaydet_json(KULLANICI_DOSYA, v)
-def bekleyen_yukle(): return _yukle_json(BEKLEYEN_DOSYA, {})
-def bekleyen_kaydet(v): _kaydet_json(BEKLEYEN_DOSYA, v)
-def bildirimler_yukle(): return _yukle_json(BILDIRIM_DOSYA, [])
-def bildirimler_kaydet(v): _kaydet_json(BILDIRIM_DOSYA, v)
-def otomatik_log_yukle(): return _yukle_json(OTOMATIK_LOG_DOSYA, {})
-def otomatik_log_kaydet(v): _kaydet_json(OTOMATIK_LOG_DOSYA, v)
-
-
-def kullanici_ekle(kullanici_adi, sifre):
-    kullanicilar = kullanicilar_yukle()
-    if kullanici_adi in kullanicilar:
-        return False, "Bu kullanıcı adı zaten alınmış."
-    salt, s_hash = sifre_hashle(sifre)
-    kullanicilar[kullanici_adi] = {
-        "salt": salt, "sifre_hash": s_hash,
-        "kayit_tarihi": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "abonelik_bitis": None, "son_odeme": None, "son_odeme_gun": 0,
-        "yasal_kabul_tarihi": datetime.now().strftime("%Y-%m-%d %H:%M"),
-    }
-    kullanicilar_kaydet(kullanicilar)
-    return True, "Kayıt başarılı."
-
-
-def kullanici_dogrula(kullanici_adi, sifre):
-    kullanicilar = kullanicilar_yukle()
-    k = kullanicilar.get(kullanici_adi)
-    if not k: return False
-    return sifre_dogrula(sifre, k["salt"], k["sifre_hash"])
-
-
-def abonelik_aktif_mi(kullanici_adi):
-    kullanicilar = kullanicilar_yukle()
-    k = kullanicilar.get(kullanici_adi)
-    if not k: return False
-    bitis_str = k.get("abonelik_bitis")
-    if not bitis_str: return False
-    try:
-        return datetime.strptime(bitis_str, "%Y-%m-%d") >= datetime.now()
-    except Exception:
-        return False
-
-
-def abonelik_aktif_et(kullanici_adi, gun_sayisi):
-    kullanicilar = kullanicilar_yukle()
-    if kullanici_adi not in kullanicilar:
-        return False, "Kullanıcı bulunamadı."
-    k = kullanicilar[kullanici_adi]
-    mevcut_bitis = None
-    if k.get("abonelik_bitis"):
-        try: mevcut_bitis = datetime.strptime(k["abonelik_bitis"], "%Y-%m-%d")
-        except Exception: mevcut_bitis = None
-    bugun = datetime.now()
-    baslangic = mevcut_bitis if (mevcut_bitis and mevcut_bitis > bugun) else bugun
-    yeni_bitis = baslangic + timedelta(days=int(gun_sayisi))
-    k["abonelik_bitis"] = yeni_bitis.strftime("%Y-%m-%d")
-    k["son_odeme"] = bugun.strftime("%Y-%m-%d %H:%M")
-    k["son_odeme_gun"] = int(gun_sayisi)
-    kullanicilar_kaydet(kullanicilar)
-    return True, yeni_bitis.strftime("%Y-%m-%d")
-
-
-def abonelik_iptal_et(kullanici_adi):
-    kullanicilar = kullanicilar_yukle()
-    if kullanici_adi not in kullanicilar: return False
-    kullanicilar[kullanici_adi]["abonelik_bitis"] = None
-    kullanicilar_kaydet(kullanicilar)
-    return True
-
-
-def kullanici_sil(kullanici_adi):
-    kullanicilar = kullanicilar_yukle()
-    if kullanici_adi in kullanicilar:
-        del kullanicilar[kullanici_adi]
-        kullanicilar_kaydet(kullanicilar)
-        bd = bildirimler_yukle()
-        bd = [b for b in bd if b.get("kullanici") != kullanici_adi]
-        bildirimler_kaydet(bd)
-        return True
-    return False
-
-
-BILDIRIM_TIPLERI = {
-    "iptal": {"ikon": "🚫", "isim": "Abonelik İptal Talebi", "sinif": "fa-bildirim-iptal"},
-    "sikayet": {"ikon": "⚠️", "isim": "Şikayet", "sinif": "fa-bildirim-sikayet"},
-    "gorus": {"ikon": "💬", "isim": "Görüş / Öneri", "sinif": "fa-bildirim-gorus"},
-    "diger": {"ikon": "📩", "isim": "Diğer", "sinif": "fa-bildirim-diger"},
-}
-
-
-def bildirim_ekle(kullanici_adi, tip, konu, mesaj):
-    bd = bildirimler_yukle()
-    yeni = {"id": int(time.time() * 1000), "kullanici": kullanici_adi, "tip": tip, "konu": konu, "mesaj": mesaj, "tarih": datetime.now().strftime("%Y-%m-%d %H:%M"), "durum": "okunmadi", "cevap": ""}
-    bd.append(yeni)
-    bildirimler_kaydet(bd)
-    return yeni["id"]
-
-
-def bildirim_guncelle(bid, **kwargs):
-    bd = bildirimler_yukle()
-    for b in bd:
-        if b.get("id") == bid:
-            b.update(kwargs)
-            break
-    bildirimler_kaydet(bd)
-
-
-def bildirim_sil(bid):
-    bd = bildirimler_yukle()
-    bd = [b for b in bd if b.get("id") != bid]
-    bildirimler_kaydet(bd)
-
-
-def kullanici_bildirimleri(kullanici_adi):
-    bd = bildirimler_yukle()
-    return [b for b in bd if b.get("kullanici") == kullanici_adi]
-
-
-def gecmis_yukle(): return _yukle_json(GECMIS_DOSYA, [])
-def gecmis_kaydet(v): _kaydet_json(GECMIS_DOSYA, v)
-def gelecek_yukle(): return _yukle_json(GELECEK_DOSYA, [])
-def gelecek_kaydet(v): _kaydet_json(GELECEK_DOSYA, v)
+def gecmis_yukle(): return _yukle(GECMIS_DOSYA)
+def gecmis_kaydet(v): _kaydet(GECMIS_DOSYA, v)
+def gelecek_yukle(): return _yukle(GELECEK_DOSYA)
+def gelecek_kaydet(v): _kaydet(GELECEK_DOSYA, v)
 
 
 def ayarlar_yukle():
-    v = {"ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0, "esik_1": 55.0, "esik_x": 55.0, "esik_2": 55.0, "iban": "TR00 0000 0000 0000 0000 0000 00", "hesap_sahibi": "ADINIZ SOYADINIZ", "fiyat_haftalik": 49.0, "fiyat_aylik": 149.0, "fiyat_yillik": 999.0, "ucretsiz_kotasi": 3}
+    varsayilan = {
+        "ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0,
+        "esik_1": 55.0, "esik_x": 55.0, "esik_2": 55.0,
+    }
     try:
         if os.path.exists(AYARLAR_DOSYA):
             with open(AYARLAR_DOSYA, "r", encoding="utf-8") as f:
-                y = json.load(f)
-                if "1x2" in y and "esik_1" not in y:
-                    e = float(y["1x2"]); y["esik_1"] = e; y["esik_x"] = e; y["esik_2"] = e
-                v.update(y)
-    except Exception: pass
-    return v
+                yuklenen = json.load(f)
+                if "1x2" in yuklenen and "esik_1" not in yuklenen:
+                    eski = float(yuklenen["1x2"])
+                    yuklenen["esik_1"] = eski
+                    yuklenen["esik_x"] = eski
+                    yuklenen["esik_2"] = eski
+                varsayilan.update(yuklenen)
+    except Exception:
+        pass
+    return varsayilan
 
 
-def ayarlar_kaydet(v): _kaydet_json(AYARLAR_DOSYA, v)
+def ayarlar_kaydet(esikler):
+    try:
+        with open(AYARLAR_DOSYA, "w", encoding="utf-8") as f:
+            json.dump(esikler, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 
 
-def saat_2_saat_ileri(s):
-    if not s: return s
-    m = re.match(r'^(\d{1,2}):(\d{2})$', str(s).strip())
-    if not m: return s
-    try: return f"{(int(m.group(1)) + 2) % 24:02d}:{int(m.group(2)):02d}"
-    except Exception: return s
+# ==========================================
+# SAAT İŞLEMLERİ (YENİ)
+# ==========================================
+def saat_2_saat_ileri(saat_str):
+    """Saat metnini (HH:MM) 2 saat ileri kaydırır."""
+    if not saat_str:
+        return saat_str
+    m = re.match(r'^(\d{1,2}):(\d{2})$', str(saat_str).strip())
+    if not m:
+        return saat_str
+    try:
+        saat = int(m.group(1))
+        dakika = int(m.group(2))
+        yeni_saat = (saat + 2) % 24
+        return f"{yeni_saat:02d}:{dakika:02d}"
+    except Exception:
+        return saat_str
 
 
 def saat_sirala_anahtari(g):
+    """Gelecek maçları sıralamak için (yıl, ay, gün, saat, dakika) tuple'ı üretir.
+    Tarih/saat yoksa en sona atar."""
     try:
         v = g.get("veri", {}) if isinstance(g, dict) else {}
-        tarih = str(v.get("tarih", "")).strip(); saat = str(v.get("saat", "")).strip()
+        tarih = str(v.get("tarih", "")).strip()
+        saat = str(v.get("saat", "")).strip()
+
         gun, ay, yil = 99, 99, 9999
         if tarih:
             m = re.match(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', tarih)
             if m:
-                gun = int(m.group(1)); ay = int(m.group(2)); yr = m.group(3); yil = int(yr) if len(yr) == 4 else 2000 + int(yr)
-        sh, sm = 99, 99
+                gun = int(m.group(1))
+                ay = int(m.group(2))
+                y_raw = m.group(3)
+                yil = int(y_raw) if len(y_raw) == 4 else 2000 + int(y_raw)
+
+        sa_h, sa_m = 99, 99
         if saat:
             m2 = re.match(r'^(\d{1,2}):(\d{2})$', saat)
-            if m2: sh = int(m2.group(1)); sm = int(m2.group(2))
-        return (yil, ay, gun, sh, sm)
-    except Exception: return (9999, 99, 99, 99, 99)
+            if m2:
+                sa_h = int(m2.group(1))
+                sa_m = int(m2.group(2))
+
+        return (yil, ay, gun, sa_h, sa_m)
+    except Exception:
+        return (9999, 99, 99, 99, 99)
 
 
-ESIK_YUKSEK = 65.0; ESIK_ORTA = 55.0; ESIK_BELIRSIZ = 50.0; MONTE_CARLO_N = 10000
+# ==========================================
+# EŞİKLER
+# ==========================================
+ESIK_YUKSEK = 65.0
+ESIK_ORTA = 55.0
+ESIK_BELIRSIZ = 50.0
+
+MONTE_CARLO_N = 10000
 
 
-VARSAYILAN_VERI = {k: v for k, v in {
-    "ppg_ev": 0.0, "mpg_dep": 0.0, "form_str_ev": "", "form_str_dep": "",
-    "siralama_ev": 0, "siralama_dep": 0, "puan_ev": 0, "puan_dep": 0,
-    "xg_ev": 0.0, "xg_dep": 0.0, "atilan_ev": 0.0, "atilan_dep": 0.0,
-    "yenen_ev": 0.0, "yenen_dep": 0.0, "clean_sheets_ev": 0.0, "clean_sheets_dep": 0.0,
-    "team_scored_ev": 0.0, "team_scored_dep": 0.0, "team_scored_2_ev": 0.0, "team_scored_2_dep": 0.0,
+# ==========================================
+# VARSAYILAN VERİ
+# ==========================================
+VARSAYILAN_VERI = {
+    "ppg_ev": 0.0, "mpg_dep": 0.0,
+    "form_str_ev": "", "form_str_dep": "",
+    "siralama_ev": 0, "siralama_dep": 0,
+    "puan_ev": 0, "puan_dep": 0,
+    "xg_ev": 0.0, "xg_dep": 0.0,
+    "atilan_ev": 0.0, "atilan_dep": 0.0,
+    "yenen_ev": 0.0, "yenen_dep": 0.0,
+    "clean_sheets_ev": 0.0, "clean_sheets_dep": 0.0,
+    "team_scored_ev": 0.0, "team_scored_dep": 0.0,
+    "team_scored_2_ev": 0.0, "team_scored_2_dep": 0.0,
     "scored_both_halves_ev": 0.0, "scored_both_halves_dep": 0.0,
     "goal_both_halves_ev": 0.0, "goal_both_halves_dep": 0.0,
-    "ust05_ev": 80.0, "ust05_dep": 80.0, "ust15_ev": 50.0, "ust15_dep": 50.0,
-    "ust25_ev": 30.0, "ust25_dep": 30.0, "ust35_ev": 20.0, "ust35_dep": 20.0,
-    "kg_siklik_ev": 50.0, "kg_siklik_dep": 50.0, "btts_1h_ev": 0.0, "btts_1h_dep": 0.0,
-    "btts_2h_ev": 0.0, "btts_2h_dep": 0.0, "btts_over15_ev": 0.0, "btts_over15_dep": 0.0,
-    "btts_over25_ev": 0.0, "btts_over25_dep": 0.0, "tg_0_ev": 0.0, "tg_0_dep": 0.0,
-    "tg_1_ev": 0.0, "tg_1_dep": 0.0, "tg_2_ev": 0.0, "tg_2_dep": 0.0,
-    "tg_3_ev": 0.0, "tg_3_dep": 0.0, "tg_4_ev": 0.0, "tg_4_dep": 0.0,
-    "tg_01_ev": 0.0, "tg_01_dep": 0.0, "tg_23_ev": 0.0, "tg_23_dep": 0.0,
-    "tg_4p_ev": 0.0, "tg_4p_dep": 0.0, "ht_ust05_ev": 0.0, "ht_ust05_dep": 0.0,
-    "ht_ust15_ev": 0.0, "ht_ust15_dep": 0.0, "ht_ust25_ev": 0.0, "ht_ust25_dep": 0.0,
-    "wht_wft_ev": 0.0, "wht_wft_dep": 0.0, "wht_dft_ev": 0.0, "wht_dft_dep": 0.0,
-    "wht_lft_ev": 0.0, "wht_lft_dep": 0.0, "dht_wft_ev": 0.0, "dht_wft_dep": 0.0,
-    "dht_dft_ev": 0.0, "dht_dft_dep": 0.0, "dht_lft_ev": 0.0, "dht_lft_dep": 0.0,
-    "lht_wft_ev": 0.0, "lht_wft_dep": 0.0, "lht_dft_ev": 0.0, "lht_dft_dep": 0.0,
+    "ust05_ev": 80.0, "ust05_dep": 80.0,
+    "ust15_ev": 50.0, "ust15_dep": 50.0,
+    "ust25_ev": 30.0, "ust25_dep": 30.0,
+    "ust35_ev": 20.0, "ust35_dep": 20.0,
+    "kg_siklik_ev": 50.0, "kg_siklik_dep": 50.0,
+    "btts_1h_ev": 0.0, "btts_1h_dep": 0.0,
+    "btts_2h_ev": 0.0, "btts_2h_dep": 0.0,
+    "btts_over15_ev": 0.0, "btts_over15_dep": 0.0,
+    "btts_over25_ev": 0.0, "btts_over25_dep": 0.0,
+    "tg_0_ev": 0.0, "tg_0_dep": 0.0,
+    "tg_1_ev": 0.0, "tg_1_dep": 0.0,
+    "tg_2_ev": 0.0, "tg_2_dep": 0.0,
+    "tg_3_ev": 0.0, "tg_3_dep": 0.0,
+    "tg_4_ev": 0.0, "tg_4_dep": 0.0,
+    "tg_01_ev": 0.0, "tg_01_dep": 0.0,
+    "tg_23_ev": 0.0, "tg_23_dep": 0.0,
+    "tg_4p_ev": 0.0, "tg_4p_dep": 0.0,
+    "ht_ust05_ev": 0.0, "ht_ust05_dep": 0.0,
+    "ht_ust15_ev": 0.0, "ht_ust15_dep": 0.0,
+    "ht_ust25_ev": 0.0, "ht_ust25_dep": 0.0,
+    "wht_wft_ev": 0.0, "wht_wft_dep": 0.0,
+    "wht_dft_ev": 0.0, "wht_dft_dep": 0.0,
+    "wht_lft_ev": 0.0, "wht_lft_dep": 0.0,
+    "dht_wft_ev": 0.0, "dht_wft_dep": 0.0,
+    "dht_dft_ev": 0.0, "dht_dft_dep": 0.0,
+    "dht_lft_ev": 0.0, "dht_lft_dep": 0.0,
+    "lht_wft_ev": 0.0, "lht_wft_dep": 0.0,
+    "lht_dft_ev": 0.0, "lht_dft_dep": 0.0,
     "lht_lft_ev": 0.0, "lht_lft_dep": 0.0,
-    "galibiyet_ev": 30.0, "galibiyet_dep": 30.0, "beraberlik_ev": 30.0, "beraberlik_dep": 30.0,
+    "galibiyet_ev": 30.0, "galibiyet_dep": 30.0,
+    "beraberlik_ev": 30.0, "beraberlik_dep": 30.0,
     "maglubiyet_ev": 30.0, "maglubiyet_dep": 30.0,
-    "win_1h_ev": 0.0, "win_1h_dep": 0.0, "draw_ht_ev": 0.0, "draw_ht_dep": 0.0,
-    "lose_1h_ev": 0.0, "lose_1h_dep": 0.0, "win_btts_ev": 0.0, "win_btts_dep": 0.0,
-    "draw_btts_ev": 0.0, "draw_btts_dep": 0.0, "lose_btts_ev": 0.0, "lose_btts_dep": 0.0,
-    "win_over15_ev": 0.0, "win_over15_dep": 0.0, "lose_over15_ev": 0.0, "lose_over15_dep": 0.0,
-    "takim_ev": "", "takim_dep": "", "skor_ev": 0, "skor_dep": 0, "skor_belli": False,
-    "lig_ort_toplam": 0.0, "lig_ust25": 0.0, "lig_kg": 0.0,
-    "saat": "", "tarih": "", "ulke": "", "format": "bilinmiyor", "kaynak_url": "",
-    "trends_ev": [], "trends_dep": [],
-}.items()}
+    "win_1h_ev": 0.0, "win_1h_dep": 0.0,
+    "draw_ht_ev": 0.0, "draw_ht_dep": 0.0,
+    "lose_1h_ev": 0.0, "lose_1h_dep": 0.0,
+    "win_btts_ev": 0.0, "win_btts_dep": 0.0,
+    "draw_btts_ev": 0.0, "draw_btts_dep": 0.0,
+    "lose_btts_ev": 0.0, "lose_btts_dep": 0.0,
+    "win_over15_ev": 0.0, "win_over15_dep": 0.0,
+    "lose_over15_ev": 0.0, "lose_over15_dep": 0.0,
+    "takim_ev": "", "takim_dep": "",
+    "skor_ev": 0, "skor_dep": 0,
+    "skor_belli": False,
+    "lig_ort_toplam": 0.0,
+    "lig_ust25": 0.0,
+    "lig_kg": 0.0,
+    "saat": "",
+    "tarih": "",
+    "ulke": "",
+    "format": "bilinmiyor",
+}
 
-MAX_GOL = 8; BELIRSIZLIK = 0.20; MAX_MAC_SINIRI = 200
-_kilit = threading.Lock(); _ESIK_CACHE = {}
+MAX_GOL = 8
+BELIRSIZLIK = 0.20
 
 
+# ==========================================
+# SESSION STATE
+# ==========================================
 if "sayfa" not in st.session_state: st.session_state.sayfa = "giris"
 if "form_verileri" not in st.session_state: st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
 if "gecmis_analizler" not in st.session_state: st.session_state.gecmis_analizler = gecmis_yukle()
@@ -645,88 +809,654 @@ if "okunamayan_alanlar" not in st.session_state: st.session_state.okunamayan_ala
 if "manuel_bekleyen" not in st.session_state: st.session_state.manuel_bekleyen = []
 if "tek_silme_onay" not in st.session_state: st.session_state.tek_silme_onay = None
 if "tek_silme_gelecek" not in st.session_state: st.session_state.tek_silme_gelecek = None
+
 if "giris_yapildi" not in st.session_state: st.session_state.giris_yapildi = True
 if "rol" not in st.session_state: st.session_state.rol = "misafir"
 if "admin_login_acik" not in st.session_state: st.session_state.admin_login_acik = False
-if "esikler" not in st.session_state: st.session_state.esikler = ayarlar_yukle()
-if "bt_market" not in st.session_state: st.session_state.bt_market = {"1x2": False, "kg_var": False, "kg_yok": False, "ust": False, "alt": False}
-if "bt_market_esik" not in st.session_state: st.session_state.bt_market_esik = {"esik_1": 55.0, "esik_x": 55.0, "esik_2": 55.0, "kg_var": 70.0, "kg_yok": 70.0, "ust": 70.0, "alt": 70.0}
-if "bt_sonuc" not in st.session_state: st.session_state.bt_sonuc = None
-if "bt_detaylar" not in st.session_state: st.session_state.bt_detaylar = []
-if "toplu_cek_ozet" not in st.session_state: st.session_state.toplu_cek_ozet = None
-if "skor_ozet" not in st.session_state: st.session_state.skor_ozet = None
-if "aktif_kullanici" not in st.session_state: st.session_state.aktif_kullanici = None
-if "odeme_hedef_kadi" not in st.session_state: st.session_state.odeme_hedef_kadi = None
-if "sil_onay_kadi" not in st.session_state: st.session_state.sil_onay_kadi = None
-if "kayit_yasal_onay" not in st.session_state: st.session_state.kayit_yasal_onay = False
-if "odeme_yasal_onay" not in st.session_state: st.session_state.odeme_yasal_onay = False
+
+if "esikler" not in st.session_state:
+    st.session_state.esikler = ayarlar_yukle()
+
+if "bt_market" not in st.session_state:
+    st.session_state.bt_market = {"1x2": False, "kg_var": False, "kg_yok": False, "ust": False, "alt": False}
+if "bt_market_esik" not in st.session_state:
+    st.session_state.bt_market_esik = {
+        "esik_1": 55.0, "esik_x": 55.0, "esik_2": 55.0,
+        "kg_var": 70.0, "kg_yok": 70.0, "ust": 70.0, "alt": 70.0,
+    }
+if "bt_sonuc" not in st.session_state:
+    st.session_state.bt_sonuc = None
+if "bt_detaylar" not in st.session_state:
+    st.session_state.bt_detaylar = []
 
 
-def admin_mi(): return st.session_state.get("rol") == "admin"
-def uye_mi(): return st.session_state.get("aktif_kullanici") is not None
-def uye_adi(): return st.session_state.get("aktif_kullanici", "")
-def uye_premium_mu():
-    if not uye_mi(): return False
-    return abonelik_aktif_mi(uye_adi())
+def admin_mi():
+    return st.session_state.get("rol") == "admin"
 
 
 def esik_al(key):
-    try:
-        v = st.session_state.esikler.get(key)
-        if v is not None: return v
-    except Exception: pass
-    return _ESIK_CACHE.get(key, 50.0)
+    return st.session_state.esikler.get(key, 50.0)
 
 
 def esik_1x2_al(secim):
-    km = {"1": "esik_1", "X": "esik_x", "2": "esik_2"}; k = km.get(secim, "")
-    try:
-        v = st.session_state.esikler.get(k)
-        if v is not None: return v
-    except Exception: pass
-    return _ESIK_CACHE.get(k, 55.0)
+    key_map = {"1": "esik_1", "X": "esik_x", "2": "esik_2"}
+    return st.session_state.esikler.get(key_map.get(secim, ""), 55.0)
 
 
-def ayar_al(key, default=None):
-    try: return st.session_state.esikler.get(key, default)
-    except Exception: return default
-
-
-ULKE_BAYRAK = {"switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭", "england": "🏴", "ingiltere": "🏴", "i̇ngiltere": "🏴", "spain": "🇪🇸", "ispanya": "🇪🇸", "italy": "🇮🇹", "italya": "🇮🇹", "germany": "🇩🇪", "almanya": "🇩🇪", "france": "🇫🇷", "fransa": "🇫🇷", "netherlands": "🇳🇱", "hollanda": "🇳🇱", "portugal": "🇵🇹", "portekiz": "🇵🇹", "belgium": "🇧🇪", "belçika": "🇧🇪", "turkey": "🇹🇷", "türkiye": "🇹🇷", "turkiye": "🇹🇷", "argentina": "🇦🇷", "arjantin": "🇦🇷", "brazil": "🇧🇷", "brezilya": "🇧🇷", "mexico": "🇲🇽", "meksika": "🇲🇽", "usa": "🇺🇸", "abd": "🇺🇸", "japan": "🇯🇵", "japonya": "🇯🇵", "south korea": "🇰🇷", "güney kore": "🇰🇷", "china": "🇨🇳", "çin": "🇨🇳", "russia": "🇷🇺", "rusya": "🇷🇺", "ukraine": "🇺🇦", "ukrayna": "🇺🇦", "poland": "🇵🇱", "polonya": "🇵🇱", "greece": "🇬🇷", "yunanistan": "🇬🇷", "scotland": "🏴", "wales": "🏴", "ireland": "🇮🇪", "austria": "🇦🇹", "avusturya": "🇦🇹", "croatia": "🇭🇷", "hırvatistan": "🇭🇷", "serbia": "🇷🇸", "sırbistan": "🇷🇸", "romania": "🇷🇴", "romanya": "🇷🇴", "bulgaria": "🇧🇬", "bulgaristan": "🇧🇬", "denmark": "🇩🇰", "danimarka": "🇩🇰", "sweden": "🇸🇪", "norway": "🇳🇴", "norveç": "🇳🇴", "finland": "🇫🇮", "finlandiya": "🇫🇮", "iceland": "🇮🇸", "hungary": "🇭🇺", "macaristan": "🇭🇺", "czech": "🇨🇿", "slovakia": "🇸🇰", "slovenia": "🇸🇮", "saudi": "🇸🇦", "suudi arabistan": "🇸🇦", "qatar": "🇶🇦", "katar": "🇶🇦", "egypt": "🇪🇬", "mısır": "🇪🇬", "morocco": "🇲🇦", "fas": "🇲🇦", "algeria": "🇩🇿", "cezayir": "🇩🇿", "tunisia": "🇹🇳", "tunus": "🇹🇳", "nigeria": "🇳🇬", "nijerya": "🇳🇬", "south africa": "🇿🇦", "australia": "🇦🇺", "avustralya": "🇦🇺", "new zealand": "🇳🇿", "india": "🇮🇳", "hindistan": "🇮🇳", "iran": "🇮🇷", "iraq": "🇮🇶", "irak": "🇮🇶", "israel": "🇮🇱", "colombia": "🇨🇴", "kolombiya": "🇨🇴", "chile": "🇨🇱", "şili": "🇨🇱", "peru": "🇵🇪", "uruguay": "🇺🇾", "ecuador": "🇪🇨", "paraguay": "🇵🇾", "bolivia": "🇧🇴", "venezuela": "🇻🇪", "canada": "🇨🇦", "kanada": "🇨🇦", "kosovo": "🇽🇰", "kosova": "🇽🇰", "albania": "🇦🇱", "arnavutluk": "🇦🇱", "georgia": "🇬🇪", "gürcistan": "🇬🇪", "armenia": "🇦🇲", "azerbaijan": "🇦🇿", "azerbaycan": "🇦🇿", "kazakhstan": "🇰🇿", "kazakistan": "🇰🇿", "uzbekistan": "🇺🇿", "belarus": "🇧🇾", "latvia": "🇱🇻", "lithuania": "🇱🇹", "estonia": "🇪🇪", "luxembourg": "🇱🇺", "malta": "🇲🇹", "cyprus": "🇨🇾", "kıbrıs": "🇨🇾", "montenegro": "🇲🇪", "karadağ": "🇲🇪", "north macedonia": "🇲🇰", "bosnia": "🇧🇦", "bosna": "🇧🇦", "moldova": "🇲🇩"}
+# ==========================================
+# ÜLKE → BAYRAK
+# ==========================================
+ULKE_BAYRAK = {
+    "switzerland": "🇨🇭", "isviçre": "🇨🇭", "i̇sviçre": "🇨🇭",
+    "england": "🏴󠁧󠁢󠁥󠁮󠁧", "ingiltere": "🏴", "i̇ngiltere": "🏴",
+    "spain": "🇪🇸", "ispanya": "🇪🇸", "i̇spanya": "🇪🇸",
+    "italy": "🇮🇹", "italya": "🇮🇹", "i̇talya": "🇮🇹",
+    "germany": "🇩🇪", "almanya": "🇩🇪",
+    "france": "🇫🇷", "fransa": "🇫🇷",
+    "netherlands": "🇳🇱", "hollanda": "🇳🇱",
+    "portugal": "🇵🇹", "portekiz": "🇵🇹",
+    "belgium": "🇧🇪", "belçika": "🇧🇪",
+    "turkey": "🇹🇷", "türkiye": "🇹🇷", "turkiye": "🇹🇷",
+    "argentina": "🇦🇷", "arjantin": "🇦🇷",
+    "brazil": "🇧🇷", "brezilya": "🇧🇷",
+    "mexico": "🇲🇽", "meksika": "🇲🇽",
+    "usa": "🇺🇸", "united states": "🇺🇸", "abd": "🇺🇸",
+    "japan": "🇯🇵", "japonya": "🇯🇵",
+    "south korea": "🇰🇷", "korea": "🇰🇷", "güney kore": "🇰🇷",
+    "china": "🇨🇳", "çin": "🇨🇳",
+    "russia": "🇷🇺", "rusya": "🇷🇺",
+    "ukraine": "🇺🇦", "ukrayna": "🇺🇦",
+    "poland": "🇵🇱", "polonya": "🇵🇱",
+    "greece": "🇬🇷", "yunanistan": "🇬🇷",
+    "scotland": "🏴", "i̇skoçya": "🏴",
+    "wales": "🏴", "galler": "🏴",
+    "ireland": "🇮🇪", "i̇rlanda": "🇮🇪",
+    "austria": "🇦🇹", "avusturya": "🇦🇹",
+    "croatia": "🇭🇷", "hırvatistan": "🇭🇷",
+    "serbia": "🇷🇸", "sırbistan": "🇷🇸",
+    "romania": "🇷🇴", "romanya": "🇷🇴",
+    "bulgaria": "🇧🇬", "bulgaristan": "🇧🇬",
+    "denmark": "🇩🇰", "danimarka": "🇩🇰",
+    "sweden": "🇸🇪", "i̇sveç": "🇸🇪",
+    "norway": "🇳🇴", "norveç": "🇳🇴",
+    "finland": "🇫🇮", "finlandiya": "🇫🇮",
+    "iceland": "🇮🇸", "i̇zlanda": "🇮🇸",
+    "hungary": "🇭🇺", "macaristan": "🇭🇺",
+    "czech": "🇨🇿", "çekya": "🇨🇿",
+    "slovakia": "🇸🇰", "slovakya": "🇸🇰",
+    "slovenia": "🇸🇮", "slovenya": "🇸🇮",
+    "saudi": "🇸🇦", "suudi arabistan": "🇸🇦",
+    "uae": "🇦🇪", "birleşik arap emirlikleri": "🇦🇪",
+    "qatar": "🇶🇦", "katar": "🇶🇦",
+    "egypt": "🇪🇬", "mısır": "🇪🇬",
+    "morocco": "🇲🇦", "fas": "🇲🇦",
+    "algeria": "🇩🇿", "cezayir": "🇩🇿",
+    "tunisia": "🇹🇳", "tunus": "🇹🇳",
+    "nigeria": "🇳🇬", "nijerya": "🇳🇬",
+    "south africa": "🇿🇦", "güney afrika": "🇿🇦",
+    "australia": "🇦🇺", "avustralya": "🇦🇺",
+    "new zealand": "🇳🇿", "yeni zelanda": "🇳🇿",
+    "india": "🇮🇳", "hindistan": "🇮🇳",
+    "iran": "🇮🇷",
+    "iraq": "🇮🇶", "irak": "🇮🇶",
+    "israel": "🇮🇱", "i̇srail": "🇮🇱",
+    "colombia": "🇨🇴", "kolombiya": "🇨🇴",
+    "chile": "🇨🇱", "şili": "🇨🇱",
+    "peru": "🇵🇪",
+    "uruguay": "🇺🇾",
+    "ecuador": "🇪🇨", "ekvador": "🇪🇨",
+    "paraguay": "🇵🇾",
+    "bolivia": "🇧🇴", "bolivya": "🇧🇴",
+    "venezuela": "🇻🇪",
+    "costa rica": "🇨🇷",
+    "panama": "🇵🇦",
+    "jamaica": "🇯🇲",
+    "canada": "🇨🇦", "kanada": "🇨🇦",
+    "kosovo": "🇽🇰", "kosova": "🇽🇰",
+    "albania": "🇦🇱", "arnavutluk": "🇦🇱",
+    "moldova": "🇲🇩",
+    "georgia": "🇬🇪", "gürcistan": "🇬🇪",
+    "armenia": "🇦🇲", "ermenistan": "🇦🇲",
+    "azerbaijan": "🇦🇿", "azerbaycan": "🇦🇿",
+    "kazakhstan": "🇰🇿", "kazakistan": "🇰🇿",
+    "uzbekistan": "🇺🇿", "özbekistan": "🇺🇿",
+    "belarus": "🇧🇾",
+    "latvia": "🇱🇻", "letonya": "🇱🇻",
+    "lithuania": "🇱🇹", "litvanya": "🇱🇹",
+    "estonia": "🇪🇪", "estonya": "🇪🇪",
+    "luxembourg": "🇱🇺", "lüksemburg": "🇱🇺",
+    "malta": "🇲🇹",
+    "cyprus": "🇨🇾", "kıbrıs": "🇨🇾",
+    "montenegro": "🇲🇪", "karadağ": "🇲🇪",
+    "north macedonia": "🇲🇰", "kuzey makedonya": "🇲🇰",
+    "bosnia": "🇧🇦", "bosna": "🇧🇦",
+    "liechtenstein": "🇱🇮",
+    "andorra": "🇦🇩",
+    "san marino": "🇸🇲",
+    "gibraltar": "🇬🇮",
+    "faroe": "🇫🇴",
+}
 
 
 def ulke_bayrak_bul(ulke_adi):
-    if not ulke_adi: return "🌍"
+    if not ulke_adi:
+        return "🌍"
     u = ulke_adi.lower().strip()
-    for a in sorted(ULKE_BAYRAK.keys(), key=len, reverse=True):
-        if a in u: return ULKE_BAYRAK[a]
+    for anahtar in sorted(ULKE_BAYRAK.keys(), key=len, reverse=True):
+        if anahtar in u:
+            return ULKE_BAYRAK[anahtar]
     return "🌍"
 
 
 def _ulke_bul(metin):
     m = re.search(r'Standings\s+([^\n]+)', metin)
-    if not m: return ""
-    s = m.group(1).strip()
-    if not s: return ""
-    alt = s.lower()
-    for a in sorted(ULKE_BAYRAK.keys(), key=len, reverse=True):
-        if a in alt: return a
-    p = s.split(); return " ".join(p[:2]) if len(p) >= 2 else (p[0] if p else "")
+    if not m:
+        return ""
+    satir = m.group(1).strip()
+    if not satir:
+        return ""
+    alt = satir.lower()
+    for anahtar in sorted(ULKE_BAYRAK.keys(), key=len, reverse=True):
+        if anahtar in alt:
+            return anahtar
+    parcalar = satir.split()
+    return " ".join(parcalar[:2]) if len(parcalar) >= 2 else (parcalar[0] if parcalar else "")
 
 
-def clamp(x, lo, hi): return max(lo, min(hi, x))
+# ==========================================
+# YARDIMCI FONKSİYONLAR
+# ==========================================
+def clamp(x, lo, hi):
+    return max(lo, min(hi, x))
+
+
 def ort_iki(a, b):
-    v = [x for x in [a, b] if x is not None and x > 0]
-    return sum(v) / len(v) if v else 0
+    vals = [x for x in [a, b] if x is not None and x > 0]
+    if not vals: return 0
+    return sum(vals) / len(vals)
 
 
-def guven_seviyesi_bul(o):
-    if o >= ESIK_YUKSEK: return ("yuksek", "🟢", "success", "Yüksek")
-    if o >= ESIK_ORTA: return ("orta", "🟡", "warning", "Orta")
-    if o >= ESIK_BELIRSIZ: return ("belirsiz", "🔴", "error", "Belirsiz")
+def guven_seviyesi_bul(olasilik):
+    if olasilik >= ESIK_YUKSEK: return ("yuksek", "🟢", "success", "Yüksek")
+    if olasilik >= ESIK_ORTA:   return ("orta", "🟡", "warning", "Orta")
+    if olasilik >= ESIK_BELIRSIZ: return ("belirsiz", "🔴", "error", "Belirsiz")
     return ("cok_dusuk", "⚫", "error", "Düşük")
 
 
+def oneri_istatistik_guncel(gecmis):
+    ist = {"1x2": {"tam": 0, "yakin": 0, "yanlis": 0},
+           "gol": {"tam": 0, "yakin": 0, "yanlis": 0},
+           "kg": {"tam": 0, "yakin": 0, "yanlis": 0}}
+    for g in gecmis:
+        try:
+            v = g["veri"]
+            if not v.get("skor_belli", False):
+                continue
+            try:
+                ya = yeniden_analiz(v)
+            except Exception:
+                ya = g.get("analiz", {})
+            d = sonuc_hesapla({"veri": v, "analiz": ya})
+            if not d:
+                continue
+            for key in ["oneri_1x2", "oneri_gol", "oneri_kg"]:
+                kisa = key.replace("oneri_", "")
+                durum = d[key].get("durum")
+                if durum == "tam": ist[kisa]["tam"] += 1
+                elif durum == "yanlis": ist[kisa]["yanlis"] += 1
+        except Exception:
+            continue
+    return ist
+
+
+# ==========================================
+# BACKTEST FONKSİYONU
+# ==========================================
+def wilson_aralik(dogru, toplam, z=1.96):
+    if toplam <= 0:
+        return 0.0, 0.0
+    p = dogru / toplam
+    payda = 1 + z * z / toplam
+    merkez = (p + z * z / (2 * toplam)) / payda
+    yari = z * math.sqrt(p * (1 - p) / toplam + z * z / (4 * toplam * toplam)) / payda
+    return max(0.0, (merkez - yari) * 100), min(100.0, (merkez + yari) * 100)
+
+
+def _form_ppg(s):
+    return sum(3 if c == "W" else 1 if c == "D" else 0 for c in s) / max(len(s), 1)
+
+
+def yeniden_analiz(v):
+    v2 = copy.deepcopy(v)
+    if v2.get("form_str_ev"):
+        v2["ppg_ev"] = _form_ppg(v2["form_str_ev"])
+    if v2.get("form_str_dep"):
+        v2["mpg_dep"] = _form_ppg(v2["form_str_dep"])
+
+    anahtar = json.dumps(v2, sort_keys=True, ensure_ascii=False)
+    if "bt_analiz_cache" not in st.session_state:
+        st.session_state.bt_analiz_cache = {}
+    cache = st.session_state.bt_analiz_cache
+    if anahtar not in cache:
+        a = analiz_hesapla(v2)
+        cache[anahtar] = {
+            "ust_25": a["ust_25"],
+            "kg_var_model": a["kg_var_model"],
+            "p1": a["p1"],
+            "px": a["px"],
+            "p2": a["p2"],
+        }
+    return cache[anahtar]
+
+
+def backtest_hesapla(gecmis, market_sec, market_esik):
+    sonuc = {
+        "1x2": {"dogru": 0, "yanlis": 0},
+        "kg_var": {"dogru": 0, "yanlis": 0},
+        "kg_yok": {"dogru": 0, "yanlis": 0},
+        "ust": {"dogru": 0, "yanlis": 0},
+        "alt": {"dogru": 0, "yanlis": 0},
+    }
+    mac_detaylari = []
+
+    for g in gecmis:
+        try:
+            v = g["veri"]
+            analiz = g.get("analiz", {})
+            if not v.get("skor_belli", False):
+                continue
+
+            skor_ev = int(v.get("skor_ev", 0))
+            skor_dep = int(v.get("skor_dep", 0))
+            toplam_gol = skor_ev + skor_dep
+            gercek_kg_var = (skor_ev > 0 and skor_dep > 0)
+            gercek_ust = toplam_gol > 2.5
+
+            if skor_ev > skor_dep: gercek_1x2 = "1"
+            elif skor_ev == skor_dep: gercek_1x2 = "X"
+            else: gercek_1x2 = "2"
+
+            try:
+                yeni_analiz = yeniden_analiz(v)
+                ust_25 = yeni_analiz["ust_25"]
+                kg_var = yeni_analiz["kg_var_model"]
+                p1_y = yeni_analiz["p1"]
+                px_y = yeni_analiz["px"]
+                p2_y = yeni_analiz["p2"]
+            except Exception:
+                ust_25 = analiz.get("ust_25", 50)
+                kg_var = analiz.get("kg_var_model", 50)
+                p1_y = analiz.get("p1", 33.33)
+                px_y = analiz.get("px", 33.33)
+                p2_y = analiz.get("p2", 33.34)
+            alt_25 = 100 - ust_25
+            kg_yok = 100 - kg_var
+
+            mac_kayit = {
+                "takim_ev": v.get("takim_ev", "Ev"),
+                "takim_dep": v.get("takim_dep", "Dep"),
+                "skor": f"{skor_ev}-{skor_dep}",
+                "gercek_kg": "Var" if gercek_kg_var else "Yok",
+                "gercek_gol": "Üst" if gercek_ust else "Alt",
+                "gercek_1x2": gercek_1x2,
+                "detaylar": []
+            }
+
+            if market_sec.get("1x2", False):
+                en_yuksek = max([("1", p1_y), ("X", px_y), ("2", p2_y)], key=lambda x: x[1])
+                secim, yuzde = en_yuksek
+                esik_key = {"1": "esik_1", "X": "esik_x", "2": "esik_2"}[secim]
+                esik_secim = market_esik.get(esik_key, 55.0)
+                if yuzde >= esik_secim:
+                    if secim == gercek_1x2:
+                        sonuc["1x2"]["dogru"] += 1
+                        mac_kayit["detaylar"].append(f"1X2: {secim} ✅ (%{yuzde:.1f} ≥ %{esik_secim:.0f})")
+                    else:
+                        sonuc["1x2"]["yanlis"] += 1
+                        mac_kayit["detaylar"].append(f"1X2: {secim} ❌ (gerçek: {gercek_1x2}, %{yuzde:.1f} ≥ %{esik_secim:.0f})")
+
+            if market_sec.get("kg_var", False):
+                if kg_var >= market_esik["kg_var"] and kg_var >= kg_yok:
+                    if gercek_kg_var:
+                        sonuc["kg_var"]["dogru"] += 1
+                        mac_kayit["detaylar"].append("KG Var ✅")
+                    else:
+                        sonuc["kg_var"]["yanlis"] += 1
+                        mac_kayit["detaylar"].append("KG Var ❌")
+
+            if market_sec.get("kg_yok", False):
+                if kg_yok >= market_esik["kg_yok"] and kg_yok >= kg_var:
+                    if not gercek_kg_var:
+                        sonuc["kg_yok"]["dogru"] += 1
+                        mac_kayit["detaylar"].append("KG Yok ✅")
+                    else:
+                        sonuc["kg_yok"]["yanlis"] += 1
+                        mac_kayit["detaylar"].append("KG Yok ❌")
+
+            if market_sec.get("ust", False):
+                if ust_25 >= market_esik["ust"] and ust_25 >= alt_25:
+                    if gercek_ust:
+                        sonuc["ust"]["dogru"] += 1
+                        mac_kayit["detaylar"].append("Üst ✅")
+                    else:
+                        sonuc["ust"]["yanlis"] += 1
+                        mac_kayit["detaylar"].append("Üst ❌")
+
+            if market_sec.get("alt", False):
+                if alt_25 >= market_esik["alt"] and alt_25 >= ust_25:
+                    if not gercek_ust:
+                        sonuc["alt"]["dogru"] += 1
+                        mac_kayit["detaylar"].append("Alt ✅")
+                    else:
+                        sonuc["alt"]["yanlis"] += 1
+                        mac_kayit["detaylar"].append("Alt ❌")
+
+            if mac_kayit["detaylar"]:
+                mac_detaylari.append(mac_kayit)
+
+        except Exception:
+            continue
+
+    return sonuc, mac_detaylari
+
+
+# ==========================================
+# MANUEL ALANLAR
+# ==========================================
+MANUEL_ALANLAR = {
+    "Sıralama": [("siralama_ev", "Ev Sıralaması", "int", 1), ("siralama_dep", "Dep Sıralaması", "int", 1)],
+    "Takım isimleri (Ev)": [("takim_ev", "Ev Takım Adı", "str", "")],
+    "Takım isimleri (Dep)": [("takim_dep", "Dep Takım Adı", "str", "")],
+    "PPG (Ev Form)": [("ppg_ev", "PPG (Ev)", "float", 0.0)],
+    "MPG (Dep Form)": [("mpg_dep", "MPG (Dep)", "float", 0.0)],
+    "xG": [("xg_ev", "xG (Ev)", "float", 0.0), ("xg_dep", "xG (Dep)", "float", 0.0)],
+    "Atılan Gol": [("atilan_ev", "Atılan Gol (Ev)", "float", 0.0), ("atilan_dep", "Atılan Gol (Dep)", "float", 0.0)],
+    "Yenen Gol": [("yenen_ev", "Yenen Gol (Ev)", "float", 0.0), ("yenen_dep", "Yenen Gol (Dep)", "float", 0.0)],
+}
+
+
+# ==========================================
+# SPORTYTRADER ÇIKARICI
+# ==========================================
+def _cift_tab(etiket, blok):
+    pattern = r'([\d.,]+)%?\s*\t\s*' + re.escape(etiket) + r'\s*\t\s*([\d.,]+)%?'
+    m = re.search(pattern, blok, re.IGNORECASE)
+    if m:
+        try:
+            return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
+        except ValueError:
+            pass
+    pattern2 = r'([\d.,]+)%?\s{1,4}' + re.escape(etiket) + r'\s{1,4}([\d.,]+)%?'
+    m = re.search(pattern2, blok, re.IGNORECASE)
+    if m:
+        try:
+            return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
+        except ValueError:
+            pass
+    return None, None
+
+
+def _sira_bul(metin, takim_adi):
+    if not takim_adi:
+        return None, None
+    pattern = (
+        r'(?:^|\n)\s*(\d{1,2})\s*\r?\n\s*'
+        + re.escape(takim_adi) + r'\s*\r?\n\s*'
+        + re.escape(takim_adi) + r'\s*\r?\n'
+        r'\s*(\d+)\s*\t'
+    )
+    m = re.search(pattern, metin, re.MULTILINE)
+    if m:
+        try:
+            sira = int(m.group(1))
+            if 1 <= sira <= 30:
+                devam = metin[m.end()-1:]
+                m_puan = re.match(r'[\s\S]{0,80}?\r?\n\s*(\d{1,2})\s*\r?\n', devam)
+                puan = int(m_puan.group(1)) if m_puan else 0
+                return sira, puan
+        except (ValueError, AttributeError):
+            pass
+    pattern2 = (
+        r'(?:^|\n)\s*(\d{1,2})\s*\r?\n\s*\r?\n\s*'
+        + re.escape(takim_adi) + r'\s*\r?\n\s*'
+        + re.escape(takim_adi)
+    )
+    m = re.search(pattern2, metin, re.MULTILINE)
+    if m:
+        try:
+            sira = int(m.group(1))
+            if 1 <= sira <= 30:
+                return sira, 0
+        except ValueError:
+            pass
+    return None, None
+
+
+def sportytrader_veri_cikar(metin):
+    veri = {}; okunamayanlar = []
+
+    m = re.search(r'^([A-ZÇĞİÖŞÜ][\w\s\.\-]+?)\s*-\s*([A-ZÇĞİÖŞÜ][\w\s\.\-]+?)\s+Stats', metin, re.MULTILINE)
+    if m:
+        veri["takim_ev"] = m.group(1).strip()
+        veri["takim_dep"] = m.group(2).strip()
+
+    m = re.search(r'Time\s*\t\s*(\d{1,2}:\d{2})', metin)
+    if m:
+        veri["saat"] = m.group(1).strip()
+    else:
+        m = re.search(r'\d{1,2}\.\d{1,2}\.\d{2,4}\s+(\d{1,2}:\d{2})', metin)
+        if m:
+            veri["saat"] = m.group(1).strip()
+
+    m = re.search(r'Date\s*\t\s*(\d{1,2}\.\d{1,2}\.\d{2,4})', metin)
+    if m:
+        veri["tarih"] = m.group(1).strip()
+    else:
+        m = re.search(r'(\d{1,2}\.\d{1,2}\.\d{2,4})\s+\d{1,2}:\d{2}', metin)
+        if m:
+            veri["tarih"] = m.group(1).strip()
+
+    veri["ulke"] = _ulke_bul(metin)
+
+    m = re.search(r'FT\s*\r?\n\s*(\d+)\s*-\s*(\d+)', metin)
+    if m:
+        veri["skor_ev"] = int(m.group(1)); veri["skor_dep"] = int(m.group(2))
+        veri["skor_belli"] = True
+    else:
+        veri["skor_belli"] = False
+
+    takim_ev = veri.get("takim_ev", "")
+    takim_dep = veri.get("takim_dep", "")
+
+    idx = metin.find("Main Stats")
+    if idx != -1:
+        blok = metin[idx:idx+1500]
+        v1, v2 = _cift_tab("Goals scored per game", blok)
+        if v1 is not None: veri["atilan_ev"] = v1; veri["atilan_dep"] = v2
+        v1, v2 = _cift_tab("Goals conceded per game", blok)
+        if v1 is not None: veri["yenen_ev"] = v1; veri["yenen_dep"] = v2
+        v1, v2 = _cift_tab("Clean sheets", blok)
+        if v1 is not None: veri["clean_sheets_ev"] = v1; veri["clean_sheets_dep"] = v2
+        v1, v2 = _cift_tab("Team scored", blok)
+        if v1 is not None: veri["team_scored_ev"] = v1; veri["team_scored_dep"] = v2
+        v1, v2 = _cift_tab("Team scored twice", blok)
+        if v1 is not None: veri["team_scored_2_ev"] = v1; veri["team_scored_2_dep"] = v2
+        v1, v2 = _cift_tab("Scored in both halves", blok)
+        if v1 is not None: veri["scored_both_halves_ev"] = v1; veri["scored_both_halves_dep"] = v2
+        v1, v2 = _cift_tab("Goal in both halves", blok)
+        if v1 is not None: veri["goal_both_halves_ev"] = v1; veri["goal_both_halves_dep"] = v2
+
+    idx = metin.find("Win Draw Lose")
+    if idx != -1:
+        blok = metin[idx:idx+1500]
+        v1, v2 = _cift_tab("Win and Over 1.5 goals", blok)
+        if v1 is not None: veri["win_over15_ev"] = v1; veri["win_over15_dep"] = v2
+        v1, v2 = _cift_tab("Lose and Over 1.5 goals", blok)
+        if v1 is not None: veri["lose_over15_ev"] = v1; veri["lose_over15_dep"] = v2
+        v1, v2 = _cift_tab("Team win first half", blok)
+        if v1 is not None: veri["win_1h_ev"] = v1; veri["win_1h_dep"] = v2
+        v1, v2 = _cift_tab("Team draw at half time", blok)
+        if v1 is not None: veri["draw_ht_ev"] = v1; veri["draw_ht_dep"] = v2
+        v1, v2 = _cift_tab("Team lost first half", blok)
+        if v1 is not None: veri["lose_1h_ev"] = v1; veri["lose_1h_dep"] = v2
+
+        for etiket, key_ev, key_dep in [
+            ("Win", "galibiyet_ev", "galibiyet_dep"),
+            ("Draw", "beraberlik_ev", "beraberlik_dep"),
+            ("Lose", "maglubiyet_ev", "maglubiyet_dep"),
+        ]:
+            pattern = r'(?:^|\n)\s*([\d.,]+)%\s*\t\s*' + etiket + r'\s*\t\s*([\d.,]+)%'
+            mm = re.search(pattern, blok, re.MULTILINE)
+            if mm:
+                try:
+                    veri[key_ev] = float(mm.group(1).replace(",", "."))
+                    veri[key_dep] = float(mm.group(2).replace(",", "."))
+                except ValueError:
+                    pass
+
+    idx = metin.find("Both Teams to Score")
+    if idx != -1:
+        blok = metin[idx:idx+1500]
+        v1, v2 = _cift_tab("BTTS in first-half", blok)
+        if v1 is not None: veri["btts_1h_ev"] = v1; veri["btts_1h_dep"] = v2
+        v1, v2 = _cift_tab("BBTS in second-half", blok)
+        if v1 is not None: veri["btts_2h_ev"] = v1; veri["btts_2h_dep"] = v2
+        v1, v2 = _cift_tab("BBTS and Over 1.5", blok)
+        if v1 is not None: veri["btts_over15_ev"] = v1; veri["btts_over15_dep"] = v2
+        v1, v2 = _cift_tab("BBTS and Over 2.5", blok)
+        if v1 is not None: veri["btts_over25_ev"] = v1; veri["btts_over25_dep"] = v2
+        v1, v2 = _cift_tab("Win and BTTS", blok)
+        if v1 is not None: veri["win_btts_ev"] = v1; veri["win_btts_dep"] = v2
+        v1, v2 = _cift_tab("Draw and BTTS", blok)
+        if v1 is not None: veri["draw_btts_ev"] = v1; veri["draw_btts_dep"] = v2
+        v1, v2 = _cift_tab("Lose and BTTS", blok)
+        if v1 is not None: veri["lose_btts_ev"] = v1; veri["lose_btts_dep"] = v2
+
+        m = re.search(r'(?:^|\n)\s*([\d.,]+)%\s*\t\s*Both Teams to Score\s*\t\s*([\d.,]+)%', blok, re.MULTILINE)
+        if m:
+            try:
+                veri["kg_siklik_ev"] = float(m.group(1).replace(",", "."))
+                veri["kg_siklik_dep"] = float(m.group(2).replace(",", "."))
+            except ValueError: pass
+
+    idx = metin.find("Match Total Goals")
+    if idx != -1:
+        blok = metin[idx:idx+1500]
+        v1, v2 = _cift_tab("Match total goals 0 or 1", blok)
+        if v1 is not None: veri["tg_01_ev"] = v1; veri["tg_01_dep"] = v2
+        v1, v2 = _cift_tab("Match total goals 2 or 3", blok)
+        if v1 is not None: veri["tg_23_ev"] = v1; veri["tg_23_dep"] = v2
+        v1, v2 = _cift_tab("Match total goals 4+", blok)
+        if v1 is not None: veri["tg_4p_ev"] = v1; veri["tg_4p_dep"] = v2
+        v1, v2 = _cift_tab("Match total goals 0", blok)
+        if v1 is not None: veri["tg_0_ev"] = v1; veri["tg_0_dep"] = v2
+        v1, v2 = _cift_tab("Match total goals 1", blok)
+        if v1 is not None: veri["tg_1_ev"] = v1; veri["tg_1_dep"] = v2
+        v1, v2 = _cift_tab("Match total goals 2", blok)
+        if v1 is not None: veri["tg_2_ev"] = v1; veri["tg_2_dep"] = v2
+        v1, v2 = _cift_tab("Match total goals 3", blok)
+        if v1 is not None: veri["tg_3_ev"] = v1; veri["tg_3_dep"] = v2
+        if veri.get("tg_4_ev", 0) == 0 and veri.get("tg_4p_ev", 0) > 0:
+            veri["tg_4_ev"] = veri["tg_4p_ev"]
+            veri["tg_4_dep"] = veri["tg_4p_dep"]
+
+    idx = metin.find("Over Under Goals")
+    if idx != -1:
+        blok = metin[idx:idx+1500]
+        v1, v2 = _cift_tab("Over 0.5 goals at half-time", blok)
+        if v1 is not None: veri["ht_ust05_ev"] = v1; veri["ht_ust05_dep"] = v2
+        v1, v2 = _cift_tab("Over 1.5 goals at half-time", blok)
+        if v1 is not None: veri["ht_ust15_ev"] = v1; veri["ht_ust15_dep"] = v2
+        v1, v2 = _cift_tab("Over 2.5 goals at half-time", blok)
+        if v1 is not None: veri["ht_ust25_ev"] = v1; veri["ht_ust25_dep"] = v2
+        v1, v2 = _cift_tab("Over 0.5 goals", blok)
+        if v1 is not None: veri["ust05_ev"] = v1; veri["ust05_dep"] = v2
+        v1, v2 = _cift_tab("Over 1.5 goals", blok)
+        if v1 is not None: veri["ust15_ev"] = v1; veri["ust15_dep"] = v2
+        v1, v2 = _cift_tab("Over 2.5 goals", blok)
+        if v1 is not None: veri["ust25_ev"] = v1; veri["ust25_dep"] = v2
+        v1, v2 = _cift_tab("Over 3.5 goals", blok)
+        if v1 is not None: veri["ust35_ev"] = v1; veri["ust35_dep"] = v2
+
+    idx = metin.find("Half Time-Full Time")
+    if idx != -1:
+        blok = metin[idx:idx+2000]
+        for etiket, key in [
+            ("Win HT - Win FT", "wht_wft"), ("Win HT - Draw FT", "wht_dft"),
+            ("Win HT - Lose FT", "wht_lft"), ("Draw HT - Win FT", "dht_wft"),
+            ("Draw HT - Draw FT", "dht_dft"), ("Draw HT - Lose FT", "dht_lft"),
+            ("Lose HT - Win FT", "lht_wft"), ("Lose HT - Draw FT", "lht_dft"),
+            ("Lose HT - Lose FT", "lht_lft"),
+        ]:
+            v1, v2 = _cift_tab(etiket, blok)
+            if v1 is not None:
+                veri[key + "_ev"] = v1
+                veri[key + "_dep"] = v2
+
+    if takim_ev:
+        s, p = _sira_bul(metin, takim_ev)
+        if s is not None:
+            veri["siralama_ev"] = s
+            if p: veri["puan_ev"] = p
+    if takim_dep:
+        s, p = _sira_bul(metin, takim_dep)
+        if s is not None:
+            veri["siralama_dep"] = s
+            if p: veri["puan_dep"] = p
+
+    if veri.get("siralama_ev", 0) == 0: okunamayanlar.append("Sıralama (Ev)")
+    if veri.get("siralama_dep", 0) == 0: okunamayanlar.append("Sıralama (Dep)")
+
+    m = re.search(
+        r'\n([WDL])\s*\r?\n([WDL])\s*\r?\n([WDL])\s*\r?\n([WDL])\s*\r?\n([WDL])\s*\r?\nForm\s*\t?\s*\r?\n([WDL])\s*\r?\n([WDL])\s*\r?\n([WDL])\s*\r?\n([WDL])\s*\r?\n([WDL])',
+        metin
+    )
+    if m:
+        form_ev = m.group(1) + m.group(2) + m.group(3) + m.group(4) + m.group(5)
+        form_dep = m.group(6) + m.group(7) + m.group(8) + m.group(9) + m.group(10)
+        veri["form_str_ev"] = form_ev
+        veri["form_str_dep"] = form_dep
+        def _form_puan(s):
+            return sum(3 if c == "W" else 1 if c == "D" else 0 for c in s) / max(len(s), 1)
+        veri["ppg_ev"] = _form_puan(form_ev)
+        veri["mpg_dep"] = _form_puan(form_dep)
+
+    if veri.get("atilan_ev", 0) > 0 and veri.get("yenen_ev", 0) > 0:
+        veri["lig_ort_toplam"] = (veri.get("atilan_ev", 0) + veri.get("atilan_dep", 0) +
+                                  veri.get("yenen_ev", 0) + veri.get("yenen_dep", 0)) / 2
+
+    if veri.get("ust25_ev", 0) > 0 and veri.get("ust25_dep", 0) > 0:
+        veri["lig_ust25"] = (veri["ust25_ev"] + veri["ust25_dep"]) / 2
+
+    if veri.get("kg_siklik_ev", 0) > 0 and veri.get("kg_siklik_dep", 0) > 0:
+        veri["lig_kg"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
+
+    veri["format"] = "sportytrader"
+    return veri, okunamayanlar
+
+
+def metinden_veri_cikar(metin):
+    metin = metin.replace(",", ".")
+
+    if "Main Stats" in metin and "Goals scored per game" in metin:
+        veri, okunamayanlar = sportytrader_veri_cikar(metin)
+        if not veri.get("takim_ev"): okunamayanlar.append("Takım isimleri (Ev)")
+        if not veri.get("takim_dep"): okunamayanlar.append("Takım isimleri (Dep)")
+
+        # ✅ SAATİ +2 SAAT İLERİ KAYDIR (Türkiye saati)
+        if veri.get("saat"):
+            veri["saat"] = saat_2_saat_ileri(veri["saat"])
+
+        return veri, okunamayanlar
+
+    veri = {}; okunamayanlar = []
+    veri["format"] = "genel"
+    return veri, okunamayanlar
+
+
+# ==========================================
+# POISSON & LAMBDA
+# ==========================================
 def poisson_pmf(k, lam):
     if lam <= 0: return 1.0 if k == 0 else 0.0
     return (math.exp(-lam) * (lam ** k)) / math.factorial(k)
@@ -741,1631 +1471,1132 @@ def poisson_random(lam, rng=None):
         if p <= L: return k - 1
 
 
-def poisson_matris(lam_ev, lam_dep, mg=MAX_GOL):
-    return [[poisson_pmf(i, lam_ev) * poisson_pmf(j, lam_dep) for j in range(mg)] for i in range(mg)]
+def poisson_matris(lam_ev, lam_dep, max_gol=MAX_GOL):
+    return [[poisson_pmf(i, lam_ev) * poisson_pmf(j, lam_dep) for j in range(max_gol)] for i in range(max_gol)]
 
 
 def hesapla_lambda(v):
-    ae = v.get("atilan_ev", 0.0); ye = v.get("yenen_ev", 0.0)
-    ad = v.get("atilan_dep", 0.0); yd = v.get("yenen_dep", 0.0)
-    xge = v.get("xg_ev", 0.0); xgd = v.get("xg_dep", 0.0)
-    he = (xge * 0.60 + ae * 0.40) if xge > 0 else (ae if ae > 0 else 1.2)
-    hd = (xgd * 0.60 + ad * 0.40) if xgd > 0 else (ad if ad > 0 else 1.0)
-    tse = v.get("team_scored_ev", 0); tsd = v.get("team_scored_dep", 0)
-    if tse > 0: he *= clamp(tse / 60, 0.7, 1.3)
-    if tsd > 0: hd *= clamp(tsd / 60, 0.7, 1.3)
-    sd = yd if yd > 0 else 1.2; se = ye if ye > 0 else 1.0
-    cse = v.get("clean_sheets_ev", 0.0); csd = v.get("clean_sheets_dep", 0.0)
-    def cf(cs):
-        if cs <= 0: return 1.0
-        if cs < 40.0: return 1.0 - (cs / 250.0)
-        return max(0.40, 0.84 - (cs - 40.0) * (0.44 / 60.0))
-    df = cf(cse); ef = cf(csd)
-    le = he * 0.60 + sd * 0.40; ld = hd * 0.60 + se * 0.40
-    u25e = v.get("ust25_ev", 0); u25d = v.get("ust25_dep", 0)
-    if u25e > 0: le *= clamp(u25e / 50, 0.85, 1.15)
-    if u25d > 0: ld *= clamp(u25d / 50, 0.85, 1.15)
-    kge = v.get("kg_siklik_ev", 0); kgd = v.get("kg_siklik_dep", 0)
-    if kge > 0 and kgd > 0:
-        ko = (kge + kgd) / 2
-        if ko >= 60: le *= 1.05; ld *= 1.05
-        elif ko <= 35: le *= 0.95; ld *= 0.95
-    fe = clamp(1 + (v.get("ppg_ev", 1.5) - 1.5) / 15, 0.85, 1.15)
-    fd = clamp(1 + (v.get("mpg_dep", 1.5) - 1.5) / 15, 0.85, 1.15)
-    se_s = v.get("siralama_ev", 10); sd_s = v.get("siralama_dep", 10)
-    dom = 1.20 if (1 <= se_s <= 5 and sd_s >= 10) else 1.0
-    ge = v.get("galibiyet_ev", 0); gd = v.get("galibiyet_dep", 0)
-    if ge > 0 and gd > 0:
-        if ge - gd >= 25: le *= 1.08; ld *= 0.95
-        elif gd - ge >= 25: le *= 0.95; ld *= 1.08
-    le = le * 1.05 * fe * ef * dom; ld = ld * 0.95 * fd * df
-    if le > 2.50: le = 2.50 + (le - 2.50) * 0.5
-    if ld > 2.50: ld = 2.50 + (ld - 2.50) * 0.5
-    return clamp(le, 0.05, 4.5), clamp(ld, 0.05, 4.5), 0.80
+    atilan_e = v.get("atilan_ev", 0.0)
+    yenen_e = v.get("yenen_ev", 0.0)
+    atilan_d = v.get("atilan_dep", 0.0)
+    yenen_d = v.get("yenen_dep", 0.0)
+
+    xg_e = v.get("xg_ev", 0.0)
+    xg_d = v.get("xg_dep", 0.0)
+
+    if xg_e > 0:
+        hucum_ev_baz = (xg_e * 0.60) + (atilan_e * 0.40)
+    else:
+        hucum_ev_baz = atilan_e if atilan_e > 0 else 1.2
+
+    if xg_d > 0:
+        hucum_dep_baz = (xg_d * 0.60) + (atilan_d * 0.40)
+    else:
+        hucum_dep_baz = atilan_d if atilan_d > 0 else 1.0
+
+    ts_ev = v.get("team_scored_ev", 0)
+    ts_dep = v.get("team_scored_dep", 0)
+    if ts_ev > 0:
+        hucum_ev_baz *= clamp(ts_ev / 60, 0.7, 1.3)
+    if ts_dep > 0:
+        hucum_dep_baz *= clamp(ts_dep / 60, 0.7, 1.3)
+
+    savunma_dep_zaaf = yenen_d if yenen_d > 0 else 1.2
+    savunma_ev_zaaf = yenen_e if yenen_e > 0 else 1.0
+
+    cs_ev = v.get("clean_sheets_ev", 0.0)
+    cs_dep = v.get("clean_sheets_dep", 0.0)
+
+    def clean_sheet_freni(cs_orani):
+        if cs_orani <= 0:
+            return 1.0
+        if cs_orani < 40.0:
+            return 1.0 - (cs_orani / 250.0)
+        return max(0.40, 0.84 - (cs_orani - 40.0) * (0.44 / 60.0))
+
+    dep_freni = clean_sheet_freni(cs_ev)
+    ev_freni = clean_sheet_freni(cs_dep)
+
+    lam_ev_ham = (hucum_ev_baz * 0.60) + (savunma_dep_zaaf * 0.40)
+    lam_dep_ham = (hucum_dep_baz * 0.60) + (savunma_ev_zaaf * 0.40)
+
+    ust25_e = v.get("ust25_ev", 0)
+    ust25_d = v.get("ust25_dep", 0)
+    if ust25_e > 0:
+        lam_ev_ham *= clamp(ust25_e / 50, 0.85, 1.15)
+    if ust25_d > 0:
+        lam_dep_ham *= clamp(ust25_d / 50, 0.85, 1.15)
+
+    kg_e = v.get("kg_siklik_ev", 0)
+    kg_d = v.get("kg_siklik_dep", 0)
+    if kg_e > 0 and kg_d > 0:
+        kg_ort = (kg_e + kg_d) / 2
+        if kg_ort >= 60:
+            lam_ev_ham *= 1.05
+            lam_dep_ham *= 1.05
+        elif kg_ort <= 35:
+            lam_ev_ham *= 0.95
+            lam_dep_ham *= 0.95
+
+    EV_ETKISI = 1.05
+    DEP_ETKISI = 0.95
+
+    form_ev = clamp(1 + (v.get("ppg_ev", 1.5) - 1.5) / 15, 0.85, 1.15)
+    form_dep = clamp(1 + (v.get("mpg_dep", 1.5) - 1.5) / 15, 0.85, 1.15)
+
+    sira_e = v.get("siralama_ev", 10)
+    sira_d = v.get("siralama_dep", 10)
+    dominasyon_bonus_ev = 1.0
+    if 1 <= sira_e <= 5 and sira_d >= 10:
+        dominasyon_bonus_ev = 1.20
+
+    gal_ev = v.get("galibiyet_ev", 0)
+    gal_dep = v.get("galibiyet_dep", 0)
+    if gal_ev > 0 and gal_dep > 0:
+        if gal_ev - gal_dep >= 25:
+            lam_ev_ham *= 1.08
+            lam_dep_ham *= 0.95
+        elif gal_dep - gal_ev >= 25:
+            lam_ev_ham *= 0.95
+            lam_dep_ham *= 1.08
+
+    wht_wft = v.get("wht_wft_ev", 0)
+    lht_lft = v.get("lht_lft_ev", 0)
+    if wht_wft >= 25:
+        lam_ev_ham *= 1.05
+    if lht_lft >= 25:
+        lam_dep_ham *= 1.05
+
+    lam_ev = lam_ev_ham * EV_ETKISI * form_ev * ev_freni * dominasyon_bonus_ev
+    lam_dep = lam_dep_ham * DEP_ETKISI * form_dep * dep_freni
+
+    if lam_ev > 2.50: lam_ev = 2.50 + (lam_ev - 2.50) * 0.5
+    if lam_dep > 2.50: lam_dep = 2.50 + (lam_dep - 2.50) * 0.5
+
+    lam_ev = clamp(lam_ev, 0.05, 4.5)
+    lam_dep = clamp(lam_dep, 0.05, 4.5)
+
+    guven = 0.80
+    return lam_ev, lam_dep, guven
 
 
-def matristen_olasilik(matris, mg=MAX_GOL):
-    p1 = px = p2 = u05 = u15 = u25 = u35 = kg = 0.0; sk = {}; tot = 0.0
-    for i in range(mg):
-        for j in range(mg):
-            p = matris[i][j]; tot += p
+def matristen_olasilik(matris, max_gol=MAX_GOL):
+    p1 = px = p2 = 0.0
+    ust_05 = ust_15 = ust_25 = ust_35 = 0.0
+    kg_var = 0.0; skorlar = {}; toplam = 0.0
+    for i in range(max_gol):
+        for j in range(max_gol):
+            p = matris[i][j]; toplam += p
             if i > j: p1 += p
             elif i == j: px += p
             else: p2 += p
             tg = i + j
-            if tg > 0.5: u05 += p
-            if tg > 1.5: u15 += p
-            if tg > 2.5: u25 += p
-            if tg > 3.5: u35 += p
-            if i > 0 and j > 0: kg += p
-            sk[f"{i}-{j}"] = p
-    return {"1": p1, "X": px, "2": p2, "ust_05": u05, "ust_15": u15, "ust_25": u25, "ust_35": u35, "kg_var": kg, "skorlar": sk, "toplam": tot}
+            if tg > 0.5: ust_05 += p
+            if tg > 1.5: ust_15 += p
+            if tg > 2.5: ust_25 += p
+            if tg > 3.5: ust_35 += p
+            if i > 0 and j > 0: kg_var += p
+            skorlar[f"{i}-{j}"] = p
+    return {"1": p1, "X": px, "2": p2, "ust_05": ust_05, "ust_15": ust_15,
+            "ust_25": ust_25, "ust_35": ust_35, "kg_var": kg_var, "skorlar": skorlar, "toplam": toplam}
 
 
 def veri_yeterli_mi(v):
-    o = [v.get("atilan_ev", 0), v.get("atilan_dep", 0), v.get("yenen_ev", 0), v.get("yenen_dep", 0)]
-    return sum(1 for x in o if x > 0) >= 2
+    onemli = [v.get("atilan_ev", 0), v.get("atilan_dep", 0), v.get("yenen_ev", 0), v.get("yenen_dep", 0)]
+    return sum(1 for x in onemli if x > 0) >= 2
 
 
-def mac_ici_sok(le, ld, rng=None):
+def mac_ici_sok(lam_ev, lam_dep, rng=None):
     r = rng if rng is not None else random
     if r.random() < 0.03:
-        if r.random() < 0.5: le *= 0.70
-        else: ld *= 0.70
-    return le, ld
+        if r.random() < 0.5: lam_ev *= 0.70
+        else: lam_dep *= 0.70
+    return lam_ev, lam_dep
 
 
-def monte_carlo_simulasyon(leb, ldb, n=MONTE_CARLO_N):
-    seed = int(round(leb * 1_000_000)) * 1_000_003 + int(round(ldb * 1_000_000))
+def monte_carlo_simulasyon(lam_ev_base, lam_dep_base, n=MONTE_CARLO_N):
+    seed = int(round(lam_ev_base * 1_000_000)) * 1_000_003 + int(round(lam_dep_base * 1_000_000))
     rng = random.Random(seed)
-    s = {"1": 0, "X": 0, "2": 0, "u25": 0, "kg": 0}
+
+    sayac = {"1": 0, "X": 0, "2": 0, "ust25": 0, "kg_var": 0}
     for _ in range(n):
-        le = leb * rng.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
-        ld = ldb * rng.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
-        le, ld = mac_ici_sok(le, ld, rng)
-        eg = min(MAX_GOL - 1, poisson_random(le, rng))
-        dg = min(MAX_GOL - 1, poisson_random(ld, rng))
-        if eg > dg: s["1"] += 1
-        elif eg == dg: s["X"] += 1
-        else: s["2"] += 1
-        if eg + dg > 2.5: s["u25"] += 1
-        if eg > 0 and dg > 0: s["kg"] += 1
-    def yz(x): return x / n * 100 if n > 0 else 0
-    return {"p1": yz(s["1"]), "px": yz(s["X"]), "p2": yz(s["2"]), "ust25": yz(s["u25"]), "alt25": 100 - yz(s["u25"]), "kg_var": yz(s["kg"]), "kg_yok": 100 - yz(s["kg"]), "n": n}
+        sapma_ev = rng.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
+        sapma_dep = rng.uniform(1 - BELIRSIZLIK, 1 + BELIRSIZLIK)
+        lam_ev = lam_ev_base * sapma_ev
+        lam_dep = lam_dep_base * sapma_dep
+        lam_ev, lam_dep = mac_ici_sok(lam_ev, lam_dep, rng)
+        ev_gol = min(MAX_GOL - 1, poisson_random(lam_ev, rng))
+        dep_gol = min(MAX_GOL - 1, poisson_random(lam_dep, rng))
+        if ev_gol > dep_gol: sayac["1"] += 1
+        elif ev_gol == dep_gol: sayac["X"] += 1
+        else: sayac["2"] += 1
+        if ev_gol + dep_gol > 2.5: sayac["ust25"] += 1
+        if ev_gol > 0 and dep_gol > 0: sayac["kg_var"] += 1
+
+    def yuzde(s): return s / n * 100 if n > 0 else 0
+    return {"p1": yuzde(sayac["1"]), "px": yuzde(sayac["X"]), "p2": yuzde(sayac["2"]),
+            "ust25": yuzde(sayac["ust25"]), "alt25": 100 - yuzde(sayac["ust25"]),
+            "kg_var": yuzde(sayac["kg_var"]), "kg_yok": 100 - yuzde(sayac["kg_var"]), "n": n}
 
 
+# ==========================================
+# ANALİZ HESAPLA
+# ==========================================
 def analiz_hesapla(v):
-    le, ld, gv = hesapla_lambda(v)
-    matris = poisson_matris(le, ld, MAX_GOL)
-    o = matristen_olasilik(matris, MAX_GOL)
-    tot = o["toplam"] or 1
-    p1p = o["1"] / tot * 100; pxp = o["X"] / tot * 100; p2p = o["2"] / tot * 100
-    u25p = o["ust_25"] / tot * 100; kgp = o["kg_var"] / tot * 100
-    mc = monte_carlo_simulasyon(le, ld, MONTE_CARLO_N)
-    lu = v.get("lig_ust25", 0.0); lk = v.get("lig_kg", 0.0)
-    p1 = p1p * 0.60 + mc["p1"] * 0.40
-    px = pxp * 0.60 + mc["px"] * 0.40
-    p2 = p2p * 0.60 + mc["p2"] * 0.40
-    ge = v.get("galibiyet_ev", 0); gd = v.get("galibiyet_dep", 0)
-    if ge > 0 and gd > 0:
-        p1 = p1 * 0.85 + ge * 0.15; p2 = p2 * 0.85 + gd * 0.15
-    be = v.get("beraberlik_ev", 0); bd = v.get("beraberlik_dep", 0)
-    if be > 0 and bd > 0: px = px * 0.85 + ((be + bd) / 2) * 0.15
+    lam_ev, lam_dep, guven = hesapla_lambda(v)
+    matris = poisson_matris(lam_ev, lam_dep, MAX_GOL)
+    olas = matristen_olasilik(matris, MAX_GOL)
+    toplam = olas["toplam"] or 1
+
+    p1_po = olas["1"] / toplam * 100
+    px_po = olas["X"] / toplam * 100
+    p2_po = olas["2"] / toplam * 100
+    ust25_po = olas["ust_25"] / toplam * 100
+    kg_var_po = olas["kg_var"] / toplam * 100
+
+    mc = monte_carlo_simulasyon(lam_ev, lam_dep, MONTE_CARLO_N)
+    p1_mc = mc["p1"]; px_mc = mc["px"]; p2_mc = mc["p2"]
+    ust25_mc = mc["ust25"]; kg_var_mc = mc["kg_var"]
+
+    lig_ust25 = v.get("lig_ust25", 0.0)
+    lig_kg = v.get("lig_kg", 0.0)
+
+    ust15_e = v.get("ust15_ev", 0); ust15_d = v.get("ust15_dep", 0)
+    ust35_e = v.get("ust35_ev", 0); ust35_d = v.get("ust35_dep", 0)
+    kg_sik_e = v.get("kg_siklik_ev", 0); kg_sik_d = v.get("kg_siklik_dep", 0)
+    btts_1h_e = v.get("btts_1h_ev", 0); btts_1h_d = v.get("btts_1h_dep", 0)
+    btts_2h_e = v.get("btts_2h_ev", 0); btts_2h_d = v.get("btts_2h_dep", 0)
+    tg_0_e = v.get("tg_0_ev", 0); tg_0_d = v.get("tg_0_dep", 0)
+    tg_1_e = v.get("tg_1_ev", 0); tg_1_d = v.get("tg_1_dep", 0)
+    tg_2_e = v.get("tg_2_ev", 0); tg_2_d = v.get("tg_2_dep", 0)
+    tg_3_e = v.get("tg_3_ev", 0); tg_3_d = v.get("tg_3_dep", 0)
+    tg_4_e = v.get("tg_4_ev", 0); tg_4_d = v.get("tg_4_dep", 0)
+    gal_e = v.get("galibiyet_ev", 0); gal_d = v.get("galibiyet_dep", 0)
+    ber_e = v.get("beraberlik_ev", 0); ber_d = v.get("beraberlik_dep", 0)
+
+    p1 = (p1_po * 0.60) + (p1_mc * 0.40)
+    px = (px_po * 0.60) + (px_mc * 0.40)
+    p2 = (p2_po * 0.60) + (p2_mc * 0.40)
+
+    if gal_e > 0 and gal_d > 0:
+        p1 = (p1 * 0.85) + (gal_e * 0.15)
+        p2 = (p2 * 0.85) + (gal_d * 0.15)
+    if ber_e > 0 and ber_d > 0:
+        ber_ort = (ber_e + ber_d) / 2
+        px = (px * 0.85) + (ber_ort * 0.15)
+
     t = p1 + px + p2
     if t > 0: p1, px, p2 = (p1 / t) * 100, (px / t) * 100, (p2 / t) * 100
-    u25 = u25p * 0.60 + lu * 0.10 + mc["ust25"] * 0.30 if lu > 0 else u25p * 0.65 + mc["ust25"] * 0.35
-    kgm = kgp * 0.40 + lk * 0.30 + mc["kg_var"] * 0.30 if lk > 0 else kgp * 0.60 + mc["kg_var"] * 0.40
-    kge = v.get("kg_siklik_ev", 0); kgd = v.get("kg_siklik_dep", 0)
-    if kge > 0 and kgd > 0: kgm = kgm * 0.85 + ((kge + kgd) / 2) * 0.15
-    tbg = le + ld
-    if tbg < 1.80:
-        bf = (1.80 - tbg) / 1.80
-        u25 = max(10.0, u25 * (1.0 - bf * 0.8))
-        kgm = max(15.0, kgm * (1.0 - bf * 0.9))
-    kgy = 100.0 - kgm; alt = 100.0 - u25
-    eo = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
-    eg = max([("1X", p1 + px), ("X2", p2 + px), ("12", p1 + p2)], key=lambda x: x[1])
-    return {"lam_ev": le, "lam_dep": ld, "guven": gv, "p1": p1, "px": px, "p2": p2, "ust_25": u25, "alt_25": alt, "kg_var_model": kgm, "kg_yok_model": kgy, "en_olasi": eo, "en_guvenli": eg, "en_olasi_gol": "Üst" if u25 > alt else "Alt", "en_olasi_kg": "Var" if kgm > kgy else "Yok"}
+
+    if lig_ust25 > 0:
+        ust_25 = (ust25_po * 0.60) + (lig_ust25 * 0.10) + (ust25_mc * 0.30)
+    else:
+        ust_25 = (ust25_po * 0.65) + (ust25_mc * 0.35)
+
+    if ust15_e > 0 and ust15_d > 0:
+        u15_ort = (ust15_e + ust15_d) / 2
+        if u15_ort >= 70:
+            ust_25 = (ust_25 * 0.90) + (u15_ort * 0.10)
+    if ust35_e > 0 and ust35_d > 0:
+        u35_ort = (ust35_e + ust35_d) / 2
+        if u35_ort >= 40:
+            ust_25 = (ust_25 * 0.92) + (u35_ort * 0.08)
+
+    tg_3p = ort_iki(
+        (tg_3_e + tg_4_e) if (tg_3_e > 0 or tg_4_e > 0) else 0,
+        (tg_3_d + tg_4_d) if (tg_3_d > 0 or tg_4_d > 0) else 0,
+    )
+    if tg_3p > 0:
+        ust_egilim = tg_3p
+        if ust_egilim >= 50:
+            ust_25 = (ust_25 * 0.93) + (ust_egilim * 0.07)
+
+    if lig_kg > 0:
+        kg_var_model = (kg_var_po * 0.40) + (lig_kg * 0.30) + (kg_var_mc * 0.30)
+    else:
+        kg_var_model = (kg_var_po * 0.60) + (kg_var_mc * 0.40)
+
+    if kg_sik_e > 0 and kg_sik_d > 0:
+        kg_ort = (kg_sik_e + kg_sik_d) / 2
+        kg_var_model = (kg_var_model * 0.85) + (kg_ort * 0.15)
+
+    if btts_1h_e > 0 and btts_1h_d > 0:
+        btts_1h_ort = (btts_1h_e + btts_1h_d) / 2
+        if btts_1h_ort >= 30:
+            kg_var_model = (kg_var_model * 0.95) + (btts_1h_ort * 0.05)
+
+    if btts_2h_e > 0 and btts_2h_d > 0:
+        btts_2h_ort = (btts_2h_e + btts_2h_d) / 2
+        if btts_2h_ort >= 30:
+            kg_var_model = (kg_var_model * 0.95) + (btts_2h_ort * 0.05)
+
+    tg_0_ort = ort_iki(tg_0_e, tg_0_d)
+    tg_1_ort = ort_iki(tg_1_e, tg_1_d)
+    if tg_0_ort >= 15 or tg_1_ort >= 15:
+        kg_yoklama = tg_0_ort + tg_1_ort
+        if kg_yoklama >= 30:
+            kg_var_model = (kg_var_model * 0.90) + ((100 - kg_yoklama) * 0.10)
+
+    toplam_beklenen_gol = lam_ev + lam_dep
+
+    if toplam_beklenen_gol < 1.80:
+        baski_faktoru = (1.80 - toplam_beklenen_gol) / 1.80
+        ust_25 = max(10.0, ust_25 * (1.0 - baski_faktoru * 0.8))
+        kg_var_model = max(15.0, kg_var_model * (1.0 - baski_faktoru * 0.9))
+
+    cs_ev = v.get("clean_sheets_ev", 0.0)
+    cs_dep = v.get("clean_sheets_dep", 0.0)
+
+    if cs_ev >= 50.0 and lam_dep < 1.0:
+        kg_var_model *= 0.80
+    if cs_dep >= 50.0 and lam_ev < 1.0:
+        kg_var_model *= 0.80
+
+    kg_yok_model = 100.0 - kg_var_model
+
+    if kg_yok_model > 68.0 and p1 > 55.0 and lam_ev >= 1.70:
+        ust_25 = min(68.0, ust_25 * 1.35)
+
+    alt_25 = 100.0 - ust_25
+
+    tahmini_gol = lam_ev + lam_dep
+    en_olasi = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
+    en_guvenli = max([("1X", p1+px), ("X2", p2+px), ("12", p1+p2)], key=lambda x: x[1])
+    en_olasi_gol = "Üst" if ust_25 > alt_25 else "Alt"
+    en_olasi_kg = "Var" if kg_var_model > kg_yok_model else "Yok"
+
+    return {
+        "lam_ev": lam_ev, "lam_dep": lam_dep, "guven": guven, "matris": matris, "olas": olas,
+        "p1": p1, "px": px, "p2": p2,
+        "cifte_1x": p1 + px, "cifte_x2": p2 + px, "cifte_12": p1 + p2,
+        "tahmini_gol": tahmini_gol, "ust_25": ust_25, "alt_25": alt_25,
+        "kg_var_model": kg_var_model, "kg_yok_model": kg_yok_model,
+        "en_olasi": en_olasi, "en_guvenli": en_guvenli,
+        "en_olasi_gol": en_olasi_gol, "en_olasi_kg": en_olasi_kg,
+        "p1_po": p1_po, "px_po": px_po, "p2_po": p2_po, "ust25_po": ust25_po, "kg_var_po": kg_var_po,
+        "p1_lig": 0, "px_lig": 0, "p2_lig": 0,
+        "ust25_lig": lig_ust25, "kg_var_lig": lig_kg,
+        "p1_mc": p1_mc, "px_mc": px_mc, "p2_mc": p2_mc, "ust25_mc": ust25_mc, "kg_var_mc": kg_var_mc,
+        "mc_n": mc["n"]
+    }
 
 
 def kayit_olustur(v, a):
-    return {"veri": copy.deepcopy(v), "analiz": {"p1": a["p1"], "px": a["px"], "p2": a["p2"], "tahmini_gol": a["lam_ev"] + a["lam_dep"], "kg_var_model": a["kg_var_model"], "ust_25": a["ust_25"], "en_olasi_1x2": a["en_olasi"][0], "en_guvenli_cifte": a["en_guvenli"][0], "en_olasi_gol": a["en_olasi_gol"], "en_olasi_kg": a["en_olasi_kg"]}}
+    return {"veri": copy.deepcopy(v), "analiz": {
+        "p1": a["p1"], "px": a["px"], "p2": a["p2"],
+        "tahmini_gol": a["tahmini_gol"], "kg_var_model": a["kg_var_model"], "ust_25": a["ust_25"],
+        "en_olasi_1x2": a["en_olasi"][0], "en_guvenli_cifte": a["en_guvenli"][0],
+        "en_olasi_gol": a["en_olasi_gol"], "en_olasi_kg": a["en_olasi_kg"]}}
 
 
 def sonuc_hesapla(kayit):
-    v = kayit["veri"]; a = kayit.get("analiz", {})
+    v = kayit["veri"]; analiz = kayit.get("analiz", {})
     if not v.get("skor_belli", False): return None
-    se = v.get("skor_ev", 0); sd = v.get("skor_dep", 0)
-    tg = se + sd; gu = tg > 2.5; gk = (se > 0 and sd > 0)
-    g1 = "1" if se > sd else ("X" if se == sd else "2")
-    u25 = a.get("ust_25", 50); alt = 100 - u25
-    kgv = a.get("kg_var_model", 50); kgy = 100 - kgv
-    p1a = a.get("p1", 33.33); pxa = a.get("px", 33.33); p2a = a.get("p2", 33.34)
-    s1, y1 = max([("1", p1a), ("X", pxa), ("2", p2a)], key=lambda x: x[1])
-    o1 = s1 if y1 >= esik_1x2_al(s1) else None
-    og = None
-    if u25 >= esik_al("ust") and u25 >= alt: og = "Üst"
-    elif alt >= esik_al("alt") and alt >= u25: og = "Alt"
-    okg = None
-    if kgv >= esik_al("kg_var") and kgv >= kgy: okg = "Var"
-    elif kgy >= esik_al("kg_yok") and kgy >= kgv: okg = "Yok"
-    def _t(o, g):
-        if o is None: return None, None
-        d = "tam" if o == g else "yanlis"; return d == "tam", d
-    t1, d1 = _t(o1, g1); tg_, dg_ = _t(og, "Üst" if gu else "Alt"); tk, dk = _t(okg, "Var" if gk else "Yok")
-    return {"oneri_1x2": {"tahmin": o1, "tuttu": t1, "durum": d1}, "oneri_gol": {"tahmin": og, "tuttu": tg_, "durum": dg_}, "oneri_kg": {"tahmin": okg, "tuttu": tk, "durum": dk}, "gercek_1x2": g1, "gercek_gol": "Üst" if gu else "Alt", "gercek_kg": "Var" if gk else "Yok"}
 
+    skor_ev = v.get("skor_ev", 0); skor_dep = v.get("skor_dep", 0)
+    toplam_gol = skor_ev + skor_dep
+    gercek_ust = toplam_gol > 2.5
+    gercek_kg_var = (skor_ev > 0 and skor_dep > 0)
 
-def oneri_istatistik_guncel(gecmis):
-    ist = {"1x2": {"tam": 0, "yakin": 0, "yanlis": 0}, "gol": {"tam": 0, "yakin": 0, "yanlis": 0}, "kg": {"tam": 0, "yakin": 0, "yanlis": 0}}
-    for g in gecmis:
-        try:
-            v = g["veri"]
-            if not v.get("skor_belli", False): continue
-            try: ya = yeniden_analiz(v)
-            except Exception: ya = g.get("analiz", {})
-            d = sonuc_hesapla({"veri": v, "analiz": ya})
-            if not d: continue
-            for key in ["oneri_1x2", "oneri_gol", "oneri_kg"]:
-                kisa = key.replace("oneri_", ""); durum = d[key].get("durum")
-                if durum == "tam": ist[kisa]["tam"] += 1
-                elif durum == "yanlis": ist[kisa]["yanlis"] += 1
-        except Exception: continue
-    return ist
+    if skor_ev > skor_dep: gercek_1x2 = "1"
+    elif skor_ev == skor_dep: gercek_1x2 = "X"
+    else: gercek_1x2 = "2"
 
+    ust_25 = analiz.get("ust_25", 50); alt_25 = 100 - ust_25
+    kg_var = analiz.get("kg_var_model", 50); kg_yok = 100 - kg_var
 
-def _form_ppg(s):
-    return sum(3 if c == "W" else 1 if c == "D" else 0 for c in s) / max(len(s), 1)
+    p1_a = analiz.get("p1", 33.33)
+    px_a = analiz.get("px", 33.33)
+    p2_a = analiz.get("p2", 33.34)
+    en_yuksek_1x2 = max([("1", p1_a), ("X", px_a), ("2", p2_a)], key=lambda x: x[1])
+    secim_1x2, yuzde_1x2 = en_yuksek_1x2
+    oneri_1x2 = None
+    if yuzde_1x2 >= esik_1x2_al(secim_1x2):
+        oneri_1x2 = secim_1x2
 
+    oneri_gol = None
+    if ust_25 >= esik_al("ust") and ust_25 >= alt_25: oneri_gol = "Üst"
+    elif alt_25 >= esik_al("alt") and alt_25 >= ust_25: oneri_gol = "Alt"
 
-def yeniden_analiz(v):
-    v2 = copy.deepcopy(v)
-    if v2.get("form_str_ev"): v2["ppg_ev"] = _form_ppg(v2["form_str_ev"])
-    if v2.get("form_str_dep"): v2["mpg_dep"] = _form_ppg(v2["form_str_dep"])
-    anahtar = json.dumps(v2, sort_keys=True, ensure_ascii=False)
-    if "bt_analiz_cache" not in st.session_state: st.session_state.bt_analiz_cache = {}
-    cache = st.session_state.bt_analiz_cache
-    if anahtar not in cache:
-        a = analiz_hesapla(v2)
-        cache[anahtar] = {"ust_25": a["ust_25"], "kg_var_model": a["kg_var_model"], "p1": a["p1"], "px": a["px"], "p2": a["p2"]}
-    return cache[anahtar]
+    oneri_kg = None
+    if kg_var >= esik_al("kg_var") and kg_var >= kg_yok: oneri_kg = "Var"
+    elif kg_yok >= esik_al("kg_yok") and kg_yok >= kg_var: oneri_kg = "Yok"
 
-
-def backtest_hesapla(gecmis, ms, me):
-    sonuc = {"1x2": {"dogru": 0, "yanlis": 0}, "kg_var": {"dogru": 0, "yanlis": 0}, "kg_yok": {"dogru": 0, "yanlis": 0}, "ust": {"dogru": 0, "yanlis": 0}, "alt": {"dogru": 0, "yanlis": 0}}
-    detaylar = []
-    for g in gecmis:
-        try:
-            v = g["veri"]; analiz = g.get("analiz", {})
-            if not v.get("skor_belli", False): continue
-            se = int(v.get("skor_ev", 0)); sd = int(v.get("skor_dep", 0))
-            tg = se + sd; gkv = (se > 0 and sd > 0); gust = tg > 2.5
-            g1 = "1" if se > sd else ("X" if se == sd else "2")
-            try:
-                ya = yeniden_analiz(v)
-                u25 = ya["ust_25"]; kgv = ya["kg_var_model"]
-                p1y = ya["p1"]; pxy = ya["px"]; p2y = ya["p2"]
-            except Exception:
-                u25 = analiz.get("ust_25", 50); kgv = analiz.get("kg_var_model", 50)
-                p1y = analiz.get("p1", 33.33); pxy = analiz.get("px", 33.33); p2y = analiz.get("p2", 33.34)
-            alt = 100 - u25; kgy = 100 - kgv
-            mk = {"takim_ev": v.get("takim_ev", "Ev"), "takim_dep": v.get("takim_dep", "Dep"), "skor": f"{se}-{sd}", "gercek_kg": "Var" if gkv else "Yok", "gercek_gol": "Üst" if gust else "Alt", "gercek_1x2": g1, "detaylar": []}
-            if ms.get("1x2", False):
-                s, y = max([("1", p1y), ("X", pxy), ("2", p2y)], key=lambda x: x[1])
-                ek = {"1": "esik_1", "X": "esik_x", "2": "esik_2"}[s]; esc = me.get(ek, 55.0)
-                if y >= esc:
-                    if s == g1: sonuc["1x2"]["dogru"] += 1; mk["detaylar"].append(f"1X2: {s} ✅")
-                    else: sonuc["1x2"]["yanlis"] += 1; mk["detaylar"].append(f"1X2: {s} ❌")
-            if ms.get("kg_var", False) and kgv >= me["kg_var"] and kgv >= kgy:
-                if gkv: sonuc["kg_var"]["dogru"] += 1; mk["detaylar"].append("KG Var ✅")
-                else: sonuc["kg_var"]["yanlis"] += 1; mk["detaylar"].append("KG Var ❌")
-            if ms.get("kg_yok", False) and kgy >= me["kg_yok"] and kgy >= kgv:
-                if not gkv: sonuc["kg_yok"]["dogru"] += 1; mk["detaylar"].append("KG Yok ✅")
-                else: sonuc["kg_yok"]["yanlis"] += 1; mk["detaylar"].append("KG Yok ❌")
-            if ms.get("ust", False) and u25 >= me["ust"] and u25 >= alt:
-                if gust: sonuc["ust"]["dogru"] += 1; mk["detaylar"].append("Üst ✅")
-                else: sonuc["ust"]["yanlis"] += 1; mk["detaylar"].append("Üst ❌")
-            if ms.get("alt", False) and alt >= me["alt"] and alt >= u25:
-                if not gust: sonuc["alt"]["dogru"] += 1; mk["detaylar"].append("Alt ✅")
-                else: sonuc["alt"]["yanlis"] += 1; mk["detaylar"].append("Alt ❌")
-            if mk["detaylar"]: detaylar.append(mk)
-        except Exception: continue
-    return sonuc, detaylar
-
-
-# ==========================================
-# METİN PARSER (Sportytrader)
-# ==========================================
-MANUEL_ALANLAR = {
-    "Sıralama": [("siralama_ev", "Ev Sıralaması", "int", 1), ("siralama_dep", "Dep Sıralaması", "int", 1)],
-    "Takım isimleri (Ev)": [("takim_ev", "Ev Takım Adı", "str", "")],
-    "Takım isimleri (Dep)": [("takim_dep", "Dep Takım Adı", "str", "")],
-    "PPG (Ev Form)": [("ppg_ev", "PPG (Ev)", "float", 0.0)],
-    "MPG (Dep Form)": [("mpg_dep", "MPG (Dep)", "float", 0.0)],
-    "xG": [("xg_ev", "xG (Ev)", "float", 0.0), ("xg_dep", "xG (Dep)", "float", 0.0)],
-    "Atılan Gol": [("atilan_ev", "Atılan Gol (Ev)", "float", 0.0), ("atilan_dep", "Atılan Gol (Dep)", "float", 0.0)],
-    "Yenen Gol": [("yenen_ev", "Yenen Gol (Ev)", "float", 0.0), ("yenen_dep", "Yenen Gol (Dep)", "float", 0.0)],
-}
-
-
-def _cift_tab(etiket, blok):
-    pattern = r'([\d.,]+)%?\s*\t\s*' + re.escape(etiket) + r'\s*\t\s*([\d.,]+)%?'
-    m = re.search(pattern, blok, re.IGNORECASE)
-    if m:
-        try: return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
-        except ValueError: pass
-    pattern2 = r'([\d.,]+)%?\s{1,4}' + re.escape(etiket) + r'\s{1,4}([\d.,]+)%?'
-    m = re.search(pattern2, blok, re.IGNORECASE)
-    if m:
-        try: return float(m.group(1).replace(",", ".")), float(m.group(2).replace(",", "."))
-        except ValueError: pass
-    return None, None
-
-
-def _sira_bul(metin, takim_adi):
-    if not takim_adi: return None, None
-    pattern = (r'(?:^|\n)\s*(\d{1,2})\s*\r?\n\s*' + re.escape(takim_adi) + r'\s*\r?\n\s*' + re.escape(takim_adi) + r'\s*\r?\n' r'\s*(\d+)\s*\t')
-    m = re.search(pattern, metin, re.MULTILINE)
-    if m:
-        try:
-            sira = int(m.group(1))
-            if 1 <= sira <= 30:
-                devam = metin[m.end()-1:]
-                m_puan = re.match(r'[\s\S]{0,80}?\r?\n\s*(\d{1,2})\s*\r?\n', devam)
-                puan = int(m_puan.group(1)) if m_puan else 0
-                return sira, puan
-        except (ValueError, AttributeError): pass
-    return None, None
-
-
-def sportytrader_veri_cikar(metin):
-    veri = {}; okunamayanlar = []
-    m = re.search(r'^([A-ZÇĞİÖŞÜ][\w\s\.\-]+?)\s*-\s*([A-ZÇĞİÖŞÜ][\w\s\.\-]+?)\s+Stats', metin, re.MULTILINE)
-    if m:
-        veri["takim_ev"] = m.group(1).strip(); veri["takim_dep"] = m.group(2).strip()
-    m = re.search(r'Time\s*\t\s*(\d{1,2}:\d{2})', metin)
-    if m: veri["saat"] = m.group(1).strip()
+    if oneri_1x2 is None: d_o1 = None
     else:
-        m = re.search(r'\d{1,2}\.\d{1,2}\.\d{2,4}\s+(\d{1,2}:\d{2})', metin)
-        if m: veri["saat"] = m.group(1).strip()
-    m = re.search(r'Date\s*\t\s*(\d{1,2}\.\d{1,2}\.\d{2,4})', metin)
-    if m: veri["tarih"] = m.group(1).strip()
+        d_o1 = "tam" if oneri_1x2 == gercek_1x2 else "yanlis"
+
+    if oneri_gol is None: d_og = None
     else:
-        m = re.search(r'(\d{1,2}\.\d{1,2}\.\d{2,4})\s+\d{1,2}:\d{2}', metin)
-        if m: veri["tarih"] = m.group(1).strip()
-    veri["ulke"] = _ulke_bul(metin)
-    m = re.search(r'FT\s*\r?\n\s*(\d+)\s*-\s*(\d+)', metin)
-    if m:
-        veri["skor_ev"] = int(m.group(1)); veri["skor_dep"] = int(m.group(2)); veri["skor_belli"] = True
-    else: veri["skor_belli"] = False
-    takim_ev = veri.get("takim_ev", ""); takim_dep = veri.get("takim_dep", "")
-    idx = metin.find("Main Stats")
-    if idx != -1:
-        blok = metin[idx:idx+1500]
-        v1, v2 = _cift_tab("Goals scored per game", blok)
-        if v1 is not None: veri["atilan_ev"] = v1; veri["atilan_dep"] = v2
-        v1, v2 = _cift_tab("Goals conceded per game", blok)
-        if v1 is not None: veri["yenen_ev"] = v1; veri["yenen_dep"] = v2
-        v1, v2 = _cift_tab("Clean sheets", blok)
-        if v1 is not None: veri["clean_sheets_ev"] = v1; veri["clean_sheets_dep"] = v2
-        v1, v2 = _cift_tab("Team scored", blok)
-        if v1 is not None: veri["team_scored_ev"] = v1; veri["team_scored_dep"] = v2
-    idx = metin.find("Win Draw Lose")
-    if idx != -1:
-        blok = metin[idx:idx+1500]
-        for etiket, key_ev, key_dep in [("Win", "galibiyet_ev", "galibiyet_dep"), ("Draw", "beraberlik_ev", "beraberlik_dep"), ("Lose", "maglubiyet_ev", "maglubiyet_dep")]:
-            pattern = r'(?:^|\n)\s*([\d.,]+)%\s*\t\s*' + etiket + r'\s*\t\s*([\d.,]+)%'
-            mm = re.search(pattern, blok, re.MULTILINE)
-            if mm:
-                try:
-                    veri[key_ev] = float(mm.group(1).replace(",", "."))
-                    veri[key_dep] = float(mm.group(2).replace(",", "."))
-                except ValueError: pass
-    idx = metin.find("Both Teams to Score")
-    if idx != -1:
-        blok = metin[idx:idx+1500]
-        m = re.search(r'(?:^|\n)\s*([\d.,]+)%\s*\t\s*Both Teams to Score\s*\t\s*([\d.,]+)%', blok, re.MULTILINE)
-        if m:
-            try:
-                veri["kg_siklik_ev"] = float(m.group(1).replace(",", "."))
-                veri["kg_siklik_dep"] = float(m.group(2).replace(",", "."))
-            except ValueError: pass
-    idx = metin.find("Over Under Goals")
-    if idx != -1:
-        blok = metin[idx:idx+1500]
-        v1, v2 = _cift_tab("Over 1.5 goals", blok)
-        if v1 is not None: veri["ust15_ev"] = v1; veri["ust15_dep"] = v2
-        v1, v2 = _cift_tab("Over 2.5 goals", blok)
-        if v1 is not None: veri["ust25_ev"] = v1; veri["ust25_dep"] = v2
-        v1, v2 = _cift_tab("Over 3.5 goals", blok)
-        if v1 is not None: veri["ust35_ev"] = v1; veri["ust35_dep"] = v2
-    if takim_ev:
-        s, p = _sira_bul(metin, takim_ev)
-        if s is not None: veri["siralama_ev"] = s
-    if takim_dep:
-        s, p = _sira_bul(metin, takim_dep)
-        if s is not None: veri["siralama_dep"] = s
-    if veri.get("siralama_ev", 0) == 0: okunamayanlar.append("Sıralama (Ev)")
-    if veri.get("siralama_dep", 0) == 0: okunamayanlar.append("Sıralama (Dep)")
-    if veri.get("atilan_ev", 0) > 0 and veri.get("yenen_ev", 0) > 0:
-        veri["lig_ort_toplam"] = (veri.get("atilan_ev", 0) + veri.get("atilan_dep", 0) + veri.get("yenen_ev", 0) + veri.get("yenen_dep", 0)) / 2
-    if veri.get("ust25_ev", 0) > 0 and veri.get("ust25_dep", 0) > 0:
-        veri["lig_ust25"] = (veri["ust25_ev"] + veri["ust25_dep"]) / 2
-    if veri.get("kg_siklik_ev", 0) > 0 and veri.get("kg_siklik_dep", 0) > 0:
-        veri["lig_kg"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
+        gy = "Üst" if gercek_ust else "Alt"
+        d_og = "tam" if oneri_gol == gy else "yanlis"
 
-    try:
-        m_form = re.search(
-            r'(?:^|\n)\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*Form\b[\s\S]{0,20}?\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])',
-            metin, re.MULTILINE
-        )
-        if m_form:
-            veri["form_str_ev"] = "".join(m_form.group(i) for i in range(1, 6))
-            veri["form_str_dep"] = "".join(m_form.group(i) for i in range(6, 11))
-    except Exception:
-        pass
-
-    try:
-        for taraf_k, taraf in [("trends_ev", takim_ev), ("trends_dep", takim_dep)]:
-            if not taraf:
-                continue
-            idx_t = metin.find(f"{taraf} Trends")
-            if idx_t == -1:
-                idx_t = metin.find(f"{taraf} trends")
-            if idx_t != -1:
-                blok_t = metin[idx_t:idx_t + 900]
-                cumleler = re.findall(r'([A-Z][a-zA-Z\s]+?[^\n\.]{5,180}\.)', blok_t)
-                temiz = []
-                for c in cumleler:
-                    c = c.strip()
-                    if not c: continue
-                    if "trends last games" in c.lower(): continue
-                    if taraf.lower() not in c.lower(): continue
-                    temiz.append(c)
-                if temiz:
-                    veri[taraf_k] = temiz[:5]
-    except Exception:
-        pass
-
-    veri["format"] = "sportytrader"
-    return veri, okunamayanlar
-
-
-def metinden_veri_cikar(metin):
-    metin = metin.replace(",", ".")
-    if "Main Stats" in metin and "Goals scored per game" in metin:
-        veri, okunamayanlar = sportytrader_veri_cikar(metin)
-        if not veri.get("takim_ev"): okunamayanlar.append("Takım isimleri (Ev)")
-        if not veri.get("takim_dep"): okunamayanlar.append("Takım isimleri (Dep)")
-        if veri.get("saat"): veri["saat"] = saat_2_saat_ileri(veri["saat"])
-        return veri, okunamayanlar
-    veri = {}; okunamayanlar = []
-    veri["format"] = "genel"
-    return veri, okunamayanlar
-    # ==========================================
-# VERİ ÇEKME MOTORU
-# ==========================================
-UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
-
-TARAYICI_ESZAMANLI = int(os.environ.get("TARAYICI_ESZAMANLI", "3"))
-_TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
-
-
-def _js_tikla_kodu(mac_sec):
-    return """
-    (function() {
-        var macSayi = "%s";
-        function ok(el) { return el.children.length <= 1 && !el.closest('table'); }
-        function tikla(el) {
-            try { el.click(); } catch(e) {}
-            var inp = el.querySelector('input[type=radio], input[type=checkbox]');
-            if (inp && !inp.checked) { try { inp.click(); } catch(e) {} }
-        }
-        var tum = document.querySelectorAll('label, span, div, button, a, li');
-        var homes = [], aways = [];
-        for (var i = 0; i < tum.length; i++) {
-            var t = (tum[i].textContent || '').trim();
-            if (!ok(tum[i])) continue;
-            if (t === macSayi) tikla(tum[i]);
-            else if (t === 'Home') homes.push(tum[i]);
-            else if (t === 'Away') aways.push(tum[i]);
-        }
-        if (homes.length) tikla(homes[0]);
-        if (aways.length) tikla(aways[aways.length - 1]);
-        return true;
-    })()
-    """ % mac_sec
-
-
-def _son_n_oku(metin):
-    m = re.search(r'Last\s+(\d+)\s+games', metin or "")
-    return int(m.group(1)) if m else None
-
-
-def _playwright_html(url, mac_sec, timeout, dogrula=False):
-    from playwright.sync_api import sync_playwright
-    js_kod = _js_tikla_kodu(mac_sec)
-    hedef = int(mac_sec) if str(mac_sec).isdigit() else None
-    with _TARAYICI_SEM:
-        with sync_playwright() as p:
-            b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
-            try:
-                ctx = b.new_context(user_agent=UA, locale="en-US")
-                pg = ctx.new_page()
-                pg.route("**/*", lambda route: route.abort()
-                         if route.request.resource_type in ("image", "media", "font")
-                         else route.continue_())
-                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-                try:
-                    pg.wait_for_load_state("networkidle", timeout=15000)
-                except Exception:
-                    pass
-                pg.wait_for_timeout(3000)
-                pg.evaluate(js_kod)
-                pg.wait_for_timeout(3500)
-
-                if dogrula and hedef:
-                    n = _son_n_oku(pg.inner_text("body"))
-                    if n is not None and n != hedef:
-                        try:
-                            for el in pg.get_by_text(str(hedef), exact=True).all()[:20]:
-                                try:
-                                    if el.evaluate("e => !!e.closest('table')"):
-                                        continue
-                                    el.click(timeout=1500)
-                                except Exception:
-                                    pass
-                            pg.wait_for_timeout(1500)
-                            pg.evaluate(js_kod)
-                            pg.wait_for_timeout(3000)
-                        except Exception:
-                            pass
-                        n = _son_n_oku(pg.inner_text("body"))
-                    if n is not None and n != hedef:
-                        raise RuntimeError(f"{hedef} maç filtresi uygulanamadı (sayfa: Last {n} games)")
-                return pg.content()
-            finally:
-                try: b.close()
-                except Exception: pass
-
-
-def _playwright_skor_cek(url, timeout=25):
-    """Sadece FT skoru okumak için minimal tarayıcı çekimi. Filtre yapmaz, hızlıdır."""
-    from playwright.sync_api import sync_playwright
-    with _TARAYICI_SEM:
-        with sync_playwright() as p:
-            b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
-            try:
-                ctx = b.new_context(user_agent=UA, locale="en-US")
-                pg = ctx.new_page()
-                pg.route("**/*", lambda route: route.abort()
-                         if route.request.resource_type in ("image", "media", "font", "stylesheet")
-                         else route.continue_())
-                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-                pg.wait_for_timeout(2000)
-                return pg.content()
-            finally:
-                try: b.close()
-                except Exception: pass
-
-
-def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3, dogrula=False):
-    son_hata = None
-
-    try:
-        import playwright  # noqa: F401
-        playwright_var = True
-    except ImportError:
-        playwright_var = False
-        son_hata = "playwright kurulu değil"
-
-    if playwright_var:
-        for deneme in range(max_retry):
-            try:
-                html = _playwright_html(url, mac_sec, timeout, dogrula)
-                if html and len(html) > 500:
-                    return html, None
-                son_hata = "Boş sayfa"
-            except Exception as e:
-                son_hata = f"Tarayıcı hatası: {str(e)[:150]}"
-            if deneme < max_retry - 1:
-                time.sleep(2 + deneme * 2)
-
-    if dogrula:
-        return None, son_hata or "Filtre uygulanamadı"
-    try:
-        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
-        if r.status_code == 200 and r.text:
-            return r.text, None
-        son_hata = f"HTTP {r.status_code}" + (f" | {son_hata}" if son_hata else "")
-    except Exception as e:
-        son_hata = f"Bağlantı hatası: {str(e)[:100]}" + (f" | {son_hata}" if son_hata else "")
-
-    return None, son_hata or "Sayfa alınamadı."
-
-
-def _html_metne_cevir(html):
-    soup = BeautifulSoup(html, "html.parser")
-    for tag in soup(["script", "style", "noscript", "svg", "iframe"]): tag.decompose()
-    for td in soup.find_all(["td", "th"]): td.insert_after("\t")
-    for tr in soup.find_all("tr"): tr.insert_after("\n")
-    for e in soup.find_all(["div", "p", "li", "h1", "h2", "h3", "h4", "br"]): e.insert_after("\n")
-    metin = soup.get_text(separator="", strip=False)
-    metin = re.sub(r'[ \t]+\n', '\n', metin)
-    metin = re.sub(r'\n{3,}', '\n\n', metin)
-    return metin
-
-
-def mutating_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI):
-    html, hata = _scrapingbee_get("https://www.mutating.com/football-stats/", render_js=True)
-    if hata: return [], [hata]
-    if not html: return [], ["Ana sayfa indirilemedi."]
-    soup = BeautifulSoup(html, "html.parser")
-    maclar = []; gorulen = set()
-    for link in soup.find_all("a", href=True):
-        if len(maclar) >= max_mac: break
-        href = link.get("href", "")
-        if not any(x in href for x in ["match-preview", "match/", "/stats/"]): continue
-        if href.startswith("/"): href = "https://www.mutating.com" + href
-        elif not href.startswith("http"): continue
-        if href in gorulen: continue
-        gorulen.add(href)
-        h2_list = link.find_all("h2")
-        takim_ev = h2_list[0].get_text(strip=True) if len(h2_list) > 0 else ""
-        takim_dep = h2_list[1].get_text(strip=True) if len(h2_list) > 1 else ""
-        saat_el = link.find(class_=re.compile(r"nostart|time|match-time"))
-        saat = saat_el.get_text(strip=True) if saat_el else ""
-        maclar.append({"url": href, "takim_ev": takim_ev, "takim_dep": takim_dep, "saat": saat})
-    return maclar, []
-
-
-def mutating_mac_detay_cek(url):
-    html, hata = _scrapingbee_get(url, render_js=True, mac_sec="5", dogrula=True)
-    if hata: return None, [hata]
-    if not html: return None, ["Sayfa indirilemedi."]
-    return _mac_html_parse(html, url)
-
-
-def _mac_html_parse(html, url=""):
-    soup = BeautifulSoup(html, "html.parser")
-    veri = {}; okunamayanlar = []
-    h1 = soup.find("h1")
-    if h1:
-        baslik = h1.get_text(strip=True)
-        if " - " in baslik:
-            p = baslik.replace(" Stats", "").replace(" stats", "").split(" - ")
-            veri["takim_ev"] = p[0].strip()
-            if len(p) > 1: veri["takim_dep"] = p[1].strip()
-    metin = _html_metne_cevir(html)
-    veri["son_n"] = _son_n_oku(metin)
-    m = re.search(r'(\d{1,2}\.\d{1,2}\.\d{4})', metin)
-    if m: veri["tarih"] = m.group(1)
-    m = re.search(r'(\d{1,2}:\d{2})', metin)
-    if m: veri["saat"] = m.group(1)
-    veri["ulke"] = _ulke_bul(metin)
-
-    skor_ev = skor_dep = None
-    m = re.search(r'FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
-    if m:
-        skor_ev = int(m.group(1)); skor_dep = int(m.group(2))
-    if skor_ev is not None:
-        veri["skor_ev"] = skor_ev; veri["skor_dep"] = skor_dep; veri["skor_belli"] = True
+    if oneri_kg is None: d_ok = None
     else:
-        veri["skor_belli"] = False
+        gy = "Var" if gercek_kg_var else "Yok"
+        d_ok = "tam" if oneri_kg == gy else "yanlis"
 
-    def _cift(label):
-        for pat in [
-            r'([\d.,]+)\s*%?\s*\t\s*' + re.escape(label) + r'\s*\t\s*([\d.,]+)',
-            r'([\d.,]+)\s*%?\s*\|\s*' + re.escape(label) + r'\s*\|\s*([\d.,]+)',
-            r'([\d.,]+)\s*%?\s+' + re.escape(label) + r'\s+([\d.,]+)\s*%?',
-            r'([\d.,]+)\s*%?\s*\n\s*' + re.escape(label) + r'\s*\n\s*([\d.,]+)',
-        ]:
-            mm = re.search(pat, metin, re.IGNORECASE)
-            if mm:
-                try: return float(mm.group(1).replace(",", ".")), float(mm.group(2).replace(",", "."))
-                except ValueError: continue
-        return None, None
+    def _t(d): return None if d is None else (d == "tam")
 
-    for label, k_ev, k_dep in [
-        ("Goals scored per game", "atilan_ev", "atilan_dep"),
-        ("Goals conceded per game", "yenen_ev", "yenen_dep"),
-        ("Clean sheets", "clean_sheets_ev", "clean_sheets_dep"),
-        ("Team scored", "team_scored_ev", "team_scored_dep"),
-        ("Both Teams to Score", "kg_siklik_ev", "kg_siklik_dep"),
-        ("Over 2.5 goals", "ust25_ev", "ust25_dep"),
-        ("Over 1.5 goals", "ust15_ev", "ust15_dep"),
-        ("Over 3.5 goals", "ust35_ev", "ust35_dep"),
-    ]:
-        a, b = _cift(label)
-        if a is not None and veri.get(k_ev, 0) == 0:
-            veri[k_ev] = a; veri[k_dep] = b
-
-    for label, k_ev, k_dep in [("Win", "galibiyet_ev", "galibiyet_dep"), ("Draw", "beraberlik_ev", "beraberlik_dep"), ("Lose", "maglubiyet_ev", "maglubiyet_dep")]:
-        mm = re.search(r'([\d.,]+)\s*%\s*\t\s*' + label + r'\s*\t\s*([\d.,]+)\s*%', metin, re.MULTILINE)
-        if mm:
-            try:
-                veri[k_ev] = float(mm.group(1).replace(",", "."))
-                veri[k_dep] = float(mm.group(2).replace(",", "."))
-            except ValueError: pass
-
-    if veri.get("atilan_ev", 0) > 0 and veri.get("yenen_ev", 0) > 0:
-        veri["lig_ort_toplam"] = (veri.get("atilan_ev", 0) + veri.get("atilan_dep", 0) + veri.get("yenen_ev", 0) + veri.get("yenen_dep", 0)) / 2
-    if veri.get("ust25_ev", 0) > 0 and veri.get("ust25_dep", 0) > 0:
-        veri["lig_ust25"] = (veri["ust25_ev"] + veri["ust25_dep"]) / 2
-    if veri.get("kg_siklik_ev", 0) > 0 and veri.get("kg_siklik_dep", 0) > 0:
-        veri["lig_kg"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
-
-    veri["format"] = "mutating"
-    if url: veri["kaynak_url"] = url
-    if not veri.get("takim_ev"): okunamayanlar.append("Takım isimleri (Ev)")
-    if not veri.get("takim_dep"): okunamayanlar.append("Takım isimleri (Dep)")
-    if veri.get("atilan_ev", 0) == 0: okunamayanlar.append("Atılan Gol (Ev)")
-    if veri.get("yenen_ev", 0) == 0: okunamayanlar.append("Yenen Gol (Ev)")
-    return veri, okunamayanlar
-
-
-def _mac_tahmin_var_mi(v):
-    try:
-        a = analiz_hesapla(v)
-        s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
-        if y1 >= esik_1x2_al(s1): return True
-        if a["ust_25"] >= esik_al("ust") and a["ust_25"] >= a["alt_25"]: return True
-        if a["alt_25"] >= esik_al("alt") and a["alt_25"] >= a["ust_25"]: return True
-        if a["kg_var_model"] >= esik_al("kg_var") and a["kg_var_model"] >= a["kg_yok_model"]: return True
-        if a["kg_yok_model"] >= esik_al("kg_yok") and a["kg_yok_model"] >= a["kg_var_model"]: return True
-        return False
-    except Exception:
-        return False
-
-
-def _gelecek_mac_isle(mac, mevcut_urls):
-    try:
-        veri, _ = mutating_mac_detay_cek(mac["url"])
-        if not veri:
-            return ("hata", mac, "Veri çekilemedi")
-        if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
-        if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
-        if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
-        veri["kaynak_url"] = mac["url"]
-        if mac["url"] in mevcut_urls:
-            return ("atlandi", veri, "Zaten var")
-        if _mac_tahmin_var_mi(veri):
-            kayit = kayit_olustur(veri, analiz_hesapla(veri))
-            with _kilit:
-                st.session_state.gelecek_analizler.append(kayit)
-                gelecek_kaydet(st.session_state.gelecek_analizler)
-            return ("eklendi", veri, "Gelecek'e eklendi")
-        return ("atlandi", veri, "Tahmin yok")
-    except Exception as e:
-        return ("hata", mac, str(e))
-
-
-def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_workers=2):
-    maclar, hatalar = mutating_ana_sayfa_linklerini_al(max_mac=max_mac)
-    if hatalar: return [], hatalar
-    if not maclar: return [], ["Ana sayfada maç linki bulunamadı."]
-
-    mevcut_urls = set()
-    for g in st.session_state.gelecek_analizler:
-        u = g.get("veri", {}).get("kaynak_url", "")
-        if u: mevcut_urls.add(u)
-
-    basarili = []; hatali = []
-    eklenen = 0; atlanan = 0; tamamlanan = 0
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(_gelecek_mac_isle, m, mevcut_urls): m for m in maclar}
-        for fut in as_completed(futures):
-            tamamlanan += 1
-            mac = futures[fut]
-            try:
-                sonuc, veri, mesaj = fut.result()
-                if sonuc == "eklendi":
-                    eklenen += 1; basarili.append(veri)
-                elif sonuc == "atlandi":
-                    atlanan += 1; basarili.append(veri)
-                else:
-                    hatali.append(f"{mac.get('takim_ev','?')}: {mesaj}")
-            except Exception as e:
-                hatali.append(f"{mac.get('takim_ev','?')}: {e}")
-            if progress_callback:
-                try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
-                except Exception: pass
-
-    st.session_state.toplu_cek_ozet = {"eklenen": eklenen, "atlanan": atlanan, "toplam": len(basarili)}
-    return basarili, hatali
-
-
-def _lig_son_mac_linklerini_al(lig_url, adet=10):
-    html, hata = _scrapingbee_get(lig_url, render_js=True, mac_sec="10")
-    if hata: return [], [hata]
-    if not html: return [], ["Lig sayfası indirilemedi."]
-    soup = BeautifulSoup(html, "html.parser")
-    maclar = []; gorulen = set()
-    for link in soup.find_all("a", href=True):
-        href = link.get("href", "")
-        if "match-preview" not in href: continue
-        if href.startswith("/"): href = "https://www.mutating.com" + href
-        elif not href.startswith("http"): continue
-        if href in gorulen: continue
-        gorulen.add(href)
-        takim_ev = ""; takim_dep = ""
-        img = link.find_all("img", alt=True)
-        if len(img) >= 2:
-            takim_ev = img[0].get("alt", "").strip()
-            takim_dep = img[1].get("alt", "").strip()
-        if not takim_ev:
-            txt = link.get_text(" ", strip=True)
-            if " - " in txt:
-                p = txt.split(" - ")
-                takim_ev = p[0].strip(); takim_dep = p[1].strip() if len(p) > 1 else ""
-        maclar.append({"url": href, "takim_ev": takim_ev, "takim_dep": takim_dep})
-        if len(maclar) >= adet: break
-    return maclar, []
-
-
-def _gecmis_mac_isle(mac, mevcut_urls):
-    try:
-        if mac["url"] in mevcut_urls:
-            return ("atlandi", None, "Zaten var")
-        html, hata = _scrapingbee_get(mac["url"], render_js=True, mac_sec="5", dogrula=True)
-        if hata or not html:
-            return ("hata", mac, hata or "HTML yok")
-        veri, _ = _mac_html_parse(html, mac["url"])
-        if not veri.get("skor_belli", False):
-            return ("atlandi", None, "Skor yok (bitmemiş maç)")
-        if veri.get("atilan_ev", 0) == 0 or veri.get("yenen_ev", 0) == 0:
-            return ("atlandi", None, "İstatistik eksik")
-        if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
-        if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
-
-        yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(veri)
-        kayit = kayit_olustur(yv, analiz_hesapla(yv))
-        kayit["dogruluk"] = sonuc_hesapla(kayit)
-        with _kilit:
-            st.session_state.gecmis_analizler.append(kayit)
-            gecmis_kaydet(st.session_state.gecmis_analizler)
-        return ("eklendi", veri, f"{veri['skor_ev']}-{veri['skor_dep']}")
-    except Exception as e:
-        return ("hata", mac, str(e))
-
-
-def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
-    maclar, hatalar = _lig_son_mac_linklerini_al(lig_url, adet=adet)
-    if hatalar: return [], hatalar
-    if not maclar: return [], ["Lig sayfasında maç linki bulunamadı."]
-
-    mevcut_urls = set()
-    for g in st.session_state.gecmis_analizler:
-        u = g.get("veri", {}).get("kaynak_url", "")
-        if u: mevcut_urls.add(u)
-
-    basarili = []; hatali = []
-    eklenen = 0; atlanan = 0; tamamlanan = 0
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(_gecmis_mac_isle, m, mevcut_urls): m for m in maclar}
-        for fut in as_completed(futures):
-            tamamlanan += 1
-            mac = futures[fut]
-            try:
-                sonuc, veri, mesaj = fut.result()
-                if sonuc == "eklendi":
-                    eklenen += 1; basarili.append(veri)
-                elif sonuc == "atlandi":
-                    atlanan += 1
-                else:
-                    hatali.append(f"{mac.get('takim_ev','?')}: {mesaj}")
-            except Exception as e:
-                hatali.append(f"{mac.get('takim_ev','?')}: {e}")
-            if progress_callback:
-                try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
-                except Exception: pass
-
-    st.session_state.gecmis_cek_ozet = {"eklenen": eklenen, "atlanan": atlanan}
-    return basarili, hatali
+    return {
+        "oneri_1x2": {"tahmin": oneri_1x2, "tuttu": _t(d_o1), "durum": d_o1},
+        "oneri_gol": {"tahmin": oneri_gol, "tuttu": _t(d_og), "durum": d_og},
+        "oneri_kg": {"tahmin": oneri_kg, "tuttu": _t(d_ok), "durum": d_ok},
+        "gercek_1x2": gercek_1x2,
+        "gercek_gol": "Üst" if gercek_ust else "Alt",
+        "gercek_kg": "Var" if gercek_kg_var else "Yok",
+    }
 
 
 # ==========================================
-# SKOR ÇEKME (DÜZELTİLMİŞ — requests hızlı, tarayıcı opsiyonel)
+# YORUM
 # ==========================================
-def _skor_parse(html):
-    if not html: return None
-    metin = _html_metne_cevir(html)
-    if not metin: return None
-    m = re.search(r'(?<![A-Za-z])FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
-    if m:
-        try:
-            a = int(m.group(1)); b = int(m.group(2))
-            if 0 <= a <= 20 and 0 <= b <= 20:
-                return a, b
-        except Exception: pass
-    m = re.search(r'(?<![A-Za-z])FT\s+(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
-    if m:
-        try:
-            a = int(m.group(1)); b = int(m.group(2))
-            if 0 <= a <= 20 and 0 <= b <= 20:
-                return a, b
-        except Exception: pass
-    m = re.search(r'Full[\s\-]*Time[^\d]{0,30}(\d{1,2})\s*[-:]\s*(\d{1,2})', metin, re.IGNORECASE)
-    if m:
-        try:
-            a = int(m.group(1)); b = int(m.group(2))
-            if 0 <= a <= 20 and 0 <= b <= 20:
-                return a, b
-        except Exception: pass
-    return None
+def detayli_analiz_yorumu(v):
+    yorumlar = []
+    ppg = v.get("ppg_ev", 0.0)
+    mpg = v.get("mpg_dep", 0.0)
 
-
-def _skor_cek(url, tarayici_yedek=False):
-    """Önce hızlı requests (varsayılan). Skor bulunamazsa ve tarayici_yedek=True ise tarayıcı dener."""
-    if not url:
-        return None, "URL yok"
-    html = None; hata = None
-    try:
-        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=15)
-        if r.status_code == 200 and r.text:
-            html = r.text
+    if ppg > 0 or mpg > 0:
+        fark = ppg - mpg
+        if ppg >= 2.0 and mpg <= 1.0:
+            txt = f"Ev sahibi evinde mükemmel form (**PPG {ppg:.2f}**), deplasman zayıf (**MPG {mpg:.2f}**)."
+        elif fark >= 0.7:
+            txt = f"Ev sahibi form olarak önde (**PPG {ppg:.2f}** vs **{mpg:.2f}**)."
+        elif fark <= -0.7:
+            txt = f"Deplasman form olarak önde (**MPG {mpg:.2f}** vs **{ppg:.2f}**)."
         else:
-            hata = f"HTTP {r.status_code}"
-    except Exception as e:
-        hata = f"Bağlantı: {str(e)[:80]}"
-    skor = _skor_parse(html) if html else None
-    if skor:
-        return skor, None
-    if tarayici_yedek:
-        try:
-            h2 = _playwright_skor_cek(url, timeout=25)
-            if h2:
-                skor = _skor_parse(h2)
-                if skor:
-                    return skor, None
-        except Exception as e:
-            hata = f"Tarayıcı: {str(e)[:60]}"
-    if html:
-        return None, None
-    return None, hata or "Sayfa alınamadı"
+            txt = f"Form dengeli (**PPG {ppg:.2f}** vs **MPG {mpg:.2f}**)."
+        yorumlar.append(("📈 FORM", txt))
+
+    s_ev = v.get("siralama_ev", 0)
+    s_dep = v.get("siralama_dep", 0)
+    if s_ev > 0 and s_dep > 0:
+        fark_sira = s_dep - s_ev
+        if fark_sira >= 8:
+            txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. **{fark_sira} basamak** ciddi fark."
+        elif fark_sira >= 3:
+            txt = f"Ev sahibi **{s_ev}.**, deplasman **{s_dep}.** sırada. Ev sahibi üstün."
+        elif fark_sira <= -8:
+            txt = f"Deplasman **{s_dep}.**, ev sahibi **{s_ev}.** sırada. Deplasman **{abs(fark_sira)} basamak** yukarıda."
+        else:
+            txt = f"Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**)."
+        yorumlar.append(("🏆 SIRALAMA", txt))
+
+    at_ev = v.get("atilan_ev", 0.0)
+    at_dep = v.get("atilan_dep", 0.0)
+    if at_ev > 0 or at_dep > 0:
+        if at_ev - at_dep >= 0.6:
+            txt = f"Ev sahibi maç başına **{at_ev:.1f}** gol atıyor, deplasman **{at_dep:.1f}**."
+        elif at_ev - at_dep <= -0.6:
+            txt = f"Deplasman maç başına **{at_dep:.1f}** gol atıyor, ev sahibi **{at_ev:.1f}**."
+        else:
+            txt = f"Atılan goller benzer (Ev **{at_ev:.1f}** / Dep **{at_dep:.1f}**)."
+        yorumlar.append(("⚽ ATILAN GOL", txt))
+
+    y_ev = v.get("yenen_ev", 0.0)
+    y_dep = v.get("yenen_dep", 0.0)
+    if y_ev > 0 or y_dep > 0:
+        if y_dep - y_ev >= 0.7:
+            txt = f"Ev sahibi savunması sağlam (**{y_ev:.1f}**), deplasman zayıf (**{y_dep:.1f}**)."
+        elif y_dep - y_ev <= -0.7:
+            txt = f"Deplasman savunması sağlam (**{y_dep:.1f}**), ev sahibi zayıf (**{y_ev:.1f}**)."
+        else:
+            txt = f"Savunmalar benzer (Ev **{y_ev:.1f}** / Dep **{y_dep:.1f}**)."
+        yorumlar.append(("🛡️ YENEN GOL", txt))
+
+    return yorumlar
 
 
-def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
-    gel = st.session_state.gelecek_analizler
-    isler = [(i, g) for i, g in enumerate(gel) if g.get("veri", {}).get("kaynak_url")]
-    sonuc = {}
-    tamam = 0
-    if isler:
-        with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], tarayici_yedek): (i, g) for i, g in isler}
-            for f in as_completed(fut):
-                i, g = fut[f]; tamam += 1
-                try:
-                    sonuc[i] = f.result()
-                except Exception as e:
-                    sonuc[i] = (None, str(e)[:80])
-                if progress_callback:
-                    try:
-                        progress_callback(tamam - 1, len(isler), g["veri"].get("takim_ev", ""))
-                    except Exception:
-                        pass
+def gol_detayli_aciklama(v, a):
+    ust_25 = a["ust_25"]; alt_25 = a["alt_25"]
+    lam_ev = a["lam_ev"]; lam_dep = a["lam_dep"]
+    toplam_lambda = lam_ev + lam_dep
 
-    mevcut = {x.get("veri", {}).get("kaynak_url") for x in st.session_state.gecmis_analizler}
-    tasinan = 0; bitmemis = 0; hatalar = []; kalan = []
-    for i, g in enumerate(gel):
-        r = sonuc.get(i)
-        if r is None:
-            kalan.append(g); continue
-        skor, hata = r
-        v = g["veri"]; isim = f"{v.get('takim_ev', '?')} - {v.get('takim_dep', '?')}"
-        if skor is None:
-            if hata:
-                hatalar.append(f"{isim}: {hata}")
-            else:
-                bitmemis += 1
-            kalan.append(g); continue
-        v["skor_ev"], v["skor_dep"], v["skor_belli"] = skor[0], skor[1], True
-        d = sonuc_hesapla(g)
-        if d: g["dogruluk"] = d
-        if v.get("kaynak_url") not in mevcut:
-            st.session_state.gecmis_analizler.append(g)
-            mevcut.add(v.get("kaynak_url"))
-        tasinan += 1
+    at_ev = v.get("atilan_ev", 0)
+    at_dep = v.get("atilan_dep", 0)
+    y_ev = v.get("yenen_ev", 0)
+    y_dep = v.get("yenen_dep", 0)
+    lig_ort = v.get("lig_ort_toplam", 0)
+    u15 = ort_iki(v.get("ust15_ev", 0), v.get("ust15_dep", 0))
+    u35 = ort_iki(v.get("ust35_ev", 0), v.get("ust35_dep", 0))
+    tg_2_3 = ort_iki(v.get("tg_2_ev", 0) + v.get("tg_3_ev", 0), v.get("tg_2_dep", 0) + v.get("tg_3_dep", 0))
+    tg_4 = ort_iki(v.get("tg_4_ev", 0), v.get("tg_4_dep", 0))
 
-    st.session_state.gelecek_analizler = kalan
-    st.session_state.aktif_gelecek_idx = None
-    st.session_state.gelecekten_gelindi = False
-    gecmis_kaydet(st.session_state.gecmis_analizler)
-    gelecek_kaydet(st.session_state.gelecek_analizler)
-    return {"tasinan": tasinan, "bitmemis": bitmemis, "hatalar": hatalar, "toplam": len(isler)}
+    yorumlar = []
 
+    if ust_25 >= esik_al("ust"):
+        yorumlar.append(f"🎯 **ÜST 2.5 NEDEN POZİTİF? (%{ust_25:.1f})**")
+        yorumlar.append(f"- Toplam beklenen gol: **{toplam_lambda:.2f}**")
+        yorumlar.append(f"- Ev sahibi atak gücü: **{at_ev:.2f}** gol/maç")
+        yorumlar.append(f"- Deplasman atak gücü: **{at_dep:.2f}** gol/maç")
+        yorumlar.append(f"- Ev sahibi yenen: **{y_ev:.2f}** gol/maç")
+        yorumlar.append(f"- Deplasman yenen: **{y_dep:.2f}** gol/maç")
+        if lig_ort > 0:
+            yorumlar.append(f"- Lig ortalaması: **{lig_ort:.2f}** gol/maç")
+        if u15 > 0:
+            yorumlar.append(f"- Üst 1.5 ortalaması: **%{u15:.0f}**")
+        if u35 > 0:
+            yorumlar.append(f"- Üst 3.5 ortalaması: **%{u35:.0f}**")
+        if tg_2_3 > 0:
+            yorumlar.append(f"- TG 2-3 gol oranı: **%{tg_2_3:.0f}**")
+        if tg_4 > 0:
+            yorumlar.append(f"- TG 4+ gol oranı: **%{tg_4:.0f}**")
+        yorumlar.append(f"- **Sonuç:** Toplam gol beklentisi **2.5 üstü** → Üst 2.5 mantıklı")
 
-# ==========================================
-# TASARIM YARDIMCILARI
-# ==========================================
-def _e(x): return _html.escape(str(x))
-def rozet(m, t="gray"): return f'<span class="fa-badge fa-b-{t}">{_e(m)}</span>'
+    elif alt_25 >= esik_al("alt"):
+        yorumlar.append(f"🎯 **ALT 2.5 NEDEN POZİTİF? (%{alt_25:.1f})**")
+        yorumlar.append(f"- Toplam beklenen gol: **{toplam_lambda:.2f}**")
+        yorumlar.append(f"- Ev sahibi atak gücü: **{at_ev:.2f}** gol/maç")
+        yorumlar.append(f"- Deplasman atak gücü: **{at_dep:.2f}** gol/maç")
+        yorumlar.append(f"- Ev sahibi yenen: **{y_ev:.2f}** gol/maç")
+        yorumlar.append(f"- Deplasman yenen: **{y_dep:.2f}** gol/maç")
+        cs_ev = v.get("clean_sheets_ev", 0)
+        cs_dep = v.get("clean_sheets_dep", 0)
+        if cs_ev >= 40:
+            yorumlar.append(f"- ✅ Ev sahibi clean sheet: **%{cs_ev:.0f}**")
+        if cs_dep >= 40:
+            yorumlar.append(f"- ✅ Deplasman clean sheet: **%{cs_dep:.0f}**")
+        tg_0_1 = ort_iki(v.get("tg_0_ev", 0) + v.get("tg_1_ev", 0), v.get("tg_0_dep", 0) + v.get("tg_1_dep", 0))
+        if tg_0_1 > 0:
+            yorumlar.append(f"- TG 0-1 gol oranı: **%{tg_0_1:.0f}**")
+        yorumlar.append(f"- **Sonuç:** Toplam gol beklentisi **2.5 altı** → Alt 2.5 mantıklı")
 
-
-def _donut_svg(yuzde, renk, boyut=82):
-    y = max(0.0, min(100.0, yuzde))
-    r = 38
-    cevre = 2 * 3.14159265 * r
-    offset = cevre * (1 - y / 100)
-    return f'''<svg class="fa-donut-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-<circle cx="50" cy="50" r="{r}" fill="none" stroke="#1a2438" stroke-width="8"/>
-<circle cx="50" cy="50" r="{r}" fill="none" stroke="{renk}" stroke-width="8"
-    stroke-dasharray="{cevre:.2f}" stroke-dashoffset="{offset:.2f}"
-    stroke-linecap="round" transform="rotate(-90 50 50)"/>
-<text x="50" y="50" text-anchor="middle" dominant-baseline="central"
-    fill="{renk}" font-size="22" font-weight="900" font-family="Rajdhani, Inter, sans-serif">%{y:.0f}</text>
-</svg>'''
+    return yorumlar
 
 
-def mac_karti(ev, dep, sb, se, sd, le, ld, saat="", ulke="", tarih=""):
-    orta = f'<div class="fa-score">{int(se)} - {int(sd)}</div>' if sb else '<div class="fa-vs">VS</div>'
-    br = ulke_bayrak_bul(ulke); ust = ""
-    if saat or ulke or tarih:
-        p = []
-        if br != "🌍" or ulke: p.append(f"{br} {_e((ulke or '').title())}")
-        if tarih: p.append(f"📅 {_e(tarih)}")
-        if saat: p.append(f"🕐 {_e(saat)}")
-        if p: ust = f'<div class="fa-sub" style="margin-bottom:6px;">{" • ".join(p)}</div>'
-    alt = f'<div class="fa-sub">Model beklenen gol: {le:.2f} - {ld:.2f}</div>'
-    return f'<div class="fa-hero">{ust}<div class="fa-teams"><div class="fa-team">{_e(ev)}</div>{orta}<div class="fa-team">{_e(dep)}</div></div>{alt}</div>'
+def kg_detayli_aciklama(v, a):
+    kg_var = a["kg_var_model"]; kg_yok = a["kg_yok_model"]
+    lam_ev = a["lam_ev"]; lam_dep = a["lam_dep"]
+
+    kg_ev = v.get("kg_siklik_ev", 0)
+    kg_dep = v.get("kg_siklik_dep", 0)
+    cs_ev = v.get("clean_sheets_ev", 0)
+    cs_dep = v.get("clean_sheets_dep", 0)
+    ts_ev = v.get("team_scored_ev", 0)
+    ts_dep = v.get("team_scored_dep", 0)
+    btts_1h = ort_iki(v.get("btts_1h_ev", 0), v.get("btts_1h_dep", 0))
+    btts_2h = ort_iki(v.get("btts_2h_ev", 0), v.get("btts_2h_dep", 0))
+
+    yorumlar = []
+
+    if kg_var >= esik_al("kg_var"):
+        yorumlar.append(f"🤝 **KG VAR NEDEN POZİTİF? (%{kg_var:.1f})**")
+        if kg_ev > 0:
+            yorumlar.append(f"- Ev sahibi KG Var oranı: **%{kg_ev:.1f}**")
+        if kg_dep > 0:
+            yorumlar.append(f"- Deplasman KG Var oranı: **%{kg_dep:.1f}**")
+        yorumlar.append(f"- Ev sahibi gol beklentisi: **{lam_ev:.2f}**")
+        yorumlar.append(f"- Deplasman gol beklentisi: **{lam_dep:.2f}**")
+        if btts_1h > 0:
+            yorumlar.append(f"- İY KG ortalaması: **%{btts_1h:.0f}**")
+        if btts_2h > 0:
+            yorumlar.append(f"- 2Y KG ortalaması: **%{btts_2h:.0f}**")
+        if ts_ev >= 70:
+            yorumlar.append(f"- ✅ Ev sahibi gol atmaya yatkın: **%{ts_ev:.0f}**")
+        if ts_dep >= 70:
+            yorumlar.append(f"- ✅ Deplasman gol atmaya yatkın: **%{ts_dep:.0f}**")
+        yorumlar.append(f"- **Sonuç:** İki takım da gol atabilir → KG Var mantıklı")
+
+    elif kg_yok >= esik_al("kg_yok"):
+        yorumlar.append(f"🤝 **KG YOK NEDEN POZİTİF? (%{kg_yok:.1f})**")
+        if kg_ev > 0:
+            yorumlar.append(f"- Ev sahibi KG Var oranı: **%{kg_ev:.1f}** (düşük)")
+        if kg_dep > 0:
+            yorumlar.append(f"- Deplasman KG Var oranı: **%{kg_dep:.1f}** (düşük)")
+        if cs_ev > 0:
+            yorumlar.append(f"- Ev sahibi clean sheet: **%{cs_ev:.0f}**")
+        if cs_dep > 0:
+            yorumlar.append(f"- Deplasman clean sheet: **%{cs_dep:.0f}**")
+        if ts_ev < 60:
+            yorumlar.append(f"- ⚠️ Ev sahibi gol atmaya yatkın değil: **%{ts_ev:.0f}**")
+        if ts_dep < 60:
+            yorumlar.append(f"- ⚠️ Deplasman gol atmaya yatkın değil: **%{ts_dep:.0f}**")
+        yorumlar.append(f"- **Sonuç:** En az bir takım gol atmayabilir → KG Yok mantıklı")
+
+    return yorumlar
 
 
-def kilitli_mac_karti(ev, dep, saat="", ulke="", tarih=""):
-    br = ulke_bayrak_bul(ulke); ust = ""
-    if saat or ulke or tarih:
-        p = []
-        if br != "🌍" or ulke: p.append(f"{br} {_e((ulke or '').title())}")
-        if tarih: p.append(f"📅 {_e(tarih)}")
-        if saat: p.append(f"🕐 {_e(saat)}")
-        if p: ust = f'<div class="fa-sub" style="margin-bottom:6px;">{" • ".join(p)}</div>'
-    return f'<div class="fa-locked">{ust}<div class="fa-locked-teams"><div class="fa-team">{_e(ev)}</div><div class="fa-vs">VS</div><div class="fa-team">{_e(dep)}</div></div><div class="fa-locked-overlay"><div class="fa-locked-text">🔒 PREMIUM\'A GEÇ</div></div></div>'
+def birx_iki_detayli_aciklama(v, a):
+    p1 = a["p1"]; px = a["px"]; p2 = a["p2"]
+    en = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
+    secim, yuzde = en
+    esik_secim = esik_1x2_al(secim)
 
+    isim = {"1": "Ev Sahibi Kazanır (1)", "X": "Beraberlik (X)", "2": "Deplasman Kazanır (2)"}[secim]
 
-def mac_tahmin_karti(v_g, g=None):
-    try:
-        try: ya = yeniden_analiz(v_g)
-        except Exception: ya = (g or {}).get("analiz", {})
-        p1 = ya.get("p1", 33.33); px = ya.get("px", 33.33); p2 = ya.get("p2", 33.34)
-        u25 = ya.get("ust_25", 50); a25 = 100 - u25
-        kgv = ya.get("kg_var_model", 50); kgy = 100 - kgv
-        e1 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
-        s1, y1 = e1; es1 = esik_1x2_al(s1); poz1 = y1 >= es1
-        isim1 = {"1": "1 — Ev Kazanır", "X": "X — Beraberlik", "2": "2 — Dep Kazanır"}[s1]
-        if u25 >= a25: gs = "Üst 2.5"; gy = u25; ge_ = esik_al("ust")
-        else: gs = "Alt 2.5"; gy = a25; ge_ = esik_al("alt")
-        gp = gy >= ge_
-        if kgv >= kgy: ks = "KG Var"; ky = kgv; ke = esik_al("kg_var")
-        else: ks = "KG Yok"; ky = kgy; ke = esik_al("kg_yok")
-        kp = ky >= ke
-        def r(p): return "pass" if p else "off"
-        def b(p): return "ok" if p else "no"
-        def bt(p): return "✅" if p else "⚪"
-        return f'''<div class="fa-mk"><div class="fa-mk-row"><span class="fa-mk-lbl">🎯 1X2</span><span class="fa-mk-pick {r(poz1)}">{_e(isim1)}</span><span class="fa-mk-pct">%{y1:.0f} <span class="fa-mk-badge {b(poz1)}">{bt(poz1)} eşik %{es1:.0f}</span></span></div><div class="fa-mk-row"><span class="fa-mk-lbl">⚽ Gol</span><span class="fa-mk-pick {r(gp)}">{_e(gs)}</span><span class="fa-mk-pct">%{gy:.0f} <span class="fa-mk-badge {b(gp)}">{bt(gp)} eşik %{ge_:.0f}</span></span></div><div class="fa-mk-row"><span class="fa-mk-lbl">🤝 KG</span><span class="fa-mk-pick {r(kp)}">{_e(ks)}</span><span class="fa-mk-pct">%{ky:.0f} <span class="fa-mk-badge {b(kp)}">{bt(kp)} eşik %{ke:.0f}</span></span></div></div>'''
-    except Exception: return ""
+    s_ev = v.get("siralama_ev", 0); s_dep = v.get("siralama_dep", 0)
+    at_ev = v.get("atilan_ev", 0); at_dep = v.get("atilan_dep", 0)
+    y_ev = v.get("yenen_ev", 0); y_dep = v.get("yenen_dep", 0)
+    ppg = v.get("ppg_ev", 0); mpg = v.get("mpg_dep", 0)
+    gal_e = v.get("galibiyet_ev", 0); gal_d = v.get("galibiyet_dep", 0)
+    ber_e = v.get("beraberlik_ev", 0); ber_d = v.get("beraberlik_dep", 0)
 
+    yorumlar = []
+    yorumlar.append(f"🎯 **1X2 NEDEN {secim}? (Ev %{p1:.1f} • X %{px:.1f} • Dep %{p2:.1f})**")
 
-def olasilik_bar(e, y, esik=None, renk="#3b82f6"):
-    y = max(0.0, min(100.0, y)); isr = ""
-    if esik is not None:
-        renk = "#22c55e" if y >= esik else "#475569"
-        isr = f'<div class="fa-tick" style="left:{esik:.0f}%"></div>'
-    return f'<div class="fa-row"><div class="fa-row-top"><span class="fa-lbl">{_e(e)}</span><span class="fa-val">%{y:.1f}</span></div><div class="fa-bar"><div class="fa-fill" style="width:{y:.1f}%;background:{renk}"></div>{isr}</div></div>'
+    if ppg > 0 and mpg > 0:
+        fark = ppg - mpg
+        if fark >= 0.5:
+            yorumlar.append(f"- ✅ **Form:** Ev PPG **{ppg:.2f}** vs Dep MPG **{mpg:.2f}** → Ev sahibi formda önde")
+        elif fark <= -0.5:
+            yorumlar.append(f"- ✅ **Form:** Dep MPG **{mpg:.2f}** vs Ev PPG **{ppg:.2f}** → Deplasman formda önde")
+        else:
+            yorumlar.append(f"- Form dengeli (Ev PPG {ppg:.2f} / Dep MPG {mpg:.2f})")
 
+    if s_ev > 0 and s_dep > 0:
+        fark_sira = s_dep - s_ev
+        if fark_sira >= 5:
+            yorumlar.append(f"- ✅ **Sıralama:** Ev **{s_ev}.** vs Dep **{s_dep}.** → Ev sahibi **{fark_sira}** basamak önde")
+        elif fark_sira <= -5:
+            yorumlar.append(f"- ✅ **Sıralama:** Dep **{s_dep}.** vs Ev **{s_ev}.** → Deplasman **{abs(fark_sira)}** basamak önde")
+        else:
+            yorumlar.append(f"- Sıralamalar yakın (Ev **{s_ev}.** / Dep **{s_dep}.**)")
 
-def olasilik_paneli(a):
-    s = ('<div class="fa-ttl">Maç Sonucu</div>'
-        + olasilik_bar("Ev (1)", a["p1"], esik_1x2_al("1"), "#3b82f6")
-        + olasilik_bar("Beraberlik (X)", a["px"], esik_1x2_al("X"), "#94a3b8")
-        + olasilik_bar("Dep (2)", a["p2"], esik_1x2_al("2"), "#f59e0b")
-        + '<div class="fa-ttl" style="margin-top:10px">Piyasalar</div>'
-        + olasilik_bar("Üst 2.5", a["ust_25"], esik_al("ust"))
-        + olasilik_bar("Alt 2.5", a["alt_25"], esik_al("alt"))
-        + olasilik_bar("KG Var", a["kg_var_model"], esik_al("kg_var"))
-        + olasilik_bar("KG Yok", a["kg_yok_model"], esik_al("kg_yok")))
-    return f'<div class="fa-card">{s}</div>'
+    if at_ev > 0 and at_dep > 0:
+        if at_ev - at_dep >= 0.5:
+            yorumlar.append(f"- ✅ **Atak gücü:** Ev **{at_ev:.2f}** vs Dep **{at_dep:.2f}** gol/maç → Ev daha üretken")
+        elif at_dep - at_ev >= 0.5:
+            yorumlar.append(f"- ✅ **Atak gücü:** Dep **{at_dep:.2f}** vs Ev **{at_ev:.2f}** gol/maç → Dep daha üretken")
+        else:
+            yorumlar.append(f"- Atak güçleri benzer (Ev **{at_ev:.2f}** / Dep **{at_dep:.2f}**)")
 
+    if y_ev > 0 and y_dep > 0:
+        if y_dep - y_ev >= 0.5:
+            yorumlar.append(f"- ✅ **Savunma:** Ev **{y_ev:.2f}** vs Dep **{y_dep:.2f}** gol yiyor → Dep zayıf")
+        elif y_ev - y_dep >= 0.5:
+            yorumlar.append(f"- ✅ **Savunma:** Dep **{y_dep:.2f}** vs Ev **{y_ev:.2f}** gol yiyor → Ev zayıf")
+        else:
+            yorumlar.append(f"- Savunmalar benzer (Ev **{y_ev:.2f}** / Dep **{y_dep:.2f}**)")
 
-def oneri_karti(b, s, y, e, poz, alt):
-    if poz:
-        sv, _, _, et = guven_seviyesi_bul(y)
-        t = "green" if sv == "yuksek" else "yellow" if sv == "orta" else "gray"
-        d = rozet(f"{et} güven", t); sn = "fa-card fa-pos"; ps = "fa-pct"
-        ns = f'<div class="fa-mut">{_e(alt)}</div>'
+    if gal_e > 0 or gal_d > 0:
+        yorumlar.append(f"- Galibiyet oranı: Ev **%{gal_e:.0f}** • Dep **%{gal_d:.0f}**")
+    if ber_e > 0 or ber_d > 0:
+        yorumlar.append(f"- Beraberlik oranı: Ev **%{ber_e:.0f}** • Dep **%{ber_d:.0f}**")
+
+    if yuzde >= esik_secim:
+        yorumlar.append(f"- **Sonuç:** En yüksek olasılık **{isim}** (%{yuzde:.1f}) ≥ eşik %{esik_secim:.0f} → **POZİTİF ✅**")
     else:
-        d = rozet("Eşik altı", "gray"); sn = "fa-card fa-neg"; ps = "fa-pct fa-off"
-        ns = f'<div class="fa-mut">{_e(alt)} • Gerekli: %{e:.0f}</div>'
-    bar = olasilik_bar("", y, e)
-    return f'<div class="{sn}"><div class="fa-ttl">{_e(b)}</div><div class="fa-pickrow"><div><div class="fa-pick">{_e(s)}</div>{d}</div><div class="{ps}">%{y:.1f}</div></div>{bar}{ns}</div>'
+        yorumlar.append(f"- **Sonuç:** En yüksek olasılık **{isim}** (%{yuzde:.1f}) < eşik %{esik_secim:.0f} → **EŞİK ALTI**")
+
+    return yorumlar
 
 
 def okunan_veriler_paneli(v):
-    if v.get("format") in ("sportytrader", "mutating"):
+    format_tip = v.get("format", "bilinmiyor")
+
+    if format_tip == "sportytrader":
         c1, c2 = st.columns(2)
         with c1:
             st.markdown(f"**{v.get('takim_ev', 'Ev')}**")
             st.markdown(f"- Atılan: **{v.get('atilan_ev', 0):.2f}**")
             st.markdown(f"- Yenen: **{v.get('yenen_ev', 0):.2f}**")
-            st.markdown(f"- CS: **{v.get('clean_sheets_ev', 0):.1f}%**")
-            st.markdown(f"- KG: **{v.get('kg_siklik_ev', 0):.1f}%**")
+            st.markdown(f"- Clean sheets: **{v.get('clean_sheets_ev', 0):.1f}%**")
+            st.markdown(f"- Team scored: **{v.get('team_scored_ev', 0):.1f}%**")
+            st.markdown(f"- KG Var: **{v.get('kg_siklik_ev', 0):.1f}%**")
+            st.markdown(f"- Üst 2.5: **{v.get('ust25_ev', 0):.1f}%**")
+            st.markdown(f"- Üst 1.5: **{v.get('ust15_ev', 0):.1f}%**")
+            st.markdown(f"- Form: **{v.get('form_str_ev', '')}**")
+            st.markdown(f"- Sıralama: **{v.get('siralama_ev', 0)}**")
         with c2:
             st.markdown(f"**{v.get('takim_dep', 'Dep')}**")
             st.markdown(f"- Atılan: **{v.get('atilan_dep', 0):.2f}**")
             st.markdown(f"- Yenen: **{v.get('yenen_dep', 0):.2f}**")
-            st.markdown(f"- CS: **{v.get('clean_sheets_dep', 0):.1f}%**")
-            st.markdown(f"- KG: **{v.get('kg_siklik_dep', 0):.1f}%**")
+            st.markdown(f"- Clean sheets: **{v.get('clean_sheets_dep', 0):.1f}%**")
+            st.markdown(f"- Team scored: **{v.get('team_scored_dep', 0):.1f}%**")
+            st.markdown(f"- KG Var: **{v.get('kg_siklik_dep', 0):.1f}%**")
+            st.markdown(f"- Üst 2.5: **{v.get('ust25_dep', 0):.1f}%**")
+            st.markdown(f"- Üst 1.5: **{v.get('ust15_dep', 0):.1f}%**")
+            st.markdown(f"- Form: **{v.get('form_str_dep', '')}**")
+            st.markdown(f"- Sıralama: **{v.get('siralama_dep', 0)}**")
 
 
-def _form_detay(form_str):
-    if not form_str: return None
-    s = str(form_str).upper().replace(" ", "").strip()
-    s = "".join(c for c in s if c in "WDL")
-    if not s: return None
-    return {"W": s.count("W"), "D": s.count("D"), "L": s.count("L"), "n": len(s), "str": s}
+# ==========================================
+# TASARIM YARDIMCILARI
+# ==========================================
+def _e(x):
+    return _html.escape(str(x))
 
 
-def _form_hikaye(form_str, takim, ev_mi=True):
-    f = _form_detay(form_str)
-    if not f: return None
-    n, w, d, l = f["n"], f["W"], f["D"], f["L"]
-    p = []
-    if w: p.append(f"{w} galibiyet")
-    if d: p.append(f"{d} beraberlik")
-    if l: p.append(f"{l} mağlubiyet")
-    detay = ", ".join(p)
-    sinif = "ev" if ev_mi else "dep"
-    if w >= n - 1 and n >= 3:
-        ton = "muhteşem bir form yakalamış durumda"
-    elif w >= (n + 1) // 2:
-        ton = "iyi bir form grafiği çiziyor"
-    elif l >= (n + 1) // 2:
-        ton = "formsuz günler geçiriyor"
-    else:
-        ton = "istikrarsız bir görünüm sergiliyor"
-    return f"<span class='{sinif}'>{takim}</span> son {n} maçında {detay} alarak {ton}"
+def rozet(metin, tip="gray"):
+    return f'<span class="fa-badge fa-b-{tip}">{_e(metin)}</span>'
 
 
-def _trend_cumleleri(v, taraf):
-    key = f"trends_{taraf}"
-    trends = v.get(key, [])
-    if not trends: return []
-    return [str(t).strip() for t in trends if t and str(t).strip()]
+def mac_karti(ev, dep, skor_belli, skor_ev, skor_dep, lam_ev, lam_dep, saat="", ulke="", tarih=""):
+    orta = (f'<div class="fa-score">{int(skor_ev)} - {int(skor_dep)}</div>' if skor_belli
+            else '<div class="fa-vs">VS</div>')
+    bayrak = ulke_bayrak_bul(ulke)
+    ust_bilgi = ""
+    if saat or ulke or tarih:
+        parcalar = []
+        if bayrak != "🌍" or ulke:
+            parcalar.append(f"{bayrak} {_e((ulke or '').title())}")
+        if tarih:
+            parcalar.append(f"📅 {_e(tarih)}")
+        if saat:
+            parcalar.append(f"🕐 {_e(saat)}")
+        if parcalar:
+            ust_bilgi = f'<div class="fa-sub" style="margin-bottom:6px;">{" • ".join(parcalar)}</div>'
+    alt = f'<div class="fa-sub">Model beklenen gol: {lam_ev:.2f} - {lam_dep:.2f}</div>'
+    return (f'<div class="fa-hero">{ust_bilgi}<div class="fa-teams"><div class="fa-team">{_e(ev)}</div>'
+            f'{orta}<div class="fa-team">{_e(dep)}</div></div>{alt}</div>')
 
 
-def ai_yorum_olustur(v, a):
-    """Maç hakkında uzun, akıcı, hikayeli yorum üretir."""
-    te = (v.get("takim_ev", "Ev") or "Ev").strip()
-    td = (v.get("takim_dep", "Dep") or "Dep").strip()
+def mac_tahmin_karti(v_g, g=None):
+    try:
+        try:
+            ya = yeniden_analiz(v_g)
+        except Exception:
+            ya = (g or {}).get("analiz", {})
+        p1 = ya.get("p1", 33.33); px = ya.get("px", 33.33); p2 = ya.get("p2", 33.34)
+        ust_25 = ya.get("ust_25", 50); alt_25 = 100 - ust_25
+        kg_var = ya.get("kg_var_model", 50); kg_yok = 100 - kg_var
 
-    ppg_ev = float(v.get("ppg_ev", 0.0) or 0.0)
-    mpg_dep = float(v.get("mpg_dep", 0.0) or 0.0)
-    ae = float(v.get("atilan_ev", 0.0) or 0.0)
-    ad = float(v.get("atilan_dep", 0.0) or 0.0)
-    ye = float(v.get("yenen_ev", 0.0) or 0.0)
-    yd = float(v.get("yenen_dep", 0.0) or 0.0)
-    kg_ev = float(v.get("kg_siklik_ev", 0.0) or 0.0)
-    kg_dep = float(v.get("kg_siklik_dep", 0.0) or 0.0)
-    u25_ev = float(v.get("ust25_ev", 0.0) or 0.0)
-    u25_dep = float(v.get("ust25_dep", 0.0) or 0.0)
-    cs_ev = float(v.get("clean_sheets_ev", 0.0) or 0.0)
-    cs_dep = float(v.get("clean_sheets_dep", 0.0) or 0.0)
-    ts_ev = float(v.get("team_scored_ev", 0.0) or 0.0)
-    ts_dep = float(v.get("team_scored_dep", 0.0) or 0.0)
-    form_ev = v.get("form_str_ev", "")
-    form_dep = v.get("form_str_dep", "")
-    s_ev = int(v.get("siralama_ev", 0) or 0)
-    s_dep = int(v.get("siralama_dep", 0) or 0)
-    xg_ev = float(v.get("xg_ev", 0.0) or 0.0)
-    xg_dep = float(v.get("xg_dep", 0.0) or 0.0)
-    trends_ev = _trend_cumleleri(v, "ev")
-    trends_dep = _trend_cumleleri(v, "dep")
+        en1x2 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
+        sec1x2, y1x2 = en1x2
+        e1x2 = esik_1x2_al(sec1x2)
+        p1x2_poz = y1x2 >= e1x2
+        isim1x2 = {"1": "1 — Ev Kazanır", "X": "X — Beraberlik", "2": "2 — Dep Kazanır"}[sec1x2]
 
-    lam_ev = a["lam_ev"]; lam_dep = a["lam_dep"]
-    ust25 = a["ust_25"]; alt25 = a["alt_25"]
-    kgvar = a["kg_var_model"]; kgyok = a["kg_yok_model"]
-    p1v = a["p1"]; pxv = a["px"]; p2v = a["p2"]
-
-    def V(x): return f"<span class='vurgu'>{x}</span>"
-    def U(x): return f"<span class='uyari'>{x}</span>"
-    def K(x): return f"<span class='kotu'>{x}</span>"
-    def EV(x): return f"<span class='ev'>{x}</span>"
-    def DP(x): return f"<span class='dep'>{x}</span>"
-
-    bolumler = []
-
-    # 1. MAÇIN TABLOSU
-    hp = []
-    if s_ev and s_dep:
-        if s_ev < s_dep:
-            fark = s_dep - s_ev
-            if fark >= 8:
-                hp.append(f"Lig tablosunda {EV(te)} {V(f'{s_ev}.')} sırada, {DP(td)} ise {V(f'{s_dep}.')} sırada yer alıyor. Aradaki {V(fark)} basamaklık fark, iki takım arasındaki form ve kalite uçurumunu net şekilde gösteriyor.")
-            elif fark >= 4:
-                hp.append(f"{EV(te)} ligde {V(f'{s_ev}.')}, {DP(td)} ise {V(f'{s_dep}.')} sırada. Ev sahibi kağıt üzerinde bir adım önde görünüyor.")
-            else:
-                hp.append(f"Lig tablosunda {EV(te)} {V(f'{s_ev}.')}, {DP(td)} ise {V(f'{s_dep}.')} sırada. Aradaki fark sadece {V(fark)} basamak — yani kağıt üzerinde iki takım neredeyse eşit seviyede.")
-        elif s_dep < s_ev:
-            fark = s_ev - s_dep
-            if fark >= 8:
-                hp.append(f"Lig tablosunda {DP(td)} {V(f'{s_dep}.')} sırada, {EV(te)} ise {V(f'{s_ev}.')} sırada. Deplasman ekibi {V(fark)} basamak daha yukarıda — bu, kağıt üzerinde onları favori yapıyor.")
-            elif fark >= 4:
-                hp.append(f"{DP(td)} ligde {V(f'{s_dep}.')}, {EV(te)} ise {V(f'{s_ev}.')} sırada. Deplasman bir adım önde.")
-            else:
-                hp.append(f"İki takım da tabloda çok yakın: {DP(td)} {V(f'{s_dep}.')}, {EV(te)} {V(f'{s_ev}.')}.")
+        if ust_25 >= alt_25:
+            gol_s = "Üst 2.5"; gol_y = ust_25; gol_e = esik_al("ust")
         else:
-            hp.append(f"İki takım da ligde {V(f'{s_ev}.')} sırada — tam anlamıyla dengeli bir eşleşme.")
+            gol_s = "Alt 2.5"; gol_y = alt_25; gol_e = esik_al("alt")
+        gol_poz = gol_y >= gol_e
 
-    f_ev_c = _form_hikaye(form_ev, te, ev_mi=True)
-    f_dep_c = _form_hikaye(form_dep, td, ev_mi=False)
-    if f_ev_c:
-        hp.append(f_ev_c + ". Form grafiği işi ilginç bir yere taşıyor.")
-    if f_dep_c:
-        hp.append(f_dep_c + ".")
-
-    if ae > 0 and ye > 0 and ad > 0 and yd > 0:
-        if ye <= 0.8 and yd >= 1.5:
-            hp.append(f"Asıl kritik nokta ev/deplasman performansı: {EV(te)} evinde maç başına {V(f'{ae:.2f}')} gol atıp sadece {V(f'{ye:.2f}')} gol yiyor. {DP(td)} ise deplasmanda maç başına {V(f'{ad:.2f}')} gol atarken {K(f'{yd:.2f}')} gol yiyor — yani dış sahada adeta bir savunma faciası yaşıyor.")
-        elif yd <= 0.8 and ye >= 1.5:
-            hp.append(f"Ev/deplasman tablosu tersine: {DP(td)} deplasmanda maç başına {V(f'{ad:.2f}')} gol atıp sadece {V(f'{yd:.2f}')} gol yiyor. {EV(te)} ise evinde {K(f'{ye:.2f}')} gol yiyor — savunma anlamında ciddi sıkıntıda.")
-        elif ye <= 1.0 and yd <= 1.0:
-            hp.append(f"Savunma tarafında iki takım da sağlam: {EV(te)} {V(f'{ye:.2f}')}, {DP(td)} {V(f'{yd:.2f}')} gol yiyor. Bu da gol sayısının düşük kalma ihtimalini artırıyor.")
-        elif ye >= 1.8 and yd >= 1.8:
-            hp.append(f"İki takımın da savunması sıkıntılı — {EV(te)} {K(f'{ye:.2f}')}, {DP(td)} {K(f'{yd:.2f}')} gol yiyor. Bu tabloda karşılıklı goller sürpriz olmaz.")
+        if kg_var >= kg_yok:
+            kg_s = "KG Var"; kg_y = kg_var; kg_e = esik_al("kg_var")
         else:
-            hp.append(f"Ev sahibi {EV(te)} kendi sahasında maç başına {V(f'{ae:.2f}')} gol atıp {V(f'{ye:.2f}')} yiyor. Deplasman {DP(td)} ise dışarıda {V(f'{ad:.2f}')} gol atıp {U(f'{yd:.2f}')} yiyor.")
+            kg_s = "KG Yok"; kg_y = kg_yok; kg_e = esik_al("kg_yok")
+        kg_poz = kg_y >= kg_e
 
-    if cs_ev or cs_dep:
-        cs_list = []
-        if cs_ev: cs_list.append(f"{EV(te)} evinde %{V(f'{cs_ev:.0f}')} clean sheet")
-        if cs_dep: cs_list.append(f"{DP(td)} deplasmanda %{K(f'{cs_dep:.0f}')} clean sheet")
-        if cs_list:
-            hp.append("Kale performansına bakınca " + ", ".join(cs_list) + ". " + ("Bu tablo deplasmanın kendi kalesini korumakta ne kadar zorlandığını açıkça gösteriyor." if cs_ev > cs_dep else "Ev sahibi savunmada ciddi sorun yaşıyor."))
+        def r(p): return "pass" if p else "off"
+        def b(p): return "ok" if p else "no"
+        def bt(p): return "✅" if p else "⚪"
 
-    if xg_ev > 0 or xg_dep > 0:
-        xs = []
-        if xg_ev > 0: xs.append(f"{EV(te)} {V(f'{xg_ev:.2f}')}")
-        if xg_dep > 0: xs.append(f"{DP(td)} {V(f'{xg_dep:.2f}')}")
-        hp.append("Beklenen gol (xG) verileri de bu tabloyu destekliyor: " + ", ".join(xs) + ".")
-
-    if trends_ev:
-        hp.append(f"<b>📈 {te} trendleri:</b> " + " ".join(trends_ev[:3]))
-    if trends_dep:
-        hp.append(f"<b>📈 {td} trendleri:</b> " + " ".join(trends_dep[:3]))
-
-    if hp:
-        bolumler.append(("📖", "MAÇIN TABLOSU", " ".join(hp)))
-
-    # 2. 1X2 NEDEN BU?
-    s1, y1 = max([("1", p1v), ("X", pxv), ("2", p2v)], key=lambda x: x[1])
-    p1 = p1v; px = pxv; p2 = p2v
-    kp = []
-
-    if s1 == "1":
-        kp.append(f"Model bu maçta {EV(te)} tarafını yaklaşık {V(f'%{p1:.0f}')} olasılıkla işaret ediyor. Bunu söylerken birkaç kritik noktaya birlikte baktık:")
-        nedenler = []
-        if ppg_ev >= 2.2:
-            nedenler.append(f"{EV(te)}'in evindeki puan ortalaması {V(f'{ppg_ev:.2f}')} — bu elit seviye bir rakam")
-        elif ppg_ev >= 1.7:
-            nedenler.append(f"{EV(te)}'in evindeki PPG'si {V(f'{ppg_ev:.2f}')} ile sağlam")
-        if mpg_dep <= 0.8 and mpg_dep > 0:
-            nedenler.append(f"{DP(td)}'in deplasman MPG'si sadece {K(f'{mpg_dep:.2f}')} — dış sahada adeta kayıp")
-        elif mpg_dep <= 1.3 and mpg_dep > 0:
-            nedenler.append(f"{DP(td)} deplasmanda {U(f'{mpg_dep:.2f}')} MPG ile zorlanıyor")
-        if ye <= 0.8:
-            nedenler.append(f"ev sahibi kendi sahasında maç başına yalnızca {V(f'{ye:.2f}')} gol yiyor (neredeyse her 2-3 maçta bir gol)")
-        if yd >= 1.5:
-            nedenler.append(f"deplasman ekibi dışarıda {K(f'{yd:.2f}')} gol yiyor — savunması delik deşik")
-        if ts_ev >= 70:
-            nedenler.append(f"ev sahibi maçlarının %{V(f'{ts_ev:.0f}')}'inde gol atmış")
-        if 0 < s_ev < s_dep:
-            nedenler.append(f"sıralama farkı ({V(f'{s_ev}.')} vs {V(f'{s_dep}.')}) ev sahibinin lehine")
-        if cs_ev >= 50:
-            nedenler.append(f"evinde %{V(f'{cs_ev:.0f}')} clean sheet yapıyor")
-        f_ev_d = _form_detay(form_ev)
-        if f_ev_d and f_ev_d["W"] >= f_ev_d["n"] - 1 and f_ev_d["n"] >= 3:
-            nedenler.append(f"form grafiği ({V(form_ev)}) çok güçlü")
-        if nedenler:
-            kp.append("Öncelikle " + ", ".join(nedenler[:5]) + ".")
-        karsi = []
-        if px > 20: karsi.append(f"beraberlik ihtimali %{px:.0f} ile hiç de az değil")
-        if p2 > 15: karsi.append(f"deplasmanın kazanma şansı da %{p2:.0f} seviyesinde")
-        if karsi:
-            kp.append("Elbette " + " ve ".join(karsi) + " — futbol sürprizlere açık bir oyun. Ama mevcut veriler ışığında ev sahibinin kazanması en olası senaryo olarak öne çıkıyor.")
-        kp.append(f"Tüm bunları birleştirdiğimizde <b>1 ({te} Kazanır)</b> demek en mantıklısı oldu.")
-    elif s1 == "2":
-        kp.append(f"Model bu maçta {DP(td)} tarafını yaklaşık {V(f'%{p2:.0f}')} olasılıkla öne çıkarıyor. Bunu söylerken şu noktalara baktık:")
-        nedenler = []
-        if mpg_dep >= 2.2:
-            nedenler.append(f"{DP(td)}'in deplasman MPG'si {V(f'{mpg_dep:.2f}')} — deplasmanda bile canavar gibi")
-        elif mpg_dep >= 1.7:
-            nedenler.append(f"{DP(td)} dış sahada {V(f'{mpg_dep:.2f}')} MPG ile etkili")
-        if ppg_ev <= 0.8 and ppg_ev > 0:
-            nedenler.append(f"{EV(te)}'in evindeki PPG'si {K(f'{ppg_ev:.2f}')} — kendi sahasında bile kayıp")
-        elif ppg_ev <= 1.3 and ppg_ev > 0:
-            nedenler.append(f"{EV(te)} evinde {U(f'{ppg_ev:.2f}')} PPG ile zorlanıyor")
-        if yd <= 0.8:
-            nedenler.append(f"deplasman dış sahada sadece {V(f'{yd:.2f}')} gol yiyor")
-        if ye >= 1.5:
-            nedenler.append(f"ev sahibi {K(f'{ye:.2f}')} gol yiyor")
-        if 0 < s_dep < s_ev:
-            nedenler.append(f"sıralama farkı ({V(f'{s_dep}.')} vs {V(f'{s_ev}.')}) deplasmanın lehine")
-        f_dep_d = _form_detay(form_dep)
-        if f_dep_d and f_dep_d["W"] >= f_dep_d["n"] - 1 and f_dep_d["n"] >= 3:
-            nedenler.append(f"deplasman formu ({V(form_dep)}) mükemmel")
-        if nedenler:
-            kp.append("Öncelikle " + ", ".join(nedenler[:5]) + ".")
-        karsi = []
-        if px > 20: karsi.append(f"beraberlik %{px:.0f} ile hâlâ masada")
-        if p1 > 20: karsi.append(f"ev sahibinin de %{p1:.0f} şansı var")
-        if karsi:
-            kp.append("Ancak " + " ve ".join(karsi) + ". Yani bu maçta kesin bir şey söylemek zor, fakat tüm veriler deplasman lehine eğiliyor.")
-        kp.append(f"Bu veriler ışığında <b>2 ({td} Kazanır)</b> en mantıklı tercih olarak öne çıkıyor.")
-    else:
-        kp.append(f"Model bu maçta beraberliği yaklaşık {V(f'%{px:.0f}')} olasılıkla işaret ediyor. Bu tip maçlarda genelde iki takım birbirini nötralize eder. Neden böyle düşündük:")
-        nedenler = []
-        if ppg_ev > 0 and mpg_dep > 0 and abs(ppg_ev - mpg_dep) < 0.4:
-            nedenler.append(f"iki takımın form ortalamaları neredeyse eşit ({V(f'{ppg_ev:.2f}')} vs {V(f'{mpg_dep:.2f}')})")
-        if ae > 0 and ad > 0 and abs(ae - ad) < 0.4:
-            nedenler.append(f"hücum güçleri birbirine çok yakın ({V(f'{ae:.2f}')} vs {V(f'{ad:.2f}')})")
-        if ye > 0 and yd > 0 and abs(ye - yd) < 0.5:
-            nedenler.append("iki savunma da benzer seviyede")
-        if s_ev and s_dep and abs(s_ev - s_dep) <= 3:
-            nedenler.append(f"lig sıralamaları çok yakın ({V(f'{s_ev}.')} vs {V(f'{s_dep}.')})")
-        if nedenler:
-            kp.append("Öncelikle " + ", ".join(nedenler[:4]) + ".")
-        kp.append(f"Yine de 1 ve 2 ihtimalleri de yabana atılmamalı — ev sahibi %{p1:.0f}, deplasman %{p2:.0f}. Ama beraberlik {V(f'%{px:.0f}')} ile en yüksek olasılık olarak öne çıkıyor.")
-        kp.append("Bu veriler ışığında <b>X (Beraberlik)</b> en dengeli tercih gibi görünüyor.")
-
-    if kp:
-        bolumler.append(("🎯", "NEDEN BU SONUÇ?", " ".join(kp)))
-
-    # 3. GOL BEKLENTİSİ
-    gp = []
-    u25 = ust25; a25 = alt25
-    top_at = ae + ad
-    top_ye = ye + yd
-    lam_top = lam_ev + lam_dep
-
-    if u25 >= a25:
-        gp.append(f"Bu maçta <b>Üst 2.5</b> tarafı ağır basıyor (%{u25:.1f}). Neden mi?")
-        gn = []
-        if top_at >= 3.0:
-            gn.append(f"iki takım toplamda maç başına {V(f'{top_at:.2f}')} gol üretiyor")
-        if top_ye >= 3.0:
-            gn.append(f"toplam {V(f'{top_ye:.2f}')} gol yiyorlar — yani savunmalar delik deşik")
-        if u25_ev >= 55 and u25_dep >= 55:
-            gn.append(f"her iki takımın da maçlarının yarısından fazlası 2.5 üstü bitmiş (ev %{V(f'{u25_ev:.0f}')}, dep %{V(f'{u25_dep:.0f}')})")
-        elif u25_ev >= 55:
-            gn.append(f"{EV(te)} maçlarının %{V(f'{u25_ev:.0f}')}'inde 2.5 üstü görmüş")
-        elif u25_dep >= 55:
-            gn.append(f"{DP(td)} maçlarının %{V(f'{u25_dep:.0f}')}'inde 2.5 üstü görmüş")
-        if gn:
-            gp.append("Çünkü " + ", ".join(gn[:3]) + ".")
-        gp.append(f"Modelin beklediği toplam gol sayısı {V(f'{lam_top:.2f}')} seviyesinde — ev sahibi {V(f'{lam_ev:.2f}')}, deplasman {V(f'{lam_dep:.2f}')} gol beklentisiyle oynuyor.")
-        gp.append("Bu yüzden <b>Üst 2.5</b> demek daha mantıklı.")
-    else:
-        gp.append(f"Bu maçta <b>Alt 2.5</b> tarafı öne çıkıyor (%{a25:.1f}). Sebeplerine bakalım:")
-        gn = []
-        if top_at <= 2.4 and top_at > 0:
-            gn.append(f"iki takım toplamda sadece {V(f'{top_at:.2f}')} gol ortalaması yakalamış")
-        if ye <= 1.0 and ye > 0:
-            gn.append(f"{EV(te)} evinde maç başına yalnızca {V(f'{ye:.2f}')} gol yiyor — sağlam savunma")
-        if yd <= 1.0 and yd > 0:
-            gn.append(f"{DP(td)} dışarıda {V(f'{yd:.2f}')} gol yiyor")
-        if cs_ev >= 40:
-            gn.append(f"{EV(te)} maçlarının %{V(f'{cs_ev:.0f}')}'inde gol yememiş")
-        if cs_dep >= 40:
-            gn.append(f"{DP(td)} maçlarının %{V(f'{cs_dep:.0f}')}'inde kalesini gole kapatmış")
-        if u25_ev > 0 and u25_ev <= 40:
-            gn.append(f"{EV(te)} maçlarının sadece %{U(f'{u25_ev:.0f}')}'inde 2.5 üstü görmüş")
-        if u25_dep > 0 and u25_dep <= 40:
-            gn.append(f"{DP(td)} maçlarında bu oran %{U(f'{u25_dep:.0f}')}")
-        if gn:
-            gp.append("Çünkü " + ", ".join(gn[:3]) + ".")
-        gp.append(f"Modelin beklediği toplam gol de {V(f'{lam_top:.2f}')} seviyesinde — yani 2.5 barajının altı.")
-        gp.append("Tüm bu veriler ışığında <b>Alt 2.5</b> demek daha akıllıca.")
-
-    if gp:
-        bolumler.append(("⚽", "GOL BEKLENTİSİ", " ".join(gp)))
-
-    # 4. KG
-    kgp = []
-    if kgvar >= kgyok:
-        kgp.append(f"<b>Karşılıklı Gol Var</b> tarafı ağır basıyor (%{kgvar:.1f}). Neden böyle düşünüyoruz:")
-        kn = []
-        if kg_ev >= 60:
-            kn.append(f"{EV(te)} maçlarının %{V(f'{kg_ev:.0f}')}'inde karşılıklı gol görmüş")
-        elif kg_ev >= 50:
-            kn.append(f"{EV(te)} maçlarının yaklaşık yarısında iki takım da gol atmış (%{V(f'{kg_ev:.0f}')})")
-        if kg_dep >= 60:
-            kn.append(f"{DP(td)} maçlarının %{V(f'{kg_dep:.0f}')}'inde KG gerçekleşmiş")
-        elif kg_dep >= 50:
-            kn.append(f"{DP(td)}'te bu oran %{V(f'{kg_dep:.0f}')} civarında")
-        if ye >= 1.0 and yd >= 1.0:
-            kn.append(f"her iki takım da maç başına ortalama {V(f'{(ye+yd)/2:.2f}')} gol yiyor")
-        if ae >= 1.0 and ad >= 1.0:
-            kn.append(f"iki taraf da hücumda etkili ({V(f'{ae:.2f}')} vs {V(f'{ad:.2f}')} gol ortalaması)")
-        if kn:
-            kgp.append("Çünkü " + ", ".join(kn[:3]) + ".")
-        kgp.append("Yani hem ev sahibi hem deplasman gol atma eğiliminde. Bu durumda <b>KG Var</b> tercihi mantıklı.")
-    else:
-        kgp.append(f"<b>Karşılıklı Gol Yok</b> tarafı açık ara öne çıkıyor (%{kgyok:.1f}). Neden böyle düşünüyoruz:")
-        kn = []
-        if kg_ev <= 40 and kg_ev > 0:
-            kn.append(f"{EV(te)} maçlarının yalnızca %{K(f'{kg_ev:.0f}')}'inde iki takım da gol atmış")
-        if kg_dep <= 40 and kg_dep > 0:
-            kn.append(f"{DP(td)}'te bu oran sadece %{K(f'{kg_dep:.0f}')}")
-        if ye <= 1.0 and ye > 0:
-            kn.append(f"{EV(te)} savunması evinde {V(f'{ye:.2f}')} gol yiyor — sağlam")
-        if yd <= 1.0 and yd > 0:
-            kn.append(f"{DP(td)} dışarıda {V(f'{yd:.2f}')} gol yiyor")
-        if cs_ev >= 45:
-            kn.append(f"{EV(te)} maçlarının %{V(f'{cs_ev:.0f}')}'inde kalesini gole kapatmış")
-        if cs_dep >= 45:
-            kn.append(f"{DP(td)} de %{V(f'{cs_dep:.0f}')}'inde gol yememiş")
-        if kn:
-            kgp.append("Çünkü " + ", ".join(kn[:3]) + ".")
-        kgp.append("Bu tabloda en az bir takımın gol atamama ihtimali yüksek görünüyor. Bu yüzden <b>KG Yok</b> daha mantıklı.")
-
-    if kgp:
-        bolumler.append(("🤝", "KARŞILIKLI GOL (KG)", " ".join(kgp)))
-
-    # 5. GERÇEKÇİ SENARYO
-    sn = []
-    yorum_ev = []
-    yorum_dep = []
-    if ye <= 0.6: yorum_ev.append(f"{EV(te)} evinde son derece sağlam")
-    elif ye >= 1.8: yorum_ev.append(f"{EV(te)} evinde savunmada sıkıntılı")
-    if ae >= 1.8: yorum_ev.append(f"hücumda etkili ({V(f'{ae:.2f}')} gol/maç)")
-    elif ae <= 0.8: yorum_ev.append(f"hücumda kısır ({K(f'{ae:.2f}')} gol/maç)")
-
-    if yd >= 1.8: yorum_dep.append(f"{DP(td)} deplasmanda savunma faciası yaşıyor")
-    elif yd <= 0.8: yorum_dep.append(f"{DP(td)} dış sahada sağlam")
-    if ad >= 1.8: yorum_dep.append(f"deplasmanda gol bulmayı biliyor ({V(f'{ad:.2f}')} gol/maç)")
-    elif ad <= 0.8: yorum_dep.append(f"dış sahada gol üretmekte zorlanıyor ({U(f'{ad:.2f}')} gol/maç)")
-
-    if yorum_ev:
-        sn.append(" ".join(yorum_ev).capitalize() + ".")
-    if yorum_dep:
-        sn.append(" ".join(yorum_dep).capitalize() + ".")
-
-    se_t = int(round(lam_ev)); sd_t = int(round(lam_dep))
-    if se_t == sd_t: skor_t = f"{se_t}-{sd_t}"
-    elif s1 == "1": skor_t = f"{max(1, se_t)}-{max(0, sd_t)}"
-    else: skor_t = f"{max(0, se_t)}-{max(1, sd_t)}"
-    sn.append(f"<b>En olası skor tahmini:</b> {V(skor_t)} civarı. Fakat futbolun sürprizlere açık bir oyun olduğunu unutmayın — hiçbir tahmin %100 kesinlik taşımaz.")
-
-    if sn:
-        bolumler.append(("📌", "GERÇEKÇİ SENARYO", " ".join(sn)))
-
-    return bolumler
-
-
-def ai_yorum_paneli(v, a):
-    bolumler = ai_yorum_olustur(v, a)
-    if not bolumler:
+        return f'''
+        <div class="fa-mk">
+            <div class="fa-mk-row">
+                <span class="fa-mk-lbl">🎯 1X2</span>
+                <span class="fa-mk-pick {r(p1x2_poz)}">{_e(isim1x2)}</span>
+                <span class="fa-mk-pct">%{y1x2:.0f} <span class="fa-mk-badge {b(p1x2_poz)}">{bt(p1x2_poz)} eşik %{e1x2:.0f}</span></span>
+            </div>
+            <div class="fa-mk-row">
+                <span class="fa-mk-lbl">⚽ Gol</span>
+                <span class="fa-mk-pick {r(gol_poz)}">{_e(gol_s)}</span>
+                <span class="fa-mk-pct">%{gol_y:.0f} <span class="fa-mk-badge {b(gol_poz)}">{bt(gol_poz)} eşik %{gol_e:.0f}</span></span>
+            </div>
+            <div class="fa-mk-row">
+                <span class="fa-mk-lbl">🤝 KG</span>
+                <span class="fa-mk-pick {r(kg_poz)}">{_e(kg_s)}</span>
+                <span class="fa-mk-pct">%{kg_y:.0f} <span class="fa-mk-badge {b(kg_poz)}">{bt(kg_poz)} eşik %{kg_e:.0f}</span></span>
+            </div>
+        </div>
+        '''
+    except Exception:
         return ""
 
-    html_parcalar = []
-    for ikon, baslik, metin in bolumler:
-        html_parcalar.append(
-            f'<div class="fa-ai-bolum">'
-            f'<div class="fa-ai-bolum-baslik">{ikon} {baslik}</div>'
-            f'<div class="fa-ai-bolum-metin">{metin}</div>'
-            f'</div>'
-        )
 
-    s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
-    te = v.get("takim_ev", "Ev"); td = v.get("takim_dep", "Dep")
-    karar_isim = {"1": f"1 ({te} Kazanır)", "X": "X (Beraberlik)", "2": f"2 ({td} Kazanır)"}[s1]
-    if a["ust_25"] >= a["alt_25"]:
-        gol_isim = f"Üst 2.5 (%{a['ust_25']:.0f})"
-    else:
-        gol_isim = f"Alt 2.5 (%{a['alt_25']:.0f})"
-    if a["kg_var_model"] >= a["kg_yok_model"]:
-        kg_isim = f"KG Var (%{a['kg_var_model']:.0f})"
-    else:
-        kg_isim = f"KG Yok (%{a['kg_yok_model']:.0f})"
+def olasilik_bar(etiket, yuzde, esik=None, renk="#3b82f6"):
+    y = max(0.0, min(100.0, yuzde))
+    isaret = ""
+    if esik is not None:
+        renk = "#22c55e" if yuzde >= esik else "#475569"
+        isaret = f'<div class="fa-tick" style="left:{esik:.0f}%"></div>'
+    return (f'<div class="fa-row"><div class="fa-row-top"><span class="fa-lbl">{_e(etiket)}</span>'
+            f'<span class="fa-val">%{yuzde:.1f}</span></div>'
+            f'<div class="fa-bar"><div class="fa-fill" style="width:{y:.1f}%;background:{renk}"></div>{isaret}</div></div>')
 
-    karar_html = (
-        f'<div class="fa-ai-karar">'
-        f'<b>🎯 MODEL ÖZETİ:</b> {karar_isim} &nbsp;•&nbsp; {gol_isim} &nbsp;•&nbsp; {kg_isim}'
-        f'</div>'
+
+def olasilik_paneli(a):
+    satirlar = (
+        '<div class="fa-ttl">Maç Sonucu (her seçimin kendi eşiği)</div>'
+        + olasilik_bar("Ev Sahibi (1)", a["p1"], esik_1x2_al("1"), "#3b82f6")
+        + olasilik_bar("Beraberlik (X)", a["px"], esik_1x2_al("X"), "#94a3b8")
+        + olasilik_bar("Deplasman (2)", a["p2"], esik_1x2_al("2"), "#f59e0b")
+        + '<div class="fa-ttl" style="margin-top:10px">Piyasalar (çizgi = eşik)</div>'
+        + olasilik_bar("Üst 2.5", a["ust_25"], esik_al("ust"))
+        + olasilik_bar("Alt 2.5", a["alt_25"], esik_al("alt"))
+        + olasilik_bar("KG Var", a["kg_var_model"], esik_al("kg_var"))
+        + olasilik_bar("KG Yok", a["kg_yok_model"], esik_al("kg_yok"))
     )
-
-    return (
-        f'<div class="fa-ai-kart">'
-        f'<div class="fa-ai-baslik">🤖 AI MAÇ YORUMU</div>'
-        f'{"".join(html_parcalar)}'
-        f'{karar_html}'
-        f'</div>'
-    )
+    return f'<div class="fa-card">{satirlar}</div>'
 
 
-def yasal_metin_goster():
-    with st.expander("📜 Kullanım Şartları ve Sorumluluk Reddi — OKU", expanded=False):
-        st.markdown(YASAL_METIN)
+def oneri_karti(baslik, secim, yuzde, esik, poz, alt_satir):
+    if poz:
+        seviye, emoji, _k, etiket = guven_seviyesi_bul(yuzde)
+        tip = "green" if seviye == "yuksek" else "yellow" if seviye == "orta" else "gray"
+        durum = rozet(f"{etiket} güven", tip)
+        sinif = "fa-card fa-pos"
+        pct_sinif = "fa-pct"
+        not_satiri = f'<div class="fa-mut">{_e(alt_satir)}</div>'
+    else:
+        durum = rozet("Eşik altı", "gray")
+        sinif = "fa-card fa-neg"
+        pct_sinif = "fa-pct fa-off"
+        not_satiri = f'<div class="fa-mut">{_e(alt_satir)} • Gerekli: %{esik:.0f}</div>'
+    bar = olasilik_bar("", yuzde, esik)
+    return (f'<div class="{sinif}"><div class="fa-ttl">{_e(baslik)}</div>'
+            f'<div class="fa-pickrow"><div><div class="fa-pick">{_e(secim)}</div>{durum}</div>'
+            f'<div class="{pct_sinif}">%{yuzde:.1f}</div></div>{bar}{not_satiri}</div>')
 
 
-@st.cache_data(ttl=60, show_spinner=False)
-def gecmis_istatistik_hesapla_cached(gecmis_hash, _gecmis_ref, e1, ex, e2, eu, ea, ekv, eky):
-    g_1x2 = g_gol = g_kg = 0
-    g_1x2_t = g_gol_t = g_kg_t = 0
-    for gg in _gecmis_ref:
-        try:
-            vv = gg.get("veri", {})
-            if not vv.get("skor_belli", False): continue
-            dd = sonuc_hesapla(gg)
-            if not dd: continue
-            o = dd["oneri_1x2"]
-            if o.get("tuttu") is not None:
-                g_1x2_t += 1
-                if o["tuttu"]: g_1x2 += 1
-            o = dd["oneri_gol"]
-            if o.get("tuttu") is not None:
-                g_gol_t += 1
-                if o["tuttu"]: g_gol += 1
-            o = dd["oneri_kg"]
-            if o.get("tuttu") is not None:
-                g_kg_t += 1
-                if o["tuttu"]: g_kg += 1
-        except Exception: continue
-    p1 = (g_1x2 / g_1x2_t * 100) if g_1x2_t > 0 else 0
-    pg = (g_gol / g_gol_t * 100) if g_gol_t > 0 else 0
-    pk = (g_kg / g_kg_t * 100) if g_kg_t > 0 else 0
-    return p1, g_1x2, g_1x2_t, pg, g_gol, g_gol_t, pk, g_kg, g_kg_t
+def istat_karti(baslik, ist, esik_metni):
+    t = ist["tam"]; y = ist["yakin"]; yl = ist["yanlis"]
+    top = t + y + yl
+    if top == 0:
+        govde = '<div class="fa-big fa-off">—</div><div class="fa-mut">Henüz bahis yok</div>'
+    else:
+        isabet = (t + y) / top * 100
+        sinif = "fa-g" if isabet >= 85 else "fa-y" if isabet >= 70 else "fa-r"
+        govde = (f'<div class="fa-big {sinif}">%{isabet:.0f}</div>'
+                 f'<div class="fa-mut">✅ {t + y} doğru • ❌ {yl} yanlış • {top} bahis</div>')
+    return (f'<div class="fa-card"><div class="fa-ttl">{_e(baslik)}</div>{govde}'
+            f'<div class="fa-mut">{_e(esik_metni)}</div></div>')
 
 
-def gecmis_istatistik_hesapla():
+def backtest_karti(baslik, dogru, yanlis):
+    top = dogru + yanlis
+    if top == 0:
+        return (f'<div class="fa-card"><div class="fa-ttl">{_e(baslik)}</div>'
+                f'<div class="fa-mut">Eşiği geçen maç yok.</div></div>')
+    yuzde = dogru / top * 100
+    alt_s, ust_s = wilson_aralik(dogru, top)
+    sinif = "fa-g" if yuzde >= 85 else "fa-y" if yuzde >= 70 else "fa-r"
+    renk = "#22c55e" if yuzde >= 85 else "#f59e0b" if yuzde >= 70 else "#ef4444"
+    return (f'<div class="fa-card"><div class="fa-ttl">{_e(baslik)}</div>'
+            f'<div class="fa-pickrow"><div class="fa-big {sinif}">%{yuzde:.1f}</div>'
+            f'<div style="text-align:right"><div class="fa-val">✅ {dogru} &nbsp; ❌ {yanlis}</div>'
+            f'<div class="fa-mut">{top} bahis</div></div></div>'
+            f'<div class="fa-ci"><div class="fa-ci-fill" style="left:{alt_s:.1f}%;width:{max(ust_s - alt_s, 0.5):.1f}%"></div>'
+            f'<div class="fa-ci-dot" style="left:{yuzde:.1f}%;background:{renk}"></div></div>'
+            f'<div class="fa-mut">%95 güven aralığı: %{alt_s:.0f} – %{ust_s:.0f}</div></div>')
+
+
+def mac_sonuc_ikon(g):
     try:
-        gc = st.session_state.gecmis_analizler
-        son_url = gc[-1].get("veri", {}).get("kaynak_url", "") if gc else ""
-        e = st.session_state.esikler
-        anahtar = f"{len(gc)}_{son_url}_{e.get('esik_1',55)}_{e.get('esik_x',55)}_{e.get('esik_2',55)}_{e.get('ust',65)}_{e.get('alt',55)}_{e.get('kg_var',57)}_{e.get('kg_yok',72)}"
-        return gecmis_istatistik_hesapla_cached(
-            anahtar, gc,
-            e.get("esik_1", 55.0), e.get("esik_x", 55.0), e.get("esik_2", 55.0),
-            e.get("ust", 65.0), e.get("alt", 55.0), e.get("kg_var", 57.0), e.get("kg_yok", 72.0),
-        )
+        v = g["veri"]
+        if not v.get("skor_belli", False):
+            return "⚫"
+        try:
+            ya = yeniden_analiz(v)
+        except Exception:
+            ya = g.get("analiz", {})
+        d = sonuc_hesapla({"veri": v, "analiz": ya})
+        if not d:
+            return "⚫"
+        verilen = [x for x in [d["oneri_1x2"]["tuttu"], d["oneri_gol"]["tuttu"], d["oneri_kg"]["tuttu"]] if x is not None]
+        if not verilen:
+            return "⚫"
+        if all(verilen):
+            return "✅"
+        if not any(verilen):
+            return "❌"
+        return "🟡"
     except Exception:
-        return 0, 0, 0, 0, 0, 0, 0, 0, 0
+        return "⚫"
 
 
-def modern_istatistik_grafik(baslik="📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ"):
-    p1, t1, s1, pg, tg, sg, pk, tk, sk = gecmis_istatistik_hesapla()
-    st.markdown(f'<div class="mh-hero-ust" style="text-align:center;margin-top:14px;">{_e(baslik)}</div>', unsafe_allow_html=True)
-    st.markdown(f'''<div class="fa-donut-grid">
-    <div class="fa-donut-kart" style="--c:#22c55e;">
-        <div class="fa-donut-ttl">🎯 1X2</div>
-        {_donut_svg(p1, "#22c55e")}
-        <div class="fa-donut-sub"><b>{t1}</b> / {s1}</div>
-    </div>
-    <div class="fa-donut-kart" style="--c:#3b82f6;">
-        <div class="fa-donut-ttl">⚽ GOL</div>
-        {_donut_svg(pg, "#3b82f6")}
-        <div class="fa-donut-sub"><b>{tg}</b> / {sg}</div>
-    </div>
-    <div class="fa-donut-kart" style="--c:#f59e0b;">
-        <div class="fa-donut-ttl">🤝 KG</div>
-        {_donut_svg(pk, "#f59e0b")}
-        <div class="fa-donut-sub"><b>{tk}</b> / {sk}</div>
-    </div>
-    </div>''', unsafe_allow_html=True)
+def nav_git(hedef):
+    st.session_state.sayfa = hedef
+    st.session_state.kayit_yapildi = False
+    st.session_state.gecmisten_gelindi = False
+    st.session_state.gelecekten_gelindi = False
+    st.session_state.aktif_kayit_idx = None
+    st.session_state.aktif_gelecek_idx = None
+    st.session_state.okunamayan_alanlar = []
+    st.session_state.manuel_bekleyen = []
+    st.session_state.tek_silme_onay = None
+    st.session_state.tek_silme_gelecek = None
+    st.session_state.silme_onay = False
+    if hedef == "backtest":
+        st.session_state.bt_sonuc = None
+        st.session_state.bt_detaylar = []
+    st.rerun()
+
+
+def nav_bar():
+    try:
+        kutu = st.container(key="fa_nav")
+    except TypeError:
+        kutu = st.container()
+    with kutu:
+        if admin_mi():
+            secenekler = [("🏠", "giris"), ("📊 Geçmiş", "gecmis"), ("🔮 Gelecek", "gelecek"),
+                          ("🔬 Test", "backtest"), ("⚙️ Ayar", "ayarlar")]
+        else:
+            secenekler = [("🏠 Ana", "giris"), ("📊 Geçmiş", "gecmis"), ("🔮 Gelecek", "gelecek")]
+        kolonlar = st.columns(len(secenekler))
+        for kol, (etiket, hedef) in zip(kolonlar, secenekler):
+            with kol:
+                aktif = st.session_state.sayfa == hedef
+                if st.button(etiket, key=f"nav_{hedef}", use_container_width=True,
+                             type="primary" if aktif else "secondary"):
+                    if not aktif:
+                        nav_git(hedef)
 
 
 # ==========================================
 # ADMİN GİRİŞ EKRANI
 # ==========================================
 def admin_giris_ekrani():
-    st.markdown('''<div class="login-hero"><div class="login-logo">🔐</div><h1 class="login-title">Giriş Yap</h1><p class="login-subtitle">Admin veya üye girişi</p></div>''', unsafe_allow_html=True)
+    st.markdown("""
+        <div class="login-hero">
+            <div class="login-logo">👑</div>
+            <h1 class="login-title">Admin Girişi</h1>
+            <p class="login-subtitle">Yönetici paneline erişim</p>
+        </div>
+    """, unsafe_allow_html=True)
+
     with st.form("admin_giris_form"):
-        kadi = st.text_input("👤 Kullanıcı Adı", placeholder="Kullanıcı adın...", key="admin_kadi_input")
-        sifre = st.text_input("🔐 Şifre", type="password", placeholder="Şifren...", key="admin_sifre_input")
-        c1, c2 = st.columns(2)
-        with c1: giris_btn = st.form_submit_button("✅ Giriş Yap", use_container_width=True, type="primary")
-        with c2: iptal_btn = st.form_submit_button("⬅️ Ana Sayfa", use_container_width=True)
+        sifre = st.text_input(
+            "🔐 Admin Şifresi",
+            type="password",
+            key="admin_sifre_input",
+            placeholder="Şifreni gir..."
+        )
+
+        col_a, col_b = st.columns(2)
+        with col_a:
+            giris_btn = st.form_submit_button(
+                "✅ Giriş Yap",
+                use_container_width=True,
+                type="primary"
+            )
+        with col_b:
+            iptal_btn = st.form_submit_button(
+                "⬅️ Geri Dön",
+                use_container_width=True
+            )
+
         if giris_btn:
-            if not kadi.strip() or not sifre: st.error("❌ Kullanıcı adı ve şifre gerekli.")
-            elif kadi.strip() == ADMIN_KULLANICI_ADI and sifre == ADMIN_SIFRE:
-                st.session_state.rol = "admin"; st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"; st.rerun()
-            elif kullanici_dogrula(kadi.strip(), sifre):
-                st.session_state.aktif_kullanici = kadi.strip(); st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"
-                st.success(f"✅ Hoş geldin, {kadi.strip()}!"); time.sleep(1); st.rerun()
-            else: st.error("❌ Kullanıcı adı veya şifre hatalı.")
+            if sifre == ADMIN_SIFRE:
+                st.session_state.rol = "admin"
+                st.session_state.admin_login_acik = False
+                st.session_state.sayfa = "giris"
+                st.rerun()
+            else:
+                st.error("❌ Yanlış şifre. Tekrar deneyin.")
+
         if iptal_btn:
-            st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"; st.rerun()
-    st.markdown('<div class="login-divider">HESABIN YOK MU?</div>', unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("✨ Üye Ol", use_container_width=True, key="admin_to_kayit", type="primary"):
-            st.session_state.admin_login_acik = False; st.session_state.sayfa = "kayit"; st.rerun()
-    with c2:
-        if st.button("⬅️ Ana Sayfa", use_container_width=True, key="admin_to_main"):
-            st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"; st.rerun()
+            st.session_state.admin_login_acik = False
+            st.rerun()
+
+    st.markdown("""
+        <div class="login-footer">© <b>Futbol Analiz Pro</b> • Yönetici Erişimi</div>
+    """, unsafe_allow_html=True)
 
 
 # ==========================================
-# ÜST BAR
+# ÜST BAR (Giriş / Çıkış)
 # ==========================================
 def ust_bar():
-    c1, c2 = st.columns([3, 1])
+    c1, c2 = st.columns([4, 1])
     with c1:
         if admin_mi():
-            st.markdown('<div style="padding:6px 0; font-size:0.8rem; color:#22c55e; font-weight:700;">👑 Admin Modu</div>', unsafe_allow_html=True)
-        elif uye_mi():
-            premium = uye_premium_mu()
-            if premium:
-                badge = '🌟 <span style="color:#22c55e;font-weight:700;">PREMIUM</span>'
-                try:
-                    k = kullanicilar_yukle().get(uye_adi(), {})
-                    bs = k.get("abonelik_bitis")
-                    if bs:
-                        bt = datetime.strptime(bs, "%Y-%m-%d"); kl = (bt - datetime.now()).days
-                        if kl >= 0: badge += f' <span style="color:#8fa0bd;font-size:0.72rem;">({kl} gün kaldı)</span>'
-                except Exception: pass
-                st.markdown(f'<div style="padding:6px 0; font-size:0.8rem; color:#eaf1fb; font-weight:700;">👤 {_e(uye_adi())} &nbsp; {badge}</div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div style="padding:6px 0; font-size:0.8rem; color:#f59e0b; font-weight:700;">👤 {_e(uye_adi())} <span style="color:#8fa0bd;font-size:0.72rem;">(abonelik yok)</span></div>', unsafe_allow_html=True)
+            st.markdown(
+                '<div style="padding:6px 0; font-size:0.8rem; color:#22c55e; font-weight:700;">'
+                '👑 Admin Modu</div>',
+                unsafe_allow_html=True
+            )
         else:
-            st.markdown('<div style="padding:6px 0; font-size:0.8rem; color:#8fa0bd; font-weight:600;">👤 Misafir Modu</div>', unsafe_allow_html=True)
+            st.markdown(
+                '<div style="padding:6px 0; font-size:0.8rem; color:#8fa0bd; font-weight:600;">'
+                '👤 Misafir Modu</div>',
+                unsafe_allow_html=True
+            )
     with c2:
         if admin_mi():
             if st.button("🚪 Çıkış", use_container_width=True, key="cikis_btn"):
-                st.session_state.rol = "misafir"; st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"
-                st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI); st.rerun()
-        elif uye_mi():
-            if st.button("🚪 Çıkış", use_container_width=True, key="uye_cikis_btn"):
-                st.session_state.aktif_kullanici = None; st.session_state.sayfa = "giris"; st.rerun()
+                st.session_state.rol = "misafir"
+                st.session_state.admin_login_acik = False
+                st.session_state.sayfa = "giris"
+                st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
+                st.session_state.tek_silme_onay = None
+                st.session_state.tek_silme_gelecek = None
+                st.session_state.silme_onay = False
+                st.session_state.aktif_kayit_idx = None
+                st.session_state.aktif_gelecek_idx = None
+                st.session_state.bt_sonuc = None
+                st.session_state.bt_detaylar = []
+                st.rerun()
+        else:
+            if st.button("🔐 Giriş", use_container_width=True, key="giris_btn", type="primary"):
+                st.session_state.admin_login_acik = True
+                st.rerun()
 
 
+# ==========================================
+# MİSAFİR AÇIKLAMA BÖLÜMÜ
+# ==========================================
 def misafir_aciklama():
     with st.expander("📖 Uygulamayı Tanı ve Kuralları Oku", expanded=False):
-        st.markdown("""### ⚽ Futbol Analiz Pro
-Geçmiş istatistiklere dayalı analiz ve tahminler. Sadece **bilgilendirme amaçlıdır**.
+        st.markdown("""
+### ⚽ Futbol Analiz Pro Nedir?
 
-### 🌟 PREMIUM
-- Tüm maçlar açık
-- Haftalık / Aylık / Yıllık
+Bu uygulama, futbol maçlarının **geçmiş istatistiklerini** analiz ederek 
+**1X2 (Maç Sonucu)**, **Üst/Alt 2.5** ve **Karşılıklı Gol (KG)** tahminleri üretir. 
+Sadece **bilgilendirme amaçlıdır.** Kesin sonuç garantisi **YOKTUR.**
+
+---
+
+### 🎯 EŞİKLER NEDİR? NEDEN KULLANILIR?
+
+**Eşik** = Bir tahminin "oynanabilir" sayılması için geçmesi gereken minimum yüzde.
+
+**Örnek eşikler:**
+- 1X2 → %55+ (sadece yüksek olasılıklı sonuçlar)
+- Üst 2.5 → %82
+- Alt 2.5 → %74
+- KG Var → %73
+- KG Yok → %88
+
+**Neden eşik kullanılır?**
+Her maçta tahmin üretilmez. Çünkü bazı maçlar "**belirsiz**" (%50-55 civarı) olur. 
+Bu tür maçları oynamak **kumar** olur. Eşikler sayesinde sadece **YÜKSEK OLASILIKLI** 
+maçlara odaklanılır. Bu da isabet oranını yükseltir.
+
+---
+
+### 📊 1X2 NEDİR? NASIL OKUNUR?
+
+**1X2**, maç sonucu bahsidir:
+- **1** = Ev sahibi kazanır
+- **X** = Beraberlik
+- **2** = Deplasman kazanır
+
+**Nasıl yorumlanır?**
+Analiz sayfasında 3 bar görürsün: **p1, px, p2**. En yüksek olan **en olası** sonuçtur. 
+Ama unutma: 1X2 tahmini **en zor** markettir. Çünkü 3 seçenek vardır.
+
+**Önemli:**
+- %50+ → **Oynanabilir** (yüksek olasılık)
+- %40-50 → **Belirsiz** (riskli)
+- %40 altı → **Oynama** (kumar)
+
+---
+
+### 📊 GEÇMİŞ VERİLER NASIL OKUNUR?
+
+Geçmiş sayfasında her maçın yanında **renkli ikon** vardır:
+
+- ✅ = Her iki tahmin de tuttu (Gol + KG)
+- 🟡 = Sadece biri tuttu (kısmi başarı)
+- ❌ = İki tahmin de yanlış çıktı
+- ⚫ = O maçta öneri verilmedi (eşik altı, oynanmadı)
+
+**Üst kısımdaki istatistikler:**
+- ✅ X doğru → Kazanılan tahmin sayısı
+- ❌ Y yanlış → Kaybedilen tahmin sayısı
+- %Z isabet → Genel başarı oranı
+
+**ÖNEMLİ:** İsabet **%100 olmaz.** %85+ çok iyi, %90+ mükemmel. 
+Ama %100 imkansızdır. Her zaman kayıp olacaktır.
+
+---
+
+### 🔮 GELECEK MAÇLAR NASIL KULLANILIR?
+
+Gelecek maçlar, **henüz oynanmamış** ama analiz edilmiş maçlardır. 
+Her maçın yanında:
+- 🇹🇷 **Bayrak** → Ülke
+- 🕐 **Saat** → Maç saati
+- ⚽ **Takım isimleri**
+
+Bu maçlara tıklayarak analizi görebilirsin. Ama unutma: 
+**Gelecek maç tahminleri %100 değildir.** Kesin sonuç yoktur.
+
+---
+
+### ⚡ STRATEJİ: TEKLİ Mİ, KOMBİNE Mİ?
+
+#### 📌 TEKLİ BAHİS
+Her maça ayrı ayrı oyna. Risk düşük, kazanç düşük.
+Öneri: %85 isabetli tahminlere haftada 5-10 tekli.
+
+#### 📌 2'Lİ KOMBİNE
+İki maçı birleştir. İsabet = **%85 × %85 = %72**.
+Ama oran 2 katına çıkar. Riskli ama kârlı.
+
+#### 📌 3'LÜ KOMBİNE
+Üç maçı birleştir. İsabet = **%85³ = %61**.
+Yüksek risk, yüksek kazanç. Haftada max 1-2 tane.
+
+**🎯 FORMÜL:** Kombine isabet = **Her maçın isabeti ÇARPILIR**
+
+---
+
+### ⚠️ DİKKATLİ BAHİS KURALLARI
+
+**1. KAYBETMEYİ KABUL ET**
+Hiçbir sistem %100 değildir. 10 maçtan 1-2 tanesi kaybedilecektir. 
+Bu normaldir, panik yapma.
+
+**2. BANKANI KORU**
+Toplam paranı tek bahse **YATIRMA.**
+Kural: Her bahis, bankanın **%2-5'ini** geçmesin.
+Örnek: 5.000 TL banka → max 100-250 TL bahis
+
+**3. KAYIPTAN SONRA ARTTIRMA (Martingale YAPMA)**
+"Kaybettim, 2 katı basayım" → **BÜYÜK HATA.**
+Her zaman **sabit miktar.** Sabırlı ol.
+
+**4. SADECE ÖNERİLERE OYNA**
+Eşiği geçmeyen maçlara oynama. Kod "belirsiz" diyorsa uzak dur. 
+**Belirsiz maç = kumar.**
+
+**5. HAFTALIK LİMİT KOY**
+Örn: Haftada max 20 bahis, aylık max 80.
+Bu limiti aşma. Aşarsan **bağımlılık** başlar.
+
+**6. KAYIP SERİSİNDE ARA VER**
+3-4 üst üste kayıp gelirse 2-3 gün ara ver.
+Sinirle bahis yapma. Soğukkanlı ol.
+
+**7. KAZANCI ÇEK**
+Kazandığının %30-50'sini **hemen çek.** Kalanı bankada tut.
+Her şeyi tekrar riske atma.
+
+**8. ALKOL/SİNİR/AÇLIK DURUMUNDA OYNAMA**
+Beyin net olmalı. Duygusal kararlar **kaybettirir.**
+
+---
 
 ### 🚫 SORUMLULUK REDDİ
-- **18 yaşından küçükler** kullanamaz.
-- Yasadışı bahis **suçtur**.
-- **Kesin sonuç garantisi yoktur.**
-- **YEDAM: 115**
-""")
 
+- Bu uygulama **SADECE bilgi amaçlıdır.**
+- Hiçbir kayıptan **sorumlu değiliz.**
+- Bahis oynamak **YASAL RİSK** içerir.
+- **18 yaşından küçükler** bahis oynayamaz.
+- Kaybettiğiniz parayı **geri talep etme hakkınız yok.**
+- **Bağımlılık riski** vardır. Profesyonel yardım alın.
+- **Yeşilay Danışma: 115**
+- Kumar bağımlılığı **ciddi bir hastalıktır.**
 
-# ==========================================
-# NAV BAR
-# ==========================================
-def nav_git(h):
-    st.session_state.sayfa = h
-    st.session_state.kayit_yapildi = False
-    st.session_state.tek_silme_onay = None
-    st.session_state.tek_silme_gelecek = None
-    st.session_state.sil_onay_kadi = None
-    if h == "backtest": st.session_state.bt_sonuc = None; st.session_state.bt_detaylar = []
-    st.rerun()
+---
 
+### 💡 ÖZET
 
-def nav_bar():
-    if st.session_state.sayfa in ("kayit", "uyegirisi", "odeme", "giris_yap"): return
-    try: kutu = st.container(key="fa_nav")
-    except TypeError: kutu = st.container()
-    with kutu:
-        if admin_mi():
-            sec = [("🏠 Ana Sayfa", "giris"), ("🔮 Gelecek", "gelecek_admin"), ("📊 Geçmiş", "gecmis"), ("🔬 Test", "backtest"), ("💳 Ödemeler", "admin_odemeler"), ("👥 Aboneler", "admin_aboneler"), ("📬 Bildirimler", "admin_bildirimler"), ("⚙️ Ayar", "ayarlar")]
-        elif uye_mi():
-            sec = [("🏠 Ana Sayfa", "giris"), ("📊 Geçmiş Maçlar", "gecmis"), ("📬 Bildirim", "kullanici_bildirim")]
-        else:
-            sec = [("🏠 Ana Sayfa", "giris"), ("📊 Geçmiş Maçlar", "gecmis")]
-        kl = st.columns(len(sec))
-        for k, (e, h) in zip(kl, sec):
-            with k:
-                aktif = st.session_state.sayfa == h
-                if st.button(e, key=f"nav_{h}", use_container_width=True, type="primary" if aktif else "secondary"):
-                    if not aktif: nav_git(h)
+**✅ Yap:**
+- Eşiği geçen maçlara oyna
+- Sabit miktar bas
+- Kazancı çek
+- Sabırlı ol
+- Kaybı kabul et
+
+**❌ Yapma:**
+- Belirsiz maçlara oyna
+- Kayıptan sonra 2 katı bas
+- Tüm bankayı riske at
+- Duygusal karar ver
+- Borçla bahis yap
+
+**🎯 HEDEF:** Uzun vadede kârlı olmak.
+Kısa vadede kayıp normal. Önemli olan **ortalamadır.**
+
+**Bol şans! Ama unutma: BU BİR KUMAR DEĞİL, ANALİZ.**
+**Ve her analiz yanılabilir.** 🍀
+        """)
 
 
 # ==========================================
@@ -2380,627 +2611,376 @@ nav_bar()
 
 
 # ==========================================
-# SAYFA: GİRİŞ YAP
-# ==========================================
-if st.session_state.sayfa == "giris_yap":
-    admin_giris_ekrani()
-
-
-# ==========================================
 # SAYFA: ANA SAYFA
 # ==========================================
-elif st.session_state.sayfa == "giris":
+if st.session_state.sayfa == "giris":
     if admin_mi():
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center;color:gray;'>Admin Paneli</p>", unsafe_allow_html=True)
-
-        st.divider()
+        st.markdown("<p style='text-align:center; color:gray;'>İstatistik metnini kopyala → yapıştır → analiz et.</p>", unsafe_allow_html=True)
         st.markdown("### 📋 İstatistik Metnini Yapıştır")
-        ym = st.text_area("Yapıştırma", height=200, key="yapistir_input", label_visibility="collapsed", placeholder="İstatistik metnini buraya yapıştır")
-        c1, c2, c3, c4, c5 = st.columns([2, 1, 1, 1, 1])
-        with c1: analiz_btn = st.button("🚀 ANALİZ ET", use_container_width=True, type="primary")
-        with c2: gecmis_btn = st.button("📊 Geçmiş", use_container_width=True)
-        with c3: gelecek_btn = st.button("🔮 Gelecek", use_container_width=True)
-        with c4: backtest_btn = st.button("🔬 Test", use_container_width=True)
-        with c5: ayarlar_btn = st.button("⚙️ Ayar", use_container_width=True)
+
+        yapistir_metni = st.text_area("Yapıştırma alanı", height=240, key="yapistir_input", label_visibility="collapsed", placeholder="İstatistik metnini buraya yapıştır.")
+        st.divider()
+
+        col_bt1, col_bt2, col_bt3, col_bt4, col_bt5 = st.columns([2, 1, 1, 1, 1])
+        with col_bt1:
+            analiz_btn = st.button("🚀 ANALİZ ET", use_container_width=True, type="primary")
+        with col_bt2:
+            gecmis_btn = st.button("📊 Geçmiş", use_container_width=True)
+        with col_bt3:
+            gelecek_btn = st.button("🔮 Gelecek", use_container_width=True)
+        with col_bt4:
+            backtest_btn = st.button("🔬 Backtest", use_container_width=True)
+        with col_bt5:
+            ayarlar_btn = st.button("⚙️ Ayarlar", use_container_width=True)
+
         if analiz_btn:
-            if not ym.strip(): st.warning("⚠️ Metin yapıştır.")
+            if not yapistir_metni.strip():
+                st.warning("⚠️ Önce metni yapıştır.")
             else:
-                cikan, okunamayanlar = metinden_veri_cikar(ym)
-                if not cikan: st.error("❌ Veri çıkarılamadı.")
+                cikan, okunamayanlar = metinden_veri_cikar(yapistir_metni)
+                if not cikan:
+                    st.error("❌ Metinden hiçbir veri çıkarılamadı.")
                 else:
-                    yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(cikan)
-                    st.session_state.form_verileri = yv; st.session_state.kayit_yapildi = False
-                    st.session_state.manuel_bekleyen = okunamayanlar.copy() if okunamayanlar else []
-                    if not veri_yeterli_mi(yv): st.error("⚠️ Yetersiz veri.")
-                    else:
-                        if okunamayanlar: st.session_state.sayfa = "manuel_giris"
-                        else: st.session_state.sayfa = "sonuc"
-                        st.rerun()
-        if gecmis_btn: nav_git("gecmis")
-        if gelecek_btn: nav_git("gelecek_admin")
-        if backtest_btn: nav_git("backtest")
-        if ayarlar_btn: nav_git("ayarlar")
+                    yeni_veri = copy.deepcopy(VARSAYILAN_VERI)
+                    yeni_veri.update(cikan)
+                    st.session_state.form_verileri = yeni_veri
+                    st.session_state.kayit_yapildi = False
+                    st.session_state.gecmisten_gelindi = False
+                    st.session_state.gelecekten_gelindi = False
+                    st.session_state.aktif_kayit_idx = None
+                    st.session_state.aktif_gelecek_idx = None
+                    st.session_state.okunamayan_alanlar = okunamayanlar
+                    st.session_state.manuel_bekleyen = okunamayanlar.copy()
 
-        st.divider()
-        st.markdown("### 🤖 Otomatik Veri Çekme")
-        vs1, vs2, vs3 = st.tabs(["🔄 Gelecek Maçlar", "📜 Lig Geçmişi", "🏁 Sonuçları İşle"])
-        with vs1:
-            if st.session_state.toplu_cek_ozet:
-                oz = st.session_state.toplu_cek_ozet
-                st.markdown(f"**Son çekim:** Eklenen: **{oz.get('eklenen', 0)}** | Atlanan: **{oz.get('atlanan', 0)}** | Toplam: **{oz.get('toplam', 0)}**")
-            c1, c2 = st.columns(2)
-            with c1: w = st.number_input("Paralel", 1, 6, 2, 1, key="fw")
-            with c2:
-                st.markdown("")
-                if st.button("🚀 Bugünün Maçlarını Çek", use_container_width=True, type="primary", key="mbtn"):
-                    ph = st.empty()
-                    def _p(i, t, n):
-                        try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
-                        except Exception: pass
-                    with st.spinner("Çekiliyor..."):
-                        bas, hat = mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=_p, max_workers=int(w))
-                    ph.empty()
-                    if hat:
-                        with st.expander(f"⚠️ {len(hat)} hata"):
-                            for h in hat: st.caption(h)
-                    if not bas: st.error("❌ Hiçbir maç çekilemedi.")
+                    if not veri_yeterli_mi(yeni_veri):
+                        st.error(f"⚠️ Analiz için yeterli veri yok.")
                     else:
-                        st.success(f"✅ {len(bas)} maç işlendi.")
-                        time.sleep(2); st.rerun()
-        with vs2:
-            lurl = st.text_input("Lig URL", key="lig_url_input", placeholder="https://www.mutating.com/football-stats/league-...")
-            c1, c2 = st.columns(2)
-            with c1: la = st.number_input("Kaç maç?", 5, 30, 10, 1, key="lig_adet")
-            with c2: lw = st.number_input("Paralel", 1, 6, 2, 1, key="lig_workers")
-            if st.button("📜 Ligi Çek", use_container_width=True, type="primary", key="lig_cek_btn"):
-                if not lurl.strip(): st.warning("URL gerekli")
-                else:
-                    ph = st.empty()
-                    def _p2(i, t, n):
-                        try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
-                        except Exception: pass
-                    with st.spinner(f"Son {la} maç..."):
-                        bas, hat = lig_gecmis_cek(lurl.strip(), int(la), int(lw), _p2)
-                    ph.empty()
-                    if hat:
-                        with st.expander(f"⚠️ {len(hat)} hata"):
-                            for h in hat: st.caption(h)
-                    if bas:
-                        st.success(f"✅ {len(bas)} maç eklendi!"); time.sleep(2); st.rerun()
-                    else: st.error("Hiçbir maç eklenemedi.")
-        with vs3:
-            if st.session_state.skor_ozet:
-                oz = st.session_state.skor_ozet
-                hata_say = len(oz.get("hatalar", []))
-                st.success(f"✅ {oz['tasinan']} maç Geçmişe taşındı • {oz['bitmemis']} maç henüz bitmemiş • {hata_say} hata")
-                if oz.get("hatalar"):
-                    with st.expander(f"⚠️ {hata_say} hata detayı"):
-                        for _h in oz["hatalar"][:50]:
-                            st.caption(_h)
-            st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}**")
-            sy = st.checkbox("Skor bulunamazsa tarayıcıyla da dene (yavaş)", value=False, key="skor_yedek")
-            c1, c2 = st.columns(2)
-            with c1: sw = st.number_input("Paralel", 1, 8, 4, 1, key="skor_w")
-            with c2:
-                st.markdown("")
-                if st.button("🏁 Biten Maçları Geçmişe Aktar", use_container_width=True, type="primary", key="skor_btn"):
-                    if not st.session_state.gelecek_analizler:
-                        st.warning("Gelecek'te maç yok")
-                    else:
-                        ph = st.empty()
-                        def _p3(i, t, n):
-                            try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
-                            except Exception: pass
-                        with st.spinner("Skorlar kontrol ediliyor..."):
-                            st.session_state.skor_ozet = sonuclari_isle(bool(sy), int(sw), _p3)
-                        ph.empty()
+                        if okunamayanlar:
+                            st.session_state.sayfa = "manuel_giris"
+                        else:
+                            st.session_state.sayfa = "sonuc"
                         st.rerun()
 
+        if gecmis_btn:
+            st.session_state.sayfa = "gecmis"
+            st.session_state.kayit_yapildi = False
+            st.session_state.gecmisten_gelindi = False
+            st.session_state.gelecekten_gelindi = False
+            st.session_state.aktif_kayit_idx = None
+            st.session_state.aktif_gelecek_idx = None
+            st.session_state.okunamayan_alanlar = []
+            st.session_state.manuel_bekleyen = []
+            st.session_state.tek_silme_onay = None
+            st.session_state.silme_onay = False
+            st.rerun()
+
+        if gelecek_btn:
+            st.session_state.sayfa = "gelecek"
+            st.session_state.kayit_yapildi = False
+            st.session_state.gecmisten_gelindi = False
+            st.session_state.gelecekten_gelindi = False
+            st.session_state.aktif_kayit_idx = None
+            st.session_state.aktif_gelecek_idx = None
+            st.session_state.okunamayan_alanlar = []
+            st.session_state.manuel_bekleyen = []
+            st.session_state.tek_silme_gelecek = None
+            st.rerun()
+
+        if backtest_btn:
+            st.session_state.sayfa = "backtest"
+            st.session_state.bt_sonuc = None
+            st.session_state.bt_detaylar = []
+            st.rerun()
+
+        if ayarlar_btn:
+            st.session_state.sayfa = "ayarlar"
+            st.rerun()
     else:
-        gelecek = st.session_state.gelecek_analizler
-        toplam = len(gelecek)
-        premium = uye_premium_mu()
-        kota = int(ayar_al("ucretsiz_kotasi", 3))
+        gecmis_sayi = len(st.session_state.gecmis_analizler)
+        gelecek_sayi = len(st.session_state.gelecek_analizler)
 
-        if premium:
-            kl = ""
-            try:
-                bs = kullanicilar_yukle().get(uye_adi(), {}).get("abonelik_bitis")
-                if bs:
-                    kk = (datetime.strptime(bs, "%Y-%m-%d") - datetime.now()).days
-                    if kk >= 0: kl = f'<div class="mh-hero-badge">🌟 PREMIUM — {kk} gün kaldı</div>'
-            except Exception: pass
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">Premium aktif — tüm analizler açık</div>{kl}</div>', unsafe_allow_html=True)
-            modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ")
-        elif uye_mi():
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz açık</div><div class="mh-hero-badge" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.5);color:#f59e0b !important;">⚠️ ABONELİK YOK</div></div>', unsafe_allow_html=True)
-            modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ")
-            if st.button("💳 Premium'a Geç  •  ✨ Üye Ol", use_container_width=True, type="primary", key="ana_premium_btn"):
-                st.session_state["odeme_hedef_kadi"] = uye_adi(); st.session_state.sayfa = "odeme"; st.rerun()
-        else:
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Bugün {toplam} Maç</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz açık</div></div>', unsafe_allow_html=True)
-            modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ")
-            if st.button("💳 Premium'a Geç  •  ✨ Üye Ol", use_container_width=True, type="primary", key="mis_prem"):
-                st.session_state.sayfa = "kayit"; st.rerun()
-            if st.button("🔐 Giriş Yap", use_container_width=True, key="mis_giris_btn"):
-                st.session_state.sayfa = "giris_yap"; st.rerun()
+        st.markdown(f"""
+            <div class="mh-hero">
+                <div class="mh-hero-icon">⚽</div>
+                <div class="mh-hero-title">Futbol Analiz Pro</div>
+                <div class="mh-hero-sub">Akıllı maç analizi ve tahmin motoru</div>
+                <div class="mh-hero-badge">● CANLI VERİ</div>
+            </div>
+            <div class="mh-stat-grid">
+                <div class="mh-stat">
+                    <div class="mh-stat-icon">📊</div>
+                    <div class="mh-stat-num">{gecmis_sayi}</div>
+                    <div class="mh-stat-lbl">Geçmiş Maç</div>
+                </div>
+                <div class="mh-stat">
+                    <div class="mh-stat-icon">🔮</div>
+                    <div class="mh-stat-num">{gelecek_sayi}</div>
+                    <div class="mh-stat-lbl">Gelecek Maç</div>
+                </div>
+            </div>
+            <div class="mh-section-title">HIZLI ERİŞİM</div>
+        """, unsafe_allow_html=True)
 
-        st.divider()
-        if not gelecek: st.info("ℹ️ Henüz maç yok.")
-        else:
-            sirali = sorted(enumerate(gelecek), key=lambda x: saat_sirala_anahtari(x[1]))
-            acik = 0
-            for idx, g in sirali:
-                v = g["veri"]; te = v.get("takim_ev", "Ev") or "Ev"; td = v.get("takim_dep", "Dep") or "Dep"
-                ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
-                if premium or acik < kota:
-                    try:
-                        af = analiz_hesapla(v); le = af["lam_ev"]; ld = af["lam_dep"]
-                    except Exception: le = ld = 0
-                    st.markdown(mac_karti(te, td, False, 0, 0, le, ld, saat, ulke, tarih), unsafe_allow_html=True)
-                    th = mac_tahmin_karti(v, g)
-                    if th: st.markdown(th, unsafe_allow_html=True)
-                    if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gmac_{idx}"):
-                        st.session_state.form_verileri = copy.deepcopy(v); st.session_state.kayit_yapildi = True
-                        st.session_state.gelecekten_gelindi = True; st.session_state.aktif_gelecek_idx = idx
-                        st.session_state.sayfa = "sonuc"; st.rerun()
-                    acik += 1
-                else:
-                    st.markdown(kilitli_mac_karti(te, td, saat, ulke, tarih), unsafe_allow_html=True)
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        if st.button("💳 Premium", use_container_width=True, key=f"kp_{idx}", type="primary"):
-                            if uye_mi(): st.session_state["odeme_hedef_kadi"] = uye_adi(); st.session_state.sayfa = "odeme"
-                            else: st.session_state.sayfa = "kayit"
-                            st.rerun()
-                    with c2:
-                        if st.button("🔑 Giriş", use_container_width=True, key=f"kg_{idx}"):
-                            st.session_state.sayfa = "giris_yap"; st.rerun()
-                st.divider()
+        try:
+            kutu = st.container(key="fa_misafir_nav")
+        except TypeError:
+            kutu = st.container()
+        with kutu:
+            col_bt2, col_bt3 = st.columns(2)
+            with col_bt2:
+                gecmis_btn = st.button("📊  Geçmiş Maçlar", use_container_width=True, type="primary", key="m_gecmis")
+            with col_bt3:
+                gelecek_btn = st.button("🔮  Gelecek Maçlar", use_container_width=True, type="primary", key="m_gelecek")
 
-        yasal_metin_goster()
+        if gecmis_btn:
+            st.session_state.sayfa = "gecmis"
+            st.session_state.kayit_yapildi = False
+            st.session_state.aktif_kayit_idx = None
+            st.session_state.aktif_gelecek_idx = None
+            st.session_state.tek_silme_onay = None
+            st.rerun()
+
+        if gelecek_btn:
+            st.session_state.sayfa = "gelecek"
+            st.session_state.kayit_yapildi = False
+            st.session_state.aktif_kayit_idx = None
+            st.session_state.aktif_gelecek_idx = None
+            st.session_state.tek_silme_gelecek = None
+            st.rerun()
+
+        st.markdown("""
+            <div class="mh-info">
+                💡 <b>İpucu:</b> Geçmiş maçlarda isabet oranlarını incele, gelecek maçlarda
+                yüksek güvenli tahminleri filtreleyerek kombine oluştur.
+            </div>
+            <div class="mh-section-title" style="margin-top:16px;">BİLGİLENDİRME</div>
+        """, unsafe_allow_html=True)
+
         misafir_aciklama()
-        st.markdown('<div class="login-footer" style="margin-top:20px;">© <b>Futbol Analiz Pro</b> • Bilgi amaçlıdır</div>', unsafe_allow_html=True)
-        # ==========================================
-# SAYFA: KAYIT
-# ==========================================
-elif st.session_state.sayfa == "kayit":
-    st.markdown('''<div class="login-hero"><div class="login-logo">✨</div><h1 class="login-title">Üye Ol</h1><p class="login-subtitle">Kullanıcı adı ve şifre belirle</p></div>''', unsafe_allow_html=True)
-    with st.form("kayit_form"):
-        yk = st.text_input("👤 Kullanıcı Adı", placeholder="örn: ahmet34", max_chars=30)
-        ys = st.text_input("🔐 Şifre", type="password", placeholder="En az 4 karakter")
-        yst = st.text_input("🔐 Şifre Tekrar", type="password", placeholder="Şifreyi tekrar gir")
-        yasal_onay = st.checkbox("✅ **Kullanım Şartlarını, Sorumluluk Reddini ve KVKK metnini okudum, kabul ediyorum.** 18 yaşından büyük olduğumu beyan ederim.", key="kayit_yasal_onay_cb")
-        c1, c2 = st.columns(2)
-        with c1: kb = st.form_submit_button("✅ Kayıt Ol", use_container_width=True, type="primary")
-        with c2: gb = st.form_submit_button("⬅️ Geri", use_container_width=True)
-        if kb:
-            if not yk.strip(): st.error("❌ Kullanıcı adı boş olamaz.")
-            elif len(yk.strip()) < 3: st.error("❌ En az 3 karakter.")
-            elif not yk.replace("_", "").isalnum(): st.error("❌ Sadece harf, rakam, _")
-            elif yk.strip() == ADMIN_KULLANICI_ADI: st.error("❌ Bu isim kullanılamaz.")
-            elif len(ys) < 4: st.error("❌ Şifre en az 4 karakter.")
-            elif ys != yst: st.error("❌ Şifreler uyuşmuyor.")
-            elif not yasal_onay: st.error("❌ Kayıt için Kullanım Şartlarını kabul etmelisiniz.")
-            else:
-                b, m = kullanici_ekle(yk.strip(), ys)
-                if b:
-                    st.session_state["aktif_kullanici"] = yk.strip()
-                    st.session_state["odeme_hedef_kadi"] = yk.strip()
-                    st.success(f"✅ {m} Ödeme sayfasına yönlendiriliyorsun...")
-                    time.sleep(1.5); st.session_state.sayfa = "odeme"; st.rerun()
-                else: st.error(f"❌ {m}")
-        if gb: st.session_state.sayfa = "giris"; st.rerun()
-    yasal_metin_goster()
+
+        st.markdown("""
+            <div class="login-footer" style="margin-top:20px;">
+                © <b>Futbol Analiz Pro</b> • Bilgi amaçlıdır • Kesin sonuç garantisi yoktur
+            </div>
+        """, unsafe_allow_html=True)
 
 
 # ==========================================
-# SAYFA: ÜYE GİRİŞİ
+# MANUEL GİRİŞ
 # ==========================================
-elif st.session_state.sayfa == "uyegirisi":
-    st.markdown('''<div class="login-hero"><div class="login-logo">🔑</div><h1 class="login-title">Üye Girişi</h1></div>''', unsafe_allow_html=True)
-    with st.form("uye_giris_form"):
-        k = st.text_input("👤 Kullanıcı Adı")
-        s = st.text_input("🔐 Şifre", type="password")
-        c1, c2 = st.columns(2)
-        with c1: g = st.form_submit_button("🔓 Giriş", use_container_width=True, type="primary")
-        with c2: gg = st.form_submit_button("⬅️ Geri", use_container_width=True)
-        if g:
-            if not k.strip() or not s: st.error("❌ Bilgiler gerekli.")
-            elif kullanici_dogrula(k.strip(), s):
-                st.session_state["aktif_kullanici"] = k.strip()
-                st.success(f"✅ Hoş geldin, {k.strip()}!")
-                time.sleep(1); st.session_state.sayfa = "giris"; st.rerun()
-            else: st.error("❌ Hatalı giriş.")
-        if gg: st.session_state.sayfa = "giris"; st.rerun()
+elif st.session_state.sayfa == "manuel_giris":
+    st.markdown("<h1>📝 Eksik Alanları Doldur</h1>", unsafe_allow_html=True)
+    st.warning(f"Aşağıdaki **{len(st.session_state.manuel_bekleyen)}** alan metinden çıkarılamadı:")
+    v = st.session_state.form_verileri
 
-
-# ==========================================
-# SAYFA: ÖDEME
-# ==========================================
-elif st.session_state.sayfa == "odeme":
-    hedef = st.session_state.get("odeme_hedef_kadi") or uye_adi()
-    if not hedef:
-        st.error("❌ Kullanıcı yok.")
-        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary"):
-            st.session_state.sayfa = "giris"; st.rerun()
-        st.stop()
-    iban = ayar_al("iban", "TR00 0000 0000 0000 0000 0000 00")
-    hs = ayar_al("hesap_sahibi", "ADINIZ SOYADINIZ")
-    fh = float(ayar_al("fiyat_haftalik", 49.0)); fa = float(ayar_al("fiyat_aylik", 149.0)); fy = float(ayar_al("fiyat_yillik", 999.0))
-    st.markdown(f'''<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-icon">💳</div><div class="mh-hero-title">Premium'a Geç</div><div class="mh-hero-sub">Havale / EFT ile ödeme</div><div class="mh-hero-badge">● GÜVENLİ ÖDEME</div></div>''', unsafe_allow_html=True)
-    st.markdown(f'''<div class="mh-info"><b>👤 Kullanıcı:</b> {_e(hedef)}<br>Açıklama kısmına <b>MUTLAKA</b> kullanıcı adını yaz.</div>''', unsafe_allow_html=True)
-    st.markdown("### 📆 Paket Seç")
-    sec = st.radio("Süre?", ["haftalik", "aylik", "yillik"], format_func=lambda x: {"haftalik": f"📅 Haftalık — {fh:.0f} ₺", "aylik": f"📆 Aylık — {fa:.0f} ₺", "yillik": f"🎯 Yıllık — {fy:.0f} ₺"}[x], index=1, key="odeme_sure_sec")
-    sg = {"haftalik": 7, "aylik": 30, "yillik": 365}[sec]
-    fy_ = {"haftalik": fh, "aylik": fa, "yillik": fy}[sec]
-    et = {"haftalik": "Haftalık", "aylik": "Aylık", "yillik": "Yıllık"}[sec]
-    if sec == "yillik":
-        ai = fa * 12
-        ind = int((1 - (fy / ai)) * 100) if ai > 0 else 0
-        if ind > 0:
-            st.markdown(f'<div class="fa-card fa-pos"><div class="fa-ttl">Seçilen</div><div class="fa-pickrow"><div class="fa-pick">🎯 Yıllık</div><div class="fa-pct">{fy_:.0f} ₺</div></div><div class="fa-mut">💸 %{ind} indirim!</div></div>', unsafe_allow_html=True)
-        else:
-            st.markdown(f'<div class="fa-card fa-pos"><div class="fa-ttl">Seçilen</div><div class="fa-pickrow"><div class="fa-pick">🎯 Yıllık</div><div class="fa-pct">{fy_:.0f} ₺</div></div></div>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<div class="fa-card fa-pos"><div class="fa-ttl">Seçilen</div><div class="fa-pickrow"><div class="fa-pick">{et}</div><div class="fa-pct">{fy_:.0f} ₺</div></div></div>', unsafe_allow_html=True)
-    st.markdown("### 🏦 Havale Bilgileri")
-    st.markdown(f'<div class="fa-card"><div class="fa-ttl">Alıcı</div><div class="fa-pick" style="margin-bottom:10px;">{_e(hs)}</div><div class="fa-ttl">IBAN</div><div class="fa-pick" style="margin-bottom:10px;font-family:monospace;">{_e(iban)}</div><div class="fa-ttl">Tutar</div><div class="fa-pick" style="margin-bottom:10px;color:#22c55e;">{fy_:.0f} ₺</div><div class="fa-ttl">Açıklama</div><div class="fa-pick" style="color:#22c55e;font-weight:900;">{_e(hedef)}</div></div>', unsafe_allow_html=True)
-    st.divider()
-    st.markdown("### ✅ Ödemeyi Yaptım")
-    bk = bekleyen_yukle()
-    if hedef in bk and bk[hedef].get("durum") == "bekliyor":
-        st.warning(f"⏳ Zaten bekleyen bildirimin var: **{bk[hedef].get('sure_etiket', '?')}**")
-    else:
-        iade_onay = st.checkbox("✅ **İade yapılmayacağını, hizmetin dijital olduğunu ve aktivasyon sonrası para iadesi talep edemeyeceğimi okudum, kabul ediyorum.**", key="odeme_yasal_onay_cb")
-        if st.button("📤 Ödeme Yaptım — Bildir", use_container_width=True, type="primary", key="odeme_bildir_btn"):
-            if not iade_onay: st.error("❌ İade koşullarını kabul etmelisiniz.")
-            else:
-                bk[hedef] = {"tarih": datetime.now().strftime("%Y-%m-%d %H:%M"), "sure_gun": int(sg), "sure_etiket": et, "fiyat": float(fy_), "durum": "bekliyor"}
-                bekleyen_kaydet(bk)
-                st.success("✅ Bildirimin alındı!"); time.sleep(2); st.rerun()
-    yasal_metin_goster()
-    st.divider()
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("⬅️ Ana Sayfa", use_container_width=True, key="odeme_geri"):
-            st.session_state.sayfa = "giris"; st.rerun()
-    with c2:
-        if st.button("🔄 Kontrol Et", use_container_width=True, key="odeme_kontrol"):
-            if abonelik_aktif_mi(hedef):
-                st.success("✅ Aboneliğin aktif!"); time.sleep(1.5); st.session_state.sayfa = "giris"; st.rerun()
-            else: st.info("⏳ Bekleniyor.")
+    with st.form("manuel_form"):
+        yeni_degerler = {}
+        for alan_basligi in st.session_state.manuel_bekleyen:
+            if alan_basligi in MANUEL_ALANLAR:
+                st.markdown(f"**{alan_basligi}**")
+                for (key, etiket, tip, varsayilan) in MANUEL_ALANLAR[alan_basligi]:
+                    mevcut = v.get(key, varsayilan)
+                    if tip == "int":
+                        val = st.number_input(etiket, value=int(mevcut) if mevcut else int(varsayilan), min_value=1, max_value=100, step=1, key=f"manuel_{key}")
+                        yeni_degerler[key] = int(val)
+                    elif tip == "float":
+                        val = st.number_input(etiket, value=float(mevcut) if mevcut else float(varsayilan), min_value=0.0, step=0.1, key=f"manuel_{key}")
+                        yeni_degerler[key] = float(val)
+                    else:
+                        val = st.text_input(etiket, value=str(mevcut) if mevcut else "", key=f"manuel_{key}")
+                        yeni_degerler[key] = val
+                st.markdown("")
+        col_a, col_b = st.columns(2)
+        with col_a:
+            kaydet = st.form_submit_button("✅ Kaydet ve Analiz Et", use_container_width=True, type="primary")
+        with col_b:
+            atla = st.form_submit_button("⏭️ Atla (Varsayılan)", use_container_width=True)
+        if kaydet or atla:
+            if kaydet: st.session_state.form_verileri.update(yeni_degerler)
+            st.session_state.manuel_bekleyen = []
+            st.session_state.sayfa = "sonuc"
+            st.rerun()
+    if st.button("⬅️ Metni Yeniden Yapıştır"):
+        st.session_state.sayfa = "giris"
+        st.rerun()
 
 
 # ==========================================
-# SAYFA: ADMIN ÖDEMELER
-# ==========================================
-elif st.session_state.sayfa == "admin_odemeler":
-    if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
-    st.markdown("<h1>💳 Bekleyen Ödemeler</h1>", unsafe_allow_html=True)
-    bk = bekleyen_yukle()
-    if not bk: st.info("ℹ️ Bekleyen ödeme yok.")
-    else:
-        for k, b in list(bk.items()):
-            tg = b.get("sure_gun", 0); te = b.get("sure_etiket", "?"); fi = b.get("fiyat", 0); tt = b.get("tarih", "?")
-            st.markdown(f'<div class="fa-card"><div class="fa-ttl">👤 {_e(k)}</div><div class="fa-pickrow"><div><div class="fa-pick">{te} — {fi:.0f} ₺</div><div class="fa-mut">📅 {_e(tt)}</div></div></div></div>', unsafe_allow_html=True)
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                if st.button(f"✅ Onayla", use_container_width=True, type="primary", key=f"o_{k}"):
-                    b_, yb = abonelik_aktif_et(k, tg)
-                    if b_:
-                        del bk[k]; bekleyen_kaydet(bk)
-                        st.success(f"✅ {k} aktif! Bitiş: {yb}"); time.sleep(2); st.rerun()
-            with c2:
-                if st.button(f"❌ Reddet", use_container_width=True, key=f"r_{k}"):
-                    del bk[k]; bekleyen_kaydet(bk); st.info("Silindi."); time.sleep(1.5); st.rerun()
-            with c3:
-                if st.button(f"🗑️ Sil", use_container_width=True, key=f"s_{k}"):
-                    del bk[k]; bekleyen_kaydet(bk); st.rerun()
-            st.divider()
-    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="og"):
-        st.session_state.sayfa = "giris"; st.rerun()
-
-
-# ==========================================
-# SAYFA: ADMIN ABONELER
-# ==========================================
-elif st.session_state.sayfa == "admin_aboneler":
-    if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
-    st.markdown("<h1>👥 Aboneler</h1>", unsafe_allow_html=True)
-    st.caption("Abonelik süresi ekleme sadece 💳 Ödemeler sayfasından yapılır.")
-    kl = kullanicilar_yukle()
-    if not kl:
-        st.info("ℹ️ Kayıtlı kullanıcı yok.")
-    else:
-        top = len(kl); ak = sum(1 for k in kl if abonelik_aktif_mi(k))
-        st.markdown(f'<div class="mh-stat-grid"><div class="mh-stat"><div class="mh-stat-icon">👥</div><div class="mh-stat-num">{top}</div><div class="mh-stat-lbl">Toplam</div></div><div class="mh-stat"><div class="mh-stat-icon">🌟</div><div class="mh-stat-num">{ak}</div><div class="mh-stat-lbl">Aktif</div></div></div>', unsafe_allow_html=True)
-        st.divider()
-        for k, kd in list(kl.items()):
-            kt = kd.get("kayit_tarihi", "?"); bs = kd.get("abonelik_bitis")
-            aktif = abonelik_aktif_mi(k); kalan = 0
-            if bs:
-                try: kalan = (datetime.strptime(bs, "%Y-%m-%d") - datetime.now()).days
-                except Exception: pass
-            if aktif: dr = "#22c55e"; dt = f"🌟 AKTİF ({kalan} gün)"; ek = f"Bitiş: {bs}"
-            elif bs: dr = "#ef4444"; dt = "⛔ SÜRESİ DOLMUŞ"; ek = f"Bitiş: {bs}"
-            else: dr = "#94a3b8"; dt = "⚪ YOK"; ek = ""
-            st.markdown(f'<div class="fa-card"><div class="fa-pickrow"><div><div class="fa-pick">👤 {_e(k)}</div><div class="fa-mut">📅 {_e(kt)} &nbsp; {_e(ek)}</div></div><div style="color:{dr};font-weight:800;font-size:0.85rem;">{_e(dt)}</div></div></div>', unsafe_allow_html=True)
-            ca, cb = st.columns(2)
-            with ca:
-                if st.button("🚫 İptal Et", use_container_width=True, key=f"ip_{k}"):
-                    abonelik_iptal_et(k); st.warning("İptal edildi."); time.sleep(1.5); st.rerun()
-            with cb:
-                if st.button("🗑️ Sil", use_container_width=True, key=f"ks_{k}"):
-                    st.session_state.sil_onay_kadi = k
-            if st.session_state.sil_onay_kadi == k:
-                st.warning(f"⚠️ **{k}** kullanıcısını silmek istediğinizden emin misiniz?")
-                c1, c2 = st.columns(2)
-                with c1:
-                    if st.button("✅ Evet, Sil", key=f"yes_{k}", use_container_width=True, type="primary"):
-                        kullanici_sil(k); st.session_state.sil_onay_kadi = None
-                        st.success("Silindi."); time.sleep(1.5); st.rerun()
-                with c2:
-                    if st.button("❌ Vazgeç", key=f"no_{k}", use_container_width=True):
-                        st.session_state.sil_onay_kadi = None; st.rerun()
-            st.markdown("")
-    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="abg"):
-        st.session_state.sayfa = "giris"; st.rerun()
-
-
-# ==========================================
-# SAYFA: ADMIN BİLDİRİMLER
-# ==========================================
-elif st.session_state.sayfa == "admin_bildirimler":
-    if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
-    st.markdown("<h1>📬 Bildirimler</h1>", unsafe_allow_html=True)
-    bd = bildirimler_yukle()
-    if not bd: st.info("ℹ️ Bildirim yok.")
-    else:
-        for b in sorted(bd, key=lambda x: x.get("tarih", ""), reverse=True):
-            bid = b.get("id"); tip = b.get("tip", "diger")
-            tb = BILDIRIM_TIPLERI.get(tip, BILDIRIM_TIPLERI["diger"])
-            durum = b.get("durum", "okunmadi")
-            border = "#22c55e" if durum == "okunmadi" else "#94a3b8"
-            st.markdown(f'''<div class="fa-bildirim {tb['sinif']}" style="border-left-color:{border};"><div class="fa-bildirim-ttl">{tb['ikon']} {tb['isim']} — <b>{_e(b.get('kullanici', '?'))}</b> {"🆕" if durum == "okunmadi" else ""}</div><div class="fa-bildirim-msg"><b>Konu:</b> {_e(b.get('konu', ''))}<br>{_e(b.get('mesaj', ''))}</div><div class="fa-bildirim-meta">📅 {_e(b.get('tarih', '?'))}</div></div>''', unsafe_allow_html=True)
-            if b.get("cevap"): st.info(f"💬 Cevabın: {b['cevap']}")
-            with st.expander("💬 Cevapla / Sil"):
-                yanit = st.text_area("Yanıtın", value=b.get("cevap", ""), key=f"cy_{bid}")
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    if st.button("💬 Kaydet", key=f"kaydet_{bid}", use_container_width=True, type="primary"):
-                        bildirim_guncelle(bid, cevap=yanit, durum="okundu")
-                        st.success("Kaydedildi."); time.sleep(1); st.rerun()
-                with c2:
-                    if st.button("✅ Okundu", key=f"ok_{bid}", use_container_width=True):
-                        bildirim_guncelle(bid, durum="okundu"); st.rerun()
-                with c3:
-                    if st.button("🗑️ Sil", key=f"sil_{bid}", use_container_width=True):
-                        bildirim_sil(bid); st.rerun()
-            st.divider()
-    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="bdg"):
-        st.session_state.sayfa = "giris"; st.rerun()
-
-
-# ==========================================
-# SAYFA: KULLANICI BİLDİRİM
-# ==========================================
-elif st.session_state.sayfa == "kullanici_bildirim":
-    if not uye_mi(): st.error("❌ Giriş yap."); st.stop()
-    st.markdown("<h1>📬 Bildirim Gönder</h1>", unsafe_allow_html=True)
-    st.caption("İptal talebi, şikayet, görüş ve önerilerini buradan iletebilirsin.")
-    with st.form("bildirim_form"):
-        tip = st.selectbox("Kategori", options=list(BILDIRIM_TIPLERI.keys()), format_func=lambda x: f"{BILDIRIM_TIPLERI[x]['ikon']} {BILDIRIM_TIPLERI[x]['isim']}")
-        konu = st.text_input("Konu", placeholder="Kısa başlık...")
-        mesaj = st.text_area("Mesaj", placeholder="Detaylı açıklamanı yaz...", height=150)
-        c1, c2 = st.columns(2)
-        with c1: gb = st.form_submit_button("📤 Gönder", use_container_width=True, type="primary")
-        with c2: gb2 = st.form_submit_button("⬅️ Geri", use_container_width=True)
-        if gb:
-            if not konu.strip() or not mesaj.strip(): st.error("❌ Konu ve mesaj gerekli.")
-            else:
-                bildirim_ekle(uye_adi(), tip, konu.strip(), mesaj.strip())
-                st.success("✅ Bildirimin gönderildi!")
-                time.sleep(2); st.rerun()
-        if gb2: st.session_state.sayfa = "giris"; st.rerun()
-    st.divider()
-    st.markdown("### 📋 Gönderdiğin Bildirimler")
-    bl = kullanici_bildirimleri(uye_adi())
-    if not bl: st.info("Henüz bildirim yok.")
-    else:
-        for b in sorted(bl, key=lambda x: x.get("tarih", ""), reverse=True):
-            tip = b.get("tip", "diger"); tb = BILDIRIM_TIPLERI.get(tip, BILDIRIM_TIPLERI["diger"])
-            st.markdown(f'''<div class="fa-bildirim {tb['sinif']}"><div class="fa-bildirim-ttl">{tb['ikon']} {tb['isim']} — {b.get('durum', '?')}</div><div class="fa-bildirim-msg"><b>Konu:</b> {_e(b.get('konu', ''))}<br>{_e(b.get('mesaj', ''))}</div><div class="fa-bildirim-meta">📅 {_e(b.get('tarih', '?'))}</div></div>''', unsafe_allow_html=True)
-            if b.get("cevap"):
-                st.markdown(f'<div class="fa-card fa-pos"><div class="fa-ttl">💬 Admin Cevabı</div><div class="fa-mut">{_e(b["cevap"])}</div></div>', unsafe_allow_html=True)
-            st.divider()
-
-
-# ==========================================
-# SAYFA: GELECEK MAÇLAR (ADMİN)
-# ==========================================
-elif st.session_state.sayfa == "gelecek_admin":
-    if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
-    st.markdown("<h1>🔮 Gelecek Maçlar</h1>", unsafe_allow_html=True)
-    gel = st.session_state.gelecek_analizler
-    toplam_g = len(gel)
-
-    st.markdown("### 💾 Yedekleme")
-    c1, c2 = st.columns(2)
-    with c1:
-        json_str2 = json.dumps(st.session_state.gelecek_analizler, ensure_ascii=False, indent=2)
-        st.download_button(
-            label=f"📥 Geleceği İndir ({toplam_g} maç)",
-            data=json_str2,
-            file_name=f"gelecek_{toplam_g}mac.json",
-            mime="application/json",
-            use_container_width=True,
-            key="ind_gelecek"
-        )
-    with c2:
-        yuk2 = st.file_uploader("📤 Geleceği Yükle (JSON)", type=["json"], key="yuk_gelecek")
-        if yuk2 is not None:
-            try:
-                veri2 = json.loads(yuk2.read().decode("utf-8"))
-                if isinstance(veri2, list):
-                    st.session_state.gelecek_analizler = veri2
-                    gelecek_kaydet(veri2)
-                    st.success(f"✅ {len(veri2)} maç yüklendi!")
-                    st.rerun()
-                else:
-                    st.error("❌ Dosya formatı hatalı.")
-            except Exception as e:
-                st.error(f"❌ Hata: {e}")
-    st.divider()
-
-    if not gel:
-        st.info("ℹ️ Gelecek maç yok. Admin ana sayfadan maç çekebilirsin.")
-    else:
-        sirali = sorted(enumerate(gel), key=lambda x: saat_sirala_anahtari(x[1]))
-        for idx, g in sirali:
-            v = g["veri"]; te = v.get("takim_ev", "Ev"); td = v.get("takim_dep", "Dep")
-            ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
-            try: a = analiz_hesapla(v); le = a["lam_ev"]; ld = a["lam_dep"]
-            except Exception: le = ld = 0
-            st.markdown(mac_karti(te, td, False, 0, 0, le, ld, saat, ulke, tarih), unsafe_allow_html=True)
-            th = mac_tahmin_karti(v, g)
-            if th: st.markdown(th, unsafe_allow_html=True)
-            c1, c2 = st.columns([5, 1])
-            with c1:
-                if st.button("🔍 Detay", use_container_width=True, key=f"gmac_{idx}"):
-                    st.session_state.form_verileri = copy.deepcopy(v)
-                    st.session_state.kayit_yapildi = True; st.session_state.gelecekten_gelindi = True
-                    st.session_state.aktif_gelecek_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
-            with c2:
-                if st.button("🗑️", key=f"gsil_{idx}"):
-                    if st.session_state.tek_silme_gelecek == idx: st.session_state.tek_silme_gelecek = None
-                    else: st.session_state.tek_silme_gelecek = idx
-                    st.rerun()
-            if st.session_state.tek_silme_gelecek == idx:
-                st.warning(f"⚠️ **{te} vs {td}** silinsin mi?")
-                c1, c2 = st.columns(2)
-                with c1:
-                    if st.button("✅ Sil", key=f"ge_{idx}", use_container_width=True, type="primary"):
-                        st.session_state.gelecek_analizler.pop(idx)
-                        gelecek_kaydet(st.session_state.gelecek_analizler)
-                        st.session_state.tek_silme_gelecek = None; st.rerun()
-                with c2:
-                    if st.button("❌ İptal", key=f"gh_{idx}", use_container_width=True):
-                        st.session_state.tek_silme_gelecek = None; st.rerun()
-            st.divider()
-
-    st.divider()
-    if st.button("🗑️ Tüm Geleceği Temizle", use_container_width=True, key="temizle_gel"):
-        st.session_state.silme_onay_gelecek = True; st.rerun()
-    if st.session_state.get("silme_onay_gelecek"):
-        st.warning("⚠️ Tüm gelecek silinecek. Emin misin?")
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("✅ Evet, Sil", key="sil_gel_evet", use_container_width=True, type="primary"):
-                st.session_state.gelecek_analizler = []
-                try:
-                    if os.path.exists(GELECEK_DOSYA): os.remove(GELECEK_DOSYA)
-                except Exception: pass
-                st.session_state.silme_onay_gelecek = False
-                st.session_state.tek_silme_gelecek = None
-                st.rerun()
-        with c2:
-            if st.button("❌ İptal", key="sil_gel_iptal", use_container_width=True):
-                st.session_state.silme_onay_gelecek = False; st.rerun()
-
-    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gg_geri"):
-        st.session_state.sayfa = "giris"; st.rerun()
-
-
-# ==========================================
-# SAYFA: GEÇMİŞ MAÇLAR
+# GEÇMİŞ
 # ==========================================
 elif st.session_state.sayfa == "gecmis":
     st.markdown("<h1>📊 Geçmiş Maçlar</h1>", unsafe_allow_html=True)
-    gc = st.session_state.gecmis_analizler; top = len(gc)
+    gecmis = st.session_state.gecmis_analizler
+    toplam = len(gecmis)
+    with st.spinner("İstatistikler güncel eşiklerle hesaplanıyor..."):
+        oneri_ist = oneri_istatistik_guncel(gecmis)
 
+    if toplam == 0:
+        st.info("ℹ️ Henüz kayıtlı maç yok.")
+    else:
+        st.markdown("### 🎯 ÖNERİ İSTATİSTİKLERİ")
+        st.caption("Ayarlar'daki güncel eşiklerle ve güncel hesaplamayla yeniden hesaplanır.")
+        col_1, col_2, col_3 = st.columns(3)
+        with col_1:
+            st.markdown(istat_karti("🎯 1X2 (Maç Sonucu)", oneri_ist["1x2"],
+                                    f"Eşikler: 1 %{esik_1x2_al('1'):.0f} • X %{esik_1x2_al('X'):.0f} • 2 %{esik_1x2_al('2'):.0f}"), unsafe_allow_html=True)
+        with col_2:
+            st.markdown(istat_karti("⚽ Üst / Alt 2.5", oneri_ist["gol"],
+                                    f"Eşikler: Üst %{esik_al('ust'):.0f} • Alt %{esik_al('alt'):.0f}"), unsafe_allow_html=True)
+        with col_3:
+            st.markdown(istat_karti("🤝 KG Var / Yok", oneri_ist["kg"],
+                                    f"Eşikler: Var %{esik_al('kg_var'):.0f} • Yok %{esik_al('kg_yok'):.0f}"), unsafe_allow_html=True)
+
+    st.divider()
+    st.markdown(f"### ⚽ Skoru Belli Maçlar ({toplam})")
+
+    if toplam > 0:
+        for i, g in enumerate(reversed(gecmis)):
+            idx_gercek = len(gecmis) - 1 - i
+            v_g = g["veri"]
+            takim_ev = v_g.get("takim_ev", "Ev") or "Ev"
+            takim_dep = v_g.get("takim_dep", "Dep") or "Dep"
+            skor_ev = v_g.get("skor_ev", 0); skor_dep = v_g.get("skor_dep", 0)
+            ulke = v_g.get("ulke", "")
+            saat = v_g.get("saat", "")
+            tarih = v_g.get("tarih", "")
+
+            ikon = mac_sonuc_ikon(g)
+            st.markdown(f"### {ikon}", unsafe_allow_html=False)
+            header_html = mac_karti(takim_ev, takim_dep, True, skor_ev, skor_dep, 0, 0,
+                                    saat=saat, ulke=ulke, tarih=tarih)
+            st.markdown(header_html, unsafe_allow_html=True)
+
+            tahmin_html = mac_tahmin_karti(v_g, g)
+            if tahmin_html:
+                st.markdown(tahmin_html, unsafe_allow_html=True)
+
+            try:
+                try:
+                    ya2 = yeniden_analiz(v_g)
+                except Exception:
+                    ya2 = g.get("analiz", {})
+                d2 = sonuc_hesapla({"veri": v_g, "analiz": ya2})
+                if d2:
+                    c1, c2, c3 = st.columns(3)
+                    with c1:
+                        o = d2["oneri_1x2"]
+                        if o["tuttu"] is None: st.caption("⚫ 1X2 — öneri yok")
+                        else:
+                            ik = "✅" if o["tuttu"] else "❌"
+                            st.caption(f"{ik} 1X2: **{o['tahmin']}** (gerçek: {d2.get('gercek_1x2','?')})")
+                    with c2:
+                        o = d2["oneri_gol"]
+                        if o["tuttu"] is None: st.caption("⚫ Gol — öneri yok")
+                        else:
+                            ik = "✅" if o["tuttu"] else "❌"
+                            st.caption(f"{ik} Gol: **{o['tahmin']}**")
+                    with c3:
+                        o = d2["oneri_kg"]
+                        if o["tuttu"] is None: st.caption("⚫ KG — öneri yok")
+                        else:
+                            ik = "✅" if o["tuttu"] else "❌"
+                            st.caption(f"{ik} KG: **{o['tahmin']}**")
+            except Exception:
+                pass
+
+            if admin_mi():
+                col_detay, col_sil = st.columns([5, 1])
+                with col_detay:
+                    if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"mac_{idx_gercek}"):
+                        st.session_state.form_verileri = copy.deepcopy(v_g)
+                        st.session_state.kayit_yapildi = True
+                        st.session_state.gecmisten_gelindi = True
+                        st.session_state.gelecekten_gelindi = False
+                        st.session_state.aktif_kayit_idx = idx_gercek
+                        st.session_state.aktif_gelecek_idx = None
+                        st.session_state.okunamayan_alanlar = []
+                        st.session_state.sayfa = "sonuc"
+                        st.rerun()
+                with col_sil:
+                    if st.button("🗑️", key=f"sil_{idx_gercek}"):
+                        if st.session_state.tek_silme_onay == idx_gercek:
+                            st.session_state.tek_silme_onay = None
+                        else:
+                            st.session_state.tek_silme_onay = idx_gercek
+                        st.rerun()
+
+                if st.session_state.tek_silme_onay == idx_gercek:
+                    st.warning(f"⚠️ **{takim_ev} vs {takim_dep}** silinsin mi?")
+                    col_e, col_h = st.columns(2)
+                    with col_e:
+                        if st.button("✅ Sil", key=f"evet_{idx_gercek}", use_container_width=True, type="primary"):
+                            if 0 <= idx_gercek < len(st.session_state.gecmis_analizler):
+                                st.session_state.gecmis_analizler.pop(idx_gercek)
+                                gecmis_kaydet(st.session_state.gecmis_analizler)
+                            st.session_state.tek_silme_onay = None
+                            st.rerun()
+                    with col_h:
+                        if st.button("❌ İptal", key=f"hayir_{idx_gercek}", use_container_width=True):
+                            st.session_state.tek_silme_onay = None
+                            st.rerun()
+            else:
+                if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"mac_{idx_gercek}"):
+                    st.session_state.form_verileri = copy.deepcopy(v_g)
+                    st.session_state.kayit_yapildi = True
+                    st.session_state.gecmisten_gelindi = True
+                    st.session_state.gelecekten_gelindi = False
+                    st.session_state.aktif_kayit_idx = idx_gercek
+                    st.session_state.aktif_gelecek_idx = None
+                    st.session_state.okunamayan_alanlar = []
+                    st.session_state.sayfa = "sonuc"
+                    st.rerun()
+
+            st.divider()
+
+    st.markdown("### 💾 Yedekleme (Geçmiş Maçlar)")
     if admin_mi():
-        st.markdown("### 💾 Yedekleme")
-        c1, c2 = st.columns(2)
-        with c1:
+        c_ind, c_yuk = st.columns(2)
+        with c_ind:
             json_str = json.dumps(st.session_state.gecmis_analizler, ensure_ascii=False, indent=2)
             st.download_button(
-                label=f"📥 Geçmişi İndir ({top} maç)",
+                label=f"📥 Geçmişi İndir ({toplam} maç)",
                 data=json_str,
-                file_name=f"gecmis_{top}mac.json",
+                file_name=f"gecmis_{toplam}mac.json",
                 mime="application/json",
                 use_container_width=True,
                 key="ind_gecmis"
             )
-        with c2:
-            yuk = st.file_uploader("📤 Geçmişi Yükle (JSON)", type=["json"], key="yuk_gecmis")
-            if yuk is not None:
+        with c_yuk:
+            yuklenen = st.file_uploader("📤 Geçmişi Yükle (JSON)", type=["json"], key="yuk_gecmis")
+            if yuklenen is not None:
                 try:
-                    veri = json.loads(yuk.read().decode("utf-8"))
+                    veri = json.loads(yuklenen.read().decode("utf-8"))
                     if isinstance(veri, list):
                         st.session_state.gecmis_analizler = veri
                         gecmis_kaydet(veri)
-                        st.success(f"✅ {len(veri)} maç yüklendi!")
+                        st.success(f"✅ {len(veri)} maç yüklendi! Sayfa yenileniyor...")
                         st.rerun()
                     else:
-                        st.error("❌ Dosya formatı hatalı (liste bekleniyor).")
+                        st.error("❌ Dosya formatı hatalı. Liste bekleniyordu.")
                 except Exception as e:
-                    st.error(f"❌ Hata: {e}")
-        st.divider()
+                    st.error(f"❌ Yükleme hatası: {e}")
 
-    if top == 0:
-        st.info("Henüz kayıt yok.")
-    else:
-        modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ")
-        st.divider()
-        st.markdown(f"### 📋 Toplam: {top} maç")
-        for i, g in enumerate(reversed(gc)):
-            idx = len(gc) - 1 - i; v = g["veri"]
-            te = v.get("takim_ev", "Ev"); td = v.get("takim_dep", "Dep")
-            se = v.get("skor_ev", 0); sd = v.get("skor_dep", 0)
-            st.markdown(mac_karti(te, td, True, se, sd, 0, 0, v.get("saat", ""), v.get("ulke", ""), v.get("tarih", "")), unsafe_allow_html=True)
-            th = mac_tahmin_karti(v, g)
-            if th: st.markdown(th, unsafe_allow_html=True)
-            if admin_mi():
-                c1, c2 = st.columns([5, 1])
-                with c1:
-                    if st.button("🔍 Detay", use_container_width=True, key=f"mac_{idx}"):
-                        st.session_state.form_verileri = copy.deepcopy(v)
-                        st.session_state.kayit_yapildi = True; st.session_state.gecmisten_gelindi = True
-                        st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
-                with c2:
-                    if st.button("🗑️", key=f"sil_{idx}"):
-                        if st.session_state.tek_silme_onay == idx: st.session_state.tek_silme_onay = None
-                        else: st.session_state.tek_silme_onay = idx
-                        st.rerun()
-                if st.session_state.tek_silme_onay == idx:
-                    st.warning(f"⚠️ **{te} vs {td}** silinsin mi?")
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        if st.button("✅ Sil", key=f"ev_{idx}", use_container_width=True, type="primary"):
-                            st.session_state.gecmis_analizler.pop(idx)
-                            gecmis_kaydet(st.session_state.gecmis_analizler)
-                            st.session_state.tek_silme_onay = None; st.rerun()
-                    with c2:
-                        if st.button("❌ İptal", key=f"hh_{idx}", use_container_width=True):
-                            st.session_state.tek_silme_onay = None; st.rerun()
-            else:
-                if st.button("🔍 Detay", use_container_width=True, key=f"mac_{idx}"):
-                    st.session_state.form_verileri = copy.deepcopy(v)
-                    st.session_state.kayit_yapildi = True; st.session_state.gecmisten_gelindi = True
-                    st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
-            st.divider()
-
+    st.divider()
     if admin_mi():
-        st.divider()
-        if st.button("🗑️ Tüm Geçmişi Temizle", use_container_width=True, key="temizle_g"):
-            st.session_state.silme_onay = True; st.rerun()
+        c_temizle, c_geri = st.columns(2)
+        with c_temizle:
+            if st.button("🗑️ Tüm Geçmişi Temizle", use_container_width=True, key="temizle_btn"):
+                st.session_state.silme_onay = True
+                st.rerun()
+        with c_geri:
+            if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gecmis_geri"):
+                st.session_state.sayfa = "giris"
+                st.session_state.silme_onay = False
+                st.session_state.tek_silme_onay = None
+                st.rerun()
+
         if st.session_state.silme_onay:
             st.warning("⚠️ Tüm geçmiş silinecek. Emin misin?")
-            c1, c2 = st.columns(2)
-            with c1:
-                if st.button("✅ Evet, Sil", key="sil_g_evet", use_container_width=True, type="primary"):
+            c_e, c_h = st.columns(2)
+            with c_e:
+                if st.button("✅ Evet, Sil", use_container_width=True, type="primary", key="sil_hepsi_evet"):
                     st.session_state.gecmis_analizler = []
                     try:
                         if os.path.exists(GECMIS_DOSYA): os.remove(GECMIS_DOSYA)
@@ -3008,181 +2988,505 @@ elif st.session_state.sayfa == "gecmis":
                     st.session_state.silme_onay = False
                     st.session_state.tek_silme_onay = None
                     st.rerun()
-            with c2:
-                if st.button("❌ İptal", key="sil_g_iptal", use_container_width=True):
-                    st.session_state.silme_onay = False; st.rerun()
-
-    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gc_geri"):
-        st.session_state.sayfa = "giris"; st.rerun()
+            with c_h:
+                if st.button("❌ İptal", use_container_width=True, key="sil_hepsi_iptal"):
+                    st.session_state.silme_onay = False
+                    st.rerun()
+    else:
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gecmis_geri_misafir"):
+            st.session_state.sayfa = "giris"
+            st.session_state.tek_silme_onay = None
+            st.rerun()
 
 
 # ==========================================
-# SAYFA: BACKTEST
+# GELECEK (SAAT +2 & SIRALI)
+# ==========================================
+elif st.session_state.sayfa == "gelecek":
+    st.markdown("<h1>🔮 Gelecek Maçlar</h1>", unsafe_allow_html=True)
+    gelecek = st.session_state.gelecek_analizler
+    toplam_g = len(gelecek)
+
+    if not gelecek:
+        st.info("ℹ️ Gelecek maç yok.")
+    else:
+        # ✅ SAATE GÖRE SIRALA (erken → geç) - orijinal index korunur
+        sirali = sorted(
+            enumerate(gelecek),
+            key=lambda x: saat_sirala_anahtari(x[1])
+        )
+
+        for idx_gercek, g in sirali:
+            v_g = g["veri"]
+            takim_ev = v_g.get("takim_ev", "Ev") or "Ev"
+            takim_dep = v_g.get("takim_dep", "Dep") or "Dep"
+            ulke = v_g.get("ulke", "")
+            saat = v_g.get("saat", "")
+            tarih = v_g.get("tarih", "")
+
+            try:
+                analiz_full = analiz_hesapla(v_g)
+                lam_ev_h = analiz_full["lam_ev"]; lam_dep_h = analiz_full["lam_dep"]
+            except Exception:
+                lam_ev_h = lam_dep_h = 0
+            hero = mac_karti(takim_ev, takim_dep, False, 0, 0, lam_ev_h, lam_dep_h,
+                             saat=saat, ulke=ulke, tarih=tarih)
+            st.markdown(hero, unsafe_allow_html=True)
+
+            tahmin_html = mac_tahmin_karti(v_g, g)
+            if tahmin_html:
+                st.markdown(tahmin_html, unsafe_allow_html=True)
+
+            if admin_mi():
+                col_detay, col_sil = st.columns([5, 1])
+                with col_detay:
+                    if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gmac_{idx_gercek}"):
+                        st.session_state.form_verileri = copy.deepcopy(v_g)
+                        st.session_state.kayit_yapildi = True
+                        st.session_state.gecmisten_gelindi = False
+                        st.session_state.gelecekten_gelindi = True
+                        st.session_state.aktif_kayit_idx = None
+                        st.session_state.aktif_gelecek_idx = idx_gercek
+                        st.session_state.okunamayan_alanlar = []
+                        st.session_state.sayfa = "sonuc"
+                        st.rerun()
+                with col_sil:
+                    if st.button("🗑️", key=f"gsil_{idx_gercek}"):
+                        if st.session_state.tek_silme_gelecek == idx_gercek:
+                            st.session_state.tek_silme_gelecek = None
+                        else:
+                            st.session_state.tek_silme_gelecek = idx_gercek
+                        st.rerun()
+
+                if st.session_state.tek_silme_gelecek == idx_gercek:
+                    st.warning(f"⚠️ **{takim_ev} vs {takim_dep}** silinsin mi?")
+                    c_e, c_h = st.columns(2)
+                    with c_e:
+                        if st.button("✅ Sil", key=f"evet_g_{idx_gercek}", use_container_width=True, type="primary"):
+                            if 0 <= idx_gercek < len(st.session_state.gelecek_analizler):
+                                st.session_state.gelecek_analizler.pop(idx_gercek)
+                                gelecek_kaydet(st.session_state.gelecek_analizler)
+                            st.session_state.tek_silme_gelecek = None
+                            st.rerun()
+                    with c_h:
+                        if st.button("❌ İptal", key=f"hayir_g_{idx_gercek}", use_container_width=True):
+                            st.session_state.tek_silme_gelecek = None
+                            st.rerun()
+            else:
+                if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gmac_{idx_gercek}"):
+                    st.session_state.form_verileri = copy.deepcopy(v_g)
+                    st.session_state.kayit_yapildi = True
+                    st.session_state.gecmisten_gelindi = False
+                    st.session_state.gelecekten_gelindi = True
+                    st.session_state.aktif_kayit_idx = None
+                    st.session_state.aktif_gelecek_idx = idx_gercek
+                    st.session_state.okunamayan_alanlar = []
+                    st.session_state.sayfa = "sonuc"
+                    st.rerun()
+
+            st.divider()
+
+    if admin_mi():
+        st.markdown("### 💾 Yedekleme (Gelecek Maçlar)")
+        c_ind2, c_yuk2 = st.columns(2)
+        with c_ind2:
+            json_str2 = json.dumps(st.session_state.gelecek_analizler, ensure_ascii=False, indent=2)
+            st.download_button(
+                label=f"📥 Geleceği İndir ({toplam_g} maç)",
+                data=json_str2,
+                file_name=f"gelecek_{toplam_g}mac.json",
+                mime="application/json",
+                use_container_width=True,
+                key="ind_gelecek"
+            )
+        with c_yuk2:
+            yuklenen2 = st.file_uploader("📤 Geleceği Yükle (JSON)", type=["json"], key="yuk_gelecek")
+            if yuklenen2 is not None:
+                try:
+                    veri2 = json.loads(yuklenen2.read().decode("utf-8"))
+                    if isinstance(veri2, list):
+                        st.session_state.gelecek_analizler = veri2
+                        gelecek_kaydet(veri2)
+                        st.success(f"✅ {len(veri2)} maç yüklendi! Sayfa yenileniyor...")
+                        st.rerun()
+                    else:
+                        st.error("❌ Dosya formatı hatalı. Liste bekleniyordu.")
+                except Exception as e:
+                    st.error(f"❌ Yükleme hatası: {e}")
+        st.divider()
+
+    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="g_geri"):
+        st.session_state.sayfa = "giris"
+        st.session_state.tek_silme_gelecek = None
+        st.rerun()
+
+
+# ==========================================
+# BACKTEST (SADECE ADMIN)
 # ==========================================
 elif st.session_state.sayfa == "backtest":
-    if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
-    st.markdown("<h1>🔬 Backtest</h1>", unsafe_allow_html=True)
+    if not admin_mi():
+        st.error("❌ Bu sayfa sadece admin içindir.")
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary"):
+            st.session_state.sayfa = "giris"
+            st.rerun()
+        st.stop()
+
+    st.markdown("<h1>🔬 Geçmiş Backtest</h1>", unsafe_allow_html=True)
+    st.caption("Test etmek istediğin marketleri seç ve eşikleri ayarla. Yüzdeler, kayıtlı ham veriden güncel hesaplamayla yeniden üretilir.")
+    st.divider()
+
+    st.markdown("### ⚙️ Test Seçenekleri ve Eşikler")
     c1, c2, c3 = st.columns(3)
     with c1:
-        s1x2 = st.checkbox("1X2", key="bt_1x2")
-        e1 = st.slider("1 eşiği", 0, 100, 55, key="sl_bt_1")
-        ex = st.slider("X eşiği", 0, 100, 55, key="sl_bt_x")
-        e2 = st.slider("2 eşiği", 0, 100, 55, key="sl_bt_2")
+        st.markdown("**🎯 Maç Sonucu**")
+        sec_1x2 = st.checkbox("1X2", value=st.session_state.bt_market.get("1x2", False), key="bt_1x2")
+        esik_bt_1 = st.slider("1 (Ev) eşiği (%)", 0, 100, int(st.session_state.bt_market_esik.get("esik_1", 55.0)), 1, key="sl_bt_1", disabled=not sec_1x2)
+        esik_bt_x = st.slider("X (Beraberlik) eşiği (%)", 0, 100, int(st.session_state.bt_market_esik.get("esik_x", 55.0)), 1, key="sl_bt_x", disabled=not sec_1x2)
+        esik_bt_2 = st.slider("2 (Dep) eşiği (%)", 0, 100, int(st.session_state.bt_market_esik.get("esik_2", 55.0)), 1, key="sl_bt_2", disabled=not sec_1x2)
     with c2:
-        skv = st.checkbox("KG Var", key="bt_kg_var"); ekv = st.slider("KG Var eşiği", 0, 100, 70, key="sl_kg_var")
-        sky = st.checkbox("KG Yok", key="bt_kg_yok"); eky = st.slider("KG Yok eşiği", 0, 100, 70, key="sl_kg_yok")
+        st.markdown("**🤝 KG**")
+        sec_kg_var = st.checkbox("KG Var", value=st.session_state.bt_market["kg_var"], key="bt_kg_var")
+        esik_kg_var = st.slider("KG Var eşiği (%)", 0, 100, int(st.session_state.bt_market_esik["kg_var"]), 1, key="sl_kg_var", disabled=not sec_kg_var)
+        sec_kg_yok = st.checkbox("KG Yok", value=st.session_state.bt_market["kg_yok"], key="bt_kg_yok")
+        esik_kg_yok = st.slider("KG Yok eşiği (%)", 0, 100, int(st.session_state.bt_market_esik["kg_yok"]), 1, key="sl_kg_yok", disabled=not sec_kg_yok)
     with c3:
-        su = st.checkbox("Üst 2.5", key="bt_ust"); eu = st.slider("Üst eşiği", 0, 100, 70, key="sl_ust")
-        sa = st.checkbox("Alt 2.5", key="bt_alt"); ea = st.slider("Alt eşiği", 0, 100, 70, key="sl_alt")
-    if st.button("🚀 TEST", use_container_width=True, type="primary"):
-        with st.spinner("Test..."):
-            sec = {"1x2": s1x2, "kg_var": skv, "kg_yok": sky, "ust": su, "alt": sa}
-            esk = {"esik_1": float(e1), "esik_x": float(ex), "esik_2": float(e2), "kg_var": float(ekv), "kg_yok": float(eky), "ust": float(eu), "alt": float(ea)}
-            if not any(sec.values()): st.warning("Market seç.")
-            else:
-                s, d = backtest_hesapla(st.session_state.gecmis_analizler, sec, esk)
-                st.session_state.bt_sonuc = s; st.session_state.bt_detaylar = d; st.session_state.bt_sec = sec
-    if st.session_state.bt_sonuc and st.session_state.get("bt_sec"):
-        for key, b in [("1x2", "1X2"), ("kg_var", "KG Var"), ("kg_yok", "KG Yok"), ("ust", "Üst"), ("alt", "Alt")]:
-            if st.session_state.bt_sec.get(key):
-                dd = st.session_state.bt_sonuc[key]; tt = dd["dogru"] + dd["yanlis"]
-                if tt > 0: st.markdown(f"**{b}:** %{dd['dogru']/tt*100:.1f} ({dd['dogru']}/{tt})")
-    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="btg"):
-        st.session_state.sayfa = "giris"; st.rerun()
+        st.markdown("**⚽ Gol**")
+        sec_ust = st.checkbox("Üst 2.5", value=st.session_state.bt_market["ust"], key="bt_ust")
+        esik_ust = st.slider("Üst 2.5 eşiği (%)", 0, 100, int(st.session_state.bt_market_esik["ust"]), 1, key="sl_ust", disabled=not sec_ust)
+        sec_alt = st.checkbox("Alt 2.5", value=st.session_state.bt_market["alt"], key="bt_alt")
+        esik_alt = st.slider("Alt 2.5 eşiği (%)", 0, 100, int(st.session_state.bt_market_esik["alt"]), 1, key="sl_alt", disabled=not sec_alt)
+
+    secenekler = {"1x2": sec_1x2, "kg_var": sec_kg_var, "kg_yok": sec_kg_yok, "ust": sec_ust, "alt": sec_alt}
+    esikler = {
+        "esik_1": float(esik_bt_1), "esik_x": float(esik_bt_x), "esik_2": float(esik_bt_2),
+        "kg_var": float(esik_kg_var), "kg_yok": float(esik_kg_yok),
+        "ust": float(esik_ust), "alt": float(esik_alt)
+    }
+
+    st.divider()
+
+    st.markdown("### 📅 Maç Aralığı")
+    tum_gecmis = st.session_state.gecmis_analizler
+    toplam_mac = len(tum_gecmis)
+    mod = st.radio(
+        "Hangi maçlarda test edilsin?",
+        ["Tümü", "Ayar seti (ilk N maç)", "Test seti (N'den sonrası)"],
+        key="bt_mod",
+        help="Eşikleri 'Ayar seti'nde bul, sonra aynı eşiklerle 'Test seti'ni çalıştır. Test setinde eşik değiştirme."
+    )
+    bolme = toplam_mac // 2
+    if mod != "Tümü" and toplam_mac >= 4:
+        bolme = st.slider("N (kayıt sırasına göre bölme noktası)", 1, toplam_mac - 1, max(1, toplam_mac // 2), 1, key="bt_bolme")
+        if mod.startswith("Ayar"):
+            st.caption(f"Test edilecek: ilk **{bolme}** maç (toplam {toplam_mac})")
+        else:
+            st.caption(f"Test edilecek: **{bolme + 1}.** maçtan sonuncuya, **{toplam_mac - bolme}** maç (toplam {toplam_mac})")
+    else:
+        st.caption(f"Test edilecek: tüm **{toplam_mac}** maç")
+
+    if mod == "Tümü" or toplam_mac < 4:
+        secili_gecmis = tum_gecmis
+        mod_etiket = f"Tümü ({toplam_mac} maç)"
+    elif mod.startswith("Ayar"):
+        secili_gecmis = tum_gecmis[:bolme]
+        mod_etiket = f"Ayar seti: ilk {bolme} maç"
+    else:
+        secili_gecmis = tum_gecmis[bolme:]
+        mod_etiket = f"Test seti: {bolme + 1}. maçtan sonrası ({toplam_mac - bolme} maç)"
+
+    st.divider()
+
+    if st.button("🚀 TEST ET", use_container_width=True, type="primary"):
+        if not any(secenekler.values()):
+            st.warning("⚠️ En az bir market seç.")
+        else:
+            with st.spinner("Test ediliyor..."):
+                st.session_state.bt_mod_etiket = mod_etiket
+                sonuc, detaylar = backtest_hesapla(secili_gecmis, secenekler, esikler)
+                st.session_state.bt_sonuc = sonuc
+                st.session_state.bt_detaylar = detaylar
+                st.session_state.bt_market = secenekler
+                st.session_state.bt_market_esik = esikler
+
+    if st.session_state.bt_sonuc:
+        sonuc = st.session_state.bt_sonuc
+        st.divider()
+        st.markdown("## 📊 BACKTEST SONUCU")
+        st.caption(f"📅 {st.session_state.get('bt_mod_etiket', '')}")
+
+        for key, baslik in [
+            ("1x2", "🎯 1X2 (Maç Sonucu)"),
+            ("kg_var", "🤝 KG Var"), ("kg_yok", "🤝 KG Yok"),
+            ("ust", "⚽ Üst 2.5"), ("alt", "⚽ Alt 2.5"),
+        ]:
+            if secenekler[key]:
+                d = sonuc[key]
+                st.markdown(backtest_karti(baslik, d["dogru"], d["yanlis"]), unsafe_allow_html=True)
+
+        st.divider()
+        with st.expander(f"📋 Maç Detayları ({len(st.session_state.bt_detaylar)} maç)"):
+            for m in st.session_state.bt_detaylar:
+                st.markdown(f"**{m['takim_ev']} {m['skor']} {m['takim_dep']}**")
+                gercek_1x2 = m.get("gercek_1x2", "?")
+                st.caption(f"Gerçek: 1X2={gercek_1x2} / Gol={m['gercek_gol']} / KG={m['gercek_kg']}")
+                for dd in m["detaylar"]:
+                    st.markdown(f" • {dd}")
+                st.markdown("")
+
+    st.divider()
+    if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="bt_geri"):
+        st.session_state.sayfa = "giris"
+        st.rerun()
 
 
 # ==========================================
-# SAYFA: AYARLAR
+# AYARLAR (SADECE ADMIN)
 # ==========================================
 elif st.session_state.sayfa == "ayarlar":
-    if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
-    st.markdown("<h1>⚙️ Ayarlar</h1>", unsafe_allow_html=True)
-    mv = st.session_state.esikler.copy()
-    st.markdown("### 🏦 Ödeme")
-    c1, c2 = st.columns(2)
-    with c1: yiban = st.text_input("IBAN", value=mv.get("iban", "TR00 0000 0000 0000 0000 0000 00"))
-    with c2: yhs = st.text_input("Hesap Sahibi", value=mv.get("hesap_sahibi", ""))
-    st.markdown("### 💰 Fiyatlar")
-    c1, c2, c3 = st.columns(3)
-    with c1: yfh = st.number_input("Haftalık", min_value=1.0, value=float(mv.get("fiyat_haftalik", 49.0)), step=10.0, key="ay_fh")
-    with c2: yfa = st.number_input("Aylık", min_value=1.0, value=float(mv.get("fiyat_aylik", 149.0)), step=10.0, key="ay_fa")
-    with c3: yfy = st.number_input("Yıllık", min_value=1.0, value=float(mv.get("fiyat_yillik", 999.0)), step=10.0, key="ay_fy")
-    if yfa > 0 and yfy < yfa * 12:
-        st.caption(f"💡 Yıllıkta %{int((1 - yfy / (yfa * 12)) * 100)} indirim")
-    st.markdown("### 🔓 Ücretsiz Kota")
-    yk = st.number_input("Kaç maç ücretsiz?", 0, 50, int(mv.get("ucretsiz_kotasi", 3)), 1, key="ay_kota")
-    st.markdown("### 🎯 Eşikler")
-    c1, c2, c3 = st.columns(3)
-    with c1: ye1 = st.slider("1 %", 0, 100, int(mv.get("esik_1", 55.0)), 1, key="ay_esik_1")
-    with c2: yex = st.slider("X %", 0, 100, int(mv.get("esik_x", 55.0)), 1, key="ay_esik_x")
-    with c3: ye2 = st.slider("2 %", 0, 100, int(mv.get("esik_2", 55.0)), 1, key="ay_esik_2")
-    c4, c5 = st.columns(2)
-    with c4: yu = st.slider("Üst %", 0, 100, int(mv["ust"]), 1, key="ay_ust")
-    with c5: ya = st.slider("Alt %", 0, 100, int(mv["alt"]), 1, key="ay_alt")
-    c6, c7 = st.columns(2)
-    with c6: ykv = st.slider("KG Var %", 0, 100, int(mv["kg_var"]), 1, key="ay_kg_var")
-    with c7: yky = st.slider("KG Yok %", 0, 100, int(mv["kg_yok"]), 1, key="ay_kg_yok")
+    if not admin_mi():
+        st.error("❌ Bu sayfa sadece admin içindir.")
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary"):
+            st.session_state.sayfa = "giris"
+            st.rerun()
+        st.stop()
+
+    st.markdown("<h1>⚙️ Eşik Ayarları</h1>", unsafe_allow_html=True)
+    st.caption("Ana analiz için eşikleri buradan değiştirebilirsin.")
     st.divider()
-    c1, c2, c3 = st.columns(3)
+
+    mevcut = st.session_state.esikler.copy()
+
+    st.markdown("### 🎯 Maç Sonucu Eşikleri (1 / X / 2)")
+    st.caption("Her seçim için ayrı eşik. En yüksek olasılıklı sonuç, kendi eşiğini geçerse öneri verilir.")
+    c1x2_a, c1x2_b, c1x2_c = st.columns(3)
+    with c1x2_a:
+        yeni_esik_1 = st.slider("1 (Ev Sahibi) eşiği (%)", 0, 100, int(mevcut.get("esik_1", 55.0)), 1, key="ay_esik_1")
+    with c1x2_b:
+        yeni_esik_x = st.slider("X (Beraberlik) eşiği (%)", 0, 100, int(mevcut.get("esik_x", 55.0)), 1, key="ay_esik_x")
+    with c1x2_c:
+        yeni_esik_2 = st.slider("2 (Deplasman) eşiği (%)", 0, 100, int(mevcut.get("esik_2", 55.0)), 1, key="ay_esik_2")
+
+    st.markdown("### ⚽ Gol Eşikleri")
+    c1, c2 = st.columns(2)
     with c1:
-        if st.button("💾 Kaydet", use_container_width=True, type="primary"):
-            y = dict(mv); y.update({"iban": yiban, "hesap_sahibi": yhs, "fiyat_haftalik": float(yfh), "fiyat_aylik": float(yfa), "fiyat_yillik": float(yfy), "ucretsiz_kotasi": int(yk), "esik_1": float(ye1), "esik_x": float(yex), "esik_2": float(ye2), "ust": float(yu), "alt": float(ya), "kg_var": float(ykv), "kg_yok": float(yky)})
-            st.session_state.esikler = y; ayarlar_kaydet(y); st.success("✅ Kaydedildi!")
+        yeni_ust = st.slider("Üst 2.5 eşiği (%)", 0, 100, int(mevcut["ust"]), 1, key="ay_ust")
     with c2:
-        if st.button("🔄 Sıfırla", use_container_width=True):
-            v = {"ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0, "esik_1": 55.0, "esik_x": 55.0, "esik_2": 55.0, "iban": "TR00 0000 0000 0000 0000 0000 00", "hesap_sahibi": "ADINIZ SOYADINIZ", "fiyat_haftalik": 49.0, "fiyat_aylik": 149.0, "fiyat_yillik": 999.0, "ucretsiz_kotasi": 3}
-            st.session_state.esikler = v; ayarlar_kaydet(v); st.rerun()
+        yeni_alt = st.slider("Alt 2.5 eşiği (%)", 0, 100, int(mevcut["alt"]), 1, key="ay_alt")
+
+    st.markdown("### 🤝 KG Eşikleri")
+    c3, c4 = st.columns(2)
     with c3:
-        if st.button("⬅️ Ana Sayfa", use_container_width=True, key="ayg"):
-            st.session_state.sayfa = "giris"; st.rerun()
+        yeni_kg_var = st.slider("KG Var eşiği (%)", 0, 100, int(mevcut["kg_var"]), 1, key="ay_kg_var")
+    with c4:
+        yeni_kg_yok = st.slider("KG Yok eşiği (%)", 0, 100, int(mevcut["kg_yok"]), 1, key="ay_kg_yok")
+
+    st.divider()
+    c_kaydet, c_sifirla, c_geri = st.columns(3)
+    with c_kaydet:
+        if st.button("💾 Kaydet", use_container_width=True, type="primary"):
+            yeni_esikler = {
+                "esik_1": float(yeni_esik_1), "esik_x": float(yeni_esik_x), "esik_2": float(yeni_esik_2),
+                "ust": float(yeni_ust), "alt": float(yeni_alt),
+                "kg_var": float(yeni_kg_var), "kg_yok": float(yeni_kg_yok),
+            }
+            st.session_state.esikler = yeni_esikler
+            ayarlar_kaydet(yeni_esikler)
+            st.success("✅ Eşikler kaydedildi!")
+    with c_sifirla:
+        if st.button("🔄 Sıfırla", use_container_width=True):
+            varsayilan = {
+                "ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0,
+                "esik_1": 55.0, "esik_x": 55.0, "esik_2": 55.0,
+            }
+            st.session_state.esikler = varsayilan
+            ayarlar_kaydet(varsayilan)
+            st.success("✅ Varsayılan eşiklere dönüldü!")
+            st.rerun()
+    with c_geri:
+        if st.button("⬅️ Ana Sayfa", use_container_width=True, key="ay_geri"):
+            st.session_state.sayfa = "giris"
+            st.rerun()
+
+    st.divider()
+    st.info(f"""
+    **Şu anki aktif eşikler:**
+    - 1X2 → 1: **%{st.session_state.esikler.get('esik_1', 55.0):.0f}** • X: **%{st.session_state.esikler.get('esik_x', 55.0):.0f}** • 2: **%{st.session_state.esikler.get('esik_2', 55.0):.0f}**
+    - Üst 2.5: **%{st.session_state.esikler['ust']:.0f}**
+    - Alt 2.5: **%{st.session_state.esikler['alt']:.0f}**
+    - KG Var: **%{st.session_state.esikler['kg_var']:.0f}**
+    - KG Yok: **%{st.session_state.esikler['kg_yok']:.0f}**
+    """)
 
 
 # ==========================================
-# SAYFA: MANUEL GİRİŞ
-# ==========================================
-elif st.session_state.sayfa == "manuel_giris":
-    if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
-    st.markdown("<h1>📝 Eksik Alanlar</h1>", unsafe_allow_html=True)
-    st.warning(f"Metinden çıkarılamayan **{len(st.session_state.manuel_bekleyen)}** alan:")
-    v = st.session_state.form_verileri
-    with st.form("mf"):
-        yd = {}
-        for a in st.session_state.manuel_bekleyen:
-            if a in MANUEL_ALANLAR:
-                st.markdown(f"**{a}**")
-                for (k, e, t, vs) in MANUEL_ALANLAR[a]:
-                    mv = v.get(k, vs)
-                    if t == "int":
-                        val = st.number_input(e, value=int(mv) if mv else int(vs), min_value=1, max_value=100, step=1, key=f"mk_{k}")
-                        yd[k] = int(val)
-                    elif t == "float":
-                        val = st.number_input(e, value=float(mv) if mv else float(vs), min_value=0.0, step=0.1, key=f"mk_{k}")
-                        yd[k] = float(val)
-                    else:
-                        val = st.text_input(e, value=str(mv) if mv else "", key=f"mk_{k}")
-                        yd[k] = val
-        c1, c2 = st.columns(2)
-        with c1: kb = st.form_submit_button("✅ Kaydet", use_container_width=True, type="primary")
-        with c2: ab = st.form_submit_button("⏭️ Atla", use_container_width=True)
-        if kb or ab:
-            if kb: st.session_state.form_verileri.update(yd)
-            st.session_state.manuel_bekleyen = []
-            st.session_state.sayfa = "sonuc"; st.rerun()
-    if st.button("⬅️ Geri"): st.session_state.sayfa = "giris"; st.rerun()
-
-
-# ==========================================
-# SAYFA: SONUÇ
+# ANALİZ SONUÇ
 # ==========================================
 elif st.session_state.sayfa == "sonuc":
-    v = st.session_state.form_verileri; a = analiz_hesapla(v)
-    te = v.get("takim_ev", "Ev") or "Ev"; td = v.get("takim_dep", "Dep") or "Dep"
-    sb = v.get("skor_belli", False); se = v.get("skor_ev", 0); sd = v.get("skor_dep", 0)
-    st.markdown(mac_karti(te, td, sb, se, sd, a["lam_ev"], a["lam_dep"], v.get("saat", ""), v.get("ulke", ""), v.get("tarih", "")), unsafe_allow_html=True)
+    v = st.session_state.form_verileri
+    a = analiz_hesapla(v)
+
+    ust_25 = a["ust_25"]; alt_25 = a["alt_25"]
+    kg_var_model = a["kg_var_model"]; kg_yok_model = a["kg_yok_model"]
+
+    takim_ev = v.get("takim_ev", "") or "Ev Sahibi"
+    takim_dep = v.get("takim_dep", "") or "Deplasman"
+    skor_belli = v.get("skor_belli", False)
+    skor_ev = v.get("skor_ev", 0); skor_dep = v.get("skor_dep", 0)
+
+    st.markdown(mac_karti(takim_ev, takim_dep, skor_belli, skor_ev, skor_dep,
+                          a["lam_ev"], a["lam_dep"],
+                          saat=v.get("saat", ""), ulke=v.get("ulke", ""), tarih=v.get("tarih", "")),
+                unsafe_allow_html=True)
     st.markdown(olasilik_paneli(a), unsafe_allow_html=True)
 
-    ai_html = ai_yorum_paneli(v, a)
-    if ai_html:
-        st.markdown(ai_html, unsafe_allow_html=True)
+    with st.expander("📋 Okunan Tüm Veriler", expanded=False):
+        okunan_veriler_paneli(v)
+
+    if skor_belli:
+        d = sonuc_hesapla({"veri": v, "analiz": a})
+        with st.expander("✅ Tahmin Doğruluğu", expanded=True):
+            st.markdown("**🎯 Öneri Tahminleri**")
+            st.caption(f"1X2: 1=%{esik_1x2_al('1'):.0f} • X=%{esik_1x2_al('X'):.0f} • 2=%{esik_1x2_al('2'):.0f} | Üst %{esik_al('ust'):.0f} • Alt %{esik_al('alt'):.0f} • KG Var %{esik_al('kg_var'):.0f} • KG Yok %{esik_al('kg_yok'):.0f}")
+            c1, c2, c3 = st.columns(3)
+            for col, key in zip([c1, c2, c3], ["oneri_1x2", "oneri_gol", "oneri_kg"]):
+                o = d[key]
+                etiket = {"oneri_1x2": "1X2", "oneri_gol": "Gol", "oneri_kg": "KG"}[key]
+                with col:
+                    if o["tuttu"] is None:
+                        st.markdown(f"⚫ **{etiket}**"); st.markdown("Öneri yok")
+                    else:
+                        ikon = "✅" if o["tuttu"] else "❌"
+                        st.markdown(rozet(f"{ikon} {etiket}", "green" if o["tuttu"] else "red"), unsafe_allow_html=True)
+                        st.markdown(f"{o['tahmin']}")
+            gercek_1x2 = d.get("gercek_1x2", "?")
+            st.caption(f"Gerçek sonuç: **{gercek_1x2}**")
+    else:
+        d = None
+
+    with st.expander("🔍 Geniş Kapsamlı Analiz", expanded=False):
+        genel_yorumlar = detayli_analiz_yorumu(v)
+        if genel_yorumlar:
+            for baslik, metin in genel_yorumlar:
+                st.markdown(f"**{baslik}**")
+                st.markdown(metin)
+                st.markdown("")
+        else:
+            st.caption("ℹ️ Genel form/sıralama verisi yok.")
+
+        y1x2 = birx_iki_detayli_aciklama(v, a)
+        if y1x2:
+            st.markdown("---")
+            for satir in y1x2:
+                if satir.startswith("🎯"):
+                    st.markdown(f"**{satir}**")
+                    st.markdown("")
+                else:
+                    st.markdown(satir)
+
+        gol_aciklama = gol_detayli_aciklama(v, a)
+        if gol_aciklama:
+            st.markdown("---")
+            for satir in gol_aciklama:
+                if satir.startswith("🎯"):
+                    st.markdown(f"**{satir}**")
+                    st.markdown("")
+                else:
+                    st.markdown(satir)
+
+        kg_aciklama = kg_detayli_aciklama(v, a)
+        if kg_aciklama:
+            st.markdown("---")
+            for satir in kg_aciklama:
+                if satir.startswith("🤝"):
+                    st.markdown(f"**{satir}**")
+                    st.markdown("")
+                else:
+                    st.markdown(satir)
+
+        if not y1x2 and not gol_aciklama and not kg_aciklama and not genel_yorumlar:
+            st.info("ℹ️ Gösterilecek analiz yorumu yok.")
 
     st.divider()
     st.markdown("## 🏆 FİNAL ÖNERİ")
-    s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
-    e1 = esik_1x2_al(s1); p1 = y1 >= e1
-    im = {"1": "1 (Ev)", "X": "X (Beraberlik)", "2": "2 (Dep)"}
-    st.markdown(oneri_karti("🎯 1X2", im[s1], y1, e1, p1, f"1:%{a['p1']:.1f} X:%{a['px']:.1f} 2:%{a['p2']:.1f}"), unsafe_allow_html=True)
-    if a["ust_25"] >= a["alt_25"]: gs = "Üst 2.5"; gy = a["ust_25"]; ge_ = esik_al("ust")
-    else: gs = "Alt 2.5"; gy = a["alt_25"]; ge_ = esik_al("alt")
-    st.markdown(oneri_karti("⚽ Gol", gs, gy, ge_, gy >= ge_, f"Üst:%{a['ust_25']:.1f} Alt:%{a['alt_25']:.1f}"), unsafe_allow_html=True)
-    if a["kg_var_model"] >= a["kg_yok_model"]: ks = "KG Var"; ky = a["kg_var_model"]; ke = esik_al("kg_var")
-    else: ks = "KG Yok"; ky = a["kg_yok_model"]; ke = esik_al("kg_yok")
-    st.markdown(oneri_karti("🤝 KG", ks, ky, ke, ky >= ke, f"Var:%{a['kg_var_model']:.1f} Yok:%{a['kg_yok_model']:.1f}"), unsafe_allow_html=True)
+
+    en_yuksek_1x2 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
+    secim_1x2, yuzde_1x2 = en_yuksek_1x2
+    esik_1x2_secim = esik_1x2_al(secim_1x2)
+    poz_1x2 = yuzde_1x2 >= esik_1x2_secim
+    isim_map = {"1": "1 (Ev Sahibi)", "X": "X (Beraberlik)", "2": "2 (Deplasman)"}
+    st.markdown(oneri_karti("🎯 Maç Sonucu (1X2)", isim_map[secim_1x2], yuzde_1x2, esik_1x2_secim, poz_1x2,
+                            f"1: %{a['p1']:.1f} • X: %{a['px']:.1f} • 2: %{a['p2']:.1f}"), unsafe_allow_html=True)
+
+    if ust_25 >= alt_25:
+        gol_secim, gol_yuzde, gol_esik = "Üst 2.5", ust_25, esik_al("ust")
+    else:
+        gol_secim, gol_yuzde, gol_esik = "Alt 2.5", alt_25, esik_al("alt")
+    gol_poz = gol_yuzde >= gol_esik
+    st.markdown(oneri_karti("⚽ Gol", gol_secim, gol_yuzde, gol_esik, gol_poz,
+                            f"Üst %{ust_25:.1f} • Alt %{alt_25:.1f}"), unsafe_allow_html=True)
+
+    if kg_var_model >= kg_yok_model:
+        kg_secim, kg_yuzde, kg_esik = "KG Var", kg_var_model, esik_al("kg_var")
+    else:
+        kg_secim, kg_yuzde, kg_esik = "KG Yok", kg_yok_model, esik_al("kg_yok")
+    kg_poz = kg_yuzde >= kg_esik
+    st.markdown(oneri_karti("🤝 Karşılıklı Gol", kg_secim, kg_yuzde, kg_esik, kg_poz,
+                            f"Var %{kg_var_model:.1f} • Yok %{kg_yok_model:.1f}"), unsafe_allow_html=True)
 
     if st.session_state.gelecekten_gelindi and admin_mi():
-        ig = st.session_state.aktif_gelecek_idx
-        if ig is not None and 0 <= ig < len(st.session_state.gelecek_analizler):
-            st.divider(); st.markdown("### 📥 Sonuç Gir")
-            c1, c2, c3 = st.columns([1, 1, 1])
-            with c1: yse = st.number_input("Ev", 0, 20, 0, 1, key=f"gse_{ig}")
-            with c2: ysd = st.number_input("Dep", 0, 20, 0, 1, key=f"gsd_{ig}")
-            with c3:
+        idx_g = st.session_state.aktif_gelecek_idx
+        if idx_g is not None and 0 <= idx_g < len(st.session_state.gelecek_analizler):
+            st.divider()
+            st.markdown("### 📥 Sonucu Gir ve Geçmişe Taşı")
+            sc1, sc2, sc3 = st.columns([1, 1, 1])
+            with sc1:
+                yeni_skor_ev = st.number_input("Ev Gol", min_value=0, max_value=20, value=int(v.get("skor_ev", 0)), step=1, key=f"gskor_ev_{idx_g}")
+            with sc2:
+                yeni_skor_dep = st.number_input("Dep Gol", min_value=0, max_value=20, value=int(v.get("skor_dep", 0)), step=1, key=f"gskor_dep_{idx_g}")
+            with sc3:
                 st.markdown(""); st.markdown("")
-                if st.button("📥 Taşı", key=f"ts_{ig}", use_container_width=True, type="primary"):
-                    k = st.session_state.gelecek_analizler[ig]
-                    k["veri"]["skor_ev"] = int(yse); k["veri"]["skor_dep"] = int(ysd); k["veri"]["skor_belli"] = True
-                    yd = sonuc_hesapla(k)
-                    if yd: k["dogruluk"] = yd
-                    st.session_state.gecmis_analizler.append(k)
-                    st.session_state.gelecek_analizler.pop(ig)
-                    gecmis_kaydet(st.session_state.gecmis_analizler); gelecek_kaydet(st.session_state.gelecek_analizler)
-                    st.session_state.gelecekten_gelindi = False; st.session_state.aktif_gelecek_idx = None
-                    st.session_state.sayfa = "giris"; st.rerun()
+                if st.button("📥 Taşı", key=f"tasi_{idx_g}", use_container_width=True, type="primary"):
+                    kayit = st.session_state.gelecek_analizler[idx_g]
+                    kayit["veri"]["skor_ev"] = int(yeni_skor_ev)
+                    kayit["veri"]["skor_dep"] = int(yeni_skor_dep)
+                    kayit["veri"]["skor_belli"] = True
+                    yeni_d = sonuc_hesapla(kayit)
+                    if yeni_d: kayit["dogruluk"] = yeni_d
+                    st.session_state.gecmis_analizler.append(kayit)
+                    st.session_state.gelecek_analizler.pop(idx_g)
+                    gecmis_kaydet(st.session_state.gecmis_analizler)
+                    gelecek_kaydet(st.session_state.gelecek_analizler)
+                    st.session_state.gelecekten_gelindi = False
+                    st.session_state.aktif_gelecek_idx = None
+                    st.session_state.sayfa = "gelecek"
+                    st.rerun()
 
-    km = (a["ust_25"] >= esik_al("ust") and a["ust_25"] >= a["alt_25"]) or (a["alt_25"] >= esik_al("alt") and a["alt_25"] >= a["ust_25"]) or p1
+    kaydet_mi = gol_poz or kg_poz or poz_1x2
+
     if not st.session_state.kayit_yapildi and admin_mi():
-        yk = kayit_olustur(v, a)
-        if sb: st.session_state.gecmis_analizler.append(yk); gecmis_kaydet(st.session_state.gecmis_analizler)
-        elif km: st.session_state.gelecek_analizler.append(yk); gelecek_kaydet(st.session_state.gelecek_analizler)
+        yeni_kayit = kayit_olustur(v, a)
+        if d is not None: yeni_kayit["dogruluk"] = d
+
+        if skor_belli:
+            st.session_state.gecmis_analizler.append(yeni_kayit)
+            gecmis_kaydet(st.session_state.gecmis_analizler)
+            if kaydet_mi:
+                st.success("📊 Geçmişe kaydedildi. (öneri vardı)")
+            else:
+                st.info("📊 Geçmişe kaydedildi. (öneri yoktu ama backtest için kaydedildi)")
+        else:
+            if kaydet_mi:
+                st.session_state.gelecek_analizler.append(yeni_kayit)
+                gelecek_kaydet(st.session_state.gelecek_analizler)
+                st.info("🔮 Gelecek Maçlar'a kaydedildi.")
+            else:
+                st.warning("⚠️ Hiçbir market pozitif değil. Bu maç geleceğe **kaydedilmedi**.")
+
         st.session_state.kayit_yapildi = True
-    if st.button("🔄 Yeni", use_container_width=True, type="primary"):
-        st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI); st.session_state.sayfa = "giris"; st.rerun()
+
+    st.divider()
+    if st.button("🔄 Yeni Maç Analizi", use_container_width=True, type="primary"):
+        st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
+        st.session_state.sayfa = "giris"
+        st.rerun()
