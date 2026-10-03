@@ -337,37 +337,17 @@ st.markdown("""
     .stApp .fa-bildirim-ttl { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
     .stApp .fa-bildirim-msg { font-size: 0.85rem; color: #eaf1fb !important; line-height: 1.5; margin: 6px 0; }
     .stApp .fa-bildirim-meta { font-size: 0.68rem; color: var(--muted) !important; }
-
-    /* NAV BUTONLARI BÜYÜK */
     .st-key-fa_nav .stButton button { min-height: 2.9rem !important; padding: 0.55rem 0.4rem !important; }
     .st-key-fa_nav .stButton button p { font-size: 0.88rem !important; font-weight: 800 !important; }
-
-    /* MODERN DONUT GRAFİK */
     .stApp .fa-donut-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0 8px 0; }
-    .stApp .fa-donut-kart {
-        background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95));
-        border: 1px solid #1d2940;
-        border-radius: 16px;
-        padding: 12px 6px 10px 6px;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-    }
+    .stApp .fa-donut-kart { background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95)); border: 1px solid #1d2940; border-radius: 16px; padding: 12px 6px 10px 6px; text-align: center; position: relative; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
     .stApp .fa-donut-kart:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-3px); box-shadow: 0 10px 28px rgba(34,197,94,0.15); }
-    .stApp .fa-donut-kart::before {
-        content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-        background: var(--c);
-    }
+    .stApp .fa-donut-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c); }
     .stApp .fa-donut-ttl { font-size: 0.62rem; color: #8fa0bd !important; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; }
     .stApp .fa-donut-svg { width: 100%; max-width: 82px; height: auto; margin: 0 auto; display: block; }
     .stApp .fa-donut-sub { font-size: 0.62rem; color: #64748b !important; margin-top: 8px; font-weight: 700; }
     .stApp .fa-donut-sub b { color: #eaf1fb !important; }
-
     .stApp .mh-hero-ust { font-size: 0.7rem; color: #8fa0bd !important; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; margin-bottom: 8px; opacity: 0.7; }
-
-    /* ÜYE OL MİNİ LİNK */
     .stApp .fa-uye-link { text-align: center; font-size: 0.78rem; color: #8fa0bd !important; margin-top: 8px; }
     .stApp .fa-uye-link b { color: #22c55e !important; font-weight: 800; }
 </style>
@@ -383,7 +363,6 @@ AYARLAR_DOSYA = "ayarlar.json"
 KULLANICI_DOSYA = "kullanicilar.json"
 BEKLEYEN_DOSYA = "bekleyen_odemeler.json"
 BILDIRIM_DOSYA = "bildirimler.json"
-OTOMATIK_LOG_DOSYA = "otomatik_log.json"
 
 ADMIN_KULLANICI_ADI = "admin52"
 
@@ -435,8 +414,6 @@ def bekleyen_yukle(): return _yukle_json(BEKLEYEN_DOSYA, {})
 def bekleyen_kaydet(v): _kaydet_json(BEKLEYEN_DOSYA, v)
 def bildirimler_yukle(): return _yukle_json(BILDIRIM_DOSYA, [])
 def bildirimler_kaydet(v): _kaydet_json(BILDIRIM_DOSYA, v)
-def otomatik_log_yukle(): return _yukle_json(OTOMATIK_LOG_DOSYA, {})
-def otomatik_log_kaydet(v): _kaydet_json(OTOMATIK_LOG_DOSYA, v)
 
 
 def kullanici_ekle(kullanici_adi, sifre):
@@ -979,7 +956,7 @@ def backtest_hesapla(gecmis, ms, me):
 
 
 # ==========================================
-# METİN PARSER (Sportytrader)
+# METİN PARSER
 # ==========================================
 MANUEL_ALANLAR = {
     "Sıralama": [("siralama_ev", "Ev Sıralaması", "int", 1), ("siralama_dep", "Dep Sıralaması", "int", 1)],
@@ -1528,115 +1505,6 @@ def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
 
 
 # ==========================================
-# OTOMATİK ZAMANLAYICI
-# ==========================================
-_OTOMATIK_BASLATILDI = False
-
-
-def _otomatik_worker():
-    son_veri_tarih = None
-    son_skor_saat = None
-    while True:
-        try:
-            now = datetime.now()
-            bugun = now.strftime("%Y-%m-%d")
-            if now.hour == 2 and now.minute >= 30 and son_veri_tarih != bugun:
-                try:
-                    log = otomatik_log_yukle()
-                    log["son_veri_cekimi"] = now.strftime("%Y-%m-%d %H:%M:%S")
-                    log["son_veri_durum"] = "başlıyor"
-                    otomatik_log_kaydet(log)
-                    _otomatik_veri_cek()
-                    log = otomatik_log_yukle()
-                    log["son_veri_durum"] = "tamamlandı"
-                    otomatik_log_kaydet(log)
-                except Exception as e:
-                    log = otomatik_log_yukle()
-                    log["son_veri_durum"] = f"hata: {str(e)[:100]}"
-                    otomatik_log_kaydet(log)
-                son_veri_tarih = bugun
-            if now.minute < 5 and son_skor_saat != f"{bugun}-{now.hour}":
-                try:
-                    log = otomatik_log_yukle()
-                    log["son_skor_cekimi"] = now.strftime("%Y-%m-%d %H:%M:%S")
-                    log["son_skor_durum"] = "başlıyor"
-                    otomatik_log_kaydet(log)
-                    _otomatik_skor_cek()
-                    log = otomatik_log_yukle()
-                    log["son_skor_durum"] = "tamamlandı"
-                    otomatik_log_kaydet(log)
-                except Exception as e:
-                    log = otomatik_log_yukle()
-                    log["son_skor_durum"] = f"hata: {str(e)[:100]}"
-                    otomatik_log_kaydet(log)
-                son_skor_saat = f"{bugun}-{now.hour}"
-            time.sleep(60)
-        except Exception:
-            time.sleep(120)
-
-
-def _otomatik_veri_cek():
-    maclar, hatalar = mutating_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI)
-    if hatalar or not maclar: return
-    mevcut_urls = set()
-    for g in gelecek_yukle():
-        u = g.get("veri", {}).get("kaynak_url", "")
-        if u: mevcut_urls.add(u)
-    _ESIK_CACHE.clear()
-    try:
-        with open(AYARLAR_DOSYA, "r", encoding="utf-8") as f:
-            _ESIK_CACHE.update(json.load(f))
-    except Exception: pass
-    eklenecek = []
-    with ThreadPoolExecutor(max_workers=3) as ex:
-        futs = {ex.submit(_gelecek_mac_isle, m, mevcut_urls): m for m in maclar}
-        for f in as_completed(futs):
-            try:
-                r = f.result()
-                kayit = r[3] if len(r) == 4 else None
-                if kayit is not None: eklenecek.append(kayit)
-            except Exception: continue
-    if eklenecek:
-        mg = gelecek_yukle(); mg.extend(eklenecek); gelecek_kaydet(mg)
-
-
-def _otomatik_skor_cek():
-    gel = gelecek_yukle()
-    isler = [g for g in gel if g.get("veri", {}).get("kaynak_url")]
-    if not isler: return
-    sonuc = {}
-    with ThreadPoolExecutor(max_workers=3) as ex:
-        futs = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], False): g for g in isler}
-        for f in as_completed(futs):
-            g = futs[f]
-            try: sonuc[id(g)] = f.result()
-            except Exception: sonuc[id(g)] = (None, None)
-    gecmis = gecmis_yukle()
-    mevcut = {x.get("veri", {}).get("kaynak_url") for x in gecmis}
-    kalan = []
-    for g in gel:
-        r = sonuc.get(id(g))
-        if r is None: kalan.append(g); continue
-        skor, hata = r
-        v = g["veri"]
-        if skor is None: kalan.append(g); continue
-        v["skor_ev"] = skor[0]; v["skor_dep"] = skor[1]; v["skor_belli"] = True
-        d = sonuc_hesapla(g)
-        if d: g["dogruluk"] = d
-        if v.get("kaynak_url") not in mevcut:
-            gecmis.append(g); mevcut.add(v.get("kaynak_url"))
-    gecmis_kaydet(gecmis); gelecek_kaydet(kalan)
-
-
-def _otomatik_baslat():
-    global _OTOMATIK_BASLATILDI
-    if _OTOMATIK_BASLATILDI: return
-    _OTOMATIK_BASLATILDI = True
-    t = threading.Thread(target=_otomatik_worker, daemon=True)
-    t.start()
-
-
-# ==========================================
 # TASARIM YARDIMCILARI
 # ==========================================
 def _e(x): return _html.escape(str(x))
@@ -1929,8 +1797,6 @@ def nav_bar():
 # ==========================================
 # UYGULAMA BAŞLANGIÇ
 # ==========================================
-_otomatik_baslat()
-
 if st.session_state.admin_login_acik and not admin_mi():
     admin_giris_ekrani()
     st.stop()
@@ -1953,18 +1819,88 @@ elif st.session_state.sayfa == "giris":
     if admin_mi():
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:gray;'>Admin Paneli</p>", unsafe_allow_html=True)
-        log = otomatik_log_yukle()
-        if log:
-            st.markdown("### 🤖 Otomatik Sistem Durumu")
-            c1, c2 = st.columns(2)
-            with c1:
-                st.caption(f"📥 Son veri çekimi: **{log.get('son_veri_cekimi', 'Yok')}**")
-                st.caption(f"Durum: **{log.get('son_veri_durum', '-')}**")
-            with c2:
-                st.caption(f"⚽ Son skor çekimi: **{log.get('son_skor_cekimi', 'Yok')}**")
-                st.caption(f"Durum: **{log.get('son_skor_durum', '-')}**")
-            st.info("ℹ️ Her gece **02:30**'da veri, **her saat başı** skor çekilir.")
 
+        # ==========================================
+        # MANUEL ÇEKİM PANELİ
+        # ==========================================
+        st.markdown("### 🖐️ Manuel Çekim Paneli")
+        st.info("ℹ️ Otomatik çekim yoktur. Verileri aşağıdaki butonlardan manuel olarak çekersiniz.")
+
+        # ── Buton 1: Veri Çek (Bugünün Maçları)
+        st.markdown("**🚀 Bugünün Maçları**")
+        if st.button("🚀 Veri Çek", use_container_width=True, key="manuel_veri_btn", type="primary"):
+            _ph = st.empty()
+            def _p_cb(i, t, n):
+                try: _ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
+                except Exception: pass
+            with st.spinner("Veri çekiliyor..."):
+                mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=_p_cb, max_workers=3)
+            _ph.empty()
+            st.success("✅ Veri çekimi tamamlandı.")
+            time.sleep(1)
+            st.rerun()
+
+        st.divider()
+
+        # ── Buton 2: Lig Çek
+        st.markdown("**📜 Lig Geçmişi**")
+        _lurl = st.text_input("Lig URL", key="manuel_lig_url", placeholder="https://www.mutating.com/football-stats/league-...")
+        _lc1, _lc2 = st.columns(2)
+        with _lc1: _la = st.number_input("Kaç maç?", 5, 30, 10, 1, key="manuel_lig_adet")
+        with _lc2: _lw = st.number_input("Paralel", 1, 8, 3, 1, key="manuel_lig_workers")
+        if st.button("📜 Ligi Çek", use_container_width=True, key="manuel_lig_btn", type="primary"):
+            if not _lurl.strip():
+                st.warning("⚠️ URL gerekli")
+            else:
+                _ph2 = st.empty()
+                def _p2_cb(i, t, n):
+                    try: _ph2.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
+                    except Exception: pass
+                with st.spinner(f"Son {_la} maç..."):
+                    _bas, _hat = lig_gecmis_cek(_lurl.strip(), int(_la), int(_lw), _p2_cb)
+                _ph2.empty()
+                if _hat:
+                    with st.expander(f"⚠️ {len(_hat)} hata"):
+                        for h in _hat: st.caption(h)
+                if _bas:
+                    st.success(f"✅ {len(_bas)} maç eklendi!")
+                    time.sleep(1.5)
+                    st.rerun()
+                else:
+                    st.error("Hiçbir maç eklenemedi.")
+
+        st.divider()
+
+        # ── Buton 3: Skor İşle
+        st.markdown("**⚽ Skor İşle**")
+        st.caption(f"Bekleyen maç: **{len(st.session_state.gelecek_analizler)}**")
+        if st.button("⚽ Skor İşle", use_container_width=True, key="manuel_skor_btn", type="primary"):
+            if not st.session_state.gelecek_analizler:
+                st.warning("⚠️ Gelecek'te maç yok.")
+            else:
+                with st.spinner("Skorlar kontrol ediliyor..."):
+                    _oz = sonuclari_isle(False, 3)
+                    st.session_state.skor_ozet = _oz
+                st.success(f"✅ {_oz.get('tasinan', 0)} maç geçmişe taşındı.")
+                time.sleep(1)
+                st.rerun()
+
+        st.divider()
+
+        # ── Son işlem özetleri
+        if st.session_state.toplu_cek_ozet:
+            oz = st.session_state.toplu_cek_ozet
+            st.caption(f"📊 Son veri çekimi: **{oz.get('eklenen', 0)}** eklendi • **{oz.get('esik_alti', 0)}** eşik altı • **{oz.get('veri_yok', 0)}** veri yok • **{oz.get('hata', 0)}** hata")
+            if oz.get("detay_log"):
+                with st.expander("🔎 Detay"):
+                    for s in oz["detay_log"]: st.text(s)
+        if st.session_state.skor_ozet:
+            oz = st.session_state.skor_ozet
+            st.caption(f"⚽ Son skor işleme: **{oz.get('tasinan', 0)}** taşındı • **{oz.get('bitmemis', 0)}** bitmemiş • **{len(oz.get('hatalar', []))}** hata")
+
+        # ==========================================
+        # İSTATİSTİK METNİ YAPIŞTIRMA
+        # ==========================================
         st.divider()
         st.markdown("### 📋 İstatistik Metnini Yapıştır")
         ym = st.text_area("Yapıştırma", height=200, key="yapistir_input", label_visibility="collapsed", placeholder="İstatistik metnini buraya yapıştır")
@@ -2335,7 +2271,6 @@ elif st.session_state.sayfa == "gelecek_admin":
     gel = st.session_state.gelecek_analizler
     toplam_g = len(gel)
 
-    # Yedekleme
     st.markdown("### 💾 Yedekleme")
     c1, c2 = st.columns(2)
     with c1:
@@ -2430,7 +2365,6 @@ elif st.session_state.sayfa == "gecmis":
     st.markdown("<h1>📊 Geçmiş Maçlar</h1>", unsafe_allow_html=True)
     gc = st.session_state.gecmis_analizler; top = len(gc)
 
-    # Admin yedekleme
     if admin_mi():
         st.markdown("### 💾 Yedekleme")
         c1, c2 = st.columns(2)
@@ -2503,7 +2437,6 @@ elif st.session_state.sayfa == "gecmis":
                     st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
             st.divider()
 
-    # Hepsini temizle (admin)
     if admin_mi():
         st.divider()
         if st.button("🗑️ Tüm Geçmişi Temizle", use_container_width=True, key="temizle_g"):
