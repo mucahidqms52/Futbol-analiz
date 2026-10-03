@@ -74,7 +74,7 @@ Uygulama, **"AS IS" (olduğu gibi)** ve **"AS AVAILABLE" (mevcut olduğu şekild
 **BU HİZMETTE SUNULAN TÜM TAHMİN, ANALİZ, İSTATİSTİK VE YORUMLAR;**
 
 - Geçmiş verilerin matematiksel modellenmesine dayanır,
-- **Gelecekteki sonuçları garanti etmez**,
+- **Gelecektek sonuçları garanti etmez**,
 - **Doğruluk oranı %100 değildir ve hiçbir zaman olamaz**,
 - **Kayıp veya kazanç garantisi içermez.**
 
@@ -976,7 +976,9 @@ def backtest_hesapla(gecmis, ms, me):
             if mk["detaylar"]: detaylar.append(mk)
         except Exception: continue
     return sonuc, detaylar
-    # ==========================================
+
+
+# ==========================================
 # METİN PARSER (Sportytrader)
 # ==========================================
 MANUEL_ALANLAR = {
@@ -1990,65 +1992,6 @@ elif st.session_state.sayfa == "giris":
         if gelecek_btn: nav_git("gelecek_admin")
         if backtest_btn: nav_git("backtest")
         if ayarlar_btn: nav_git("ayarlar")
-
-        st.divider()
-        st.markdown("### 🤖 Otomatik Veri Çekme")
-        vs1, vs2, vs3 = st.tabs(["🔄 Bugünün Maçları", "📜 Lig Geçmişi", "🏁 Sonuçları İşle"])
-        with vs1:
-            if st.session_state.toplu_cek_ozet:
-                oz = st.session_state.toplu_cek_ozet
-                st.markdown(f"**Son:** Bulunan: **{oz.get('bulunan', 0)}** | Eklenen: **{oz.get('eklenen', 0)}** | Eşik altı: **{oz.get('esik_alti', 0)}** | Veri yok: **{oz.get('veri_yok', 0)}** | Zaten vardı: **{oz.get('zaten_var', 0)}** | Hata: **{oz.get('hata', 0)}**")
-                if oz.get("detay_log"):
-                    with st.expander(f"🔎 Detay"):
-                        for s in oz["detay_log"]: st.text(s)
-            c1, c2 = st.columns(2)
-            with c1: w = st.number_input("Paralel", 1, 8, 3, 1, key="fw")
-            with c2:
-                st.markdown("")
-                if st.button("🚀 Bugünün Maçlarını Çek", use_container_width=True, type="primary", key="mbtn"):
-                    ph = st.empty()
-                    def _p(i, t, n):
-                        try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
-                        except Exception: pass
-                    with st.spinner("Çekiliyor..."):
-                        mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=_p, max_workers=int(w))
-                    ph.empty(); st.rerun()
-        with vs2:
-            lurl = st.text_input("Lig URL", key="lig_url_input", placeholder="https://www.mutating.com/football-stats/league-...")
-            c1, c2 = st.columns(2)
-            with c1: la = st.number_input("Kaç maç?", 5, 30, 10, 1, key="lig_adet")
-            with c2: lw = st.number_input("Paralel", 1, 8, 3, 1, key="lig_workers")
-            if st.button("📜 Ligi Çek", use_container_width=True, type="primary", key="lig_cek_btn"):
-                if not lurl.strip(): st.warning("URL gerekli")
-                else:
-                    ph = st.empty()
-                    def _p2(i, t, n):
-                        try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
-                        except Exception: pass
-                    with st.spinner(f"Son {la} maç..."):
-                        bas, hat = lig_gecmis_cek(lurl.strip(), int(la), int(lw), _p2)
-                    ph.empty()
-                    if hat:
-                        with st.expander(f"⚠️ {len(hat)} hata"):
-                            for h in hat: st.caption(h)
-                    if bas:
-                        st.success(f"✅ {len(bas)} maç eklendi!"); time.sleep(2); st.rerun()
-                    else: st.error("Hiçbir maç eklenemedi.")
-        with vs3:
-            if st.session_state.skor_ozet:
-                oz = st.session_state.skor_ozet
-                st.success(f"✅ {oz['tasinan']} taşındı • {oz['bitmemis']} bitmemiş")
-            st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}**")
-            sy = st.checkbox("Tarayıcı ile dene", value=False, key="skor_yedek")
-            c1, c2 = st.columns(2)
-            with c1: sw = st.number_input("Paralel", 1, 8, 3, 1, key="skor_w")
-            with c2:
-                if st.button("🏁 Skorları Çek", use_container_width=True, type="primary", key="skor_btn"):
-                    if not st.session_state.gelecek_analizler: st.warning("Gelecek'te maç yok")
-                    else:
-                        with st.spinner("Kontrol..."):
-                            st.session_state.skor_ozet = sonuclari_isle(bool(sy), int(sw))
-                        st.rerun()
 
     else:
         # MİSAFİR / ÜYE GÖRÜNÜMÜ
