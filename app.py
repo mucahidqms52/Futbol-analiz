@@ -102,9 +102,6 @@ st.markdown("""
     .stApp .fa-pick { font-size: 1rem; font-weight: 800; }
     .stApp .fa-pct { font-size: 1.35rem; font-weight: 900; color: var(--green) !important; }
     .stApp .fa-mut { font-size: 0.68rem; color: var(--muted) !important; margin-top: 6px; }
-    .stApp .fa-bar { position: relative; height: 8px; background: #1a2438; border-radius: 99px; overflow: hidden; }
-    .stApp .fa-fill { height: 100%; border-radius: 99px; }
-    .stApp .fa-tick { position: absolute; top: 0; bottom: 0; width: 2px; background: #eaf1fb; }
     .mh-hero { text-align: center; padding: 28px 14px 22px 14px; background: linear-gradient(135deg, rgba(22,35,61,0.9), rgba(15,26,46,0.95)); border: 1.5px solid rgba(34,197,94,0.25); border-radius: 20px; margin: 6px 0 16px 0; }
     .mh-hero-title { font-size: 1.7rem; font-weight: 900; color: var(--green); }
     .mh-hero-sub { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
@@ -340,9 +337,7 @@ VARSAYILAN_VERI = {k: v for k, v in {
     "siralama_ev": 0, "siralama_dep": 0, "puan_ev": 0, "puan_dep": 0,
     "xg_ev": 0.0, "xg_dep": 0.0, "atilan_ev": 0.0, "atilan_dep": 0.0,
     "yenen_ev": 0.0, "yenen_dep": 0.0, "clean_sheets_ev": 0.0, "clean_sheets_dep": 0.0,
-    "team_scored_ev": 0.0, "team_scored_dep": 0.0, "team_scored_2_ev": 0.0, "team_scored_2_dep": 0.0,
-    "scored_both_halves_ev": 0.0, "scored_both_halves_dep": 0.0,
-    "goal_both_halves_ev": 0.0, "goal_both_halves_dep": 0.0,
+    "team_scored_ev": 0.0, "team_scored_dep": 0.0,
     "ust05_ev": 80.0, "ust05_dep": 80.0, "ust15_ev": 50.0, "ust15_dep": 50.0,
     "ust25_ev": 30.0, "ust25_dep": 30.0, "ust35_ev": 20.0, "ust35_dep": 20.0,
     "kg_siklik_ev": 50.0, "kg_siklik_dep": 50.0,
@@ -642,7 +637,6 @@ def _playwright_html(url, timeout):
 
 
 def _sayfa_getir(url, timeout=90, max_retry=3):
-    """Playwright ile HTML getir, hata mesajı döndür."""
     hata = None
     try:
         import playwright
@@ -659,7 +653,6 @@ def _sayfa_getir(url, timeout=90, max_retry=3):
             except Exception as e:
                 hata = f"Tarayıcı hatası: {str(e)[:200]}"
             if d < max_retry - 1: time.sleep(2 + d * 2)
-    # Fallback: requests
     try:
         r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
         if r.status_code == 200 and r.text and len(r.text) > 500:
@@ -906,21 +899,39 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=3, progress_callback=None):
 
 
 # ==========================================
-# SKOR ÇEKME
+# SKOR ÇEKME — DÜZELTİLDİ
 # ==========================================
 def _skor_parse(html):
     m = _html_metne_cevir(html)
-    x = re.search(r'(?<![A-Za-z])FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', m)
-    if x: return int(x.group(1)), int(x.group(2))
+    patterns = [
+        r'FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})',
+        r'FT\s*(\d{1,2})\s*[-:]\s*(\d{1,2})',
+        r'(?<![A-Za-z])(\d{1,2})\s*[-:]\s*(\d{1,2})\s*\n+\s*FT',
+        r'Full\s*Time\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})',
+        r'Finished\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})',
+        r'\bFT\b[^\d]{0,30}(\d{1,2})\s*[-:]\s*(\d{1,2})',
+        r'(\d{1,2})\s*[-:]\s*(\d{1,2})\s*\n+\s*(?:Full|Finished|FT)',
+    ]
+    for pat in patterns:
+        x = re.search(pat, m, re.IGNORECASE)
+        if x:
+            try:
+                e = int(x.group(1)); d = int(x.group(2))
+                if 0 <= e <= 20 and 0 <= d <= 20:
+                    return e, d
+            except Exception:
+                continue
     return None
 
 
 def _skor_cek(url):
-    h, _ = _sayfa_getir(url, timeout=30, max_retry=1)
-    if h: 
-        skor = _skor_parse(h)
-        if skor: return skor, None
-    return None, "Skor bulunamadı"
+    h, hata = _sayfa_getir(url, timeout=60, max_retry=2)
+    if not h:
+        return None, f"Sayfa alınamadı: {hata}"
+    skor = _skor_parse(h)
+    if skor:
+        return skor, None
+    return None, None
 
 
 def sonuclari_isle(max_workers=3, progress_callback=None):
@@ -944,8 +955,10 @@ def sonuclari_isle(max_workers=3, progress_callback=None):
         if r is None: kalan.append(g); continue
         skor, hata = r
         v = g["veri"]; isim = f"{v.get('takim_ev', '?')} - {v.get('takim_dep', '?')}"
-        if hata: ht.append(f"{isim}: {hata}"); kalan.append(g); continue
-        if skor is None: bm += 1; kalan.append(g); continue
+        if hata:
+            ht.append(f"{isim}: {hata}"); kalan.append(g); continue
+        if skor is None:
+            bm += 1; kalan.append(g); continue
         v["skor_ev"] = skor[0]; v["skor_dep"] = skor[1]; v["skor_belli"] = True
         d = sonuc_hesapla(g)
         if d: g["dogruluk"] = d
@@ -998,18 +1011,18 @@ def gecmis_istatistik_hesapla():
             if not v.get("skor_belli"): continue
             d = sonuc_hesapla(g)
             if not d: continue
-            for key, a, b in [("oneri_1x2", "1x2", None), ("oneri_gol", "gol", None), ("oneri_kg", "kg", None)]:
-                o = d[key]
-                if o.get("tuttu") is not None:
-                    if key == "oneri_1x2":
-                        t1x2 += 1
-                        if o["tuttu"]: g1x2 += 1
-                    elif key == "oneri_gol":
-                        tg += 1
-                        if o["tuttu"]: gg += 1
-                    else:
-                        tk += 1
-                        if o["tuttu"]: gk += 1
+            o = d["oneri_1x2"]
+            if o.get("tuttu") is not None:
+                t1x2 += 1
+                if o["tuttu"]: g1x2 += 1
+            o = d["oneri_gol"]
+            if o.get("tuttu") is not None:
+                tg += 1
+                if o["tuttu"]: gg += 1
+            o = d["oneri_kg"]
+            if o.get("tuttu") is not None:
+                tk += 1
+                if o["tuttu"]: gk += 1
         except Exception: continue
     p1 = (g1x2 / t1x2 * 100) if t1x2 else 0
     pg = (gg / tg * 100) if tg else 0
@@ -1188,20 +1201,20 @@ elif st.session_state.sayfa == "giris":
         st.divider()
 
         # ==========================================
-        # 🔬 DEBUG PANELİ (Skor İşle'nin altına eklendi)
+        # 🔬 DEBUG PANELİ
         # ==========================================
-        with st.expander("🔬 DEBUG — Sorun teşhisi için bir maçı test et", expanded=False):
-            st.caption("Bir maç URL'si yapıştır ve butona bas. Ne olduğunu göreceğiz.")
+        with st.expander("🔬 DEBUG — Sorun teşhisi", expanded=False):
+            st.caption("Bir maç URL'si yapıştır ve test et.")
             _dbg_url = st.text_input("Test maç URL'si", key="dbg_url",
                 placeholder="https://www.mutating.com/football-stats/...")
 
             c1, c2 = st.columns(2)
             with c1:
-                if st.button("🔬 Playwright ile Test", key="dbg_btn1", type="primary", use_container_width=True):
+                if st.button("🔬 Playwright Test", key="dbg_btn1", type="primary", use_container_width=True):
                     if not _dbg_url.strip():
                         st.warning("URL gir")
                     else:
-                        with st.spinner("Playwright ile deneniyor... (30-60 sn)"):
+                        with st.spinner("Playwright ile deneniyor..."):
                             try:
                                 _h = _playwright_html(_dbg_url.strip(), 90)
                                 if _h:
@@ -1213,11 +1226,11 @@ elif st.session_state.sayfa == "giris":
                                     st.write("📊 **Parser sonucu:**")
                                     st.json(_v)
                                 else:
-                                    st.error("❌ Boş HTML döndü")
+                                    st.error("❌ Boş HTML")
                             except Exception as _e:
                                 st.exception(_e)
             with c2:
-                if st.button("📡 Requests ile Test", key="dbg_btn2", use_container_width=True):
+                if st.button("📡 Requests Test", key="dbg_btn2", use_container_width=True):
                     if not _dbg_url.strip():
                         st.warning("URL gir")
                     else:
@@ -1228,25 +1241,50 @@ elif st.session_state.sayfa == "giris":
                                     timeout=30)
                                 st.caption(f"📡 HTTP: **{_r.status_code}** • Boyut: **{len(_r.text)}** karakter")
                                 st.text_area("📄 HTML (ilk 4000)", _r.text[:4000], height=250, key="dbg_h2")
-                                _txt = _html_metne_cevir(_r.text)
-                                st.text_area("📝 Metin (ilk 4000)", _txt[:4000], height=250, key="dbg_t2")
-                                _v, _ = _mac_html_parse(_r.text, _dbg_url.strip())
-                                st.write("📊 **Parser sonucu:**")
-                                st.json(_v)
                             except Exception as _e:
                                 st.exception(_e)
 
             st.divider()
-            if st.button("🌐 Ana Sayfayı Test Et (mutating.com)", key="dbg_btn3", use_container_width=True):
+            if st.button("⚽ Skor Test Et (URL'den FT çek)", key="dbg_skor", use_container_width=True, type="primary"):
+                if not _dbg_url.strip():
+                    st.warning("URL gir")
+                else:
+                    with st.spinner("Skor test ediliyor..."):
+                        try:
+                            _h, _hata = _sayfa_getir(_dbg_url.strip(), timeout=60, max_retry=2)
+                            if not _h:
+                                st.error(f"❌ Sayfa alınamadı: {_hata}")
+                            else:
+                                st.success(f"✅ HTML geldi — {len(_h)} karakter")
+                                _txt = _html_metne_cevir(_h)
+                                _ft_lines = [ln for ln in _txt.split("\n") if "FT" in ln.upper() or "Full" in ln or "Finished" in ln][:20]
+                                st.write("📋 **'FT/Full/Finished' geçen satırlar:**")
+                                if _ft_lines:
+                                    for _ln in _ft_lines:
+                                        st.code(_ln)
+                                else:
+                                    st.warning("⚠️ FT/Full/Finished hiç geçmiyor")
+                                _skor = _skor_parse(_h)
+                                if _skor:
+                                    st.success(f"✅ **Skor bulundu: {_skor[0]} - {_skor[1]}**")
+                                else:
+                                    st.error("❌ Skor parser bulamadı.")
+                                    with st.expander("📄 Metnin ilk 5000 karakteri"):
+                                        st.text(_txt[:5000])
+                        except Exception as _e:
+                            st.exception(_e)
+
+            st.divider()
+            if st.button("🌐 Ana Sayfayı Test Et", key="dbg_btn3", use_container_width=True):
                 with st.spinner("Ana sayfa test ediliyor..."):
                     try:
                         _h, _hata = _sayfa_getir("https://www.mutating.com/football-stats/")
                         if _h:
-                            st.success(f"✅ Ana sayfa geldi — {len(_h)} karakter")
+                            st.success(f"✅ Ana sayfa — {len(_h)} karakter")
                             _maclar, _ = mutating_ana_sayfa_linklerini_al(max_mac=5)
                             st.write(f"📋 **Bulunan maç linki (ilk 5):** {len(_maclar)}")
                             for _m in _maclar:
-                                st.text(f"• {_m.get('takim_ev', '?')} vs {_m.get('takim_dep', '?')}\n  {_m.get('url', '')}")
+                                st.text(f"• {_m.get('takim_ev', '?')} vs {_m.get('takim_dep', '?')}")
                         else:
                             st.error(f"❌ Hata: {_hata}")
                     except Exception as _e:
@@ -1263,11 +1301,8 @@ elif st.session_state.sayfa == "giris":
                     for s in oz["detay_log"]: st.text(s)
         if st.session_state.skor_ozet:
             oz = st.session_state.skor_ozet
-            st.caption(f"⚽ Son skor: **{oz.get('tasinan', 0)}** taşındı • **{oz.get('bitmemis', 0)}** bitmemiş")
+            st.caption(f"⚽ Son skor: **{oz.get('tasinan', 0)}** taşındı • **{oz.get('bitmemis', 0)}** bitmemiş • **{len(oz.get('hatalar', []))}** hata")
 
-        # ==========================================
-        # METİN YAPIŞTIR
-        # ==========================================
         st.divider()
         st.markdown("### 📋 İstatistik Metnini Yapıştır")
         ym = st.text_area("Yapıştırma", height=200, key="yapistir_input", label_visibility="collapsed")
