@@ -11,45 +11,173 @@ import threading
 import requests
 import hashlib
 import secrets as _secrets
+import psycopg2
+from psycopg2.extras import Json
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import subprocess, sys
 
 
-# ==========================================
-# YASAL METİN — Tam Sorumluluk Reddi
-# ==========================================
 YASAL_METIN = """
 # ⚖️ KULLANIM ŞARTLARI VE SORUMLULUK REDDİ
 
 **Yürürlük Tarihi:** Hizmete kayıt olduğunuz tarih itibariyle geçerlidir.
 
+---
+
 ## 1. TARAFLAR VE KAPSAM
-Bu Kullanım Şartları, **"Futbol Analiz Pro"** ile bu hizmete kayıt olan kullanıcı arasında akdedilmiştir. Kullanıcı, Uygulama'ya kayıt olmak, giriş yapmak veya herhangi bir şekilde hizmeti kullanmakla bu şartları **okuduğunu, anladığını ve kabul ettiğini** beyan ve taahhüt eder.
+
+Bu Kullanım Şartları, **"Futbol Analiz Pro"** (bundan sonra **"Uygulama"** veya **"Hizmet"** olarak anılacaktır) ile bu hizmete kayıt olan kullanıcı (bundan sonra **"Kullanıcı"** olarak anılacaktır) arasında akdedilmiştir. Kullanıcı, Uygulama'ya kayıt olmak, giriş yapmak veya herhangi bir şekilde hizmeti kullanmakla bu şartları **okuduğunu, anladığını ve kabul ettiğini** beyan ve taahhüt eder.
+
+---
 
 ## 2. HİZMETİN TANIMI
+
 Uygulama, futbol maçlarına ilişkin olarak **geçmiş istatistiklere dayalı matematiksel ve istatistiksel analizler** üreterek kullanıcıya **bilgilendirme amaçlı tahminler** sunar.
 
-## 3. YAŞ SINIRI
-18 yaşından büyük olmanız, fiil ehliyetine sahip olmanız ve yasal olarak bahis oynamanın yasak olmadığı bir ülkede bulunmanız gerekmektedir.
+**KESİNLİKLE BELİRTİLİR Kİ:**
 
-## 4. SORUMLULUK REDDİ
-Uygulama **"AS IS"** sunulmaktadır. Tahminler **%100 doğru değildir**, garanti içermez.
+- Sunulan içerikler **bahis, yatırım, finansal veya hukuki tavsiye** niteliği taşımaz.
+- Uygulama, **hiçbir bahis sitesiyle ortaklık, iş ortaklığı, bayilik veya acentelik ilişkisi içinde değildir.**
+- Uygulama, **kullanıcı adına bahis oynamaz, bahis kuponu düzenlemez veya bahis hizmeti sunmaz.**
+- Uygulama bir **sosyal medya, sohbet veya para transfer platformu değildir.**
 
-## 5. YASADIŞI BAHİS UYARISI
-Türkiye'de yasadışı bahis **suçtur** (7258 sayılı Kanun).
+---
 
-## 6. ÖDEME VE İADE
-Ödemeler **havale / EFT** ile yapılır. Aktivasyon sonrası **iade yapılmaz**.
+## 3. YAŞ SINIRI VE EHLİYET
 
-## 7. KVKK
-Veriler yalnızca hizmet için kullanılır, 3. taraflarla paylaşılmaz.
+Uygulama'yı kullanabilmek için:
 
-## 8. İLETİŞİM
-Bildirim bölümünden iletişime geçebilirsiniz.
+- **18 (on sekiz) yaşından büyük olmanız**,
+- **Fiil ehliyetine sahip olmanız** (TMK m.10 ve devamı),
+- **Yasal olarak bahis oynamanın yasak olmadığı bir ülkede bulunmanız** gerekmektedir.
 
-**YEDAM: 115**
+Kullanıcı, bu şartları sağladığını beyan eder. Aksi halde doğacak her türlü hukuki, cezai ve idari sorumluluk **münhasıran Kullanıcı'ya aittir.**
+
+---
+
+## 4. HİZMETİN "OLDUĞU GİBİ" SUNULMASI
+
+Uygulama, **"AS IS" (olduğu gibi)** ve **"AS AVAILABLE" (mevcut olduğu şekilde)** esasına göre sunulmaktadır. Uygulama, aşağıdakiler dahil ancak bunlarla sınırlı olmamak üzere **hiçbir açık veya zımni garanti vermez:**
+
+- Hizmetin kesintisiz, hatasız, virüssüz veya güvenli olacağı,
+- Sunulan tahminlerin **doğru, güncel, eksiksiz veya güvenilir** olacağı,
+- Hizmetin **belirli bir amaca uygun** olacağı,
+- Hizmet sonucunda **herhangi bir kazanç elde edileceği.**
+
+---
+
+## 5. TAHMİN GARANTİSİ YOKTUR
+
+**BU HİZMETTE SUNULAN TÜM TAHMİN, ANALİZ, İSTATİSTİK VE YORUMLAR;**
+
+- Geçmiş verilerin matematiksel modellenmesine dayanır,
+- **Gelecekteki sonuçları garanti etmez**,
+- **Doğruluk oranı %100 değildir ve hiçbir zaman olamaz**,
+- **Kayıp veya kazanç garantisi içermez.**
+
+**Kullanıcı, hiçbir tahmine güvenerek hareket etmemesi, bahis oynamaması ve maddi kayba uğramaması gerektiğini kabul eder.** Tahminler yalnızca **eğitim ve bilgi amaçlıdır.**
+
+---
+
+## 6. SORUMLULUĞUN SINIRLANDIRILMASI VE İBRA
+
+Kullanıcı, Uygulama'yı kullanması nedeniyle veya kullanımıyla bağlantılı olarak doğrudan veya dolaylı olarak ortaya çıkabilecek;
+
+- Maddi ve manevi zararlar,
+- Kâr kaybı, veri kaybı, itibar kaybı,
+- Üçüncü kişilerden gelecek her türlü talep, dava, icra takibi ve cezai sorumluluk,
+- Yasadışı bahis, kumar, dolandırıcılık veya benzeri suçlardan doğan her türlü hukuki ve cezai yaptırım,
+
+için **Uygulama'yı işleten gerçek/tüzel kişiyi, geliştiricileri, iş ortaklarını, tedarikçileri ve çalışanlarını tamamen ibra ettiğini** kabul, beyan ve taahhüt eder.
+
+**Uygulama, hiçbir durumda Kullanıcı'nın uğradığı zararlardan sorumlu tutulamaz.** Kullanıcı, olası bir uyuşmazlıkta Uygulama'ya karşı **hiçbir tazminat, iade, cezai şart veya faiz talebinde bulunamaz.**
+
+---
+
+## 7. YASADIŞI BAHİS VE KUMAR UYARISI
+
+Türkiye Cumhuriyeti mevzuatı uyarınca **yasadışı bahis oynamak, oynatmak, yer temin etmek, para transferi yapmak ve reklamını yapmak suçtur** (7258 sayılı Kanun ve ilgili mevzuat).
+
+**KULLANICI:**
+
+- Bu Uygulama'yı **yasadışı bahis oynamak için kullanamaz**,
+- Uygulama'da sunulan tahminleri **yasadışı bahis sitelerine aktaramaz, kopyalayamaz, dağıtamaz**,
+- Uygulama'yı **kumar bağımlılığını teşvik edici** bir şekilde kullanamaz.
+
+Bu kurala aykırılık tespit edilmesi halinde **Kullanıcı'nın üyeliği derhal iptal edilir ve yasal mercilere bildirilir.**
+
+---
+
+## 8. ÖDEME, ABONELİK VE İADE KOŞULLARI
+
+**Ödeme Yöntemi:** Ödemeler yalnızca **havale / EFT** yoluyla yapılır.
+
+**Abonelik Süreleri:** Haftalık, Aylık ve Yıllık olmak üzere üç paket sunulmaktadır.
+
+**Abonelik Aktivasyonu:** Ödeme yapıldıktan sonra Kullanıcı'nın **"Ödeme Yaptım"** bildirimi üzerine, ödeme kontrol edilerek **manuel olarak** aktive edilir. Aktivasyon **birkaç saat ile 24 saat** arasında tamamlanır.
+
+**İADE KOŞULLARI:**
+
+- **Aboneliği aktive edilmiş hiçbir kullanıcı için iade yapılmaz.**
+- Yanlış/fazla/mükerrer ödemede **10 iş günü içinde** iade yapılır.
+- **Hizmet memnuniyetsizliği, tahminlerin tutmaması, kayıplar veya benzeri nedenlerle iade talep edilemez.**
+- Abonelik aktivasyonundan sonra **hiçbir koşulda para iadesi talep edilemez.**
+
+---
+
+## 9. ABONELİK İPTALİ
+
+- Kullanıcı, aboneliğini **Uygulama içindeki "Bildirim"** bölümünden iptal talebi oluşturabilir.
+- İptal talebi onaylandığında abonelik **bir sonraki yenilenme tarihine kadar** aktif kalır.
+- **İptal edilen abonelikler için kısmi iade yapılmaz.**
+
+---
+
+## 10. KİŞİSEL VERİLERİN KORUNMASI (KVKK)
+
+6698 sayılı KVKK'ya uygun olarak:
+
+- **Kullanıcı adı, şifre (hash'lenmiş), ödeme bildirim bilgileri** toplanır.
+- Veriler **yalnızca hizmetin ifası ve abonelik yönetimi** amacıyla kullanılır.
+- Veriler **hiçbir üçüncü taraf ile paylaşılmaz, satılmaz.**
+- Şifreler **tek yönlü hash** ile saklanır, geri çevrilemez.
+- Kullanıcı **dilediği zaman hesabını sildirebilir**; veriler **7 iş günü içinde** silinir.
+
+---
+
+## 11. FİKRİ MÜLKİYET
+
+Uygulama'daki **tüm analizler, modeller, algoritmalar, tahminler, tasarımlar, kodlar, logolar ve metinler** telif hakkı ile korunmaktadır. Kullanıcı bunları **kopyalayamaz, dağıtamaz, satamaz, değiştiremez**.
+
+---
+
+## 12. HİZMET DEĞİŞİKLİKLERİ
+
+Uygulama, önceden bildirimde bulunmaksızın **hizmeti değiştirme, askıya alma, sonlandırma, fiyatları güncelleme, kullanım şartlarını değiştirme, kullanıcı hesaplarını askıya alma** hakkını saklı tutar.
+
+---
+
+## 13. UYUŞMAZLIK VE YETKİLİ MAHKEME
+
+Bu şartlardan doğan uyuşmazlıklarda **Türkiye Cumhuriyeti hukuku** uygulanır. Yetkili mahkemeler, Uygulama'yı işleten kişinin yerleşim yeri mahkemeleridir.
+
+---
+
+## 14. YÜRÜRLÜK VE KABUL
+
+Kullanıcı, bu şartları **okuduğunu, anladığını ve kabul ettiğini** beyan eder. Kayıt işlemini tamamlamak veya abonelik satın almak, bu şartların kabulü anlamına gelir.
+
+---
+
+## 15. İLETİŞİM
+
+Her türlü soru, görüş, şikayet, iptal ve iade talepleri için Uygulama içindeki **"Bildirim"** bölümünden iletişime geçebilirsiniz.
+
+---
+
+**SON SÖZ:** Bu uygulama **SADECE bilgilendirme ve analiz amaçlıdır**. Bahis oynamak **yasal risk**, **maddi kayıp riski** ve **bağımlılık riski** içerir. **YEDAM: 115**
 """
 
 
@@ -103,6 +231,7 @@ st.markdown("""
     div[data-testid="stExpander"] details > summary::-webkit-details-marker { display: none !important; }
     div[data-testid="stExpander"] details > summary::marker { display: none !important; content: "" !important; }
     div[data-testid="stExpander"] details > summary:hover { background: rgba(34,197,94,0.05) !important; }
+    div[data-testid="stExpander"] details > summary > span[data-testid="stIconMaterial"], div[data-testid="stExpander"] details > summary > span.material-icons, div[data-testid="stExpander"] details > summary [data-testid="stIconMaterial"], div[data-testid="stExpander"] details > summary .material-icons, div[data-testid="stExpander"] details > summary [class*="material-symbols"], div[data-testid="stExpander"] details > summary [class*="Material"], div[data-testid="stExpander"] details > summary > svg + span, div[data-testid="stExpander"] details > summary > span[aria-hidden="true"] { display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; font-size: 0 !important; overflow: hidden !important; position: absolute !important; left: -9999px !important; opacity: 0 !important; pointer-events: none !important; }
     div[data-testid="stExpander"] details > summary p, div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"], div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"] p { font-size: 0.82rem !important; font-weight: 700 !important; margin: 0 !important; line-height: 1.3 !important; color: #eaf1fb !important; white-space: normal !important; display: inline-block !important; }
     div[data-testid="stExpander"] details > summary > div { display: flex !important; align-items: center !important; gap: 6px !important; flex-wrap: nowrap !important; }
     div[data-testid="stExpander"] details > summary svg { flex-shrink: 0 !important; width: 14px !important; height: 14px !important; min-width: 14px !important; transition: transform 0.2s ease !important; }
@@ -239,16 +368,8 @@ st.markdown("""
 
 
 # ==========================================
-# DOSYALAR
+# POSTGRESQL VERİ KATMANI (JSON DOSYALARI YERİNE)
 # ==========================================
-GECMIS_DOSYA = "gecmis.json"
-GELECEK_DOSYA = "gelecek.json"
-AYARLAR_DOSYA = "ayarlar.json"
-KULLANICI_DOSYA = "kullanicilar.json"
-BEKLEYEN_DOSYA = "bekleyen_odemeler.json"
-BILDIRIM_DOSYA = "bildirimler.json"
-OTOMATIK_LOG_DOSYA = "otomatik_log.json"
-
 ADMIN_KULLANICI_ADI = "admin52"
 
 
@@ -263,6 +384,185 @@ def _admin_sifre_al():
 ADMIN_SIFRE = _admin_sifre_al()
 
 
+def _db_baglanti():
+    url = os.environ.get("DATABASE_URL", "")
+    if not url:
+        raise RuntimeError("DATABASE_URL ortam değişkeni tanımlı değil.")
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    return psycopg2.connect(url, sslmode="require")
+
+
+@st.cache_resource(show_spinner="Veritabanı hazırlanıyor...")
+def _init_db():
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("CREATE TABLE IF NOT EXISTS kullanicilar (kullanici_adi TEXT PRIMARY KEY, veri JSONB NOT NULL)")
+            cur.execute("CREATE TABLE IF NOT EXISTS bekleyen_odemeler (kullanici_adi TEXT PRIMARY KEY, veri JSONB NOT NULL)")
+            cur.execute("CREATE TABLE IF NOT EXISTS bildirimler (id BIGINT PRIMARY KEY, veri JSONB NOT NULL)")
+            cur.execute("CREATE TABLE IF NOT EXISTS gecmis (id SERIAL PRIMARY KEY, veri JSONB NOT NULL)")
+            cur.execute("CREATE TABLE IF NOT EXISTS gelecek (id SERIAL PRIMARY KEY, veri JSONB NOT NULL)")
+            cur.execute("CREATE TABLE IF NOT EXISTS ayarlar (id INT PRIMARY KEY DEFAULT 1, veri JSONB NOT NULL, CONSTRAINT ayarlar_tek_satir CHECK (id = 1))")
+        conn.commit()
+    finally:
+        conn.close()
+    return True
+
+
+try:
+    _init_db()
+except Exception as _db_hata:
+    st.error(f"❌ Veritabanı bağlantı hatası: {_db_hata}")
+    st.stop()
+
+
+def kullanicilar_yukle():
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT kullanici_adi, veri FROM kullanicilar")
+            return {row[0]: row[1] for row in cur.fetchall()}
+    finally:
+        conn.close()
+
+
+def kullanicilar_kaydet(v):
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM kullanicilar")
+            for k, veri in v.items():
+                cur.execute("INSERT INTO kullanicilar (kullanici_adi, veri) VALUES (%s, %s)", (k, Json(veri)))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def bekleyen_yukle():
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT kullanici_adi, veri FROM bekleyen_odemeler")
+            return {row[0]: row[1] for row in cur.fetchall()}
+    finally:
+        conn.close()
+
+
+def bekleyen_kaydet(v):
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM bekleyen_odemeler")
+            for k, veri in v.items():
+                cur.execute("INSERT INTO bekleyen_odemeler (kullanici_adi, veri) VALUES (%s, %s)", (k, Json(veri)))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def bildirimler_yukle():
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, veri FROM bildirimler ORDER BY id")
+            return [row[1] for row in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def bildirimler_kaydet(v):
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM bildirimler")
+            for veri in v:
+                bid = veri.get("id") or int(time.time() * 1000)
+                cur.execute("INSERT INTO bildirimler (id, veri) VALUES (%s, %s)", (bid, Json(veri)))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def otomatik_log_yukle():
+    return {}
+
+
+def otomatik_log_kaydet(v):
+    pass
+
+
+def gecmis_yukle():
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT veri FROM gecmis ORDER BY id")
+            return [row[0] for row in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def gecmis_kaydet(v):
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM gecmis")
+            for veri in v:
+                cur.execute("INSERT INTO gecmis (veri) VALUES (%s)", (Json(veri),))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def gelecek_yukle():
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT veri FROM gelecek ORDER BY id")
+            return [row[0] for row in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def gelecek_kaydet(v):
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM gelecek")
+            for veri in v:
+                cur.execute("INSERT INTO gelecek (veri) VALUES (%s)", (Json(veri),))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def ayarlar_yukle():
+    v = {"ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0, "esik_1": 55.0, "esik_x": 55.0, "esik_2": 55.0, "iban": "TR00 0000 0000 0000 0000 0000 00", "hesap_sahibi": "ADINIZ SOYADINIZ", "fiyat_haftalik": 49.0, "fiyat_aylik": 149.0, "fiyat_yillik": 999.0, "ucretsiz_kotasi": 3}
+    try:
+        conn = _db_baglanti()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT veri FROM ayarlar WHERE id = 1")
+                row = cur.fetchone()
+                if row and row[0]:
+                    v.update(row[0])
+        finally:
+            conn.close()
+    except Exception:
+        pass
+    return v
+
+
+def ayarlar_kaydet(v):
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("INSERT INTO ayarlar (id, veri) VALUES (1, %s) ON CONFLICT (id) DO UPDATE SET veri = EXCLUDED.veri", (Json(v),))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def sifre_hashle(sifre, salt=None):
     if salt is None:
         salt = _secrets.token_hex(16)
@@ -273,34 +573,6 @@ def sifre_hashle(sifre, salt=None):
 def sifre_dogrula(sifre, salt, kayitli_hash):
     _, h = sifre_hashle(sifre, salt)
     return h == kayitli_hash
-
-
-def _yukle_json(dosya, varsayilan):
-    try:
-        if os.path.exists(dosya):
-            with open(dosya, "r", encoding="utf-8") as f:
-                return json.load(f)
-    except Exception:
-        pass
-    return varsayilan
-
-
-def _kaydet_json(dosya, veri):
-    try:
-        with open(dosya, "w", encoding="utf-8") as f:
-            json.dump(veri, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
-
-
-def kullanicilar_yukle(): return _yukle_json(KULLANICI_DOSYA, {})
-def kullanicilar_kaydet(v): _kaydet_json(KULLANICI_DOSYA, v)
-def bekleyen_yukle(): return _yukle_json(BEKLEYEN_DOSYA, {})
-def bekleyen_kaydet(v): _kaydet_json(BEKLEYEN_DOSYA, v)
-def bildirimler_yukle(): return _yukle_json(BILDIRIM_DOSYA, [])
-def bildirimler_kaydet(v): _kaydet_json(BILDIRIM_DOSYA, v)
-def otomatik_log_yukle(): return _yukle_json(OTOMATIK_LOG_DOSYA, {})
-def otomatik_log_kaydet(v): _kaydet_json(OTOMATIK_LOG_DOSYA, v)
 
 
 def kullanici_ekle(kullanici_adi, sifre):
@@ -410,28 +682,6 @@ def bildirim_sil(bid):
 def kullanici_bildirimleri(kullanici_adi):
     bd = bildirimler_yukle()
     return [b for b in bd if b.get("kullanici") == kullanici_adi]
-
-
-def gecmis_yukle(): return _yukle_json(GECMIS_DOSYA, [])
-def gecmis_kaydet(v): _kaydet_json(GECMIS_DOSYA, v)
-def gelecek_yukle(): return _yukle_json(GELECEK_DOSYA, [])
-def gelecek_kaydet(v): _kaydet_json(GELECEK_DOSYA, v)
-
-
-def ayarlar_yukle():
-    v = {"ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0, "esik_1": 55.0, "esik_x": 55.0, "esik_2": 55.0, "iban": "TR00 0000 0000 0000 0000 0000 00", "hesap_sahibi": "ADINIZ SOYADINIZ", "fiyat_haftalik": 49.0, "fiyat_aylik": 149.0, "fiyat_yillik": 999.0, "ucretsiz_kotasi": 3}
-    try:
-        if os.path.exists(AYARLAR_DOSYA):
-            with open(AYARLAR_DOSYA, "r", encoding="utf-8") as f:
-                y = json.load(f)
-                if "1x2" in y and "esik_1" not in y:
-                    e = float(y["1x2"]); y["esik_1"] = e; y["esik_x"] = e; y["esik_2"] = e
-                v.update(y)
-    except Exception: pass
-    return v
-
-
-def ayarlar_kaydet(v): _kaydet_json(AYARLAR_DOSYA, v)
 
 
 def saat_2_saat_ileri(s):
@@ -843,9 +1093,6 @@ def backtest_hesapla(gecmis, ms, me):
     return sonuc, detaylar
 
 
-# ==========================================
-# METİN PARSER (Sportytrader)
-# ==========================================
 MANUEL_ALANLAR = {
     "Sıralama": [("siralama_ev", "Ev Sıralaması", "int", 1), ("siralama_dep", "Dep Sıralaması", "int", 1)],
     "Takım isimleri (Ev)": [("takim_ev", "Ev Takım Adı", "str", "")],
@@ -1012,9 +1259,7 @@ def metinden_veri_cikar(metin):
     veri = {}; okunamayanlar = []
     veri["format"] = "genel"
     return veri, okunamayanlar
-
-
-# ==========================================
+    # ==========================================
 # VERİ ÇEKME MOTORU
 # ==========================================
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
@@ -1057,6 +1302,7 @@ def _son_n_oku(metin):
 def _playwright_html(url, mac_sec, timeout, dogrula=False):
     from playwright.sync_api import sync_playwright
     js_kod = _js_tikla_kodu(mac_sec)
+    hedef = int(mac_sec) if str(mac_sec).isdigit() else None
     with _TARAYICI_SEM:
         with sync_playwright() as p:
             b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
@@ -1074,6 +1320,26 @@ def _playwright_html(url, mac_sec, timeout, dogrula=False):
                 pg.wait_for_timeout(3000)
                 pg.evaluate(js_kod)
                 pg.wait_for_timeout(3500)
+
+                if dogrula and hedef:
+                    n = _son_n_oku(pg.inner_text("body"))
+                    if n is not None and n != hedef:
+                        try:
+                            for el in pg.get_by_text(str(hedef), exact=True).all()[:20]:
+                                try:
+                                    if el.evaluate("e => !!e.closest('table')"):
+                                        continue
+                                    el.click(timeout=1500)
+                                except Exception:
+                                    pass
+                            pg.wait_for_timeout(1500)
+                            pg.evaluate(js_kod)
+                            pg.wait_for_timeout(3000)
+                        except Exception:
+                            pass
+                        n = _son_n_oku(pg.inner_text("body"))
+                    if n is not None and n != hedef:
+                        raise RuntimeError(f"{hedef} maç filtresi uygulanamadı (sayfa: Last {n} games)")
                 return pg.content()
             finally:
                 try: b.close()
@@ -1081,6 +1347,7 @@ def _playwright_html(url, mac_sec, timeout, dogrula=False):
 
 
 def _playwright_skor_cek(url, timeout=25):
+    """Sadece FT skoru okumak için minimal tarayıcı çekimi. Filtre yapmaz, hızlıdır."""
     from playwright.sync_api import sync_playwright
     with _TARAYICI_SEM:
         with sync_playwright() as p:
@@ -1121,9 +1388,11 @@ def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3, 
             if deneme < max_retry - 1:
                 time.sleep(2 + deneme * 2)
 
+    if dogrula:
+        return None, son_hata or "Filtre uygulanamadı"
     try:
         r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
-        if r.status_code == 200 and r.text and len(r.text) > 500:
+        if r.status_code == 200 and r.text:
             return r.text, None
         son_hata = f"HTTP {r.status_code}" + (f" | {son_hata}" if son_hata else "")
     except Exception as e:
@@ -1412,12 +1681,17 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 # ==========================================
-# SKOR ÇEKME — 5 KADEMELİ PARSER
+# SKOR ÇEKME (5 KADEMELİ PARSER — GÜNCELLENDİ)
 # ==========================================
 def _skor_parse(html):
+    """
+    Mutating.com HTML'inden skor çıkarır.
+    5 kademeli arama: ham HTML → metin → FT döngü → HT döngü → DOM class
+    """
     if not html:
         return None
 
+    # 1) HAM HTML: FT kelimesinden sonra 200 karakter içinde X-Y ara
     try:
         m = re.search(r'FT\b[^\d]{0,200}?(\d{1,2})\s*[-:]\s*(\d{1,2})', html, re.IGNORECASE)
         if m:
@@ -1427,6 +1701,7 @@ def _skor_parse(html):
     except Exception:
         pass
 
+    # 2) METİN: Aynı pattern metinde
     metin = _html_metne_cevir(html)
     try:
         m = re.search(r'FT\b[^\d]{0,200}?(\d{1,2})\s*[-:]\s*(\d{1,2})', metin, re.IGNORECASE)
@@ -1437,6 +1712,7 @@ def _skor_parse(html):
     except Exception:
         pass
 
+    # 3) TÜM FT pozisyonlarını bul, her birinden sonra 200 karakter içinde X-Y ara
     up = metin.upper()
     idx = up.find("FT")
     while idx >= 0:
@@ -1452,6 +1728,7 @@ def _skor_parse(html):
                 continue
         idx = up.find("FT", idx + 1)
 
+    # 4) HT pozisyonlarını da dene (bazı sayfalarda HT skoru yazar)
     idx = up.find("HT")
     while idx >= 0:
         seg = metin[idx:idx + 200]
@@ -1465,6 +1742,7 @@ def _skor_parse(html):
             pass
         idx = up.find("HT", idx + 1)
 
+    # 5) score/result class'lı elementler (DOM)
     try:
         soup = BeautifulSoup(html, "html.parser")
         for el in soup.find_all(class_=re.compile(r'(score|result)', re.I)):
@@ -1481,6 +1759,7 @@ def _skor_parse(html):
 
 
 def _skor_cek(url, tarayici_yedek=False):
+    """Önce hızlı requests (varsayılan). Skor bulunamazsa ve tarayici_yedek=True ise tarayıcı dener."""
     if not url:
         return None, "URL yok"
     html = None; hata = None
@@ -1716,6 +1995,7 @@ def _trend_cumleleri(v, taraf):
 
 
 def ai_yorum_olustur(v, a):
+    """Maç hakkında uzun, akıcı, hikayeli yorum üretir."""
     te = (v.get("takim_ev", "Ev") or "Ev").strip()
     td = (v.get("takim_dep", "Dep") or "Dep").strip()
 
@@ -1755,6 +2035,7 @@ def ai_yorum_olustur(v, a):
 
     bolumler = []
 
+    # 1. MAÇIN TABLOSU
     hp = []
     if s_ev and s_dep:
         if s_ev < s_dep:
@@ -1816,6 +2097,7 @@ def ai_yorum_olustur(v, a):
     if hp:
         bolumler.append(("📖", "MAÇIN TABLOSU", " ".join(hp)))
 
+    # 2. 1X2 NEDEN BU?
     s1, y1 = max([("1", p1v), ("X", pxv), ("2", p2v)], key=lambda x: x[1])
     p1 = p1v; px = pxv; p2 = p2v
     kp = []
@@ -1899,6 +2181,7 @@ def ai_yorum_olustur(v, a):
     if kp:
         bolumler.append(("🎯", "NEDEN BU SONUÇ?", " ".join(kp)))
 
+    # 3. GOL BEKLENTİSİ
     gp = []
     u25 = ust25; a25 = alt25
     top_at = ae + ad
@@ -1947,6 +2230,7 @@ def ai_yorum_olustur(v, a):
     if gp:
         bolumler.append(("⚽", "GOL BEKLENTİSİ", " ".join(gp)))
 
+    # 4. KG
     kgp = []
     if kgvar >= kgyok:
         kgp.append(f"<b>Karşılıklı Gol Var</b> tarafı ağır basıyor (%{kgvar:.1f}). Neden böyle düşünüyoruz:")
@@ -1988,6 +2272,7 @@ def ai_yorum_olustur(v, a):
     if kgp:
         bolumler.append(("🤝", "KARŞILIKLI GOL (KG)", " ".join(kgp)))
 
+    # 5. GERÇEKÇİ SENARYO
     sn = []
     yorum_ev = []
     yorum_dep = []
@@ -2130,9 +2415,6 @@ def modern_istatistik_grafik(baslik="📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ"):
     </div>''', unsafe_allow_html=True)
 
 
-# ==========================================
-# ADMİN GİRİŞ EKRANI
-# ==========================================
 def admin_giris_ekrani():
     st.markdown('''<div class="login-hero"><div class="login-logo">🔐</div><h1 class="login-title">Giriş Yap</h1><p class="login-subtitle">Admin veya üye girişi</p></div>''', unsafe_allow_html=True)
     with st.form("admin_giris_form"):
@@ -2161,9 +2443,6 @@ def admin_giris_ekrani():
             st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"; st.rerun()
 
 
-# ==========================================
-# ÜST BAR
-# ==========================================
 def ust_bar():
     c1, c2 = st.columns([3, 1])
     with c1:
@@ -2212,9 +2491,6 @@ Geçmiş istatistiklere dayalı analiz ve tahminler. Sadece **bilgilendirme ama�
 """)
 
 
-# ==========================================
-# NAV BAR
-# ==========================================
 def nav_git(h):
     st.session_state.sayfa = h
     st.session_state.kayit_yapildi = False
@@ -2244,9 +2520,6 @@ def nav_bar():
                     if not aktif: nav_git(h)
 
 
-# ==========================================
-# UYGULAMA BAŞLANGIÇ
-# ==========================================
 if st.session_state.admin_login_acik and not admin_mi():
     admin_giris_ekrani()
     st.stop()
@@ -2255,16 +2528,9 @@ ust_bar()
 nav_bar()
 
 
-# ==========================================
-# SAYFA: GİRİŞ YAP
-# ==========================================
 if st.session_state.sayfa == "giris_yap":
     admin_giris_ekrani()
 
-
-# ==========================================
-# SAYFA: ANA SAYFA
-# ==========================================
 elif st.session_state.sayfa == "giris":
     if admin_mi():
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
@@ -2438,9 +2704,7 @@ elif st.session_state.sayfa == "giris":
         yasal_metin_goster()
         misafir_aciklama()
         st.markdown('<div class="login-footer" style="margin-top:20px;">© <b>Futbol Analiz Pro</b> • Bilgi amaçlıdır</div>', unsafe_allow_html=True)
-
-
-# ==========================================
+        # ==========================================
 # SAYFA: KAYIT
 # ==========================================
 elif st.session_state.sayfa == "kayit":
@@ -2777,9 +3041,7 @@ elif st.session_state.sayfa == "gelecek_admin":
         with c1:
             if st.button("✅ Evet, Sil", key="sil_gel_evet", use_container_width=True, type="primary"):
                 st.session_state.gelecek_analizler = []
-                try:
-                    if os.path.exists(GELECEK_DOSYA): os.remove(GELECEK_DOSYA)
-                except Exception: pass
+                gelecek_kaydet([])
                 st.session_state.silme_onay_gelecek = False
                 st.session_state.tek_silme_gelecek = None
                 st.rerun()
@@ -2880,9 +3142,7 @@ elif st.session_state.sayfa == "gecmis":
             with c1:
                 if st.button("✅ Evet, Sil", key="sil_g_evet", use_container_width=True, type="primary"):
                     st.session_state.gecmis_analizler = []
-                    try:
-                        if os.path.exists(GECMIS_DOSYA): os.remove(GECMIS_DOSYA)
-                    except Exception: pass
+                    gecmis_kaydet([])
                     st.session_state.silme_onay = False
                     st.session_state.tek_silme_onay = None
                     st.rerun()
