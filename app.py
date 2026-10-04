@@ -14,7 +14,6 @@ import secrets as _secrets
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import subprocess, sys
 
 
 # ==========================================
@@ -23,31 +22,12 @@ import subprocess, sys
 YASAL_METIN = """
 # ⚖️ KULLANIM ŞARTLARI VE SORUMLULUK REDDİ
 
-**Yürürlük Tarihi:** Hizmete kayıt olduğunuz tarih itibariyle geçerlidir.
+Bu uygulama **SADECE bilgilendirme ve analiz amaçlıdır**. Bahis oynamak **yasal risk**, **maddi kayıp riski** ve **bağımlılık riski** içerir.
 
-## 1. TARAFLAR VE KAPSAM
-Bu Kullanım Şartları, **"Futbol Analiz Pro"** ile bu hizmete kayıt olan kullanıcı arasında akdedilmiştir.
-
-## 2. HİZMETİN TANIMI
-Uygulama, futbol maçlarına ilişkin olarak **geçmiş istatistiklere dayalı matematiksel ve istatistiksel analizler** üreterek kullanıcıya **bilgilendirme amaçlı tahminler** sunar.
-
-## 3. YAŞ SINIRI
-18 yaşından büyük olmanız, fiil ehliyetine sahip olmanız ve yasal olarak bahis oynamanın yasak olmadığı bir ülkede bulunmanız gerekmektedir.
-
-## 4. SORUMLULUK REDDİ
-Uygulama **"AS IS"** sunulmaktadır. Tahminler **%100 doğru değildir**, garanti içermez.
-
-## 5. YASADIŞI BAHİS UYARISI
-Türkiye'de yasadışı bahis **suçtur** (7258 sayılı Kanun).
-
-## 6. ÖDEME VE İADE
-Ödemeler **havale / EFT** ile yapılır. Aktivasyon sonrası **iade yapılmaz**.
-
-## 7. KVKK
-Veriler yalnızca hizmet için kullanılır, 3. taraflarla paylaşılmaz.
-
-## 8. İLETİŞİM
-Bildirim bölümünden iletişime geçebilirsiniz.
+- 18 yaşından büyük olmalısınız.
+- Yasadışı bahis **suçtur** (7258 sayılı Kanun).
+- Tahminler **%100 doğru değildir**, garanti içermez.
+- Uygulama hiçbir bahis sitesiyle ortak değildir.
 
 **YEDAM: 115**
 """
@@ -56,28 +36,16 @@ Bildirim bölümünden iletişime geçebilirsiniz.
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
 
-@st.cache_resource(show_spinner="Tarayıcı kuruluyor (ilk açılışta 1-2 dk sürer)...")
-def _tarayici_kur():
-    try:
-        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=False, timeout=600)
-    except Exception:
-        pass
-    return True
-
-
-_tarayici_kur()
-
-
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <style>
     html { font-size: 13px !important; }
     body, .stApp { font-size: 0.85rem !important; }
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
-    h1, h2, h3, h4, .fa-score, .mh-stat-num, .login-title, .mh-hero-title { font-family: 'Rajdhani', 'Inter', sans-serif !important; letter-spacing: 0.4px; }
+    h1, h2, h3, h4, .fa-score, .mh-stat-num { font-family: 'Rajdhani', 'Inter', sans-serif !important; }
     .block-container { padding-top: 0.8rem !important; padding-bottom: 0.8rem !important; padding-left: 0.8rem !important; padding-right: 0.8rem !important; max-width: 100% !important; }
     :root { --bg-0: #060a14; --bg-1: #0b1220; --card: #131c2e; --border: #1f2c44; --text: #eaf1fb; --muted: #7f92b3; --green: #22c55e; --blue: #3b82f6; --yellow: #f59e0b; --red: #ef4444; }
-    .stApp { background: radial-gradient(1200px 600px at 10% -10%, rgba(34,197,94,0.08), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(59,130,246,0.07), transparent 60%), linear-gradient(180deg, #060a14 0%, #0b1220 100%) !important; }
+    .stApp { background: radial-gradient(1200px 600px at 10% -10%, rgba(34,197,94,0.08), transparent 60%), linear-gradient(180deg, #060a14 0%, #0b1220 100%) !important; }
     header[data-testid="stHeader"] { background: transparent !important; }
     .stApp, .stApp p, .stApp span, .stApp label, .stApp li, .stApp div[data-testid="stMarkdownContainer"] { color: var(--text) !important; }
     .stApp div[data-testid="stCaptionContainer"], .stApp small { color: var(--muted) !important; }
@@ -171,6 +139,10 @@ def bekleyen_yukle(): return _yukle_json(BEKLEYEN_DOSYA, {})
 def bekleyen_kaydet(v): _kaydet_json(BEKLEYEN_DOSYA, v)
 def bildirimler_yukle(): return _yukle_json(BILDIRIM_DOSYA, [])
 def bildirimler_kaydet(v): _kaydet_json(BILDIRIM_DOSYA, v)
+def gecmis_yukle(): return _yukle_json(GECMIS_DOSYA, [])
+def gecmis_kaydet(v): _kaydet_json(GECMIS_DOSYA, v)
+def gelecek_yukle(): return _yukle_json(GELECEK_DOSYA, [])
+def gelecek_kaydet(v): _kaydet_json(GELECEK_DOSYA, v)
 
 
 def kullanici_ekle(kullanici_adi, sifre):
@@ -182,7 +154,6 @@ def kullanici_ekle(kullanici_adi, sifre):
         "salt": salt, "sifre_hash": s_hash,
         "kayit_tarihi": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "abonelik_bitis": None, "son_odeme": None, "son_odeme_gun": 0,
-        "yasal_kabul_tarihi": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
     kullanicilar_kaydet(kullanicilar)
     return True, "Kayıt başarılı."
@@ -282,21 +253,12 @@ def kullanici_bildirimleri(kullanici_adi):
     return [b for b in bd if b.get("kullanici") == kullanici_adi]
 
 
-def gecmis_yukle(): return _yukle_json(GECMIS_DOSYA, [])
-def gecmis_kaydet(v): _kaydet_json(GECMIS_DOSYA, v)
-def gelecek_yukle(): return _yukle_json(GELECEK_DOSYA, [])
-def gelecek_kaydet(v): _kaydet_json(GELECEK_DOSYA, v)
-
-
 def ayarlar_yukle():
     v = {"ust": 65.0, "alt": 55.0, "kg_var": 57.0, "kg_yok": 72.0, "esik_1": 55.0, "esik_x": 55.0, "esik_2": 55.0, "iban": "TR00 0000 0000 0000 0000 0000 00", "hesap_sahibi": "ADINIZ SOYADINIZ", "fiyat_haftalik": 49.0, "fiyat_aylik": 149.0, "fiyat_yillik": 999.0, "ucretsiz_kotasi": 3}
     try:
         if os.path.exists(AYARLAR_DOSYA):
             with open(AYARLAR_DOSYA, "r", encoding="utf-8") as f:
-                y = json.load(f)
-                if "1x2" in y and "esik_1" not in y:
-                    e = float(y["1x2"]); y["esik_1"] = e; y["esik_x"] = e; y["esik_2"] = e
-                v.update(y)
+                v.update(json.load(f))
     except Exception: pass
     return v
 
@@ -349,7 +311,7 @@ VARSAYILAN_VERI = {k: v for k, v in {
 }.items()}
 
 MAX_GOL = 8; BELIRSIZLIK = 0.20; MAX_MAC_SINIRI = 200
-_kilit = threading.Lock(); _ESIK_CACHE = {}
+_ESIK_CACHE = {}
 
 
 if "sayfa" not in st.session_state: st.session_state.sayfa = "giris"
@@ -357,23 +319,15 @@ if "form_verileri" not in st.session_state: st.session_state.form_verileri = cop
 if "gecmis_analizler" not in st.session_state: st.session_state.gecmis_analizler = gecmis_yukle()
 if "gelecek_analizler" not in st.session_state: st.session_state.gelecek_analizler = gelecek_yukle()
 if "kayit_yapildi" not in st.session_state: st.session_state.kayit_yapildi = False
-if "gecmisten_gelindi" not in st.session_state: st.session_state.gecmisten_gelindi = False
 if "gelecekten_gelindi" not in st.session_state: st.session_state.gelecekten_gelindi = False
-if "silme_onay" not in st.session_state: st.session_state.silme_onay = False
-if "aktif_kayit_idx" not in st.session_state: st.session_state.aktif_kayit_idx = None
 if "aktif_gelecek_idx" not in st.session_state: st.session_state.aktif_gelecek_idx = None
-if "manuel_bekleyen" not in st.session_state: st.session_state.manuel_bekleyen = []
-if "tek_silme_onay" not in st.session_state: st.session_state.tek_silme_onay = None
-if "tek_silme_gelecek" not in st.session_state: st.session_state.tek_silme_gelecek = None
 if "rol" not in st.session_state: st.session_state.rol = "misafir"
 if "admin_login_acik" not in st.session_state: st.session_state.admin_login_acik = False
 if "esikler" not in st.session_state: st.session_state.esikler = ayarlar_yukle()
-if "bt_sonuc" not in st.session_state: st.session_state.bt_sonuc = None
 if "toplu_cek_ozet" not in st.session_state: st.session_state.toplu_cek_ozet = None
 if "skor_ozet" not in st.session_state: st.session_state.skor_ozet = None
 if "aktif_kullanici" not in st.session_state: st.session_state.aktif_kullanici = None
 if "odeme_hedef_kadi" not in st.session_state: st.session_state.odeme_hedef_kadi = None
-if "sil_onay_kadi" not in st.session_state: st.session_state.sil_onay_kadi = None
 
 
 def admin_mi(): return st.session_state.get("rol") == "admin"
@@ -425,7 +379,7 @@ def _ulke_bul(metin):
     alt = s.lower()
     for a in sorted(ULKE_BAYRAK.keys(), key=len, reverse=True):
         if a in alt: return a
-    p = s.split(); return " ".join(p[:2]) if len(p) >= 2 else (p[0] if p else "")
+    return ""
 
 
 def clamp(x, lo, hi): return max(lo, min(hi, x))
@@ -613,53 +567,30 @@ def metinden_veri_cikar(metin):
 
 
 # ==========================================
-# VERİ ÇEKME MOTORU
+# VERİ ÇEKME MOTORU (sadece requests)
 # ==========================================
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
 
-def _playwright_html(url, timeout):
-    from playwright.sync_api import sync_playwright
-    with sync_playwright() as p:
-        b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
-        try:
-            ctx = b.new_context(user_agent=UA, locale="en-US")
-            pg = ctx.new_page()
-            pg.route("**/*", lambda r: r.abort() if r.request.resource_type in ("image", "media", "font") else r.continue_())
-            pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-            try: pg.wait_for_load_state("networkidle", timeout=15000)
-            except Exception: pass
-            pg.wait_for_timeout(3000)
-            return pg.content()
-        finally:
-            try: b.close()
-            except Exception: pass
-
-
-def _sayfa_getir(url, timeout=90, max_retry=3):
+def _sayfa_getir(url, timeout=30, max_retry=3):
     hata = None
-    try:
-        import playwright
-        pv = True
-    except ImportError:
-        pv = False; hata = "playwright modülü yüklü değil"
-    if pv:
-        for d in range(max_retry):
-            try:
-                h = _playwright_html(url, timeout)
-                if h and len(h) > 500:
-                    return h, None
-                hata = f"Boş sayfa ({len(h) if h else 0} karakter)"
-            except Exception as e:
-                hata = f"Tarayıcı hatası: {str(e)[:200]}"
-            if d < max_retry - 1: time.sleep(2 + d * 2)
-    try:
-        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
-        if r.status_code == 200 and r.text and len(r.text) > 500:
-            return r.text, None
-        hata = f"HTTP {r.status_code} • Boyut: {len(r.text) if r.text else 0}"
-    except Exception as e:
-        hata = f"Bağlantı: {str(e)[:150]}"
+    for d in range(max_retry):
+        try:
+            r = requests.get(url,
+                headers={
+                    "User-Agent": UA,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Connection": "keep-alive",
+                    "Upgrade-Insecure-Requests": "1",
+                },
+                timeout=timeout)
+            if r.status_code == 200 and r.text and len(r.text) > 500:
+                return r.text, None
+            hata = f"HTTP {r.status_code} • Boyut: {len(r.text) if r.text else 0}"
+        except Exception as e:
+            hata = f"Bağlantı: {str(e)[:150]}"
+        if d < max_retry - 1: time.sleep(1 + d)
     return None, hata
 
 
@@ -709,12 +640,11 @@ def _mac_html_parse(html, url=""):
     m1 = re.search(r'(\d{1,2}\.\d{1,2}\.\d{4})', m)
     if m1: veri["tarih"] = m1.group(1)
     veri["ulke"] = _ulke_bul(m)
-    sk_e = sk_d = None
-    m1 = re.search(r'FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', m)
-    if m1: sk_e = int(m1.group(1)); sk_d = int(m1.group(2))
-    if sk_e is not None:
-        veri["skor_ev"] = sk_e; veri["skor_dep"] = sk_d; veri["skor_belli"] = True
-    else: veri["skor_belli"] = False
+    skor = _skor_parse(html)
+    if skor:
+        veri["skor_ev"] = skor[0]; veri["skor_dep"] = skor[1]; veri["skor_belli"] = True
+    else:
+        veri["skor_belli"] = False
 
     def cf(label):
         for pat in [r'([\d.,]+)\s*%?\s*\t\s*' + re.escape(label) + r'\s*\t\s*([\d.,]+)', r'([\d.,]+)\s*%?\s*\|\s*' + re.escape(label) + r'\s*\|\s*([\d.,]+)', r'([\d.,]+)\s*%?\s+' + re.escape(label) + r'\s+([\d.,]+)\s*%?', r'([\d.,]+)\s*%?\s*\n\s*' + re.escape(label) + r'\s*\n\s*([\d.,]+)']:
@@ -899,33 +829,85 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=3, progress_callback=None):
 
 
 # ==========================================
-# SKOR ÇEKME — DÜZELTİLDİ
+# SKOR ÇEKME — YENİ PARSER
 # ==========================================
 def _skor_parse(html):
-    m = _html_metne_cevir(html)
-    patterns = [
-        r'FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})',
-        r'FT\s*(\d{1,2})\s*[-:]\s*(\d{1,2})',
-        r'(?<![A-Za-z])(\d{1,2})\s*[-:]\s*(\d{1,2})\s*\n+\s*FT',
-        r'Full\s*Time\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})',
-        r'Finished\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})',
-        r'\bFT\b[^\d]{0,30}(\d{1,2})\s*[-:]\s*(\d{1,2})',
-        r'(\d{1,2})\s*[-:]\s*(\d{1,2})\s*\n+\s*(?:Full|Finished|FT)',
-    ]
-    for pat in patterns:
-        x = re.search(pat, m, re.IGNORECASE)
-        if x:
+    """
+    Mutating.com HTML'inden skor çıkarır.
+    Örnek HTML: <...>FT</...><...>5 - 2</...>
+    """
+    if not html:
+        return None
+
+    # 1) HAM HTML: FT kelimesinden sonra 200 karakter içinde X-Y ara
+    try:
+        m = re.search(r'FT\b[^\d]{0,200}?(\d{1,2})\s*[-:]\s*(\d{1,2})', html, re.IGNORECASE)
+        if m:
+            e, d = int(m.group(1)), int(m.group(2))
+            if 0 <= e <= 20 and 0 <= d <= 20:
+                return e, d
+    except Exception:
+        pass
+
+    # 2) METİN: Aynı pattern
+    txt = _html_metne_cevir(html)
+    try:
+        m = re.search(r'FT\b[^\d]{0,200}?(\d{1,2})\s*[-:]\s*(\d{1,2})', txt, re.IGNORECASE)
+        if m:
+            e, d = int(m.group(1)), int(m.group(2))
+            if 0 <= e <= 20 and 0 <= d <= 20:
+                return e, d
+    except Exception:
+        pass
+
+    # 3) TÜM FT pozisyonlarını bul, her birinden sonra 200 karakter içinde X-Y ara
+    up = txt.upper()
+    idx = up.find("FT")
+    while idx >= 0:
+        seg = txt[idx:idx + 200]
+        for pat in [r'(\d{1,2})\s*[-:]\s*(\d{1,2})', r'\b(\d{1,2})\s+(\d{1,2})\b']:
             try:
-                e = int(x.group(1)); d = int(x.group(2))
-                if 0 <= e <= 20 and 0 <= d <= 20:
-                    return e, d
+                m = re.search(pat, seg)
+                if m:
+                    e, d = int(m.group(1)), int(m.group(2))
+                    if 0 <= e <= 20 and 0 <= d <= 20 and (e + d) > 0:
+                        return e, d
             except Exception:
                 continue
+        idx = up.find("FT", idx + 1)
+
+    # 4) HT pozisyonlarını da dene (bazı sayfalarda HT yazar)
+    idx = up.find("HT")
+    while idx >= 0:
+        seg = txt[idx:idx + 200]
+        try:
+            m = re.search(r'(\d{1,2})\s*[-:]\s*(\d{1,2})', seg)
+            if m:
+                e, d = int(m.group(1)), int(m.group(2))
+                if 0 <= e <= 20 and 0 <= d <= 20:
+                    return e, d
+        except Exception:
+            pass
+        idx = up.find("HT", idx + 1)
+
+    # 5) score/result class'lı elementler
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        for el in soup.find_all(class_=re.compile(r'(score|result)', re.I)):
+            t = el.get_text(" ", strip=True)
+            m = re.match(r'^\s*(\d{1,2})\s*[-:]\s*(\d{1,2})\s*$', t)
+            if m:
+                e, d = int(m.group(1)), int(m.group(2))
+                if 0 <= e <= 20 and 0 <= d <= 20:
+                    return e, d
+    except Exception:
+        pass
+
     return None
 
 
 def _skor_cek(url):
-    h, hata = _sayfa_getir(url, timeout=60, max_retry=2)
+    h, hata = _sayfa_getir(url, timeout=30, max_retry=2)
     if not h:
         return None, f"Sayfa alınamadı: {hata}"
     skor = _skor_parse(h)
@@ -1090,8 +1072,6 @@ def ust_bar():
 def nav_git(h):
     st.session_state.sayfa = h
     st.session_state.kayit_yapildi = False
-    st.session_state.tek_silme_onay = None
-    st.session_state.tek_silme_gelecek = None
     st.rerun()
 
 
@@ -1133,13 +1113,10 @@ elif st.session_state.sayfa == "giris":
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:gray;'>Admin Paneli</p>", unsafe_allow_html=True)
 
-        # ==========================================
         # MANUEL ÇEKİM PANELİ
-        # ==========================================
         st.markdown("### 🖐️ Manuel Çekim Paneli")
-        st.info("ℹ️ Otomatik çekim yoktur. Verileri aşağıdaki butonlardan manuel olarak çekersiniz.")
+        st.info("ℹ️ Otomatik çekim yoktur.")
 
-        # Buton 1: Veri Çek
         st.markdown("**🚀 Bugünün Maçları**")
         if st.button("🚀 Veri Çek", use_container_width=True, key="manuel_veri_btn", type="primary"):
             _ph = st.empty()
@@ -1155,7 +1132,6 @@ elif st.session_state.sayfa == "giris":
 
         st.divider()
 
-        # Buton 2: Lig Çek
         st.markdown("**📜 Lig Geçmişi**")
         _lurl = st.text_input("Lig URL", key="manuel_lig_url", placeholder="https://www.mutating.com/football-stats/league-...")
         _lc1, _lc2 = st.columns(2)
@@ -1184,7 +1160,6 @@ elif st.session_state.sayfa == "giris":
 
         st.divider()
 
-        # Buton 3: Skor İşle
         st.markdown("**⚽ Skor İşle**")
         st.caption(f"Bekleyen maç: **{len(st.session_state.gelecek_analizler)}**")
         if st.button("⚽ Skor İşle", use_container_width=True, key="manuel_skor_btn", type="primary"):
@@ -1200,99 +1175,48 @@ elif st.session_state.sayfa == "giris":
 
         st.divider()
 
-        # ==========================================
-        # 🔬 DEBUG PANELİ
-        # ==========================================
+        # DEBUG
         with st.expander("🔬 DEBUG — Sorun teşhisi", expanded=False):
-            st.caption("Bir maç URL'si yapıştır ve test et.")
-            _dbg_url = st.text_input("Test maç URL'si", key="dbg_url",
-                placeholder="https://www.mutating.com/football-stats/...")
+            _dbg_url = st.text_input("Test maç URL'si", key="dbg_url", placeholder="https://www.mutating.com/football-stats/...")
 
-            c1, c2 = st.columns(2)
-            with c1:
-                if st.button("🔬 Playwright Test", key="dbg_btn1", type="primary", use_container_width=True):
-                    if not _dbg_url.strip():
-                        st.warning("URL gir")
-                    else:
-                        with st.spinner("Playwright ile deneniyor..."):
-                            try:
-                                _h = _playwright_html(_dbg_url.strip(), 90)
-                                if _h:
-                                    st.success(f"✅ HTML geldi — **{len(_h)}** karakter")
-                                    st.text_area("📄 HTML (ilk 4000)", _h[:4000], height=250, key="dbg_h1")
-                                    _txt = _html_metne_cevir(_h)
-                                    st.text_area("📝 Metin (ilk 4000)", _txt[:4000], height=250, key="dbg_t1")
-                                    _v, _ = _mac_html_parse(_h, _dbg_url.strip())
-                                    st.write("📊 **Parser sonucu:**")
-                                    st.json(_v)
-                                else:
-                                    st.error("❌ Boş HTML")
-                            except Exception as _e:
-                                st.exception(_e)
-            with c2:
-                if st.button("📡 Requests Test", key="dbg_btn2", use_container_width=True):
-                    if not _dbg_url.strip():
-                        st.warning("URL gir")
-                    else:
-                        with st.spinner("Requests ile deneniyor..."):
-                            try:
-                                _r = requests.get(_dbg_url.strip(),
-                                    headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"},
-                                    timeout=30)
-                                st.caption(f"📡 HTTP: **{_r.status_code}** • Boyut: **{len(_r.text)}** karakter")
-                                st.text_area("📄 HTML (ilk 4000)", _r.text[:4000], height=250, key="dbg_h2")
-                            except Exception as _e:
-                                st.exception(_e)
-
-            st.divider()
-            if st.button("⚽ Skor Test Et (URL'den FT çek)", key="dbg_skor", use_container_width=True, type="primary"):
+            if st.button("⚽ Skor Test Et", key="dbg_skor", use_container_width=True, type="primary"):
                 if not _dbg_url.strip():
                     st.warning("URL gir")
                 else:
-                    with st.spinner("Skor test ediliyor..."):
+                    with st.spinner("Test ediliyor..."):
                         try:
-                            _h, _hata = _sayfa_getir(_dbg_url.strip(), timeout=60, max_retry=2)
+                            _h, _hata = _sayfa_getir(_dbg_url.strip(), timeout=30, max_retry=2)
                             if not _h:
                                 st.error(f"❌ Sayfa alınamadı: {_hata}")
                             else:
                                 st.success(f"✅ HTML geldi — {len(_h)} karakter")
                                 _txt = _html_metne_cevir(_h)
-                                _ft_lines = [ln for ln in _txt.split("\n") if "FT" in ln.upper() or "Full" in ln or "Finished" in ln][:20]
-                                st.write("📋 **'FT/Full/Finished' geçen satırlar:**")
-                                if _ft_lines:
-                                    for _ln in _ft_lines:
-                                        st.code(_ln)
+                                _up = _txt.upper()
+                                _ft_bulundu = []
+                                _i = _up.find("FT")
+                                _cnt = 0
+                                while _i >= 0 and _cnt < 10:
+                                    _seg = _txt[max(0, _i-30):_i+80].replace("\n", " ⏎ ")
+                                    _ft_bulundu.append(_seg)
+                                    _i = _up.find("FT", _i + 1)
+                                    _cnt += 1
+                                if _ft_bulundu:
+                                    st.write("📋 **'FT' geçen yerler:**")
+                                    for _s in _ft_bulundu:
+                                        st.code(_s)
                                 else:
-                                    st.warning("⚠️ FT/Full/Finished hiç geçmiyor")
+                                    st.warning("⚠️ 'FT' hiç geçmiyor")
                                 _skor = _skor_parse(_h)
                                 if _skor:
-                                    st.success(f"✅ **Skor bulundu: {_skor[0]} - {_skor[1]}**")
+                                    st.success(f"✅ **SKOR: {_skor[0]} - {_skor[1]}**")
                                 else:
-                                    st.error("❌ Skor parser bulamadı.")
-                                    with st.expander("📄 Metnin ilk 5000 karakteri"):
-                                        st.text(_txt[:5000])
+                                    st.error("❌ Parser skor bulamadı. Metnin ilk 3000 karakteri:")
+                                    st.text(_txt[:3000])
                         except Exception as _e:
                             st.exception(_e)
 
-            st.divider()
-            if st.button("🌐 Ana Sayfayı Test Et", key="dbg_btn3", use_container_width=True):
-                with st.spinner("Ana sayfa test ediliyor..."):
-                    try:
-                        _h, _hata = _sayfa_getir("https://www.mutating.com/football-stats/")
-                        if _h:
-                            st.success(f"✅ Ana sayfa — {len(_h)} karakter")
-                            _maclar, _ = mutating_ana_sayfa_linklerini_al(max_mac=5)
-                            st.write(f"📋 **Bulunan maç linki (ilk 5):** {len(_maclar)}")
-                            for _m in _maclar:
-                                st.text(f"• {_m.get('takim_ev', '?')} vs {_m.get('takim_dep', '?')}")
-                        else:
-                            st.error(f"❌ Hata: {_hata}")
-                    except Exception as _e:
-                        st.exception(_e)
-
         st.divider()
 
-        # Son işlem özetleri
         if st.session_state.toplu_cek_ozet:
             oz = st.session_state.toplu_cek_ozet
             st.caption(f"📊 Son veri çekimi: **{oz.get('eklenen', 0)}** eklendi • **{oz.get('esik_alti', 0)}** eşik altı • **{oz.get('veri_yok', 0)}** veri yok • **{oz.get('hata', 0)}** hata")
@@ -1327,18 +1251,17 @@ elif st.session_state.sayfa == "giris":
         if ayarlar_btn: nav_git("ayarlar")
 
     else:
-        # MİSAFİR / ÜYE GÖRÜNÜMÜ
         gelecek = st.session_state.gelecek_analizler
         toplam = len(gelecek)
         premium = uye_premium_mu()
         kota = int(ayar_al("ucretsiz_kotasi", 3))
 
         if premium:
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">Premium aktif</div><div class="mh-hero-badge">🌟 PREMIUM</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="mh-hero"><div class="mh-hero-title">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">Premium aktif</div><div class="mh-hero-badge">🌟 PREMIUM</div></div>', unsafe_allow_html=True)
         elif uye_mi():
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="mh-hero"><div class="mh-hero-title">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz</div></div>', unsafe_allow_html=True)
         else:
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title">Bugün {toplam} Maç</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="mh-hero"><div class="mh-hero-title">Bugün {toplam} Maç</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz</div></div>', unsafe_allow_html=True)
 
         modern_istatistik_grafik()
 
@@ -1370,10 +1293,6 @@ elif st.session_state.sayfa == "giris":
                 else:
                     st.markdown(mac_karti(te, td, False, 0, 0, 0, 0, v.get("saat", ""), v.get("ulke", ""), v.get("tarih", "")), unsafe_allow_html=True)
                     st.warning("🔒 Premium'a geç")
-                    if st.button("💳 Premium", use_container_width=True, key=f"kp_{idx}", type="primary"):
-                        if uye_mi(): st.session_state["odeme_hedef_kadi"] = uye_adi(); st.session_state.sayfa = "odeme"
-                        else: st.session_state.sayfa = "kayit"
-                        st.rerun()
                 st.divider()
 
         yasal_metin_goster()
@@ -1405,7 +1324,6 @@ elif st.session_state.sayfa == "kayit":
                     st.session_state.sayfa = "odeme"; st.rerun()
                 else: st.error(f"❌ {m}")
         if gb: st.session_state.sayfa = "giris"; st.rerun()
-    yasal_metin_goster()
 
 
 # ==========================================
@@ -1416,7 +1334,7 @@ elif st.session_state.sayfa == "odeme":
     if not hedef:
         st.error("❌ Kullanıcı yok.")
         st.stop()
-    iban = ayar_al("iban", "TR00 0000 0000 0000 0000 0000 00")
+    iban = ayar_al("iban", "")
     hs = ayar_al("hesap_sahibi", "")
     fh = float(ayar_al("fiyat_haftalik", 49.0)); fa = float(ayar_al("fiyat_aylik", 149.0)); fy = float(ayar_al("fiyat_yillik", 999.0))
     st.markdown(f'<h1>💳 Premium</h1><p>Kullanıcı: <b>{_e(hedef)}</b></p>', unsafe_allow_html=True)
@@ -1430,7 +1348,7 @@ elif st.session_state.sayfa == "odeme":
     if hedef in bk and bk[hedef].get("durum") == "bekliyor":
         st.warning("⏳ Bekleyen bildirimin var")
     else:
-        iade_onay = st.checkbox("✅ İade kabul etmiyorum, dijital hizmet onayı")
+        iade_onay = st.checkbox("✅ İade kabul etmiyorum")
         if st.button("📤 Ödeme Yaptım", use_container_width=True, type="primary"):
             if not iade_onay: st.error("❌ Kabul et.")
             else:
@@ -1522,7 +1440,6 @@ elif st.session_state.sayfa == "admin_bildirimler":
             st.markdown(f"**{b.get('tip')}** — {_e(b.get('kullanici', ''))} — {b.get('tarih')}")
             st.write(f"**Konu:** {_e(b.get('konu', ''))}")
             st.write(_e(b.get('mesaj', '')))
-            if b.get("cevap"): st.info(f"💬 {b['cevap']}")
             yanit = st.text_area("Yanıt", value=b.get("cevap", ""), key=f"cy_{bid}")
             c1, c2 = st.columns(2)
             with c1:
