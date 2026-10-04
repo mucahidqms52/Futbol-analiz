@@ -1366,39 +1366,30 @@ def _playwright_skor_cek(url, timeout=25):
                 except Exception: pass
 
 
-def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3, dogrula=False):
-    son_hata = None
-
-    try:
-        import playwright  # noqa: F401
-        playwright_var = True
-    except ImportError:
-        playwright_var = False
-        son_hata = "playwright kurulu değil"
-
-    if playwright_var:
-        for deneme in range(max_retry):
-            try:
-                html = _playwright_html(url, mac_sec, timeout, dogrula)
-                if html and len(html) > 500:
-                    return html, None
-                son_hata = "Boş sayfa"
-            except Exception as e:
-                son_hata = f"Tarayıcı hatası: {str(e)[:150]}"
-            if deneme < max_retry - 1:
-                time.sleep(2 + deneme * 2)
-
-    if dogrula:
-        return None, son_hata or "Filtre uygulanamadı"
-    try:
-        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
-        if r.status_code == 200 and r.text:
-            return r.text, None
-        son_hata = f"HTTP {r.status_code}" + (f" | {son_hata}" if son_hata else "")
-    except Exception as e:
-        son_hata = f"Bağlantı hatası: {str(e)[:100]}" + (f" | {son_hata}" if son_hata else "")
-
-    return None, son_hata or "Sayfa alınamadı."
+def _scrapingbee_get(url, render_js=True, timeout=30, mac_sec="5", max_retry=3, dogrula=False):
+    """
+    1. koddaki _sayfa_getir yaklaşımı — sadece requests kullanır.
+    Playwright kullanılmaz. dogrula/mac_sec/render_js parametreleri uyumluluk için kabul edilir.
+    """
+    hata = None
+    for d in range(max_retry):
+        try:
+            r = requests.get(url,
+                headers={
+                    "User-Agent": UA,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Connection": "keep-alive",
+                    "Upgrade-Insecure-Requests": "1",
+                },
+                timeout=timeout)
+            if r.status_code == 200 and r.text and len(r.text) > 500:
+                return r.text, None
+            hata = f"HTTP {r.status_code} • Boyut: {len(r.text) if r.text else 0}"
+        except Exception as e:
+            hata = f"Bağlantı: {str(e)[:150]}"
+        if d < max_retry - 1: time.sleep(1 + d)
+    return None, hata or "Sayfa alınamadı."
 
 
 def _html_metne_cevir(html):
