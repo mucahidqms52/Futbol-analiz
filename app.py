@@ -1344,12 +1344,9 @@ def _mac_html_parse(html, url=""):
     if m: veri["saat"] = m.group(1)
     veri["ulke"] = _ulke_bul(metin)
 
-    skor_ev = skor_dep = None
-    m = re.search(r'FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
-    if m:
-        skor_ev = int(m.group(1)); skor_dep = int(m.group(2))
-    if skor_ev is not None:
-        veri["skor_ev"] = skor_ev; veri["skor_dep"] = skor_dep; veri["skor_belli"] = True
+    skor = _skor_parse(html)
+    if skor:
+        veri["skor_ev"] = skor[0]; veri["skor_dep"] = skor[1]; veri["skor_belli"] = True
     else:
         veri["skor_belli"] = False
 
@@ -1567,33 +1564,80 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 # ==========================================
-# SKOR ÇEKME (DÜZELTİLMİŞ — requests hızlı, tarayıcı opsiyonel)
+# SKOR ÇEKME (5 KADEMELİ PARSER — GÜNCELLENDİ)
 # ==========================================
 def _skor_parse(html):
-    if not html: return None
+    """
+    Mutating.com HTML'inden skor çıkarır.
+    5 kademeli arama: ham HTML → metin → FT döngü → HT döngü → DOM class
+    """
+    if not html:
+        return None
+
+    # 1) HAM HTML: FT kelimesinden sonra 200 karakter içinde X-Y ara
+    try:
+        m = re.search(r'FT\b[^\d]{0,200}?(\d{1,2})\s*[-:]\s*(\d{1,2})', html, re.IGNORECASE)
+        if m:
+            e, d = int(m.group(1)), int(m.group(2))
+            if 0 <= e <= 20 and 0 <= d <= 20:
+                return e, d
+    except Exception:
+        pass
+
+    # 2) METİN: Aynı pattern metinde
     metin = _html_metne_cevir(html)
-    if not metin: return None
-    m = re.search(r'(?<![A-Za-z])FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
-    if m:
+    try:
+        m = re.search(r'FT\b[^\d]{0,200}?(\d{1,2})\s*[-:]\s*(\d{1,2})', metin, re.IGNORECASE)
+        if m:
+            e, d = int(m.group(1)), int(m.group(2))
+            if 0 <= e <= 20 and 0 <= d <= 20:
+                return e, d
+    except Exception:
+        pass
+
+    # 3) TÜM FT pozisyonlarını bul, her birinden sonra 200 karakter içinde X-Y ara
+    up = metin.upper()
+    idx = up.find("FT")
+    while idx >= 0:
+        seg = metin[idx:idx + 200]
+        for pat in [r'(\d{1,2})\s*[-:]\s*(\d{1,2})', r'\b(\d{1,2})\s+(\d{1,2})\b']:
+            try:
+                m = re.search(pat, seg)
+                if m:
+                    e, d = int(m.group(1)), int(m.group(2))
+                    if 0 <= e <= 20 and 0 <= d <= 20 and (e + d) > 0:
+                        return e, d
+            except Exception:
+                continue
+        idx = up.find("FT", idx + 1)
+
+    # 4) HT pozisyonlarını da dene (bazı sayfalarda HT skoru yazar)
+    idx = up.find("HT")
+    while idx >= 0:
+        seg = metin[idx:idx + 200]
         try:
-            a = int(m.group(1)); b = int(m.group(2))
-            if 0 <= a <= 20 and 0 <= b <= 20:
-                return a, b
-        except Exception: pass
-    m = re.search(r'(?<![A-Za-z])FT\s+(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
-    if m:
-        try:
-            a = int(m.group(1)); b = int(m.group(2))
-            if 0 <= a <= 20 and 0 <= b <= 20:
-                return a, b
-        except Exception: pass
-    m = re.search(r'Full[\s\-]*Time[^\d]{0,30}(\d{1,2})\s*[-:]\s*(\d{1,2})', metin, re.IGNORECASE)
-    if m:
-        try:
-            a = int(m.group(1)); b = int(m.group(2))
-            if 0 <= a <= 20 and 0 <= b <= 20:
-                return a, b
-        except Exception: pass
+            m = re.search(r'(\d{1,2})\s*[-:]\s*(\d{1,2})', seg)
+            if m:
+                e, d = int(m.group(1)), int(m.group(2))
+                if 0 <= e <= 20 and 0 <= d <= 20:
+                    return e, d
+        except Exception:
+            pass
+        idx = up.find("HT", idx + 1)
+
+    # 5) score/result class'lı elementler (DOM)
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        for el in soup.find_all(class_=re.compile(r'(score|result)', re.I)):
+            t = el.get_text(" ", strip=True)
+            m = re.match(r'^\s*(\d{1,2})\s*[-:]\s*(\d{1,2})\s*$', t)
+            if m:
+                e, d = int(m.group(1)), int(m.group(2))
+                if 0 <= e <= 20 and 0 <= d <= 20:
+                    return e, d
+    except Exception:
+        pass
+
     return None
 
 
