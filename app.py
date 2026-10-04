@@ -231,7 +231,6 @@ st.markdown("""
     div[data-testid="stExpander"] details > summary::-webkit-details-marker { display: none !important; }
     div[data-testid="stExpander"] details > summary::marker { display: none !important; content: "" !important; }
     div[data-testid="stExpander"] details > summary:hover { background: rgba(34,197,94,0.05) !important; }
-    div[data-testid="stExpander"] details > summary > span[data-testid="stIconMaterial"], div[data-testid="stExpander"] details > summary > span.material-icons, div[data-testid="stExpander"] details > summary [data-testid="stIconMaterial"], div[data-testid="stExpander"] details > summary .material-icons, div[data-testid="stExpander"] details > summary [class*="material-symbols"], div[data-testid="stExpander"] details > summary [class*="Material"], div[data-testid="stExpander"] details > summary > svg + span, div[data-testid="stExpander"] details > summary > span[aria-hidden="true"] { display: none !important; visibility: hidden !important; width: 0 !important; height: 0 !important; font-size: 0 !important; overflow: hidden !important; position: absolute !important; left: -9999px !important; opacity: 0 !important; pointer-events: none !important; }
     div[data-testid="stExpander"] details > summary p, div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"], div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"] p { font-size: 0.82rem !important; font-weight: 700 !important; margin: 0 !important; line-height: 1.3 !important; color: #eaf1fb !important; white-space: normal !important; display: inline-block !important; }
     div[data-testid="stExpander"] details > summary > div { display: flex !important; align-items: center !important; gap: 6px !important; flex-wrap: nowrap !important; }
     div[data-testid="stExpander"] details > summary svg { flex-shrink: 0 !important; width: 14px !important; height: 14px !important; min-width: 14px !important; transition: transform 0.2s ease !important; }
@@ -1523,26 +1522,26 @@ def _mac_tahmin_var_mi(v):
         return False
 
 
+# ==========================================
+# DÜZELTİLDİ: Thread içinde session_state'e YAZMIYORUZ, kaydı döndürüyoruz
+# ==========================================
 def _gelecek_mac_isle(mac, mevcut_urls):
     try:
         veri, _ = mutating_mac_detay_cek(mac["url"])
         if not veri:
-            return ("hata", mac, "Veri çekilemedi")
+            return ("hata", mac, "Veri çekilemedi", None)
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
         if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
         veri["kaynak_url"] = mac["url"]
         if mac["url"] in mevcut_urls:
-            return ("atlandi", veri, "Zaten var")
+            return ("atlandi", veri, "Zaten var", None)
         if _mac_tahmin_var_mi(veri):
             kayit = kayit_olustur(veri, analiz_hesapla(veri))
-            with _kilit:
-                st.session_state.gelecek_analizler.append(kayit)
-                gelecek_kaydet(st.session_state.gelecek_analizler)
-            return ("eklendi", veri, "Gelecek'e eklendi")
-        return ("atlandi", veri, "Tahmin yok")
+            return ("eklendi", veri, "Gelecek'e eklendi", kayit)
+        return ("atlandi", veri, "Tahmin yok", None)
     except Exception as e:
-        return ("hata", mac, str(e))
+        return ("hata", mac, str(e), None)
 
 
 def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_workers=2):
@@ -1556,6 +1555,7 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
         if u: mevcut_urls.add(u)
 
     basarili = []; hatali = []
+    eklenecekler = []
     eklenen = 0; atlanan = 0; tamamlanan = 0
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -1564,9 +1564,12 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
             tamamlanan += 1
             mac = futures[fut]
             try:
-                sonuc, veri, mesaj = fut.result()
+                r = fut.result()
+                sonuc, veri, mesaj = r[0], r[1], r[2]
+                kayit = r[3] if len(r) == 4 else None
                 if sonuc == "eklendi":
                     eklenen += 1; basarili.append(veri)
+                    if kayit is not None: eklenecekler.append(kayit)
                 elif sonuc == "atlandi":
                     atlanan += 1; basarili.append(veri)
                 else:
@@ -1576,6 +1579,11 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
             if progress_callback:
                 try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
+
+    # Ana thread'de session_state'e yaz
+    if eklenecekler:
+        st.session_state.gelecek_analizler.extend(eklenecekler)
+        gelecek_kaydet(st.session_state.gelecek_analizler)
 
     st.session_state.toplu_cek_ozet = {"eklenen": eklenen, "atlanan": atlanan, "toplam": len(basarili)}
     return basarili, hatali
@@ -1609,30 +1617,30 @@ def _lig_son_mac_linklerini_al(lig_url, adet=10):
     return maclar, []
 
 
+# ==========================================
+# DÜZELTİLDİ: Thread içinde session_state'e YAZMIYORUZ, kaydı döndürüyoruz
+# ==========================================
 def _gecmis_mac_isle(mac, mevcut_urls):
     try:
         if mac["url"] in mevcut_urls:
-            return ("atlandi", None, "Zaten var")
+            return ("atlandi", None, "Zaten var", None)
         html, hata = _scrapingbee_get(mac["url"], render_js=True, mac_sec="5", dogrula=True)
         if hata or not html:
-            return ("hata", mac, hata or "HTML yok")
+            return ("hata", mac, hata or "HTML yok", None)
         veri, _ = _mac_html_parse(html, mac["url"])
         if not veri.get("skor_belli", False):
-            return ("atlandi", None, "Skor yok (bitmemiş maç)")
+            return ("atlandi", None, "Skor yok (bitmemiş maç)", None)
         if veri.get("atilan_ev", 0) == 0 or veri.get("yenen_ev", 0) == 0:
-            return ("atlandi", None, "İstatistik eksik")
+            return ("atlandi", None, "İstatistik eksik", None)
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
 
         yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(veri)
         kayit = kayit_olustur(yv, analiz_hesapla(yv))
         kayit["dogruluk"] = sonuc_hesapla(kayit)
-        with _kilit:
-            st.session_state.gecmis_analizler.append(kayit)
-            gecmis_kaydet(st.session_state.gecmis_analizler)
-        return ("eklendi", veri, f"{veri['skor_ev']}-{veri['skor_dep']}")
+        return ("eklendi", veri, f"{veri['skor_ev']}-{veri['skor_dep']}", kayit)
     except Exception as e:
-        return ("hata", mac, str(e))
+        return ("hata", mac, str(e), None)
 
 
 def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
@@ -1646,6 +1654,7 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
         if u: mevcut_urls.add(u)
 
     basarili = []; hatali = []
+    eklenecekler = []
     eklenen = 0; atlanan = 0; tamamlanan = 0
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -1654,9 +1663,12 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
             tamamlanan += 1
             mac = futures[fut]
             try:
-                sonuc, veri, mesaj = fut.result()
+                r = fut.result()
+                sonuc, veri, mesaj = r[0], r[1], r[2]
+                kayit = r[3] if len(r) == 4 else None
                 if sonuc == "eklendi":
                     eklenen += 1; basarili.append(veri)
+                    if kayit is not None: eklenecekler.append(kayit)
                 elif sonuc == "atlandi":
                     atlanan += 1
                 else:
@@ -1667,6 +1679,11 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
                 try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
 
+    # Ana thread'de session_state'e yaz
+    if eklenecekler:
+        st.session_state.gecmis_analizler.extend(eklenecekler)
+        gecmis_kaydet(st.session_state.gecmis_analizler)
+
     st.session_state.gecmis_cek_ozet = {"eklenen": eklenen, "atlanan": atlanan}
     return basarili, hatali
 
@@ -1675,14 +1692,9 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 # SKOR ÇEKME (5 KADEMELİ PARSER — GÜNCELLENDİ)
 # ==========================================
 def _skor_parse(html):
-    """
-    Mutating.com HTML'inden skor çıkarır.
-    5 kademeli arama: ham HTML → metin → FT döngü → HT döngü → DOM class
-    """
     if not html:
         return None
 
-    # 1) HAM HTML: FT kelimesinden sonra 200 karakter içinde X-Y ara
     try:
         m = re.search(r'FT\b[^\d]{0,200}?(\d{1,2})\s*[-:]\s*(\d{1,2})', html, re.IGNORECASE)
         if m:
@@ -1692,7 +1704,6 @@ def _skor_parse(html):
     except Exception:
         pass
 
-    # 2) METİN: Aynı pattern metinde
     metin = _html_metne_cevir(html)
     try:
         m = re.search(r'FT\b[^\d]{0,200}?(\d{1,2})\s*[-:]\s*(\d{1,2})', metin, re.IGNORECASE)
@@ -1703,7 +1714,6 @@ def _skor_parse(html):
     except Exception:
         pass
 
-    # 3) TÜM FT pozisyonlarını bul, her birinden sonra 200 karakter içinde X-Y ara
     up = metin.upper()
     idx = up.find("FT")
     while idx >= 0:
@@ -1719,7 +1729,6 @@ def _skor_parse(html):
                 continue
         idx = up.find("FT", idx + 1)
 
-    # 4) HT pozisyonlarını da dene (bazı sayfalarda HT skoru yazar)
     idx = up.find("HT")
     while idx >= 0:
         seg = metin[idx:idx + 200]
@@ -1733,7 +1742,6 @@ def _skor_parse(html):
             pass
         idx = up.find("HT", idx + 1)
 
-    # 5) score/result class'lı elementler (DOM)
     try:
         soup = BeautifulSoup(html, "html.parser")
         for el in soup.find_all(class_=re.compile(r'(score|result)', re.I)):
@@ -1750,7 +1758,6 @@ def _skor_parse(html):
 
 
 def _skor_cek(url, tarayici_yedek=False):
-    """Önce hızlı requests (varsayılan). Skor bulunamazsa ve tarayici_yedek=True ise tarayıcı dener."""
     if not url:
         return None, "URL yok"
     html = None; hata = None
@@ -1986,7 +1993,6 @@ def _trend_cumleleri(v, taraf):
 
 
 def ai_yorum_olustur(v, a):
-    """Maç hakkında uzun, akıcı, hikayeli yorum üretir."""
     te = (v.get("takim_ev", "Ev") or "Ev").strip()
     td = (v.get("takim_dep", "Dep") or "Dep").strip()
 
@@ -2026,7 +2032,6 @@ def ai_yorum_olustur(v, a):
 
     bolumler = []
 
-    # 1. MAÇIN TABLOSU
     hp = []
     if s_ev and s_dep:
         if s_ev < s_dep:
@@ -2088,7 +2093,6 @@ def ai_yorum_olustur(v, a):
     if hp:
         bolumler.append(("📖", "MAÇIN TABLOSU", " ".join(hp)))
 
-    # 2. 1X2 NEDEN BU?
     s1, y1 = max([("1", p1v), ("X", pxv), ("2", p2v)], key=lambda x: x[1])
     p1 = p1v; px = pxv; p2 = p2v
     kp = []
@@ -2172,7 +2176,6 @@ def ai_yorum_olustur(v, a):
     if kp:
         bolumler.append(("🎯", "NEDEN BU SONUÇ?", " ".join(kp)))
 
-    # 3. GOL BEKLENTİSİ
     gp = []
     u25 = ust25; a25 = alt25
     top_at = ae + ad
@@ -2221,7 +2224,6 @@ def ai_yorum_olustur(v, a):
     if gp:
         bolumler.append(("⚽", "GOL BEKLENTİSİ", " ".join(gp)))
 
-    # 4. KG
     kgp = []
     if kgvar >= kgyok:
         kgp.append(f"<b>Karşılıklı Gol Var</b> tarafı ağır basıyor (%{kgvar:.1f}). Neden böyle düşünüyoruz:")
@@ -2263,7 +2265,6 @@ def ai_yorum_olustur(v, a):
     if kgp:
         bolumler.append(("🤝", "KARŞILIKLI GOL (KG)", " ".join(kgp)))
 
-    # 5. GERÇEKÇİ SENARYO
     sn = []
     yorum_ev = []
     yorum_dep = []
