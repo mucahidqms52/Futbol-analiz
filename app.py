@@ -290,31 +290,18 @@ st.markdown("""
         0%, 100% { transform: scale(1); box-shadow: 0 2px 10px rgba(239,68,68,0.7); }
         50% { transform: scale(1.12); box-shadow: 0 2px 16px rgba(239,68,68,1); }
     }
-    /* === MODERN ÇİZGİ GRAFİK KARTLARI (fallback) === */
-    .stApp .fa-line-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 16px 0 8px 0; }
-    .stApp .fa-line-kart { background: linear-gradient(145deg, rgba(19,28,46,0.9), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 16px; padding: 12px 14px 8px 14px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.25); transition: all 0.3s ease; animation: fadeInUp 0.4s ease-out; }
-    .stApp .fa-line-kart:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-2px); box-shadow: 0 10px 28px rgba(34,197,94,0.12); }
-    .stApp .fa-line-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c); border-radius: 16px 16px 0 0; }
-    .stApp .fa-line-ust { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-    .stApp .fa-line-ust .fa-line-lbl { font-size: 0.72rem; font-weight: 900; color: #8fa0bd !important; letter-spacing: 0.8px; text-transform: uppercase; }
-    .stApp .fa-line-pct { font-size: 1.25rem; font-weight: 900; color: #eaf1fb !important; letter-spacing: -0.4px; display: flex; align-items: center; gap: 5px; }
-    .stApp .fa-line-pct .fa-trend { font-size: 0.72rem; }
-    .stApp .fa-spark-svg { width: 100%; height: 62px; display: block; }
-    .stApp .fa-line-sub { font-size: 0.62rem; color: #64748b !important; margin-top: 4px; font-weight: 700; letter-spacing: 0.3px; display: flex; justify-content: space-between; }
-    .stApp .fa-line-sub b { color: #eaf1fb !important; }
-    .stApp .fa-line-sub .fa-line-x { color: #8fa0bd !important; font-weight: 700; }
-    /* === KÜÇÜK PIN GRAFİK KARTLARI (ana sayfa) === */
-    .stApp .fa-pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 6px 0; }
-    .stApp .fa-pin-kart { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 12px; padding: 7px 5px 5px 5px; position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.3); animation: fadeInUp 0.4s ease-out; transition: all 0.25s ease; }
-    .stApp .fa-pin-kart:hover { border-color: var(--c); transform: translateY(-2px); }
-    .stApp .fa-pin-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--c); }
-    .stApp .fa-pin-ust { display: flex; justify-content: space-between; align-items: center; padding: 0 2px; margin-bottom: 1px; }
-    .stApp .fa-pin-lbl { font-size: 0.55rem; font-weight: 900; color: #8fa0bd !important; letter-spacing: 0.4px; text-transform: uppercase; }
-    .stApp .fa-pin-pct { font-size: 0.82rem; font-weight: 900; color: var(--c) !important; letter-spacing: -0.2px; text-shadow: 0 0 10px var(--c); line-height: 1; }
-    .stApp .fa-pin-svg-wrap { margin: 0; }
-    .stApp .fa-pin-alt { font-size: 0.52rem; font-weight: 800; color: #64748b !important; text-align: center; letter-spacing: 0.2px; margin-top: -2px; }
-    .stApp .fa-pin-alt .fa-dog-num { color: #22c55e !important; }
-    .stApp .fa-pin-alt .fa-yan-num { color: #ef4444 !important; }
+    /* === MİNİ YAN YANA ÇİZGİ KARTLARI (ana sayfa) === */
+    .stApp .fa-mini-line-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 8px 0; }
+    .stApp .fa-mini-line-kart { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 12px; padding: 7px 6px 5px 6px; position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.3); animation: fadeInUp 0.4s ease-out; transition: all 0.25s ease; }
+    .stApp .fa-mini-line-kart:hover { border-color: var(--c); transform: translateY(-2px); }
+    .stApp .fa-mini-line-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--c); }
+    .stApp .fa-mini-line-ust { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+    .stApp .fa-mini-line-lbl { font-size: 0.55rem; font-weight: 900; color: #8fa0bd !important; letter-spacing: 0.3px; text-transform: uppercase; }
+    .stApp .fa-mini-line-pct { font-size: 0.88rem; font-weight: 900; letter-spacing: -0.3px; line-height: 1; }
+    .stApp .fa-mini-line-svg { margin: 2px -2px 0 -2px; }
+    .stApp .fa-mini-line-svg svg { height: 52px !important; }
+    .stApp .fa-mini-line-alt { display: flex; justify-content: space-between; align-items: center; font-size: 0.55rem; font-weight: 800; margin-top: 2px; padding: 0 1px; }
+    .stApp .fa-mini-line-alt b { font-weight: 900; letter-spacing: 0.2px; }
     /* === ESKİ DONUT GRAFİK KARTLARI (geçmiş maçlar) === */
     .stApp .fa-donut-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0 8px 0; }
     .stApp .fa-donut-kart { background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95)); border: 1px solid #1d2940; border-radius: 16px; padding: 12px 6px 10px 6px; text-align: center; position: relative; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
@@ -2091,7 +2078,7 @@ def _donut_svg(yuzde, renk, boyut=82):
 def _sparkline_svg(degerler, renk, yukseklik=62, genislik=300):
     """Gradient dolgulu, yumuşak bezier çizgi grafik SVG'si üretir."""
     if not degerler or len(degerler) < 2:
-        return f'<svg class="fa-spark-svg" viewBox="0 0 {genislik} {yukseklik}" xmlns="http://www.w3.org/2000/svg"><text x="50%" y="50%" text-anchor="middle" fill="#64748b" font-size="10">Yetersiz veri</text></svg>'
+        return f'<svg class="fa-spark-svg" viewBox="0 0 {genislik} {yukseklik}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;"><text x="50%" y="50%" text-anchor="middle" fill="#64748b" font-size="10">Yetersiz veri</text></svg>'
     n = len(degerler)
     pad_top = 8
     pad_bot = 6
@@ -2114,21 +2101,21 @@ def _sparkline_svg(degerler, renk, yukseklik=62, genislik=300):
 
     alan_d = path_d + f" L {genislik} {yukseklik} L 0 {yukseklik} Z"
     son_x, son_y = noktalar[-1]
-    grad_id = f"grad_{renk.replace('#','').replace(':','')}"
+    grad_id = f"grad_{renk.replace('#','').replace(':','').replace('.','')}"
 
-    return f'''<svg class="fa-spark-svg" viewBox="0 0 {genislik} {yukseklik}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    return f'''<svg viewBox="0 0 {genislik} {yukseklik}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
 <defs><linearGradient id="{grad_id}" x1="0" y1="0" x2="0" y2="1">
 <stop offset="0%" stop-color="{renk}" stop-opacity="0.45"/>
 <stop offset="100%" stop-color="{renk}" stop-opacity="0"/>
 </linearGradient></defs>
 <path d="{alan_d}" fill="url(#{grad_id})"/>
-<path d="{path_d}" fill="none" stroke="{renk}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-<circle cx="{son_x:.2f}" cy="{son_y:.2f}" r="3.8" fill="{renk}" stroke="#0b1220" stroke-width="2"/>
+<path d="{path_d}" fill="none" stroke="{renk}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="{son_x:.2f}" cy="{son_y:.2f}" r="3.2" fill="{renk}" stroke="#0b1220" stroke-width="1.6"/>
 </svg>'''
 
 
 def _pin_chart_svg(degerler, renk, genislik=112, yukseklik=82):
-    """Küçük pin/lollipop chart — her nokta bir daire halka + dikey çubuk. Görseldeki tarz."""
+    """Küçük pin/lollipop chart — her nokta bir daire halka + dikey çubuk."""
     if not degerler or len(degerler) < 2:
         return f'<svg viewBox="0 0 {genislik} {yukseklik}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;"><text x="50%" y="50%" text-anchor="middle" fill="#64748b" font-size="8">Yetersiz veri</text></svg>'
 
@@ -2146,7 +2133,6 @@ def _pin_chart_svg(degerler, renk, genislik=112, yukseklik=82):
 
     parts = [f'<svg viewBox="0 0 {genislik} {yukseklik}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">']
 
-    # Yatay kılavuz çizgiler (0, 50, 100)
     for yz in [0, 50, 100]:
         gy = pad_t + (1 - yz / 100) * ic_h
         parts.append(f'<line x1="{pad_l - 3}" y1="{gy:.1f}" x2="{genislik - pad_r + 3}" y2="{gy:.1f}" stroke="#1d2940" stroke-width="0.5" stroke-dasharray="2 3" opacity="0.55"/>')
@@ -2156,19 +2142,10 @@ def _pin_chart_svg(degerler, renk, genislik=112, yukseklik=82):
         x = pad_l + i * adim
         y = pad_t + (1 - v / 100) * ic_h
 
-        # Dikey çubuk (pin gövdesi)
         parts.append(f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x:.1f}" y2="{alt_y:.1f}" stroke="{renk}" stroke-width="3.5" stroke-linecap="round" opacity="0.5"/>')
-
-        # Alt küçük nokta
         parts.append(f'<circle cx="{x:.1f}" cy="{alt_y:.1f}" r="1.6" fill="{renk}" opacity="0.9"/>')
-
-        # Üst halka (içi boş daire)
         parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5.5" fill="#0b1220" stroke="{renk}" stroke-width="2.3"/>')
-
-        # İç küçük nokta
         parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.4" fill="{renk}"/>')
-
-        # Üstte değer yazısı
         parts.append(f'<text x="{x:.1f}" y="{y - 8:.1f}" text-anchor="middle" fill="{renk}" font-size="6.5" font-weight="900" font-family="Rajdhani, Inter, sans-serif">{int(round(v))}</text>')
 
     parts.append('</svg>')
@@ -2771,44 +2748,42 @@ def _trend_ok(seri):
 
 def modern_istatistik_grafik(baslik="📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="donut"):
     if stil == "line":
-        # === KÜÇÜK PIN GRAFİK (ana sayfa) ===
+        # === ANA SAYFA: 3 YAN YANA ÇİZGİ GRAFİK KART ===
         gc = st.session_state.gecmis_analizler
-        veri = _modern_seri_v2(gc, son_n=20)
+        seri_1x2, seri_gol, seri_kg, ist_1x2, ist_gol, ist_kg = _modern_seri_hesapla(gc, son_n=20)
+        p1 = seri_1x2[-1] if seri_1x2 else 0
+        pg = seri_gol[-1] if seri_gol else 0
+        pk = seri_kg[-1] if seri_kg else 0
 
         st.markdown(f'<div class="mh-hero-ust" style="text-align:center;margin-top:14px;">{_e(baslik)}</div>', unsafe_allow_html=True)
 
         kartlar_html = []
-        for etiket, anahtar, renk in [("1X2", "1x2", "#22c55e"), ("GOL", "gol", "#3b82f6"), ("KG", "kg", "#f59e0b")]:
-            dizi, yuz = veri[anahtar]
-            if not dizi:
+        for ikon, etiket, seri, yuz, ist, renk in [
+            ("🎯", "1X2", seri_1x2, p1, ist_1x2, "#22c55e"),
+            ("⚽", "GOL", seri_gol, pg, ist_gol, "#3b82f6"),
+            ("🤝", "KG", seri_kg, pk, ist_kg, "#f59e0b"),
+        ]:
+            if not seri:
                 continue
-
-            son6 = dizi[-6:]
-
-            # Her maçta kümülatif başarı yüzdesi (pin değerleri)
-            kum = []
-            d_top = 0
-            for i, d in enumerate(son6):
-                d_top += d
-                kum.append(d_top / (i + 1) * 100)
-
-            dog = sum(son6)
-            yan = len(son6) - dog
-
-            svg = _pin_chart_svg(kum, renk)
-
+            dog, top = ist
+            yan = top - dog
+            spark = _sparkline_svg(seri, renk, yukseklik=52, genislik=140)
+            trend = _trend_ok(seri)
             kartlar_html.append(
-                f'<div class="fa-pin-kart" style="--c:{renk};">'
-                f'<div class="fa-pin-ust">'
-                f'<span class="fa-pin-lbl">{etiket}</span>'
-                f'<span class="fa-pin-pct">%{yuz:.0f}</span>'
+                f'<div class="fa-mini-line-kart" style="--c:{renk};">'
+                f'<div class="fa-mini-line-ust">'
+                f'<span class="fa-mini-line-lbl">{ikon} {etiket}</span>'
+                f'<span class="fa-mini-line-pct" style="color:{renk} !important; text-shadow:0 0 12px {renk};">%{yuz:.0f}</span>'
                 f'</div>'
-                f'<div class="fa-pin-svg-wrap">{svg}</div>'
-                f'<div class="fa-pin-alt"><span class="fa-dog-num">{dog}✓</span> · <span class="fa-yan-num">{yan}✗</span></div>'
+                f'<div class="fa-mini-line-svg">{spark}</div>'
+                f'<div class="fa-mini-line-alt">'
+                f'<span><b style="color:#22c55e !important;">{dog}✓</b> <b style="color:#ef4444 !important;">{yan}✗</b></span>'
+                f'<span style="color:#8fa0bd !important;">{trend}</span>'
+                f'</div>'
                 f'</div>'
             )
 
-        st.markdown(f'<div class="fa-pin-grid">{"".join(kartlar_html)}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="fa-mini-line-grid">{"".join(kartlar_html)}</div>', unsafe_allow_html=True)
     else:
         # === ESKİ DONUT GRAFİK (geçmiş maçlar sayfası) ===
         p1, t1, s1, pg, tg, sg, pk, tk, sk = gecmis_istatistik_hesapla()
@@ -3678,7 +3653,6 @@ elif st.session_state.sayfa == "backtest":
         else:
             st.markdown(f'<div class="fa-bt-grid">{"".join(kartlar)}</div>', unsafe_allow_html=True)
 
-        # Genel özet
         tum_dog = sum(sonuc[k]["dogru"] for k in sonuc)
         tum_yan = sum(sonuc[k]["yanlis"] for k in sonuc)
         tum_tt = tum_dog + tum_yan
