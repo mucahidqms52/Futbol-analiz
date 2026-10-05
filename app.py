@@ -1508,24 +1508,34 @@ def _mac_html_parse(html, url=""):
     return veri, okunamayanlar
 
 
-def _mac_tahmin_var_mi(v):
+# ==========================================
+# DEĞİŞİKLİK 1: Sadece eşiği geçen maçlar geleceğe
+# ==========================================
+def _mac_tahmin_var_mi(v, esikler=None):
     try:
+        if esikler is None:
+            try: esikler = st.session_state.esikler
+            except Exception: esikler = {}
+        def _e(k, d):
+            val = esikler.get(k) if isinstance(esikler, dict) else None
+            return val if val is not None else d
         a = analiz_hesapla(v)
         s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
-        if y1 >= esik_1x2_al(s1): return True
-        if a["ust_25"] >= esik_al("ust") and a["ust_25"] >= a["alt_25"]: return True
-        if a["alt_25"] >= esik_al("alt") and a["alt_25"] >= a["ust_25"]: return True
-        if a["kg_var_model"] >= esik_al("kg_var") and a["kg_var_model"] >= a["kg_yok_model"]: return True
-        if a["kg_yok_model"] >= esik_al("kg_yok") and a["kg_yok_model"] >= a["kg_var_model"]: return True
+        km = {"1": "esik_1", "X": "esik_x", "2": "esik_2"}
+        if y1 >= _e(km[s1], 55.0): return True
+        if a["ust_25"] >= _e("ust", 65.0) and a["ust_25"] >= a["alt_25"]: return True
+        if a["alt_25"] >= _e("alt", 55.0) and a["alt_25"] >= a["ust_25"]: return True
+        if a["kg_var_model"] >= _e("kg_var", 57.0) and a["kg_var_model"] >= a["kg_yok_model"]: return True
+        if a["kg_yok_model"] >= _e("kg_yok", 72.0) and a["kg_yok_model"] >= a["kg_var_model"]: return True
         return False
     except Exception:
         return False
 
 
 # ==========================================
-# DÜZELTİLDİ: Thread içinde session_state'e YAZMIYORUZ, kaydı döndürüyoruz
+# DEĞİŞİKLİK 2: Gelecek saatine +2 saat + eşik kontrolü
 # ==========================================
-def _gelecek_mac_isle(mac, mevcut_urls):
+def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
     try:
         veri, _ = mutating_mac_detay_cek(mac["url"])
         if not veri:
@@ -1533,17 +1543,23 @@ def _gelecek_mac_isle(mac, mevcut_urls):
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
         if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
+        # Gelecek maç saatine +2 saat ekle
+        if veri.get("saat"): veri["saat"] = saat_2_saat_ileri(veri["saat"])
         veri["kaynak_url"] = mac["url"]
         if mac["url"] in mevcut_urls:
             return ("atlandi", veri, "Zaten var", None)
-        if _mac_tahmin_var_mi(veri):
+        # Sadece eşiği geçen maçlar geleceğe
+        if _mac_tahmin_var_mi(veri, esikler):
             kayit = kayit_olustur(veri, analiz_hesapla(veri))
             return ("eklendi", veri, "Gelecek'e eklendi", kayit)
-        return ("atlandi", veri, "Tahmin yok", None)
+        return ("atlandi", veri, "Tahmin yok (eşik altı)", None)
     except Exception as e:
         return ("hata", mac, str(e), None)
 
 
+# ==========================================
+# DEĞİŞİKLİK 3: Eşikleri thread'lere aktar
+# ==========================================
 def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_workers=2):
     maclar, hatalar = mutating_ana_sayfa_linklerini_al(max_mac=max_mac)
     if hatalar: return [], hatalar
@@ -1554,12 +1570,16 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
         u = g.get("veri", {}).get("kaynak_url", "")
         if u: mevcut_urls.add(u)
 
+    # Eşikleri ana thread'de kopyala, thread'lere aktar (thread'de session_state güvenli değil)
+    try: esikler_kopya = dict(st.session_state.esikler)
+    except Exception: esikler_kopya = {}
+
     basarili = []; hatali = []
     eklenecekler = []
     eklenen = 0; atlanan = 0; tamamlanan = 0
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(_gelecek_mac_isle, m, mevcut_urls): m for m in maclar}
+        futures = {executor.submit(_gelecek_mac_isle, m, mevcut_urls, esikler_kopya): m for m in maclar}
         for fut in as_completed(futures):
             tamamlanan += 1
             mac = futures[fut]
