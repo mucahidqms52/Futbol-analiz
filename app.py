@@ -1697,15 +1697,18 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 # ==========================================
-# SKOR ÇEKME (SADECE FT SATIRININ ALTINDAKİ SKORU OKUR)
+# SKOR ÇEKME - SADECE FT ETİKETİNE BİTİŞİK SKORU OKUR
 # ==========================================
 def _skor_parse(html):
     """
-    SADECE 'FT' satırının hemen altındaki skoru okur.
-    Format:
-        FT
-        1 - 2
-    Başka hiçbir yerden skor çıkarmaz. Yoksa None döner (maç bitmemiş).
+    SADECE 'FT' etiketine bitişik skoru okur.
+    Farklı HTML yapılarını destekler:
+      - FT\n2 - 1       (alt satır)
+      - FT\n\n2 - 1      (boş satır arada)
+      - FT2 - 1          (span içinde birleşik)
+      - FT\t2 - 1       (tab)
+      - FT 2 - 1         (boşluk)
+    Bulamazsa None döner (maç bitmemiş).
     """
     if not html:
         return None
@@ -1718,12 +1721,15 @@ def _skor_parse(html):
         return None
 
     desenler = [
-        # FT satırı + altında skor satırı  (ana format)
-        r'(?:^|\n)[ \t]*FT[ \t]*\r?\n[ \t]*(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})[ \t]*(?=\r?\n|$)',
-        # FT \t skor   (tab ile ayrılmış)
-        r'(?:^|\n)[ \t]*FT[ \t]*\t[ \t]*(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})',
-        # FT boşluk skor  (nadir)
-        r'(?:^|\n)[ \t]*FT[ \t]+(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})[ \t]*(?=\r?\n|$)',
+        # 1) FT + skor aynı blokta (span/strong içinde olabilir, newline yok)
+        #    "FT2 - 1" gibi durumlar — sadece FT'den sonra doğrudan rakam
+        r'(?:^|\n)[ \t]*FT[ \t]*(?=\d)(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})(?!\d)',
+        # 2) FT satırı + 1-3 yeni satır (boş satır dahil) + skor
+        r'(?:^|\n)[ \t]*FT[ \t]*(?:\r?\n[ \t]*){1,3}(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})(?!\d)',
+        # 3) FT \t skor
+        r'(?:^|\n)[ \t]*FT[ \t]*\t+[ \t]*(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})(?!\d)',
+        # 4) FT boşluk skor (aynı satır)
+        r'(?:^|\n)[ \t]*FT[ \t]+(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})(?!\d)',
     ]
     for d in desenler:
         m = re.search(d, metin)
