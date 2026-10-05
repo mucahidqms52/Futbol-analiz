@@ -1697,22 +1697,76 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 # ==========================================
-# SKOR ÇEKME - SADECE FT ETİKETİNE BİTİŞİK SKORU OKUR
+# SKOR ÇEKME - ÇOK KATMANLI SKOR ÇIKARIMI
 # ==========================================
 def _skor_parse(html):
     """
-    SADECE 'FT' etiketine bitişik skoru okur.
-    Farklı HTML yapılarını destekler:
-      - FT\n2 - 1       (alt satır)
-      - FT\n\n2 - 1      (boş satır arada)
-      - FT2 - 1          (span içinde birleşik)
-      - FT\t2 - 1       (tab)
-      - FT 2 - 1         (boşluk)
-    Bulamazsa None döner (maç bitmemiş).
+    Çok katmanlı skor çıkarımı:
+    1) BeautifulSoup: 'FT' metnini taşıyan elementi bul, kardeşinden/üstünden skoru çıkar
+    2) Metin tabanlı: 'FT' token'inden ±150 karakter içinde skor ara
+    Skor bulunamazsa None döner (maç bitmemiş kabul edilir).
     """
     if not html:
         return None
 
+    def _ok(e, d):
+        return 0 <= e <= 15 and 0 <= d <= 15
+
+    # === 1) BeautifulSoup yaklaşımı ===
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        for tag in soup(["script", "style", "noscript"]):
+            tag.decompose()
+
+        ft_strings = [s for s in soup.find_all(string=True) if s.strip() == "FT"]
+
+        for ft_s in ft_strings:
+            el = ft_s.parent
+            if el is None:
+                continue
+
+            # a) Aynı element içinde: "FT 1 - 2"
+            ptxt = el.get_text(" ", strip=True)
+            for m in re.finditer(r'(?:^|\s)FT(?:\s+|$)\s*(\d{1,2})\s*[-:]\s*(\d{1,2})(?!\d)', ptxt):
+                e, d = int(m.group(1)), int(m.group(2))
+                if _ok(e, d):
+                    return e, d
+
+            # b) Sonraki kardeş elementlerde skor var mı?
+            sib = el.next_sibling
+            sayac = 0
+            while sib is not None and sayac < 6:
+                try:
+                    if hasattr(sib, 'get_text'):
+                        txt = sib.get_text(" ", strip=True)
+                    else:
+                        txt = str(sib).strip()
+                except Exception:
+                    txt = ""
+                m = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', txt)
+                if m:
+                    e, d = int(m.group(1)), int(m.group(2))
+                    if _ok(e, d):
+                        return e, d
+                sib = sib.next_sibling
+                sayac += 1
+
+            # c) Ebeveynde daha geniş arama (parent + grandparent)
+            for up_el in (el, el.parent, el.parent.parent if el.parent else None):
+                if up_el is None:
+                    continue
+                try:
+                    utxt = up_el.get_text(" ", strip=True)
+                except Exception:
+                    continue
+                for m in re.finditer(r'(?:^|\s)FT(?:\s+|$)\s*(\d{1,2})\s*[-:]\s*(\d{1,2})(?!\d)', utxt):
+                    e, d = int(m.group(1)), int(m.group(2))
+                    if _ok(e, d):
+                        return e, d
+    except Exception:
+        pass
+
+    # === 2) Metin tabanlı yaklaşım (fallback) ===
     try:
         metin = _html_metne_cevir(html)
     except Exception:
@@ -1720,26 +1774,22 @@ def _skor_parse(html):
     if not metin:
         return None
 
-    desenler = [
-        # 1) FT + skor aynı blokta (span/strong içinde olabilir, newline yok)
-        #    "FT2 - 1" gibi durumlar — sadece FT'den sonra doğrudan rakam
-        r'(?:^|\n)[ \t]*FT[ \t]*(?=\d)(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})(?!\d)',
-        # 2) FT satırı + 1-3 yeni satır (boş satır dahil) + skor
-        r'(?:^|\n)[ \t]*FT[ \t]*(?:\r?\n[ \t]*){1,3}(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})(?!\d)',
-        # 3) FT \t skor
-        r'(?:^|\n)[ \t]*FT[ \t]*\t+[ \t]*(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})(?!\d)',
-        # 4) FT boşluk skor (aynı satır)
-        r'(?:^|\n)[ \t]*FT[ \t]+(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})(?!\d)',
-    ]
-    for d in desenler:
-        m = re.search(d, metin)
-        if m:
-            e, d_ = int(m.group(1)), int(m.group(2))
-            # Futbol için gerçekçi üst sınır
-            if 0 <= e <= 15 and 0 <= d_ <= 15:
-                return e, d_
+    for m in re.finditer(r'(?<![A-Za-z0-9])FT(?![A-Za-z0-9])', metin):
+        # İleriye bak (150 karakter içinde skor)
+        seg = metin[m.end():m.end() + 150]
+        mm = re.search(r'(\d{1,2})\s*[-:]\s*(\d{1,2})(?!\d)', seg)
+        if mm:
+            e, d = int(mm.group(1)), int(mm.group(2))
+            if _ok(e, d):
+                return e, d
+        # Geriye bak (80 karakter öncesinde skor)
+        seg2 = metin[max(0, m.start() - 80):m.start()]
+        mm2 = re.search(r'(\d{1,2})\s*[-:]\s*(\d{1,2})\s*$', seg2)
+        if mm2:
+            e, d = int(mm2.group(1)), int(mm2.group(2))
+            if _ok(e, d):
+                return e, d
 
-    # FT satırı yoksa maç oynanmamıştır → skor yok
     return None
 
 
