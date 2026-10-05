@@ -402,6 +402,7 @@ def _init_db():
             cur.execute("CREATE TABLE IF NOT EXISTS bildirimler (id BIGINT PRIMARY KEY, veri JSONB NOT NULL)")
             cur.execute("CREATE TABLE IF NOT EXISTS gecmis (id SERIAL PRIMARY KEY, veri JSONB NOT NULL)")
             cur.execute("CREATE TABLE IF NOT EXISTS gelecek (id SERIAL PRIMARY KEY, veri JSONB NOT NULL)")
+            cur.execute("CREATE TABLE IF NOT EXISTS online_kullanicilar (session_id TEXT PRIMARY KEY, son_gorulme TIMESTAMP NOT NULL)")
             cur.execute("CREATE TABLE IF NOT EXISTS ayarlar (id INT PRIMARY KEY DEFAULT 1, veri JSONB NOT NULL, CONSTRAINT ayarlar_tek_satir CHECK (id = 1))")
         conn.commit()
     finally:
@@ -414,6 +415,23 @@ try:
 except Exception as _db_hata:
     st.error(f"❌ Veritabanı bağlantı hatası: {_db_hata}")
     st.stop()
+
+# Online kullanıcı takibi
+if "_session_id" not in st.session_state:
+    st.session_state._session_id = _secrets.token_hex(16)
+try:
+    online_heartbeat(st.session_state._session_id)
+    _ONLINE_SAYI = online_say()
+except Exception:
+    _ONLINE_SAYI = 0
+
+
+# 🟢 ONLINE göstergesi (sayfanın en üstü)
+st.markdown(f'''<div style="text-align:center; margin:0 0 10px 0;">
+<span style="display:inline-block; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.5); border-radius:99px; padding:4px 14px; font-size:0.75rem; font-weight:800; color:#22c55e; letter-spacing:0.5px;">
+🟢 {_ONLINE_SAYI} KİŞİ ONLINE
+</span>
+</div>''', unsafe_allow_html=True)
 
 
 def kullanicilar_yukle():
@@ -558,6 +576,32 @@ def ayarlar_kaydet(v):
         with conn.cursor() as cur:
             cur.execute("INSERT INTO ayarlar (id, veri) VALUES (1, %s) ON CONFLICT (id) DO UPDATE SET veri = EXCLUDED.veri", (Json(v),))
         conn.commit()
+    finally:
+        conn.close()
+
+
+def online_heartbeat(session_id):
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO online_kullanicilar (session_id, son_gorulme) VALUES (%s, NOW()) "
+                "ON CONFLICT (session_id) DO UPDATE SET son_gorulme = NOW()",
+                (session_id,)
+            )
+            cur.execute("DELETE FROM online_kullanicilar WHERE son_gorulme < NOW() - INTERVAL '2 minutes'")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def online_say():
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM online_kullanicilar WHERE son_gorulme > NOW() - INTERVAL '2 minutes'")
+            row = cur.fetchone()
+            return row[0] if row else 0
     finally:
         conn.close()
 
@@ -2573,7 +2617,21 @@ def nav_bar():
     except TypeError: kutu = st.container()
     with kutu:
         if admin_mi():
-            sec = [("🏠 Ana Sayfa", "giris"), ("🔮 Gelecek", "gelecek_admin"), ("📊 Geçmiş", "gecmis"), ("🔬 Test", "backtest"), ("💳 Ödemeler", "admin_odemeler"), ("👥 Aboneler", "admin_aboneler"), ("📬 Bildirimler", "admin_bildirimler"), ("⚙️ Ayar", "ayarlar")]
+            try:
+                bk_list = bekleyen_yukle()
+                odeme_say = len(bk_list)
+            except Exception:
+                odeme_say = 0
+            try:
+                bd_list = bildirimler_yukle()
+                bildirim_say = sum(1 for b in bd_list if b.get("durum") == "okunmadi")
+            except Exception:
+                bildirim_say = 0
+
+            odeme_et = f"💳 Ödemeler ({odeme_say})" if odeme_say > 0 else "💳 Ödemeler"
+            bildirim_et = f"📬 Bildirimler ({bildirim_say})" if bildirim_say > 0 else "📬 Bildirimler"
+
+            sec = [("🏠 Ana Sayfa", "giris"), ("🔮 Gelecek", "gelecek_admin"), ("📊 Geçmiş", "gecmis"), ("🔬 Test", "backtest"), (odeme_et, "admin_odemeler"), ("👥 Aboneler", "admin_aboneler"), (bildirim_et, "admin_bildirimler"), ("⚙️ Ayar", "ayarlar")]
         elif uye_mi():
             sec = [("🏠 Ana Sayfa", "giris"), ("📊 Geçmiş Maçlar", "gecmis"), ("📬 Bildirim", "kullanici_bildirim")]
         else:
