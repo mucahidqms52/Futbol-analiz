@@ -198,10 +198,33 @@ _tarayici_kur()
 
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <style>
     html { font-size: 13px !important; }
     body, .stApp { font-size: 0.85rem !important; }
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
+    /* === İKON FONTUNU GERİ GETİR (Material Symbols override) === */
+    span[data-testid="stIconMaterial"],
+    [data-testid="stIconMaterial"],
+    [data-testid="stIconMaterial"] span,
+    .stApp .material-symbols-rounded,
+    .stApp .material-symbols-outlined,
+    .stApp .material-icons,
+    .stApp [class*="material-symbols"],
+    .stApp [class*="material-icons"] {
+        font-family: "Material Symbols Rounded", "Material Symbols Outlined", "Material Icons" !important;
+        font-weight: normal !important;
+        font-style: normal !important;
+        letter-spacing: normal !important;
+        text-transform: none !important;
+        white-space: nowrap !important;
+        word-wrap: normal !important;
+        direction: ltr !important;
+        -webkit-font-feature-settings: 'liga' !important;
+        font-feature-settings: 'liga' !important;
+        -webkit-font-smoothing: antialiased !important;
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
+    }
     h1, h2, h3, h4, .fa-score, .fa-big, .mh-stat-num, .login-title, .mh-hero-title { font-family: 'Rajdhani', 'Inter', sans-serif !important; letter-spacing: 0.4px; }
     .block-container { padding-top: 0.8rem !important; padding-bottom: 0.8rem !important; padding-left: 0.8rem !important; padding-right: 0.8rem !important; max-width: 100% !important; }
     :root { --bg-0: #060a14; --bg-1: #0b1220; --card: #131c2e; --border: #1f2c44; --text: #eaf1fb; --muted: #7f92b3; --green: #22c55e; --blue: #3b82f6; --yellow: #f59e0b; --red: #ef4444; }
@@ -237,11 +260,36 @@ st.markdown("""
     div[data-testid="stExpander"] details > div[role="region"] { padding: 0.4rem 0.8rem 0.8rem 0.8rem !important; font-size: 0.82rem !important; }
     div[data-testid="stAlert"] { padding: 0.4rem 0.7rem !important; font-size: 0.8rem !important; border-radius: 10px !important; }
     div[data-testid="stFileUploader"] section { background: var(--card) !important; border: 1.5px dashed var(--border) !important; border-radius: 12px !important; }
-    .st-key-fa_nav div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.3rem !important; }
-    .st-key-fa_nav div[data-testid="stColumn"], .st-key-fa_nav div[data-testid="column"] { min-width: 0 !important; flex: 1 1 0 !important; width: auto !important; }
+    .st-key-fa_nav div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.3rem !important; overflow: visible !important; }
+    .st-key-fa_nav div[data-testid="stColumn"], .st-key-fa_nav div[data-testid="column"] { min-width: 0 !important; flex: 1 1 0 !important; width: auto !important; position: relative !important; overflow: visible !important; }
     .st-key-fa_nav .stButton button { padding: 0.3rem 0.25rem !important; height: 2.1rem !important; background: rgba(19,28,46,0.6) !important; backdrop-filter: blur(8px); border: 1px solid var(--border) !important; }
     .st-key-fa_nav .stButton button p { font-size: 0.72rem !important; white-space: nowrap; font-weight: 700 !important; }
     .st-key-fa_nav .stButton button[kind="primary"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; box-shadow: 0 4px 16px rgba(34,197,94,0.4) !important; }
+    /* === NAV BADGE (kırmızı bildirim noktası) === */
+    .fa-nav-badge-wrap { position: relative; height: 0; margin: 0; padding: 0; overflow: visible; }
+    .fa-nav-badge {
+        position: absolute;
+        top: -34px;
+        right: -6px;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: #fff !important;
+        font-size: 0.62rem !important;
+        font-weight: 900 !important;
+        padding: 2px 7px;
+        border-radius: 99px;
+        min-width: 20px;
+        text-align: center;
+        z-index: 99999;
+        box-shadow: 0 2px 10px rgba(239,68,68,0.7);
+        border: 1.5px solid rgba(255,255,255,0.35);
+        line-height: 1.35;
+        pointer-events: none;
+        animation: badgePulse 1.8s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 2px 10px rgba(239,68,68,0.7); }
+        50% { transform: scale(1.12); box-shadow: 0 2px 16px rgba(239,68,68,1); }
+    }
     .stApp .fa-hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #14243e 0%, #0d1729 100%); border: 1px solid var(--border); border-radius: 16px; padding: 14px 12px; margin: 6px 0 10px 0; text-align: center; box-shadow: 0 10px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(34,197,94,0.05) inset; }
     .stApp .fa-hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 0%, rgba(34,197,94,0.15), transparent 60%); pointer-events: none; }
     .stApp .fa-teams { display: flex; align-items: center; justify-content: space-between; gap: 6px; position: relative; z-index: 1; }
@@ -689,6 +737,25 @@ def kullanici_sil(kullanici_adi):
         bildirimler_kaydet(bd)
         return True
     return False
+
+
+def yeni_kayit_say(saat=24):
+    """Son X saat içinde kayıt olan kullanıcı sayısı."""
+    try:
+        kl = kullanicilar_yukle()
+        simdi = datetime.now()
+        count = 0
+        for k, kd in kl.items():
+            kt = kd.get("kayit_tarihi", "")
+            try:
+                kayit = datetime.strptime(kt, "%Y-%m-%d %H:%M")
+                if (simdi - kayit).total_seconds() < saat * 3600:
+                    count += 1
+            except Exception:
+                pass
+        return count
+    except Exception:
+        return 0
 
 
 BILDIRIM_TIPLERI = {
@@ -2616,10 +2683,10 @@ def nav_bar():
     try: kutu = st.container(key="fa_nav")
     except TypeError: kutu = st.container()
     with kutu:
+        badge_map = {}
         if admin_mi():
             try:
-                bk_list = bekleyen_yukle()
-                odeme_say = len(bk_list)
+                odeme_say = len(bekleyen_yukle())
             except Exception:
                 odeme_say = 0
             try:
@@ -2627,11 +2694,18 @@ def nav_bar():
                 bildirim_say = sum(1 for b in bd_list if b.get("durum") == "okunmadi")
             except Exception:
                 bildirim_say = 0
+            try:
+                abone_say = yeni_kayit_say(24)
+            except Exception:
+                abone_say = 0
 
-            odeme_et = f"💳 Ödemeler ({odeme_say})" if odeme_say > 0 else "💳 Ödemeler"
-            bildirim_et = f"📬 Bildirimler ({bildirim_say})" if bildirim_say > 0 else "📬 Bildirimler"
+            badge_map = {
+                "admin_odemeler": odeme_say,
+                "admin_bildirimler": bildirim_say,
+                "admin_aboneler": abone_say,
+            }
 
-            sec = [("🏠 Ana Sayfa", "giris"), ("🔮 Gelecek", "gelecek_admin"), ("📊 Geçmiş", "gecmis"), ("🔬 Test", "backtest"), (odeme_et, "admin_odemeler"), ("👥 Aboneler", "admin_aboneler"), (bildirim_et, "admin_bildirimler"), ("⚙️ Ayar", "ayarlar")]
+            sec = [("🏠 Ana Sayfa", "giris"), ("🔮 Gelecek", "gelecek_admin"), ("📊 Geçmiş", "gecmis"), ("🔬 Test", "backtest"), ("💳 Ödemeler", "admin_odemeler"), ("👥 Aboneler", "admin_aboneler"), ("📬 Bildirimler", "admin_bildirimler"), ("⚙️ Ayar", "ayarlar")]
         elif uye_mi():
             sec = [("🏠 Ana Sayfa", "giris"), ("📊 Geçmiş Maçlar", "gecmis"), ("📬 Bildirim", "kullanici_bildirim")]
         else:
@@ -2642,6 +2716,15 @@ def nav_bar():
                 aktif = st.session_state.sayfa == h
                 if st.button(e, key=f"nav_{h}", use_container_width=True, type="primary" if aktif else "secondary"):
                     if not aktif: nav_git(h)
+                cnt = int(badge_map.get(h, 0) or 0)
+                if cnt > 0:
+                    goster = str(cnt) if cnt < 100 else "99+"
+                    st.markdown(
+                        f'<div class="fa-nav-badge-wrap">'
+                        f'<div class="fa-nav-badge">{goster}</div>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
 
 
 if st.session_state.admin_login_acik and not admin_mi():
