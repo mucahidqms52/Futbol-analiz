@@ -1508,9 +1508,6 @@ def _mac_html_parse(html, url=""):
     return veri, okunamayanlar
 
 
-# ==========================================
-# DEĞİŞİKLİK 1: Sadece eşiği geçen maçlar geleceğe
-# ==========================================
 def _mac_tahmin_var_mi(v, esikler=None):
     try:
         if esikler is None:
@@ -1532,9 +1529,6 @@ def _mac_tahmin_var_mi(v, esikler=None):
         return False
 
 
-# ==========================================
-# DEĞİŞİKLİK 2: Gelecek saatine +2 saat + eşik kontrolü
-# ==========================================
 def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
     try:
         veri, _ = mutating_mac_detay_cek(mac["url"])
@@ -1557,9 +1551,6 @@ def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
         return ("hata", mac, str(e), None)
 
 
-# ==========================================
-# DEĞİŞİKLİK 3: Eşikleri thread'lere aktar
-# ==========================================
 def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_workers=2):
     maclar, hatalar = mutating_ana_sayfa_linklerini_al(max_mac=max_mac)
     if hatalar: return [], hatalar
@@ -1637,9 +1628,6 @@ def _lig_son_mac_linklerini_al(lig_url, adet=10):
     return maclar, []
 
 
-# ==========================================
-# DÜZELTİLDİ: Thread içinde session_state'e YAZMIYORUZ, kaydı döndürüyoruz
-# ==========================================
 def _gecmis_mac_isle(mac, mevcut_urls):
     try:
         if mac["url"] in mevcut_urls:
@@ -1709,71 +1697,43 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 # ==========================================
-# SKOR ÇEKME (5 KADEMELİ PARSER — GÜNCELLENDİ)
+# SKOR ÇEKME (SADECE FT SATIRININ ALTINDAKİ SKORU OKUR)
 # ==========================================
 def _skor_parse(html):
+    """
+    SADECE 'FT' satırının hemen altındaki skoru okur.
+    Format:
+        FT
+        1 - 2
+    Başka hiçbir yerden skor çıkarmaz. Yoksa None döner (maç bitmemiş).
+    """
     if not html:
         return None
 
     try:
-        m = re.search(r'FT\b[^\d]{0,200}?(\d{1,2})\s*[-:]\s*(\d{1,2})', html, re.IGNORECASE)
+        metin = _html_metne_cevir(html)
+    except Exception:
+        return None
+    if not metin:
+        return None
+
+    desenler = [
+        # FT satırı + altında skor satırı  (ana format)
+        r'(?:^|\n)[ \t]*FT[ \t]*\r?\n[ \t]*(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})[ \t]*(?=\r?\n|$)',
+        # FT \t skor   (tab ile ayrılmış)
+        r'(?:^|\n)[ \t]*FT[ \t]*\t[ \t]*(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})',
+        # FT boşluk skor  (nadir)
+        r'(?:^|\n)[ \t]*FT[ \t]+(\d{1,2})[ \t]*[-:][ \t]*(\d{1,2})[ \t]*(?=\r?\n|$)',
+    ]
+    for d in desenler:
+        m = re.search(d, metin)
         if m:
-            e, d = int(m.group(1)), int(m.group(2))
-            if 0 <= e <= 20 and 0 <= d <= 20:
-                return e, d
-    except Exception:
-        pass
+            e, d_ = int(m.group(1)), int(m.group(2))
+            # Futbol için gerçekçi üst sınır
+            if 0 <= e <= 15 and 0 <= d_ <= 15:
+                return e, d_
 
-    metin = _html_metne_cevir(html)
-    try:
-        m = re.search(r'FT\b[^\d]{0,200}?(\d{1,2})\s*[-:]\s*(\d{1,2})', metin, re.IGNORECASE)
-        if m:
-            e, d = int(m.group(1)), int(m.group(2))
-            if 0 <= e <= 20 and 0 <= d <= 20:
-                return e, d
-    except Exception:
-        pass
-
-    up = metin.upper()
-    idx = up.find("FT")
-    while idx >= 0:
-        seg = metin[idx:idx + 200]
-        for pat in [r'(\d{1,2})\s*[-:]\s*(\d{1,2})', r'\b(\d{1,2})\s+(\d{1,2})\b']:
-            try:
-                m = re.search(pat, seg)
-                if m:
-                    e, d = int(m.group(1)), int(m.group(2))
-                    if 0 <= e <= 20 and 0 <= d <= 20 and (e + d) > 0:
-                        return e, d
-            except Exception:
-                continue
-        idx = up.find("FT", idx + 1)
-
-    idx = up.find("HT")
-    while idx >= 0:
-        seg = metin[idx:idx + 200]
-        try:
-            m = re.search(r'(\d{1,2})\s*[-:]\s*(\d{1,2})', seg)
-            if m:
-                e, d = int(m.group(1)), int(m.group(2))
-                if 0 <= e <= 20 and 0 <= d <= 20:
-                    return e, d
-        except Exception:
-            pass
-        idx = up.find("HT", idx + 1)
-
-    try:
-        soup = BeautifulSoup(html, "html.parser")
-        for el in soup.find_all(class_=re.compile(r'(score|result)', re.I)):
-            t = el.get_text(" ", strip=True)
-            m = re.match(r'^\s*(\d{1,2})\s*[-:]\s*(\d{1,2})\s*$', t)
-            if m:
-                e, d = int(m.group(1)), int(m.group(2))
-                if 0 <= e <= 20 and 0 <= d <= 20:
-                    return e, d
-    except Exception:
-        pass
-
+    # FT satırı yoksa maç oynanmamıştır → skor yok
     return None
 
 
