@@ -5,4 +5,3 @@ playwright
 lxml
 bcrypt
 psycopg2-binary
-playwright==1.49.0
