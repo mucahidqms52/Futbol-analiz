@@ -290,7 +290,7 @@ st.markdown("""
         0%, 100% { transform: scale(1); box-shadow: 0 2px 10px rgba(239,68,68,0.7); }
         50% { transform: scale(1.12); box-shadow: 0 2px 16px rgba(239,68,68,1); }
     }
-    /* === MODERN ÇİZGİ GRAFİK KARTLARI (ana sayfa) === */
+    /* === MODERN ÇİZGİ GRAFİK KARTLARI (fallback) === */
     .stApp .fa-line-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 16px 0 8px 0; }
     .stApp .fa-line-kart { background: linear-gradient(145deg, rgba(19,28,46,0.9), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 16px; padding: 12px 14px 8px 14px; position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.25); transition: all 0.3s ease; animation: fadeInUp 0.4s ease-out; }
     .stApp .fa-line-kart:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-2px); box-shadow: 0 10px 28px rgba(34,197,94,0.12); }
@@ -303,6 +303,22 @@ st.markdown("""
     .stApp .fa-line-sub { font-size: 0.62rem; color: #64748b !important; margin-top: 4px; font-weight: 700; letter-spacing: 0.3px; display: flex; justify-content: space-between; }
     .stApp .fa-line-sub b { color: #eaf1fb !important; }
     .stApp .fa-line-sub .fa-line-x { color: #8fa0bd !important; font-weight: 700; }
+    /* === EXCEL TARZI COMBO CHART (ana sayfa) === */
+    .stApp .fa-combo-kart { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 16px; padding: 12px 14px 8px 14px; margin-bottom: 12px; position: relative; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.3); animation: fadeInUp 0.4s ease-out; }
+    .stApp .fa-combo-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--c), transparent 70%); }
+    .stApp .fa-combo-ust { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
+    .stApp .fa-combo-sol { display: flex; align-items: baseline; gap: 8px; }
+    .stApp .fa-combo-lbl { font-size: 0.7rem; font-weight: 900; color: #8fa0bd !important; letter-spacing: 0.6px; text-transform: uppercase; }
+    .stApp .fa-combo-pct { font-size: 1.7rem; font-weight: 900; color: var(--c) !important; letter-spacing: -0.8px; line-height: 1; text-shadow: 0 0 22px var(--c); }
+    .stApp .fa-combo-stats { display: flex; gap: 6px; }
+    .stApp .fa-combo-stat-box { text-align: center; padding: 4px 9px; border-radius: 10px; min-width: 46px; }
+    .stApp .fa-dog-box { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.4); }
+    .stApp .fa-yan-box { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); }
+    .stApp .fa-combo-stat-num { font-size: 1rem; font-weight: 900; line-height: 1; letter-spacing: -0.3px; }
+    .stApp .fa-dog-num { color: #22c55e !important; }
+    .stApp .fa-yan-num { color: #ef4444 !important; }
+    .stApp .fa-combo-stat-lbl { font-size: 0.55rem; font-weight: 800; color: #8fa0bd !important; letter-spacing: 0.5px; margin-top: 2px; }
+    .stApp .fa-combo-chart { margin-top: 4px; margin-bottom: -4px; }
     /* === ESKİ DONUT GRAFİK KARTLARI (geçmiş maçlar) === */
     .stApp .fa-donut-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0 8px 0; }
     .stApp .fa-donut-kart { background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95)); border: 1px solid #1d2940; border-radius: 16px; padding: 12px 6px 10px 6px; text-align: center; position: relative; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
@@ -2115,6 +2131,69 @@ def _sparkline_svg(degerler, renk, yukseklik=62, genislik=300):
 </svg>'''
 
 
+def _combo_chart_svg(dogru_dizi, genislik=320, yukseklik=150):
+    """Bar (doğru=yeşil uzun, yanlış=kırmızı kısa) + kümülatif başarı çizgisi (turuncu)."""
+    n = len(dogru_dizi)
+    if n == 0:
+        return f'<svg viewBox="0 0 {genislik} {yukseklik}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;"><text x="50%" y="50%" text-anchor="middle" fill="#64748b" font-size="10">Yetersiz veri</text></svg>'
+
+    pad_l = 6; pad_r = 6; pad_t = 8; pad_b = 18
+    ic_g = genislik - pad_l - pad_r
+    ic_y = yukseklik - pad_t - pad_b
+
+    kum = []
+    d_top = 0
+    for i, d in enumerate(dogru_dizi):
+        d_top += d
+        kum.append(d_top / (i + 1) * 100)
+
+    adim = ic_g / n
+    bar_g = max(2, adim * 0.65)
+
+    parts = [f'<svg viewBox="0 0 {genislik} {yukseklik}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">']
+
+    for yuzde in [0, 50, 100]:
+        y = pad_t + (1 - yuzde / 100) * ic_y
+        parts.append(f'<line x1="{pad_l}" y1="{y:.1f}" x2="{genislik - pad_r}" y2="{y:.1f}" stroke="#1d2940" stroke-width="0.6" stroke-dasharray="2 3"/>')
+
+    for i, d in enumerate(dogru_dizi):
+        x = pad_l + i * adim + (adim - bar_g) / 2
+        h = ic_y if d == 1 else ic_y * 0.35
+        y = pad_t + ic_y - h
+        renk = "#22c55e" if d == 1 else "#ef4444"
+        op = "0.85" if d == 1 else "0.6"
+        parts.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_g:.1f}" height="{h:.1f}" fill="{renk}" opacity="{op}" rx="1.5"/>')
+
+    noktalar = []
+    for i, k in enumerate(kum):
+        x = pad_l + i * adim + adim / 2
+        y = pad_t + (1 - k / 100) * ic_y
+        noktalar.append((x, y))
+
+    if len(noktalar) >= 2:
+        path_d = f"M {noktalar[0][0]:.1f} {noktalar[0][1]:.1f}"
+        for i in range(1, len(noktalar)):
+            x0, y0 = noktalar[i - 1]; x1, y1 = noktalar[i]
+            cx = (x0 + x1) / 2
+            path_d += f" C {cx:.1f} {y0:.1f}, {cx:.1f} {y1:.1f}, {x1:.1f} {y1:.1f}"
+        parts.append(f'<path d="{path_d}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>')
+        son_x, son_y = noktalar[-1]
+        parts.append(f'<circle cx="{son_x:.1f}" cy="{son_y:.1f}" r="3" fill="#f59e0b" stroke="#0b1220" stroke-width="1.5"/>')
+
+    y_lbl = yukseklik - 4
+    parts.append(f'<text x="{pad_l + adim/2:.1f}" y="{y_lbl}" fill="#64748b" font-size="7" font-weight="700" text-anchor="middle">1</text>')
+    if n >= 3:
+        mid = n // 2
+        x_mid = pad_l + mid * adim + adim / 2
+        parts.append(f'<text x="{x_mid:.1f}" y="{y_lbl}" fill="#64748b" font-size="7" font-weight="700" text-anchor="middle">{mid+1}</text>')
+    if n >= 2:
+        x_son = pad_l + (n - 1) * adim + adim / 2
+        parts.append(f'<text x="{x_son:.1f}" y="{y_lbl}" fill="#64748b" font-size="7" font-weight="700" text-anchor="middle">{n}</text>')
+
+    parts.append('</svg>')
+    return "".join(parts)
+
+
 def mac_karti(ev, dep, sb, se, sd, le, ld, saat="", ulke="", tarih=""):
     orta = f'<div class="fa-score">{int(se)} - {int(sd)}</div>' if sb else '<div class="fa-vs">VS</div>'
     br = ulke_bayrak_bul(ulke); ust = ""
@@ -2677,6 +2756,30 @@ def _modern_seri_hesapla(gc, son_n=30):
     return seri_1x2, seri_gol, seri_kg, (d_1x2, t_1x2), (d_gol, t_gol), (d_kg, t_kg)
 
 
+def _modern_seri_v2(gc, son_n=20):
+    """Son N maç için her marketin doğru(1)/yanlış(0) dizisini döner."""
+    d_1x2 = []; d_gol = []; d_kg = []
+    for g in gc:
+        try:
+            vv = g.get("veri", {})
+            if not vv.get("skor_belli", False): continue
+            dd = sonuc_hesapla(g)
+            if not dd: continue
+            o = dd.get("oneri_1x2", {})
+            if o.get("tuttu") is not None: d_1x2.append(1 if o["tuttu"] else 0)
+            o = dd.get("oneri_gol", {})
+            if o.get("tuttu") is not None: d_gol.append(1 if o["tuttu"] else 0)
+            o = dd.get("oneri_kg", {})
+            if o.get("tuttu") is not None: d_kg.append(1 if o["tuttu"] else 0)
+        except Exception:
+            continue
+    d_1x2 = d_1x2[-son_n:]
+    d_gol = d_gol[-son_n:]
+    d_kg = d_kg[-son_n:]
+    def _y(d): return (sum(d) / len(d) * 100) if d else 0
+    return {"1x2": (d_1x2, _y(d_1x2)), "gol": (d_gol, _y(d_gol)), "kg": (d_kg, _y(d_kg))}
+
+
 def _trend_ok(seri):
     if len(seri) < 2: return ''
     son = seri[-1]; onceki = seri[-2]
@@ -2687,36 +2790,31 @@ def _trend_ok(seri):
 
 def modern_istatistik_grafik(baslik="📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="donut"):
     if stil == "line":
-        # === YENİ ÇİZGİ GRAFİK (sadece ana sayfa) ===
+        # === EXCEL TARZI COMBO CHART (ana sayfa) ===
         gc = st.session_state.gecmis_analizler
-        seri_1x2, seri_gol, seri_kg, ist_1x2, ist_gol, ist_kg = _modern_seri_hesapla(gc, son_n=30)
-        p1 = seri_1x2[-1] if seri_1x2 else 0
-        pg = seri_gol[-1] if seri_gol else 0
-        pk = seri_kg[-1] if seri_kg else 0
-        d1, t1 = ist_1x2; dg, tg = ist_gol; dk, tk = ist_kg
-        n1 = len(seri_1x2); ng = len(seri_gol); nk = len(seri_kg)
-
-        spark_1x2 = _sparkline_svg(seri_1x2, "#22c55e")
-        spark_gol = _sparkline_svg(seri_gol, "#3b82f6")
-        spark_kg = _sparkline_svg(seri_kg, "#f59e0b")
+        veri = _modern_seri_v2(gc, son_n=20)
 
         st.markdown(f'<div class="mh-hero-ust" style="text-align:center;margin-top:14px;">{_e(baslik)}</div>', unsafe_allow_html=True)
-        st.markdown(f'''<div class="fa-line-grid">
-<div class="fa-line-kart" style="--c:#22c55e;">
-<div class="fa-line-ust"><span class="fa-line-lbl">🎯 1X2</span><span class="fa-line-pct">%{p1:.0f} {_trend_ok(seri_1x2)}</span></div>
-{spark_1x2}
-<div class="fa-line-sub"><span><b>{d1}</b> / {t1} doğru</span><span class="fa-line-x">Son {n1} maç</span></div>
+
+        for etiket, anahtar, renk in [("🎯 1X2", "1x2", "#22c55e"), ("⚽ GOL", "gol", "#3b82f6"), ("🤝 KG", "kg", "#f59e0b")]:
+            dizi, yuz = veri[anahtar]
+            if not dizi:
+                continue
+            dog = sum(dizi)
+            yan = len(dizi) - dog
+            svg = _combo_chart_svg(dizi)
+            st.markdown(f'''<div class="fa-combo-kart" style="--c:{renk};">
+<div class="fa-combo-ust">
+<div class="fa-combo-sol">
+<div class="fa-combo-lbl">{etiket}</div>
+<div class="fa-combo-pct">%{yuz:.0f}</div>
 </div>
-<div class="fa-line-kart" style="--c:#3b82f6;">
-<div class="fa-line-ust"><span class="fa-line-lbl">⚽ GOL</span><span class="fa-line-pct">%{pg:.0f} {_trend_ok(seri_gol)}</span></div>
-{spark_gol}
-<div class="fa-line-sub"><span><b>{dg}</b> / {tg} doğru</span><span class="fa-line-x">Son {ng} maç</span></div>
+<div class="fa-combo-stats">
+<div class="fa-combo-stat-box fa-dog-box"><div class="fa-combo-stat-num fa-dog-num">{dog}</div><div class="fa-combo-stat-lbl">DOĞRU</div></div>
+<div class="fa-combo-stat-box fa-yan-box"><div class="fa-combo-stat-num fa-yan-num">{yan}</div><div class="fa-combo-stat-lbl">YANLIŞ</div></div>
 </div>
-<div class="fa-line-kart" style="--c:#f59e0b;">
-<div class="fa-line-ust"><span class="fa-line-lbl">🤝 KG</span><span class="fa-line-pct">%{pk:.0f} {_trend_ok(seri_kg)}</span></div>
-{spark_kg}
-<div class="fa-line-sub"><span><b>{dk}</b> / {tk} doğru</span><span class="fa-line-x">Son {nk} maç</span></div>
 </div>
+<div class="fa-combo-chart">{svg}</div>
 </div>''', unsafe_allow_html=True)
     else:
         # === ESKİ DONUT GRAFİK (geçmiş maçlar sayfası) ===
@@ -3549,7 +3647,6 @@ elif st.session_state.sayfa == "backtest":
         sonuc = st.session_state.bt_sonuc
         gecmis_len = len(st.session_state.gecmis_analizler)
 
-        # Üst özet
         st.markdown(f'''<div style="text-align:center;margin:10px 0 6px 0;">
 <span style="display:inline-block; background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.5); border-radius:99px; padding:4px 14px; font-size:0.72rem; font-weight:800; color:#3b82f6; letter-spacing:0.5px;">
 🔎 {gecmis_len} MAÇ ÜZERİNDE TEST EDİLDİ
