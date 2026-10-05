@@ -303,22 +303,18 @@ st.markdown("""
     .stApp .fa-line-sub { font-size: 0.62rem; color: #64748b !important; margin-top: 4px; font-weight: 700; letter-spacing: 0.3px; display: flex; justify-content: space-between; }
     .stApp .fa-line-sub b { color: #eaf1fb !important; }
     .stApp .fa-line-sub .fa-line-x { color: #8fa0bd !important; font-weight: 700; }
-    /* === EXCEL TARZI COMBO CHART (ana sayfa) === */
-    .stApp .fa-combo-kart { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 16px; padding: 12px 14px 8px 14px; margin-bottom: 12px; position: relative; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.3); animation: fadeInUp 0.4s ease-out; }
-    .stApp .fa-combo-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--c), transparent 70%); }
-    .stApp .fa-combo-ust { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; }
-    .stApp .fa-combo-sol { display: flex; align-items: baseline; gap: 8px; }
-    .stApp .fa-combo-lbl { font-size: 0.7rem; font-weight: 900; color: #8fa0bd !important; letter-spacing: 0.6px; text-transform: uppercase; }
-    .stApp .fa-combo-pct { font-size: 1.7rem; font-weight: 900; color: var(--c) !important; letter-spacing: -0.8px; line-height: 1; text-shadow: 0 0 22px var(--c); }
-    .stApp .fa-combo-stats { display: flex; gap: 6px; }
-    .stApp .fa-combo-stat-box { text-align: center; padding: 4px 9px; border-radius: 10px; min-width: 46px; }
-    .stApp .fa-dog-box { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.4); }
-    .stApp .fa-yan-box { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.4); }
-    .stApp .fa-combo-stat-num { font-size: 1rem; font-weight: 900; line-height: 1; letter-spacing: -0.3px; }
-    .stApp .fa-dog-num { color: #22c55e !important; }
-    .stApp .fa-yan-num { color: #ef4444 !important; }
-    .stApp .fa-combo-stat-lbl { font-size: 0.55rem; font-weight: 800; color: #8fa0bd !important; letter-spacing: 0.5px; margin-top: 2px; }
-    .stApp .fa-combo-chart { margin-top: 4px; margin-bottom: -4px; }
+    /* === KÜÇÜK PIN GRAFİK KARTLARI (ana sayfa) === */
+    .stApp .fa-pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 6px 0; }
+    .stApp .fa-pin-kart { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 12px; padding: 7px 5px 5px 5px; position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.3); animation: fadeInUp 0.4s ease-out; transition: all 0.25s ease; }
+    .stApp .fa-pin-kart:hover { border-color: var(--c); transform: translateY(-2px); }
+    .stApp .fa-pin-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--c); }
+    .stApp .fa-pin-ust { display: flex; justify-content: space-between; align-items: center; padding: 0 2px; margin-bottom: 1px; }
+    .stApp .fa-pin-lbl { font-size: 0.55rem; font-weight: 900; color: #8fa0bd !important; letter-spacing: 0.4px; text-transform: uppercase; }
+    .stApp .fa-pin-pct { font-size: 0.82rem; font-weight: 900; color: var(--c) !important; letter-spacing: -0.2px; text-shadow: 0 0 10px var(--c); line-height: 1; }
+    .stApp .fa-pin-svg-wrap { margin: 0; }
+    .stApp .fa-pin-alt { font-size: 0.52rem; font-weight: 800; color: #64748b !important; text-align: center; letter-spacing: 0.2px; margin-top: -2px; }
+    .stApp .fa-pin-alt .fa-dog-num { color: #22c55e !important; }
+    .stApp .fa-pin-alt .fa-yan-num { color: #ef4444 !important; }
     /* === ESKİ DONUT GRAFİK KARTLARI (geçmiş maçlar) === */
     .stApp .fa-donut-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0 8px 0; }
     .stApp .fa-donut-kart { background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95)); border: 1px solid #1d2940; border-radius: 16px; padding: 12px 6px 10px 6px; text-align: center; position: relative; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
@@ -2131,64 +2127,49 @@ def _sparkline_svg(degerler, renk, yukseklik=62, genislik=300):
 </svg>'''
 
 
-def _combo_chart_svg(dogru_dizi, genislik=320, yukseklik=150):
-    """Bar (doğru=yeşil uzun, yanlış=kırmızı kısa) + kümülatif başarı çizgisi (turuncu)."""
-    n = len(dogru_dizi)
-    if n == 0:
-        return f'<svg viewBox="0 0 {genislik} {yukseklik}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;"><text x="50%" y="50%" text-anchor="middle" fill="#64748b" font-size="10">Yetersiz veri</text></svg>'
+def _pin_chart_svg(degerler, renk, genislik=112, yukseklik=82):
+    """Küçük pin/lollipop chart — her nokta bir daire halka + dikey çubuk. Görseldeki tarz."""
+    if not degerler or len(degerler) < 2:
+        return f'<svg viewBox="0 0 {genislik} {yukseklik}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;"><text x="50%" y="50%" text-anchor="middle" fill="#64748b" font-size="8">Yetersiz veri</text></svg>'
 
-    pad_l = 6; pad_r = 6; pad_t = 8; pad_b = 18
+    n = len(degerler)
+    pad_l = 11
+    pad_r = 11
+    pad_t = 12
+    pad_b = 6
+
     ic_g = genislik - pad_l - pad_r
-    ic_y = yukseklik - pad_t - pad_b
+    ic_h = yukseklik - pad_t - pad_b
+    alt_y = pad_t + ic_h
 
-    kum = []
-    d_top = 0
-    for i, d in enumerate(dogru_dizi):
-        d_top += d
-        kum.append(d_top / (i + 1) * 100)
-
-    adim = ic_g / n
-    bar_g = max(2, adim * 0.65)
+    adim = ic_g / (n - 1) if n > 1 else ic_g
 
     parts = [f'<svg viewBox="0 0 {genislik} {yukseklik}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">']
 
-    for yuzde in [0, 50, 100]:
-        y = pad_t + (1 - yuzde / 100) * ic_y
-        parts.append(f'<line x1="{pad_l}" y1="{y:.1f}" x2="{genislik - pad_r}" y2="{y:.1f}" stroke="#1d2940" stroke-width="0.6" stroke-dasharray="2 3"/>')
+    # Yatay kılavuz çizgiler (0, 50, 100)
+    for yz in [0, 50, 100]:
+        gy = pad_t + (1 - yz / 100) * ic_h
+        parts.append(f'<line x1="{pad_l - 3}" y1="{gy:.1f}" x2="{genislik - pad_r + 3}" y2="{gy:.1f}" stroke="#1d2940" stroke-width="0.5" stroke-dasharray="2 3" opacity="0.55"/>')
 
-    for i, d in enumerate(dogru_dizi):
-        x = pad_l + i * adim + (adim - bar_g) / 2
-        h = ic_y if d == 1 else ic_y * 0.35
-        y = pad_t + ic_y - h
-        renk = "#22c55e" if d == 1 else "#ef4444"
-        op = "0.85" if d == 1 else "0.6"
-        parts.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_g:.1f}" height="{h:.1f}" fill="{renk}" opacity="{op}" rx="1.5"/>')
+    for i, v in enumerate(degerler):
+        v = max(0.0, min(100.0, v))
+        x = pad_l + i * adim
+        y = pad_t + (1 - v / 100) * ic_h
 
-    noktalar = []
-    for i, k in enumerate(kum):
-        x = pad_l + i * adim + adim / 2
-        y = pad_t + (1 - k / 100) * ic_y
-        noktalar.append((x, y))
+        # Dikey çubuk (pin gövdesi)
+        parts.append(f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x:.1f}" y2="{alt_y:.1f}" stroke="{renk}" stroke-width="3.5" stroke-linecap="round" opacity="0.5"/>')
 
-    if len(noktalar) >= 2:
-        path_d = f"M {noktalar[0][0]:.1f} {noktalar[0][1]:.1f}"
-        for i in range(1, len(noktalar)):
-            x0, y0 = noktalar[i - 1]; x1, y1 = noktalar[i]
-            cx = (x0 + x1) / 2
-            path_d += f" C {cx:.1f} {y0:.1f}, {cx:.1f} {y1:.1f}, {x1:.1f} {y1:.1f}"
-        parts.append(f'<path d="{path_d}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>')
-        son_x, son_y = noktalar[-1]
-        parts.append(f'<circle cx="{son_x:.1f}" cy="{son_y:.1f}" r="3" fill="#f59e0b" stroke="#0b1220" stroke-width="1.5"/>')
+        # Alt küçük nokta
+        parts.append(f'<circle cx="{x:.1f}" cy="{alt_y:.1f}" r="1.6" fill="{renk}" opacity="0.9"/>')
 
-    y_lbl = yukseklik - 4
-    parts.append(f'<text x="{pad_l + adim/2:.1f}" y="{y_lbl}" fill="#64748b" font-size="7" font-weight="700" text-anchor="middle">1</text>')
-    if n >= 3:
-        mid = n // 2
-        x_mid = pad_l + mid * adim + adim / 2
-        parts.append(f'<text x="{x_mid:.1f}" y="{y_lbl}" fill="#64748b" font-size="7" font-weight="700" text-anchor="middle">{mid+1}</text>')
-    if n >= 2:
-        x_son = pad_l + (n - 1) * adim + adim / 2
-        parts.append(f'<text x="{x_son:.1f}" y="{y_lbl}" fill="#64748b" font-size="7" font-weight="700" text-anchor="middle">{n}</text>')
+        # Üst halka (içi boş daire)
+        parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5.5" fill="#0b1220" stroke="{renk}" stroke-width="2.3"/>')
+
+        # İç küçük nokta
+        parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.4" fill="{renk}"/>')
+
+        # Üstte değer yazısı
+        parts.append(f'<text x="{x:.1f}" y="{y - 8:.1f}" text-anchor="middle" fill="{renk}" font-size="6.5" font-weight="900" font-family="Rajdhani, Inter, sans-serif">{int(round(v))}</text>')
 
     parts.append('</svg>')
     return "".join(parts)
@@ -2790,32 +2771,44 @@ def _trend_ok(seri):
 
 def modern_istatistik_grafik(baslik="📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="donut"):
     if stil == "line":
-        # === EXCEL TARZI COMBO CHART (ana sayfa) ===
+        # === KÜÇÜK PIN GRAFİK (ana sayfa) ===
         gc = st.session_state.gecmis_analizler
         veri = _modern_seri_v2(gc, son_n=20)
 
         st.markdown(f'<div class="mh-hero-ust" style="text-align:center;margin-top:14px;">{_e(baslik)}</div>', unsafe_allow_html=True)
 
-        for etiket, anahtar, renk in [("🎯 1X2", "1x2", "#22c55e"), ("⚽ GOL", "gol", "#3b82f6"), ("🤝 KG", "kg", "#f59e0b")]:
+        kartlar_html = []
+        for etiket, anahtar, renk in [("1X2", "1x2", "#22c55e"), ("GOL", "gol", "#3b82f6"), ("KG", "kg", "#f59e0b")]:
             dizi, yuz = veri[anahtar]
             if not dizi:
                 continue
-            dog = sum(dizi)
-            yan = len(dizi) - dog
-            svg = _combo_chart_svg(dizi)
-            st.markdown(f'''<div class="fa-combo-kart" style="--c:{renk};">
-<div class="fa-combo-ust">
-<div class="fa-combo-sol">
-<div class="fa-combo-lbl">{etiket}</div>
-<div class="fa-combo-pct">%{yuz:.0f}</div>
-</div>
-<div class="fa-combo-stats">
-<div class="fa-combo-stat-box fa-dog-box"><div class="fa-combo-stat-num fa-dog-num">{dog}</div><div class="fa-combo-stat-lbl">DOĞRU</div></div>
-<div class="fa-combo-stat-box fa-yan-box"><div class="fa-combo-stat-num fa-yan-num">{yan}</div><div class="fa-combo-stat-lbl">YANLIŞ</div></div>
-</div>
-</div>
-<div class="fa-combo-chart">{svg}</div>
-</div>''', unsafe_allow_html=True)
+
+            son6 = dizi[-6:]
+
+            # Her maçta kümülatif başarı yüzdesi (pin değerleri)
+            kum = []
+            d_top = 0
+            for i, d in enumerate(son6):
+                d_top += d
+                kum.append(d_top / (i + 1) * 100)
+
+            dog = sum(son6)
+            yan = len(son6) - dog
+
+            svg = _pin_chart_svg(kum, renk)
+
+            kartlar_html.append(
+                f'<div class="fa-pin-kart" style="--c:{renk};">'
+                f'<div class="fa-pin-ust">'
+                f'<span class="fa-pin-lbl">{etiket}</span>'
+                f'<span class="fa-pin-pct">%{yuz:.0f}</span>'
+                f'</div>'
+                f'<div class="fa-pin-svg-wrap">{svg}</div>'
+                f'<div class="fa-pin-alt"><span class="fa-dog-num">{dog}✓</span> · <span class="fa-yan-num">{yan}✗</span></div>'
+                f'</div>'
+            )
+
+        st.markdown(f'<div class="fa-pin-grid">{"".join(kartlar_html)}</div>', unsafe_allow_html=True)
     else:
         # === ESKİ DONUT GRAFİK (geçmiş maçlar sayfası) ===
         p1, t1, s1, pg, tg, sg, pk, tk, sk = gecmis_istatistik_hesapla()
