@@ -1701,10 +1701,14 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 # ==========================================
 def _skor_parse(html):
     """
-    Çok katmanlı skor çıkarımı:
-    1) BeautifulSoup: 'FT' metnini taşıyan elementi bul, kardeşinden/üstünden skoru çıkar
-    2) Metin tabanlı: 'FT' token'inden ±150 karakter içinde skor ara
-    Skor bulunamazsa None döner (maç bitmemiş kabul edilir).
+    FT etiketine bitişik skoru okur. Çok katmanlı arama:
+    1) 'FT' string'ini içeren TÜM elementleri bul, en derinden başlayarak:
+       - aynı element metni
+       - parent/grandparent metinleri
+       - next_elements (document order)
+       - parent'ın next_elements
+    2) Metin fallback
+    Bulamazsa None döner.
     """
     if not html:
         return None
@@ -1712,83 +1716,117 @@ def _skor_parse(html):
     def _ok(e, d):
         return 0 <= e <= 15 and 0 <= d <= 15
 
-    # === 1) BeautifulSoup yaklaşımı ===
+    def _find_in_text(txt):
+        if not txt:
+            return None
+        for m in re.finditer(r'(?<![A-Za-z0-9])FT(?![A-Za-z0-9])', txt):
+            seg = txt[m.end():m.end() + 300]
+            mm = re.search(r'(\d{1,2})\s*[-:]\s*(\d{1,2})(?!\d)', seg)
+            if mm:
+                e, d = int(mm.group(1)), int(mm.group(2))
+                if _ok(e, d):
+                    return e, d
+        return None
+
     try:
         soup = BeautifulSoup(html, "html.parser")
         for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
 
-        ft_strings = [s for s in soup.find_all(string=True) if s.strip() == "FT"]
-
-        for ft_s in ft_strings:
-            el = ft_s.parent
-            if el is None:
+        # 'FT' string'ini içeren elementler (kısa metinli olanlar — yani gerçek FT etiketi)
+        ft_elements = []
+        for el in soup.find_all(True):
+            try:
+                t = el.get_text(" ", strip=True)
+            except Exception:
                 continue
+            if "FT" in t and len(t) < 300:
+                ft_elements.append(el)
 
-            # a) Aynı element içinde: "FT 1 - 2"
-            ptxt = el.get_text(" ", strip=True)
-            for m in re.finditer(r'(?:^|\s)FT(?:\s+|$)\s*(\d{1,2})\s*[-:]\s*(\d{1,2})(?!\d)', ptxt):
-                e, d = int(m.group(1)), int(m.group(2))
-                if _ok(e, d):
-                    return e, d
+        # En derin (en kısa metinli) elementten başla
+        ft_elements.sort(key=lambda e: len(e.get_text(" ", strip=True)))
 
-            # b) Sonraki kardeş elementlerde skor var mı?
-            sib = el.next_sibling
-            sayac = 0
-            while sib is not None and sayac < 6:
+        for el in ft_elements:
+            # 1) Aynı element metni
+            r = _find_in_text(el.get_text(" ", strip=True))
+            if r: return r
+
+            # 2) Parent ve grandparent zinciri (4 seviye yukarı)
+            p = el.parent
+            for _ in range(4):
+                if p is None: break
                 try:
-                    if hasattr(sib, 'get_text'):
-                        txt = sib.get_text(" ", strip=True)
-                    else:
-                        txt = str(sib).strip()
+                    r = _find_in_text(p.get_text(" ", strip=True))
+                    if r: return r
                 except Exception:
-                    txt = ""
-                m = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', txt)
-                if m:
-                    e, d = int(m.group(1)), int(m.group(2))
-                    if _ok(e, d):
-                        return e, d
-                sib = sib.next_sibling
-                sayac += 1
+                    pass
+                p = p.parent
 
-            # c) Ebeveynde daha geniş arama (parent + grandparent)
-            for up_el in (el, el.parent, el.parent.parent if el.parent else None):
-                if up_el is None:
-                    continue
-                try:
-                    utxt = up_el.get_text(" ", strip=True)
-                except Exception:
-                    continue
-                for m in re.finditer(r'(?:^|\s)FT(?:\s+|$)\s*(\d{1,2})\s*[-:]\s*(\d{1,2})(?!\d)', utxt):
-                    e, d = int(m.group(1)), int(m.group(2))
-                    if _ok(e, d):
-                        return e, d
+            # 3) el.next_elements — document order'da her şey
+            try:
+                cnt = 0
+                for nxt in el.next_elements:
+                    cnt += 1
+                    if cnt > 60: break
+                    if isinstance(nxt, str):
+                        t = str(nxt).strip()
+                        if not t: continue
+                        mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                        if mm:
+                            e, d = int(mm.group(1)), int(mm.group(2))
+                            if _ok(e, d):
+                                return e, d
+                    elif hasattr(nxt, 'get_text'):
+                        try:
+                            t = nxt.get_text(" ", strip=True)
+                            mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                            if mm:
+                                e, d = int(mm.group(1)), int(mm.group(2))
+                                if _ok(e, d):
+                                    return e, d
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+            # 4) Parent'ın next_elements'ı
+            try:
+                up = el.parent
+                if up is not None:
+                    cnt = 0
+                    for nxt in up.next_elements:
+                        cnt += 1
+                        if cnt > 60: break
+                        if isinstance(nxt, str):
+                            t = str(nxt).strip()
+                            if not t: continue
+                            mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                            if mm:
+                                e, d = int(mm.group(1)), int(mm.group(2))
+                                if _ok(e, d):
+                                    return e, d
+                        elif hasattr(nxt, 'get_text'):
+                            try:
+                                t = nxt.get_text(" ", strip=True)
+                                mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                                if mm:
+                                    e, d = int(mm.group(1)), int(mm.group(2))
+                                    if _ok(e, d):
+                                        return e, d
+                            except Exception:
+                                pass
+            except Exception:
+                pass
     except Exception:
         pass
 
-    # === 2) Metin tabanlı yaklaşım (fallback) ===
+    # Metin fallback
     try:
         metin = _html_metne_cevir(html)
+        r = _find_in_text(metin)
+        if r: return r
     except Exception:
-        return None
-    if not metin:
-        return None
-
-    for m in re.finditer(r'(?<![A-Za-z0-9])FT(?![A-Za-z0-9])', metin):
-        # İleriye bak (150 karakter içinde skor)
-        seg = metin[m.end():m.end() + 150]
-        mm = re.search(r'(\d{1,2})\s*[-:]\s*(\d{1,2})(?!\d)', seg)
-        if mm:
-            e, d = int(mm.group(1)), int(mm.group(2))
-            if _ok(e, d):
-                return e, d
-        # Geriye bak (80 karakter öncesinde skor)
-        seg2 = metin[max(0, m.start() - 80):m.start()]
-        mm2 = re.search(r'(\d{1,2})\s*[-:]\s*(\d{1,2})\s*$', seg2)
-        if mm2:
-            e, d = int(mm2.group(1)), int(mm2.group(2))
-            if _ok(e, d):
-                return e, d
+        pass
 
     return None
 
