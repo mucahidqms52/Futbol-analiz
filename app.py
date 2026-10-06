@@ -1805,23 +1805,22 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 def _skor_parse(html):
-    """HTML içinde FT etiketinin ALTINDAKI skoru bul.
-    Sadece 'FT' yazısının hemen altındaki skoru alır."""
     if not html:
         return None
 
     def _ok(e, d):
-        return 0 <= e <= 10 and 0 <= d <= 10
+        return 0 <= e <= 15 and 0 <= d <= 15
 
-    def _skor_bul_metin(metin):
-        """Metin içinde skor kalıbı ara."""
-        if not metin:
+    def _find_in_text(txt):
+        if not txt:
             return None
-        m = re.search(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})(?!\d)', metin)
-        if m:
-            e, d = int(m.group(1)), int(m.group(2))
-            if _ok(e, d):
-                return e, d
+        for m in re.finditer(r'(?<![A-Za-z0-9])FT(?![A-Za-z0-9])', txt):
+            seg = txt[m.end():m.end() + 300]
+            mm = re.search(r'(\d{1,2})\s*[-:]\s*(\d{1,2})(?!\d)', seg)
+            if mm:
+                e, d = int(mm.group(1)), int(mm.group(2))
+                if _ok(e, d):
+                    return e, d
         return None
 
     try:
@@ -1829,87 +1828,95 @@ def _skor_parse(html):
         for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
 
-        # Yöntem 1: Satır satır tara - "FT" bulunca hemen altındaki skoru al
-        tum_metin = soup.get_text("\n", strip=True)
-        satirlar = [s.strip() for s in tum_metin.split("\n") if s.strip()]
-
-        for i, satir in enumerate(satirlar):
-            # Tam "FT" satırı mı?
-            if satir == "FT" or satir.upper() == "FT":
-                # "Half Time-Full Time" kontrolü
-                onceki = " ".join(satirlar[max(0, i-5):i]).lower()
-                if "half time" in onceki or "win ht" in onceki or "draw ht" in onceki or "lose ht" in onceki:
-                    continue
-
-                # FT'den sonraki 3 satırda skor ara (kısa mesafe!)
-                for j in range(i+1, min(i+4, len(satirlar))):
-                    skor = _skor_bul_metin(satirlar[j])
-                    if skor:
-                        return skor
-
-                # Aynı satırda skor ara
-                skor = _skor_bul_metin(satir)
-                if skor:
-                    return skor
-
-        # Yöntem 2: "FT" kelimesini içeren satırlarda skor ara
-        for i, satir in enumerate(satirlar):
-            if re.search(r'\bFT\b', satir, re.IGNORECASE):
-                # İstatistik kontrolü
-                if re.search(r'(Half Time|Win HT|Draw HT|Lose HT)', satir, re.IGNORECASE):
-                    continue
-
-                # Aynı satırda skor ara
-                skor = _skor_bul_metin(satir)
-                if skor:
-                    return skor
-
-                # Sonraki 2 satırda skor ara
-                for j in range(i+1, min(i+3, len(satirlar))):
-                    skor = _skor_bul_metin(satirlar[j])
-                    if skor:
-                        return skor
-
-        # Yöntem 3: HTML elementlerinde "FT" ara
+        ft_elements = []
         for el in soup.find_all(True):
             try:
-                t = el.get_text(strip=True)
+                t = el.get_text(" ", strip=True)
             except Exception:
                 continue
+            if "FT" in t and len(t) < 300:
+                ft_elements.append(el)
 
-            if t == "FT" or t.upper() == "FT":
-                # Parent elementte skor ara
-                p = el.parent
-                for _ in range(2):
-                    if p is None:
-                        break
-                    try:
-                        pt = p.get_text(" ", strip=True)
-                        skor = _skor_bul_metin(pt)
-                        if skor:
-                            return skor
-                    except Exception:
-                        pass
-                    p = p.parent
+        ft_elements.sort(key=lambda e: len(e.get_text(" ", strip=True)))
 
-                # Kardeş elementlerde skor ara
+        for el in ft_elements:
+            r = _find_in_text(el.get_text(" ", strip=True))
+            if r: return r
+
+            p = el.parent
+            for _ in range(4):
+                if p is None: break
                 try:
-                    for nxt in el.next_elements:
-                        if isinstance(nxt, str):
-                            t = str(nxt).strip()
-                            m = re.match(r'^(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})$', t)
-                            if m:
-                                e, d = int(m.group(1)), int(m.group(2))
-                                if _ok(e, d):
-                                    return e, d
+                    r = _find_in_text(p.get_text(" ", strip=True))
+                    if r: return r
                 except Exception:
                     pass
+                p = p.parent
 
+            try:
+                cnt = 0
+                for nxt in el.next_elements:
+                    cnt += 1
+                    if cnt > 60: break
+                    if isinstance(nxt, str):
+                        t = str(nxt).strip()
+                        if not t: continue
+                        mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                        if mm:
+                            e, d = int(mm.group(1)), int(mm.group(2))
+                            if _ok(e, d):
+                                return e, d
+                    elif hasattr(nxt, 'get_text'):
+                        try:
+                            t = nxt.get_text(" ", strip=True)
+                            mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                            if mm:
+                                e, d = int(mm.group(1)), int(mm.group(2))
+                                if _ok(e, d):
+                                    return e, d
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+            try:
+                up = el.parent
+                if up is not None:
+                    cnt = 0
+                    for nxt in up.next_elements:
+                        cnt += 1
+                        if cnt > 60: break
+                        if isinstance(nxt, str):
+                            t = str(nxt).strip()
+                            if not t: continue
+                            mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                            if mm:
+                                e, d = int(mm.group(1)), int(mm.group(2))
+                                if _ok(e, d):
+                                    return e, d
+                        elif hasattr(nxt, 'get_text'):
+                            try:
+                                t = nxt.get_text(" ", strip=True)
+                                mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                                if mm:
+                                    e, d = int(mm.group(1)), int(mm.group(2))
+                                    if _ok(e, d):
+                                        return e, d
+                            except Exception:
+                                pass
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    try:
+        metin = _html_metne_cevir(html)
+        r = _find_in_text(metin)
+        if r: return r
     except Exception:
         pass
 
     return None
-
 
 
 def _skor_cek(url, tarayici_yedek=False):
