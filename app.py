@@ -1808,70 +1808,143 @@ def _skor_parse(html):
     if not html:
         return None
 
-    skor_re = re.compile(r'(?<![\d.:])(\d{1,2})\s*-\s*(\d{1,2})(?![\d.:])')
+    def _ok(e, d):
+        return 0 <= e <= 15 and 0 <= d <= 15
 
-    def _bul(txt):
-        m = skor_re.search(txt)
-        if m:
-            e, d = int(m.group(1)), int(m.group(2))
-            if e <= 15 and d <= 15:
-                return e, d
+    def _find_in_text(txt):
+        if not txt:
+            return None
+        for m in re.finditer(r'(?<![A-Za-z0-9])FT(?![A-Za-z0-9])', txt):
+            seg = txt[m.end():m.end() + 300]
+            mm = re.search(r'(\d{1,2})\s*[-:]\s*(\d{1,2})(?!\d)', seg)
+            if mm:
+                e, d = int(mm.group(1)), int(mm.group(2))
+                if _ok(e, d):
+                    return e, d
         return None
 
-    # 1) Görünen metin: FT'den sonraki ilk birkaç parça
     try:
         soup = BeautifulSoup(html, "html.parser")
-        for tag in soup(["script", "style", "noscript", "svg"]):
+        for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
-        parcalar = [s.strip() for s in soup.stripped_strings if s.strip()]
-        for i, p in enumerate(parcalar):
-            if re.match(r'^FT\b', p):
-                r = _bul(" ".join(parcalar[i + 1:i + 7]) if p == "FT" else p[2:])
-                if r:
-                    return r
+
+        ft_elements = []
+        for el in soup.find_all(True):
+            try:
+                t = el.get_text(" ", strip=True)
+            except Exception:
+                continue
+            if "FT" in t and len(t) < 300:
+                ft_elements.append(el)
+
+        ft_elements.sort(key=lambda e: len(e.get_text(" ", strip=True)))
+
+        for el in ft_elements:
+            r = _find_in_text(el.get_text(" ", strip=True))
+            if r: return r
+
+            p = el.parent
+            for _ in range(4):
+                if p is None: break
+                try:
+                    r = _find_in_text(p.get_text(" ", strip=True))
+                    if r: return r
+                except Exception:
+                    pass
+                p = p.parent
+
+            try:
+                cnt = 0
+                for nxt in el.next_elements:
+                    cnt += 1
+                    if cnt > 60: break
+                    if isinstance(nxt, str):
+                        t = str(nxt).strip()
+                        if not t: continue
+                        mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                        if mm:
+                            e, d = int(mm.group(1)), int(mm.group(2))
+                            if _ok(e, d):
+                                return e, d
+                    elif hasattr(nxt, 'get_text'):
+                        try:
+                            t = nxt.get_text(" ", strip=True)
+                            mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                            if mm:
+                                e, d = int(mm.group(1)), int(mm.group(2))
+                                if _ok(e, d):
+                                    return e, d
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+            try:
+                up = el.parent
+                if up is not None:
+                    cnt = 0
+                    for nxt in up.next_elements:
+                        cnt += 1
+                        if cnt > 60: break
+                        if isinstance(nxt, str):
+                            t = str(nxt).strip()
+                            if not t: continue
+                            mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                            if mm:
+                                e, d = int(mm.group(1)), int(mm.group(2))
+                                if _ok(e, d):
+                                    return e, d
+                        elif hasattr(nxt, 'get_text'):
+                            try:
+                                t = nxt.get_text(" ", strip=True)
+                                mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                                if mm:
+                                    e, d = int(mm.group(1)), int(mm.group(2))
+                                    if _ok(e, d):
+                                        return e, d
+                            except Exception:
+                                pass
+            except Exception:
+                pass
     except Exception:
         pass
 
-    # 2) Ham HTML (script / data alanları dahil): FT'den sonraki 600 karakter
     try:
-        for m in re.finditer(r'\bFT\b', html):
-            seg = re.sub(r'<[^>]+>', ' ', html[m.end():m.end() + 600])
-            r = _bul(seg)
-            if r:
-                return r
+        metin = _html_metne_cevir(html)
+        r = _find_in_text(metin)
+        if r: return r
     except Exception:
         pass
+
     return None
 
 
-
-def _skor_cek(url, tarayici_yedek=False):
+def _skor_cek(url, tarayici_yedek=None, debug=False):
     if not url:
         return None, "URL yok"
-    html = None; hata = None
+    detaylar = []
+
+    # ScrapingBee ile çek (Veri Çek ile aynı yöntem)
     try:
-        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=15)
-        if r.status_code == 200 and r.text:
-            html = r.text
-        else:
-            hata = f"HTTP {r.status_code}"
+        html, hata = _scrapingbee_get(url, render_js=True, mac_sec="5", dogrula=True)
+        if hata:
+            detaylar.append(f"ScrapingBee hatası: {hata}")
+            return None, " | ".join(detaylar) if debug else hata
+        if not html:
+            detaylar.append("ScrapingBee boş döndü")
+            return None, " | ".join(detaylar) if debug else "Sayfa alınamadı"
+
+        detaylar.append(f"ScrapingBee OK, {len(html)} bytes")
+        skor = _skor_parse(html)
+        if skor:
+            detaylar.append(f"Skor bulundu: {skor[0]}-{skor[1]}")
+            return skor, " | ".join(detaylar) if debug else None
+        detaylar.append("Skor parse edilemedi")
+        return None, " | ".join(detaylar) if debug else None
     except Exception as e:
-        hata = f"Bağlantı: {str(e)[:80]}"
-    skor = _skor_parse(html) if html else None
-    if skor:
-        return skor, None
-    if tarayici_yedek:
-        try:
-            h2 = _playwright_skor_cek(url, timeout=25)
-            if h2:
-                skor = _skor_parse(h2)
-                if skor:
-                    return skor, None
-        except Exception as e:
-            hata = f"Tarayıcı: {str(e)[:60]}"
-    if html:
-        return None, None
-    return None, hata or "Sayfa alınamadı"
+        detaylar.append(f"Hata: {str(e)[:60]}")
+        return None, " | ".join(detaylar) if debug else str(e)[:60]
+
 
 
 def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
