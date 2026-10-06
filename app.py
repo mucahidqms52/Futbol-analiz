@@ -27,7 +27,6 @@ logging.getLogger('streamlit.runtime.scriptrunner').setLevel(logging.ERROR)
 warnings.filterwarnings("ignore", message=".*CachedWidgetWarning.*")
 warnings.filterwarnings("ignore", category=UserWarning, module="streamlit")
 
-
 YASAL_METIN = """
 # ⚖️ KULLANIM ŞARTLARI VE SORUMLULUK REDDİ
 
@@ -189,14 +188,20 @@ Her türlü soru, görüş, şikayet, iptal ve iade talepleri için Uygulama iç
 **SON SÖZ:** Bu uygulama **SADECE bilgilendirme ve analiz amaçlıdır**. Bahis oynamak **yasal risk**, **maddi kayıp riski** ve **bağımlılık riski** içerir. **YEDAM: 115**
 """
 
-
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
-
 
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <style>
+    html, body {
+        overscroll-behavior: none !important;
+        overscroll-behavior-y: none !important;
+        touch-action: pan-y !important;
+    }
+    .stApp {
+        overscroll-behavior: none !important;
+    }
     html { font-size: 13px !important; }
     body, .stApp { font-size: 0.85rem !important; }
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
@@ -262,29 +267,8 @@ st.markdown("""
     .st-key-fa_nav .stButton button p { font-size: 0.72rem !important; white-space: nowrap; font-weight: 700 !important; }
     .st-key-fa_nav .stButton button[kind="primary"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; box-shadow: 0 4px 16px rgba(34,197,94,0.4) !important; }
     .fa-nav-badge-wrap { position: relative; height: 0; margin: 0; padding: 0; overflow: visible; }
-    .fa-nav-badge {
-        position: absolute;
-        top: -34px;
-        right: -6px;
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-        color: #fff !important;
-        font-size: 0.62rem !important;
-        font-weight: 900 !important;
-        padding: 2px 7px;
-        border-radius: 99px;
-        min-width: 20px;
-        text-align: center;
-        z-index: 99999;
-        box-shadow: 0 2px 10px rgba(239,68,68,0.7);
-        border: 1.5px solid rgba(255,255,255,0.35);
-        line-height: 1.35;
-        pointer-events: none;
-        animation: badgePulse 1.8s ease-in-out infinite;
-    }
-    @keyframes badgePulse {
-        0%, 100% { transform: scale(1); box-shadow: 0 2px 10px rgba(239,68,68,0.7); }
-        50% { transform: scale(1.12); box-shadow: 0 2px 16px rgba(239,68,68,1); }
-    }
+    .fa-nav-badge { position: absolute; top: -34px; right: -6px; background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff !important; font-size: 0.62rem !important; font-weight: 900 !important; padding: 2px 7px; border-radius: 99px; min-width: 20px; text-align: center; z-index: 99999; box-shadow: 0 2px 10px rgba(239,68,68,0.7); border: 1.5px solid rgba(255,255,255,0.35); line-height: 1.35; pointer-events: none; animation: badgePulse 1.8s ease-in-out infinite; }
+    @keyframes badgePulse { 0%, 100% { transform: scale(1); box-shadow: 0 2px 10px rgba(239,68,68,0.7); } 50% { transform: scale(1.12); box-shadow: 0 2px 16px rgba(239,68,68,1); } }
     .stApp .fa-mini-line-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 8px 0; }
     .stApp .fa-mini-line-kart { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 12px; padding: 7px 6px 5px 6px; position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.3); animation: fadeInUp 0.4s ease-out; transition: all 0.25s ease; }
     .stApp .fa-mini-line-kart:hover { border-color: var(--c); transform: translateY(-2px); }
@@ -491,7 +475,6 @@ except Exception as _db_hata:
 
 
 # ===== KALICI OTURUM (ÇEREZ) YÖNETİMİ =====
-@st.cache_resource(show_spinner=False)
 def _cookie_manager_al():
     try:
         return stx.CookieManager(key="fa_cookie_mgr_v1")
@@ -500,12 +483,12 @@ def _cookie_manager_al():
 
 _cookie_mgr = _cookie_manager_al()
 
+
 def _token_uret():
     return _secrets.token_hex(32)
 
 
 def _cerez_oku():
-    """Tüm çerezleri güvenli şekilde okur."""
     if _cookie_mgr is None:
         return {}
     try:
@@ -533,7 +516,6 @@ def _cerez_sil(ad):
 
 
 def _otomatik_giris_dene():
-    """Çerezdeki token ile otomatik giriş yapmayı dener."""
     if st.session_state.get("aktif_kullanici") or st.session_state.get("rol") == "admin":
         return
     cerezler = _cerez_oku()
@@ -2842,7 +2824,7 @@ def nav_bar():
                     )
 
 
-# ===== OTOMATİK GİRİŞ DENEMESİ (uygulama açılırken) =====
+# ===== OTOMATİK GİRİŞ DENEMESİ =====
 _otomatik_giris_dene()
 
 if st.session_state.admin_login_acik and not admin_mi():
@@ -2851,8 +2833,6 @@ if st.session_state.admin_login_acik and not admin_mi():
 
 ust_bar()
 nav_bar()
-
-
 if st.session_state.sayfa == "giris_yap":
     admin_giris_ekrani()
 
@@ -3354,21 +3334,27 @@ elif st.session_state.sayfa == "gelecek_admin":
                     st.session_state.kayit_yapildi = True; st.session_state.gelecekten_gelindi = True
                     st.session_state.aktif_gelecek_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
             with c2:
-                if st.button("🗑️", key=f"gsil_{idx}"):
-                    if st.session_state.tek_silme_gelecek == idx: st.session_state.tek_silme_gelecek = None
-                    else: st.session_state.tek_silme_gelecek = idx
-                    st.rerun()
-            if st.session_state.tek_silme_gelecek == idx:
-                st.warning(f"⚠️ **{te} vs {td}** silinsin mi?")
-                c1, c2 = st.columns(2)
-                with c1:
-                    if st.button("✅ Sil", key=f"ge_{idx}", use_container_width=True, type="primary"):
-                        st.session_state.gelecek_analizler.pop(idx)
-                        gelecek_kaydet(st.session_state.gelecek_analizler)
-                        st.session_state.tek_silme_gelecek = None; st.rerun()
-                with c2:
-                    if st.button("❌ İptal", key=f"gh_{idx}", use_container_width=True):
-                        st.session_state.tek_silme_gelecek = None; st.rerun()
+                if st.button("🗑️ Sil", use_container_width=True, key=f"gsil_{idx}"):
+                    st.session_state.tek_silme_gelecek = idx
+
+            if st.session_state.get("tek_silme_gelecek") == idx:
+                st.warning(f"⚠️ **{te} vs {td}** silinsin mi? Bu işlem geri alınamaz.")
+                oc1, oc2 = st.columns(2)
+                with oc1:
+                    if st.button("✅ Evet, Sil", key=f"ge_{idx}", use_container_width=True, type="primary"):
+                        try:
+                            st.session_state.gelecek_analizler.pop(idx)
+                            gelecek_kaydet(st.session_state.gelecek_analizler)
+                            st.session_state.tek_silme_gelecek = None
+                            st.success(f"✅ {te} vs {td} silindi!")
+                            time.sleep(0.8)
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ Silme hatası: {e}")
+                with oc2:
+                    if st.button("❌ Vazgeç", key=f"gi_{idx}", use_container_width=True):
+                        st.session_state.tek_silme_gelecek = None
+                        st.rerun()
             st.divider()
 
         if "_inline_msg" in st.session_state:
@@ -3381,21 +3367,29 @@ elif st.session_state.sayfa == "gelecek_admin":
                 st.error(_msg_text)
 
     st.divider()
-    if st.button("🗑️ Tüm Geleceği Temizle", use_container_width=True, key="temizle_gel"):
-        st.session_state.silme_onay_gelecek = True; st.rerun()
+    st.markdown("### ⚠️ Toplu Silme İşlemleri")
+    if st.button(f"🗑️ TÜM GELECEĞİ TEMİZLE ({len(gel)} maç)", use_container_width=True, key="temizle_gel", type="primary"):
+        st.session_state.silme_onay_gelecek = True
+
     if st.session_state.get("silme_onay_gelecek"):
-        st.warning("⚠️ Tüm gelecek silinecek. Emin misin?")
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("✅ Evet, Sil", key="sil_gel_evet", use_container_width=True, type="primary"):
-                st.session_state.gelecek_analizler = []
-                gelecek_kaydet([])
+        st.error(f"⚠️ **DİKKAT!** Tüm gelecek silinecek (**{len(gel)} maç**). Bu işlem geri alınamaz!")
+        oc1, oc2 = st.columns(2)
+        with oc1:
+            if st.button("✅ EVET, TÜMÜNÜ SİL", key="sil_gel_evet", use_container_width=True, type="primary"):
+                try:
+                    st.session_state.gelecek_analizler = []
+                    gelecek_kaydet([])
+                    st.session_state.silme_onay_gelecek = False
+                    st.session_state.tek_silme_gelecek = None
+                    st.success("✅ Tüm gelecek silindi!")
+                    time.sleep(1)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ Silme hatası: {e}")
+        with oc2:
+            if st.button("❌ Vazgeç", key="sil_gel_iptal", use_container_width=True):
                 st.session_state.silme_onay_gelecek = False
-                st.session_state.tek_silme_gelecek = None
                 st.rerun()
-        with c2:
-            if st.button("❌ İptal", key="sil_gel_iptal", use_container_width=True):
-                st.session_state.silme_onay_gelecek = False; st.rerun()
 
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gg_geri"):
         st.session_state.sayfa = "giris"; st.rerun()
@@ -3457,7 +3451,6 @@ elif st.session_state.sayfa == "gecmis":
                 with c2:
                     if st.button("🗑️ Sil", use_container_width=True, key=f"sil_{idx}"):
                         st.session_state.tek_silme_onay = idx
-                        st.rerun()
 
                 if st.session_state.tek_silme_onay == idx:
                     st.warning(f"⚠️ **{te} vs {td}** maçını silmek istediğinden emin misin?")
@@ -3486,21 +3479,29 @@ elif st.session_state.sayfa == "gecmis":
 
     if admin_mi():
         st.divider()
-        if st.button("🗑️ Tüm Geçmişi Temizle", use_container_width=True, key="temizle_g"):
-            st.session_state.silme_onay = True; st.rerun()
+        st.markdown("### ⚠️ Toplu Silme İşlemleri")
+        if st.button(f"🗑️ TÜM GEÇMİŞİ TEMİZLE ({top} maç)", use_container_width=True, key="temizle_g", type="primary"):
+            st.session_state.silme_onay = True
+
         if st.session_state.silme_onay:
-            st.warning("⚠️ Tüm geçmiş silinecek. Emin misin?")
-            c1, c2 = st.columns(2)
-            with c1:
-                if st.button("✅ Evet, Sil", key="sil_g_evet", use_container_width=True, type="primary"):
-                    st.session_state.gecmis_analizler = []
-                    gecmis_kaydet([])
+            st.error(f"⚠️ **DİKKAT!** Tüm geçmiş silinecek (**{top} maç**). Bu işlem geri alınamaz!")
+            oc1, oc2 = st.columns(2)
+            with oc1:
+                if st.button("✅ EVET, TÜMÜNÜ SİL", key="sil_g_evet", use_container_width=True, type="primary"):
+                    try:
+                        st.session_state.gecmis_analizler = []
+                        gecmis_kaydet([])
+                        st.session_state.silme_onay = False
+                        st.session_state.tek_silme_onay = None
+                        st.success("✅ Tüm geçmiş silindi!")
+                        time.sleep(1)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ Silme hatası: {e}")
+            with oc2:
+                if st.button("❌ Vazgeç", key="sil_g_iptal", use_container_width=True):
                     st.session_state.silme_onay = False
-                    st.session_state.tek_silme_onay = None
                     st.rerun()
-            with c2:
-                if st.button("❌ İptal", key="sil_g_iptal", use_container_width=True):
-                    st.session_state.silme_onay = False; st.rerun()
 
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gc_geri"):
         st.session_state.sayfa = "giris"; st.rerun()
