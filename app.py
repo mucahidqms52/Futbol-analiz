@@ -1431,30 +1431,70 @@ TARAYICI_ESZAMANLI = int(os.environ.get("TARAYICI_ESZAMANLI", "3"))
 _TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
 
 
-def _playwright_skor_cek(url, timeout=25):
+def _chromium_kurulu_mu():
+    """Playwright Chromium kurulu mu kontrol et."""
     try:
-        import subprocess as _sp, sys as _sys
-        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
-                check=False, timeout=600,
-                stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            b = p.chromium.launch(headless=True)
+            b.close()
+        return True
     except Exception:
-        pass
-    from playwright.sync_api import sync_playwright
+        return False
+
+
+def _chromium_kur():
+    """Playwright Chromium kurulumunu dene."""
+    import subprocess
+    try:
+        subprocess.run(
+            ["playwright", "install", "chromium"],
+            capture_output=True, text=True, timeout=120
+        )
+        return True
+    except Exception:
+        return False
+
+
+_CHROMIUM_DURUM = None
+
+def _chromium_hazirla():
+    """Chromium kurulu mu kontrol et, yoksa kur."""
+    global _CHROMIUM_DURUM
+    if _CHROMIUM_DURUM is not None:
+        return _CHROMIUM_DURUM
+    if _chromium_kurulu_mu():
+        _CHROMIUM_DURUM = True
+        return True
+    # Kurulum dene
+    if _chromium_kur():
+        _CHROMIUM_DURUM = _chromium_kurulu_mu()
+        return _CHROMIUM_DURUM
+    _CHROMIUM_DURUM = False
+    return False
+
+
+def _playwright_skor_cek(url, timeout=25):
+    """Playwright ile JS render edilmiş sayfa çek."""
+    if not _chromium_hazirla():
+        return None
+
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        return None
+
     with _TARAYICI_SEM:
         with sync_playwright() as p:
             b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
             try:
-                ctx = b.new_context(user_agent=UA, locale="en-US")
-                pg = ctx.new_page()
-                pg.route("**/*", lambda route: route.abort()
-                         if route.request.resource_type in ("image", "media", "font", "stylesheet")
-                         else route.continue_())
-                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-                pg.wait_for_timeout(2000)
+                pg = b.new_page()
+                pg.goto(url, timeout=timeout * 1000, wait_until="domcontentloaded")
+                pg.wait_for_timeout(3000)
                 return pg.content()
             finally:
-                try: b.close()
-                except Exception: pass
+                b.close()
+
 
 
 def _scrapingbee_get(url, render_js=True, timeout=30, mac_sec="5", max_retry=3, dogrula=False):
@@ -1919,141 +1959,83 @@ def _skor_parse(html):
     return None
 
 
-def _skor_cek(url, tarayici_yedek=None, debug=False):
+def _skor_cek(url, tarayici_yedek=False):
     if not url:
         return None, "URL yok"
-    html = None; hata = None; detaylar = []
-
-    # 1) Önce hızlı istek dene
+    html = None; hata = None
     try:
         r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=15)
         if r.status_code == 200 and r.text:
             html = r.text
-            detaylar.append(f"HTTP OK, {len(html)} bytes")
         else:
             hata = f"HTTP {r.status_code}"
-            detaylar.append(f"HTTP {r.status_code}")
     except Exception as e:
         hata = f"Bağlantı: {str(e)[:80]}"
-        detaylar.append(f"Bağlantı hatası: {str(e)[:60]}")
-
     skor = _skor_parse(html) if html else None
     if skor:
-        detaylar.append(f"Skor bulundu (requests): {skor[0]}-{skor[1]}")
-        return skor, " | ".join(detaylar) if debug else None
-
-    detaylar.append("requests ile skor bulunamadı")
-
-    # 2) Skor bulunamadıysa OTOMATİK tarayıcıya geç
-    try:
-        h2 = _playwright_skor_cek(url, timeout=25)
-        if h2:
-            detaylar.append(f"Playwright OK, {len(h2)} bytes")
-            skor = _skor_parse(h2)
-            if skor:
-                detaylar.append(f"Skor bulundu (playwright): {skor[0]}-{skor[1]}")
-                return skor, " | ".join(detaylar) if debug else None
-            detaylar.append("Playwright ile de skor bulunamadı")
-        else:
-            detaylar.append("Playwright boş döndü")
-    except Exception as e:
-        hata = f"Tarayıcı: {str(e)[:60]}"
-        detaylar.append(f"Playwright hatası: {str(e)[:60]}")
-
+        return skor, None
+    if tarayici_yedek:
+        try:
+            h2 = _playwright_skor_cek(url, timeout=25)
+            if h2:
+                skor = _skor_parse(h2)
+                if skor:
+                    return skor, None
+        except Exception as e:
+            hata = f"Tarayıcı: {str(e)[:60]}"
     if html:
-        return None, " | ".join(detaylar) if debug else None
-    return None, (" | ".join(detaylar)) if debug else (hata or "Sayfa alınamadı")
-
+        return None, None
+    return None, hata or "Sayfa alınamadı"
 
 
 def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
-    """Gelecek maçların skorlarını kontrol eder, bitenleri geçmişe taşır."""
-    gel = list(st.session_state.gelecek_analizler)
+    gel = st.session_state.gelecek_analizler
     isler = [(i, g) for i, g in enumerate(gel) if g.get("veri", {}).get("kaynak_url")]
     sonuc = {}
     tamam = 0
-
     if isler:
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], None, True): (i, g) for i, g in isler}
+            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], tarayici_yedek): (i, g) for i, g in isler}
             for f in as_completed(fut):
-                i, g = fut[f]
-                tamam += 1
+                i, g = fut[f]; tamam += 1
                 try:
                     sonuc[i] = f.result()
                 except Exception as e:
-                    sonuc[i] = (None, f"Thread hatası: {str(e)[:80]}")
+                    sonuc[i] = (None, str(e)[:80])
                 if progress_callback:
                     try:
-                        progress_callback(tamam, len(isler), g["veri"].get("takim_ev", ""))
+                        progress_callback(tamam - 1, len(isler), g["veri"].get("takim_ev", ""))
                     except Exception:
                         pass
 
     mevcut = {x.get("veri", {}).get("kaynak_url") for x in st.session_state.gecmis_analizler}
-    tasinan = 0
-    bitmemis = 0
-    hatalar = []
-    kalan = []
-
+    tasinan = 0; bitmemis = 0; hatalar = []; kalan = []
     for i, g in enumerate(gel):
-        v = g["veri"]
-        isim = f"{v.get('takim_ev', '?')} - {v.get('takim_dep', '?')}"
-
-        if not v.get("kaynak_url"):
-            kalan.append(g)
-            continue
-
         r = sonuc.get(i)
         if r is None:
-            kalan.append(g)
-            continue
-
-        skor, detay = r
-
+            kalan.append(g); continue
+        skor, hata = r
+        v = g["veri"]; isim = f"{v.get('takim_ev', '?')} - {v.get('takim_dep', '?')}"
         if skor is None:
-            if detay:
-                hatalar.append(f"{isim}: {detay}")
+            if hata:
+                hatalar.append(f"{isim}: {hata}")
             else:
                 bitmemis += 1
-            kalan.append(g)
-            continue
-
-        try:
-            v["skor_ev"], v["skor_dep"], v["skor_belli"] = int(skor[0]), int(skor[1]), True
-            d = sonuc_hesapla(g)
-            if d:
-                g["dogruluk"] = d
-            url = v.get("kaynak_url")
-            if url not in mevcut:
-                st.session_state.gecmis_analizler.append(g)
-                mevcut.add(url)
-            tasinan += 1
-        except Exception as e:
-            hatalar.append(f"{isim}: İşleme hatası: {str(e)[:60]}")
-            kalan.append(g)
-
-    try:
-        gecmis_kaydet(st.session_state.gecmis_analizler)
-    except Exception as e:
-        hatalar.append(f"DB kayıt hatası (gecmis): {str(e)[:60]}")
+            kalan.append(g); continue
+        v["skor_ev"], v["skor_dep"], v["skor_belli"] = skor[0], skor[1], True
+        d = sonuc_hesapla(g)
+        if d: g["dogruluk"] = d
+        if v.get("kaynak_url") not in mevcut:
+            st.session_state.gecmis_analizler.append(g)
+            mevcut.add(v.get("kaynak_url"))
+        tasinan += 1
 
     st.session_state.gelecek_analizler = kalan
     st.session_state.aktif_gelecek_idx = None
     st.session_state.gelecekten_gelindi = False
-
-    try:
-        gelecek_kaydet(st.session_state.gelecek_analizler)
-    except Exception as e:
-        hatalar.append(f"DB kayıt hatası (gelecek): {str(e)[:60]}")
-
-    return {
-        "tasinan": tasinan,
-        "bitmemis": bitmemis,
-        "hatalar": hatalar,
-        "toplam": len(isler),
-        "kalan": len(kalan),
-    }
-
+    gecmis_kaydet(st.session_state.gecmis_analizler)
+    gelecek_kaydet(st.session_state.gelecek_analizler)
+    return {"tasinan": tasinan, "bitmemis": bitmemis, "hatalar": hatalar, "toplam": len(isler)}
 
 
 # ==========================================
