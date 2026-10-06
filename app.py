@@ -1919,32 +1919,33 @@ def _skor_parse(html):
     return None
 
 
-def _skor_cek(url, tarayici_yedek=None, debug=False):
+def _skor_cek(url, tarayici_yedek=False):
     if not url:
         return None, "URL yok"
-    detaylar = []
-
-    # ScrapingBee ile çek (Veri Çek ile aynı yöntem)
+    html = None; hata = None
     try:
-        html, hata = _scrapingbee_get(url, render_js=True, mac_sec="5", dogrula=True)
-        if hata:
-            detaylar.append(f"ScrapingBee hatası: {hata}")
-            return None, " | ".join(detaylar) if debug else hata
-        if not html:
-            detaylar.append("ScrapingBee boş döndü")
-            return None, " | ".join(detaylar) if debug else "Sayfa alınamadı"
-
-        detaylar.append(f"ScrapingBee OK, {len(html)} bytes")
-        skor = _skor_parse(html)
-        if skor:
-            detaylar.append(f"Skor bulundu: {skor[0]}-{skor[1]}")
-            return skor, " | ".join(detaylar) if debug else None
-        detaylar.append("Skor parse edilemedi")
-        return None, " | ".join(detaylar) if debug else None
+        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=15)
+        if r.status_code == 200 and r.text:
+            html = r.text
+        else:
+            hata = f"HTTP {r.status_code}"
     except Exception as e:
-        detaylar.append(f"Hata: {str(e)[:60]}")
-        return None, " | ".join(detaylar) if debug else str(e)[:60]
-
+        hata = f"Bağlantı: {str(e)[:80]}"
+    skor = _skor_parse(html) if html else None
+    if skor:
+        return skor, None
+    if tarayici_yedek:
+        try:
+            h2 = _playwright_skor_cek(url, timeout=25)
+            if h2:
+                skor = _skor_parse(h2)
+                if skor:
+                    return skor, None
+        except Exception as e:
+            hata = f"Tarayıcı: {str(e)[:60]}"
+    if html:
+        return None, None
+    return None, hata or "Sayfa alınamadı"
 
 
 def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
@@ -2874,6 +2875,7 @@ elif st.session_state.sayfa == "giris":
         st.markdown("### 🤖 Otomatik Veri Çekme")
         vs1, vs2, vs3 = st.tabs(["🔄 Gelecek Maçlar", "📜 Lig Geçmişi", "🏁 Sonuçları İşle"])
         with vs1:
+            # Üst kısım: Veri çekme
             if st.session_state.toplu_cek_ozet:
                 oz = st.session_state.toplu_cek_ozet
                 st.markdown(f"**Son çekim:** Eklenen: **{oz.get('eklenen', 0)}** | Atlanan: **{oz.get('atlanan', 0)}** | Toplam: **{oz.get('toplam', 0)}**")
@@ -2896,6 +2898,74 @@ elif st.session_state.sayfa == "giris":
                     else:
                         st.success(f"✅ {len(bas)} maç işlendi.")
                         time.sleep(2); st.rerun()
+
+            st.divider()
+
+            # Gelecek Maçlar listesi
+            gel = st.session_state.gelecek_analizler
+            if not gel:
+                st.info("Henüz gelecek maç yok. Yukarıdaki butonla veri çekin.")
+            else:
+                st.markdown(f"### 📋 Gelecek Maçlar ({len(gel)} maç)")
+                for i, g in enumerate(gel):
+                    v = g["veri"]
+                    te = v.get("takim_ev", "Ev")
+                    td = v.get("takim_dep", "Dep")
+                    saat = v.get("saat", "")
+                    ulke = v.get("ulke", "")
+                    tarih = v.get("tarih", "")
+                    st.markdown(mac_karti(te, td, False, 0, 0, 0, 0, saat, ulke, tarih), unsafe_allow_html=True)
+                    if st.button("🔍 Detay", use_container_width=True, key=f"det_{i}"):
+                        st.session_state.form_verileri = copy.deepcopy(v)
+                        st.session_state.kayit_yapildi = True
+                        st.session_state.aktif_gelecek_idx = i
+                        st.session_state.sayfa = "sonuc"
+                        st.rerun()
+                    st.divider()
+
+            # Alt kısım: Skor Çekme
+            st.markdown("---")
+            st.markdown("### 🎯 Skor Çekme")
+            st.caption("Bitmiş maçları bulup geçmişe taşır.")
+
+            col_skor1, col_skor2 = st.columns(2)
+            with col_skor1:
+                if st.button("🏁 Biten Maçları Geçmişe Aktar", use_container_width=True, type="primary", key="skor_bulk"):
+                    if not st.session_state.gelecek_analizler:
+                        st.warning("Gelecek'te maç yok")
+                    else:
+                        ph = st.empty()
+                        pb = st.progress(0, text="Başlatılıyor...")
+                        def _p3(i, t, n):
+                            try: pb.progress(min(i / t, 1.0), text=f"{i}/{t}: {n}")
+                            except Exception: pass
+                        with st.spinner(f"{len(st.session_state.gelecek_analizler)} maç kontrol ediliyor..."):
+                            oz = sonuclari_isle(False, 2, _p3)
+                        st.session_state.skor_ozet = oz
+                        pb.progress(1.0, text="Tamamlandı!")
+                        time.sleep(0.5)
+                        pb.empty()
+                        ph.empty()
+                        st.rerun()
+            with col_skor2:
+                if st.session_state.get("skor_ozet"):
+                    if st.button("🗑️ Sonucu Temizle", use_container_width=True, key="skor_ozet_temizle"):
+                        st.session_state.skor_ozet = None
+                        st.rerun()
+
+            # Son skor çekme sonucu
+            if st.session_state.get("skor_ozet"):
+                oz = st.session_state.skor_ozet
+                hata_say = len(oz.get("hatalar", []))
+                c1, c2, c3 = st.columns(3)
+                with c1: st.metric("✅ Taşınan", oz.get("tasinan", 0))
+                with c2: st.metric("⏳ Bitmemiş", oz.get("bitmemis", 0))
+                with c3: st.metric("❌ Hata", hata_say)
+                if oz.get("hatalar"):
+                    with st.expander(f"⚠️ {hata_say} hata detayı"):
+                        for _h in oz["hatalar"][:50]:
+                            st.caption(_h)
+
         with vs2:
             lurl = st.text_input("Lig URL", key="lig_url_input", placeholder="https://www.mutating.com/football-stats/league-...")
             c1, c2 = st.columns(2)
