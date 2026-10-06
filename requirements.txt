@@ -5,3 +5,4 @@ playwright
 lxml
 bcrypt
 psycopg2-binary
+extra-streamlit-components
