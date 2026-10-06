@@ -1431,70 +1431,30 @@ TARAYICI_ESZAMANLI = int(os.environ.get("TARAYICI_ESZAMANLI", "3"))
 _TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
 
 
-def _chromium_kurulu_mu():
-    """Playwright Chromium kurulu mu kontrol et."""
-    try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as p:
-            b = p.chromium.launch(headless=True)
-            b.close()
-        return True
-    except Exception:
-        return False
-
-
-def _chromium_kur():
-    """Playwright Chromium kurulumunu dene."""
-    import subprocess
-    try:
-        subprocess.run(
-            ["playwright", "install", "chromium"],
-            capture_output=True, text=True, timeout=120
-        )
-        return True
-    except Exception:
-        return False
-
-
-_CHROMIUM_DURUM = None
-
-def _chromium_hazirla():
-    """Chromium kurulu mu kontrol et, yoksa kur."""
-    global _CHROMIUM_DURUM
-    if _CHROMIUM_DURUM is not None:
-        return _CHROMIUM_DURUM
-    if _chromium_kurulu_mu():
-        _CHROMIUM_DURUM = True
-        return True
-    # Kurulum dene
-    if _chromium_kur():
-        _CHROMIUM_DURUM = _chromium_kurulu_mu()
-        return _CHROMIUM_DURUM
-    _CHROMIUM_DURUM = False
-    return False
-
-
 def _playwright_skor_cek(url, timeout=25):
-    """Playwright ile JS render edilmiş sayfa çek."""
-    if not _chromium_hazirla():
-        return None
-
     try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        return None
-
+        import subprocess as _sp, sys as _sys
+        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
+                check=False, timeout=600,
+                stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    except Exception:
+        pass
+    from playwright.sync_api import sync_playwright
     with _TARAYICI_SEM:
         with sync_playwright() as p:
             b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
             try:
-                pg = b.new_page()
-                pg.goto(url, timeout=timeout * 1000, wait_until="domcontentloaded")
-                pg.wait_for_timeout(3000)
+                ctx = b.new_context(user_agent=UA, locale="en-US")
+                pg = ctx.new_page()
+                pg.route("**/*", lambda route: route.abort()
+                         if route.request.resource_type in ("image", "media", "font", "stylesheet")
+                         else route.continue_())
+                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+                pg.wait_for_timeout(2000)
                 return pg.content()
             finally:
-                b.close()
-
+                try: b.close()
+                except Exception: pass
 
 
 def _scrapingbee_get(url, render_js=True, timeout=30, mac_sec="5", max_retry=3, dogrula=False):
@@ -1845,118 +1805,109 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 def _skor_parse(html):
+    """HTML içinde FT etiketinin ALTINDAKI skoru bul.
+    Sadece 'FT' yazısının hemen altındaki skoru alır, diğerlerini atlar."""
     if not html:
         return None
 
     def _ok(e, d):
-        return 0 <= e <= 15 and 0 <= d <= 15
-
-    def _find_in_text(txt):
-        if not txt:
-            return None
-        for m in re.finditer(r'(?<![A-Za-z0-9])FT(?![A-Za-z0-9])', txt):
-            seg = txt[m.end():m.end() + 300]
-            mm = re.search(r'(\d{1,2})\s*[-:]\s*(\d{1,2})(?!\d)', seg)
-            if mm:
-                e, d = int(mm.group(1)), int(mm.group(2))
-                if _ok(e, d):
-                    return e, d
-        return None
+        return 0 <= e <= 10 and 0 <= d <= 10
 
     try:
         soup = BeautifulSoup(html, "html.parser")
         for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
 
-        ft_elements = []
+        tum_metin = soup.get_text("\n", strip=True)
+        satirlar = [s.strip() for s in tum_metin.split("\n") if s.strip()]
+
+        # Yöntem 1: Satır satır tara, "FT" bulunca altındaki satırlarda skor ara
+        for i, satir in enumerate(satirlar):
+            if satir == "FT" or satir.upper() == "FT":
+                # "Half Time-Full Time" kontrolü - önceki satırlara bak
+                onceki = " ".join(satirlar[max(0, i-3):i]).lower()
+                if "half time" in onceki or "win ht" in onceki or "draw ht" in onceki:
+                    continue
+
+                # FT'den sonraki 5 satırda skor ara
+                for j in range(i+1, min(i+6, len(satirlar))):
+                    m = re.match(r'^(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})$', satirlar[j])
+                    if m:
+                        e, d = int(m.group(1)), int(m.group(2))
+                        if _ok(e, d):
+                            return e, d
+
+                # FT ile aynı satırda skor ara (örn: "FT 2-2" veya "2-2 FT")
+                m = re.search(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})', satir)
+                if m:
+                    e, d = int(m.group(1)), int(m.group(2))
+                    if _ok(e, d):
+                        return e, d
+
+        # Yöntem 2: "FT" kelimesini içeren satırlarda skor ara
+        for i, satir in enumerate(satirlar):
+            if re.search(r'\bFT\b', satir, re.IGNORECASE):
+                # İstatistik kontrolü
+                if re.search(r'(Half Time|Win HT|Draw HT|Lose HT|HT -)', satir, re.IGNORECASE):
+                    continue
+
+                # Aynı satırda skor ara
+                m = re.search(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})', satir)
+                if m:
+                    e, d = int(m.group(1)), int(m.group(2))
+                    if _ok(e, d):
+                        return e, d
+
+                # Sonraki satırlarda skor ara
+                for j in range(i+1, min(i+4, len(satirlar))):
+                    m = re.match(r'^(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})$', satirlar[j])
+                    if m:
+                        e, d = int(m.group(1)), int(m.group(2))
+                        if _ok(e, d):
+                            return e, d
+
+        # Yöntem 3: HTML elementlerinde FT ara
         for el in soup.find_all(True):
             try:
-                t = el.get_text(" ", strip=True)
+                t = el.get_text(strip=True)
             except Exception:
                 continue
-            if "FT" in t and len(t) < 300:
-                ft_elements.append(el)
 
-        ft_elements.sort(key=lambda e: len(e.get_text(" ", strip=True)))
-
-        for el in ft_elements:
-            r = _find_in_text(el.get_text(" ", strip=True))
-            if r: return r
-
-            p = el.parent
-            for _ in range(4):
-                if p is None: break
-                try:
-                    r = _find_in_text(p.get_text(" ", strip=True))
-                    if r: return r
-                except Exception:
-                    pass
-                p = p.parent
-
-            try:
-                cnt = 0
-                for nxt in el.next_elements:
-                    cnt += 1
-                    if cnt > 60: break
-                    if isinstance(nxt, str):
-                        t = str(nxt).strip()
-                        if not t: continue
-                        mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
-                        if mm:
-                            e, d = int(mm.group(1)), int(mm.group(2))
+            if t == "FT" or t.upper() == "FT":
+                # Parent elementte skor ara
+                p = el.parent
+                for _ in range(3):
+                    if p is None:
+                        break
+                    try:
+                        pt = p.get_text(" ", strip=True)
+                        m = re.search(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})', pt)
+                        if m:
+                            e, d = int(m.group(1)), int(m.group(2))
                             if _ok(e, d):
                                 return e, d
-                    elif hasattr(nxt, 'get_text'):
-                        try:
-                            t = nxt.get_text(" ", strip=True)
-                            mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
-                            if mm:
-                                e, d = int(mm.group(1)), int(mm.group(2))
-                                if _ok(e, d):
-                                    return e, d
-                        except Exception:
-                            pass
-            except Exception:
-                pass
+                    except Exception:
+                        pass
+                    p = p.parent
 
-            try:
-                up = el.parent
-                if up is not None:
-                    cnt = 0
-                    for nxt in up.next_elements:
-                        cnt += 1
-                        if cnt > 60: break
+                # Kardeş elementlerde skor ara
+                try:
+                    for nxt in el.next_elements:
                         if isinstance(nxt, str):
                             t = str(nxt).strip()
-                            if not t: continue
-                            mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
-                            if mm:
-                                e, d = int(mm.group(1)), int(mm.group(2))
+                            m = re.match(r'^(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})$', t)
+                            if m:
+                                e, d = int(m.group(1)), int(m.group(2))
                                 if _ok(e, d):
                                     return e, d
-                        elif hasattr(nxt, 'get_text'):
-                            try:
-                                t = nxt.get_text(" ", strip=True)
-                                mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
-                                if mm:
-                                    e, d = int(mm.group(1)), int(mm.group(2))
-                                    if _ok(e, d):
-                                        return e, d
-                            except Exception:
-                                pass
-            except Exception:
-                pass
-    except Exception:
-        pass
+                except Exception:
+                    pass
 
-    try:
-        metin = _html_metne_cevir(html)
-        r = _find_in_text(metin)
-        if r: return r
     except Exception:
         pass
 
     return None
+
 
 
 def _skor_cek(url, tarayici_yedek=False):
