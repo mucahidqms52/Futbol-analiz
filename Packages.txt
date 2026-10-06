@@ -17,3 +17,4 @@ libcairo2
 libasound2
 chromium-browser
 chromium
+playwright
