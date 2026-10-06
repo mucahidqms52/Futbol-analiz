@@ -1807,45 +1807,38 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 def _skor_parse(html):
     if not html:
         return None
+
+    skor_re = re.compile(r'(?<![\d.:])(\d{1,2})\s*-\s*(\d{1,2})(?![\d.:])')
+
+    def _bul(txt):
+        m = skor_re.search(txt)
+        if m:
+            e, d = int(m.group(1)), int(m.group(2))
+            if e <= 15 and d <= 15:
+                return e, d
+        return None
+
+    # 1) Görünen metin: FT'den sonraki ilk birkaç parça
     try:
         soup = BeautifulSoup(html, "html.parser")
         for tag in soup(["script", "style", "noscript", "svg"]):
             tag.decompose()
-
-        parcalar = [s.strip() for s in soup.stripped_strings if s and s.strip()]
-
-        skor_re = re.compile(r'^(\d{1,2})\s*[-\u2013]\s*(\d{1,2})$')
-        ayni_satir_re = re.compile(r'^FT\s*[:\-]?\s*(\d{1,2})\s*[-\u2013]\s*(\d{1,2})$')
-
+        parcalar = [s.strip() for s in soup.stripped_strings if s.strip()]
         for i, p in enumerate(parcalar):
-            # "FT 2 - 2" tek parça halinde
-            m = ayni_satir_re.match(p)
-            if m:
-                e, d = int(m.group(1)), int(m.group(2))
-                if e <= 12 and d <= 12:
-                    return e, d
-                continue
+            if re.match(r'^FT\b', p):
+                r = _bul(" ".join(parcalar[i + 1:i + 7]) if p == "FT" else p[2:])
+                if r:
+                    return r
+    except Exception:
+        pass
 
-            # "FT" tek başına, skor hemen altındaki parçada
-            if p != "FT":
-                continue
-
-            # 1) Sonraki parça tam skor: "2 - 2"
-            if i + 1 < len(parcalar):
-                m = skor_re.match(parcalar[i + 1])
-                if m:
-                    e, d = int(m.group(1)), int(m.group(2))
-                    if e <= 12 and d <= 12:
-                        return e, d
-
-            # 2) Skor parçalara bölünmüş: "2", "-", "2"
-            if i + 3 < len(parcalar):
-                birlesik = " ".join(parcalar[i + 1:i + 4])
-                m = skor_re.match(birlesik)
-                if m:
-                    e, d = int(m.group(1)), int(m.group(2))
-                    if e <= 12 and d <= 12:
-                        return e, d
+    # 2) Ham HTML (script / data alanları dahil): FT'den sonraki 600 karakter
+    try:
+        for m in re.finditer(r'\bFT\b', html):
+            seg = re.sub(r'<[^>]+>', ' ', html[m.end():m.end() + 600])
+            r = _bul(seg)
+            if r:
+                return r
     except Exception:
         pass
     return None
