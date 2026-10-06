@@ -16,10 +16,8 @@ from psycopg2.extras import Json
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import subprocess, sys
 import logging
 
-# ==== LOG AYARLARI (Streamlit uyarılarını susturur) ====
 logging.getLogger('streamlit').setLevel(logging.ERROR)
 logging.getLogger('streamlit.runtime.scriptrunner.script_run_context').setLevel(logging.ERROR)
 logging.getLogger('streamlit.runtime.scriptrunner').setLevel(logging.ERROR)
@@ -190,23 +188,6 @@ Her türlü soru, görüş, şikayet, iptal ve iade talepleri için Uygulama iç
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
 
-@st.cache_resource(show_spinner="Tarayıcı kuruluyor (ilk açılışta 1-2 dk sürer)...")
-def _tarayici_kur():
-    try:
-        # ===== LOGLARI SUSTUR (stdout ve stderr DEVNULL) =====
-        subprocess.run(
-            [sys.executable, "-m", "playwright", "install", "chromium"],
-            check=False, timeout=600,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-    except Exception:
-        pass
-    return True
-
-
-_tarayici_kur()
-
-
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
@@ -214,7 +195,6 @@ st.markdown("""
     html { font-size: 13px !important; }
     body, .stApp { font-size: 0.85rem !important; }
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
-    /* === İKON FONTUNU GERİ GETİR (Material Symbols override) === */
     span[data-testid="stIconMaterial"],
     [data-testid="stIconMaterial"],
     [data-testid="stIconMaterial"] span,
@@ -276,7 +256,6 @@ st.markdown("""
     .st-key-fa_nav .stButton button { padding: 0.3rem 0.25rem !important; height: 2.1rem !important; background: rgba(19,28,46,0.6) !important; backdrop-filter: blur(8px); border: 1px solid var(--border) !important; }
     .st-key-fa_nav .stButton button p { font-size: 0.72rem !important; white-space: nowrap; font-weight: 700 !important; }
     .st-key-fa_nav .stButton button[kind="primary"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; box-shadow: 0 4px 16px rgba(34,197,94,0.4) !important; }
-    /* === NAV BADGE (kırmızı bildirim noktası) === */
     .fa-nav-badge-wrap { position: relative; height: 0; margin: 0; padding: 0; overflow: visible; }
     .fa-nav-badge {
         position: absolute;
@@ -301,7 +280,6 @@ st.markdown("""
         0%, 100% { transform: scale(1); box-shadow: 0 2px 10px rgba(239,68,68,0.7); }
         50% { transform: scale(1.12); box-shadow: 0 2px 16px rgba(239,68,68,1); }
     }
-    /* === MİNİ YAN YANA ÇİZGİ KARTLARI (ana sayfa) === */
     .stApp .fa-mini-line-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 8px 0; }
     .stApp .fa-mini-line-kart { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 12px; padding: 7px 6px 5px 6px; position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.3); animation: fadeInUp 0.4s ease-out; transition: all 0.25s ease; }
     .stApp .fa-mini-line-kart:hover { border-color: var(--c); transform: translateY(-2px); }
@@ -313,7 +291,6 @@ st.markdown("""
     .stApp .fa-mini-line-svg svg { height: 52px !important; }
     .stApp .fa-mini-line-alt { display: flex; justify-content: space-between; align-items: center; font-size: 0.55rem; font-weight: 800; margin-top: 2px; padding: 0 1px; }
     .stApp .fa-mini-line-alt b { font-weight: 900; letter-spacing: 0.2px; }
-    /* === ESKİ DONUT GRAFİK KARTLARI (geçmiş maçlar) === */
     .stApp .fa-donut-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0 8px 0; }
     .stApp .fa-donut-kart { background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95)); border: 1px solid #1d2940; border-radius: 16px; padding: 12px 6px 10px 6px; text-align: center; position: relative; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
     .stApp .fa-donut-kart:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-3px); box-shadow: 0 10px 28px rgba(34,197,94,0.15); }
@@ -322,7 +299,6 @@ st.markdown("""
     .stApp .fa-donut-svg { width: 100%; max-width: 82px; height: auto; margin: 0 auto; display: block; }
     .stApp .fa-donut-sub { font-size: 0.62rem; color: #64748b !important; margin-top: 8px; font-weight: 700; }
     .stApp .fa-donut-sub b { color: #eaf1fb !important; }
-    /* === MODERN BACKTEST KARTLARI === */
     .stApp .fa-bt-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 12px 0 8px 0; }
     .stApp .fa-bt-kart { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 16px; padding: 14px 16px 12px 16px; position: relative; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.3); transition: all 0.3s ease; animation: fadeInUp 0.4s ease-out; }
     .stApp .fa-bt-kart:hover { border-color: var(--c); transform: translateY(-2px); }
@@ -458,7 +434,7 @@ st.markdown("""
 
 
 # ==========================================
-# POSTGRESQL VERİ KATMANI (JSON DOSYALARI YERİNE)
+# POSTGRESQL VERİ KATMANI
 # ==========================================
 ADMIN_KULLANICI_ADI = "admin52"
 
@@ -507,7 +483,6 @@ except Exception as _db_hata:
     st.error(f"❌ Veritabanı bağlantı hatası: {_db_hata}")
     st.stop()
 
-# ==== Online kullanıcı takibi (LOG SPAM ÖNLEME: cache_data ile 30 sn'de bir çalışır) ====
 @st.cache_data(ttl=30, show_spinner=False)
 def _online_durum_guncelle(session_id):
     online_heartbeat(session_id)
@@ -521,7 +496,6 @@ except Exception:
     _ONLINE_SAYI = 0
 
 
-# 🟢 ONLINE göstergesi (sayfanın en üstü)
 st.markdown(f'''<div style="text-align:center; margin:0 0 10px 0;">
 <span style="display:inline-block; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.5); border-radius:99px; padding:4px 14px; font-size:0.75rem; font-weight:800; color:#22c55e; letter-spacing:0.5px;">
 🟢 {_ONLINE_SAYI} KİŞİ ONLINE
@@ -594,14 +568,6 @@ def bildirimler_kaydet(v):
         conn.commit()
     finally:
         conn.close()
-
-
-def otomatik_log_yukle():
-    return {}
-
-
-def otomatik_log_kaydet(v):
-    pass
 
 
 def gecmis_yukle():
@@ -787,7 +753,6 @@ def kullanici_sil(kullanici_adi):
 
 
 def yeni_kayit_say(saat=24):
-    """Son X saat içinde kayıt olan kullanıcı sayısı."""
     try:
         kl = kullanicilar_yukle()
         simdi = datetime.now()
@@ -866,7 +831,7 @@ def saat_sirala_anahtari(g):
     except Exception: return (9999, 99, 99, 99, 99)
 
 
-ESIK_YUKSEK = 65.0; ESIK_ORTA = 55.0; ESIK_BELIRSIZ = 50.0; MONTE_CARLO_N = 10000
+ESIK_YUKSEK = 65.0; ESIK_ORTA = 55.0; ESIK_BELIRSIZ = 50.0; MONTE_CARLO_N = 3000
 
 
 VARSAYILAN_VERI = {k: v for k, v in {
@@ -992,9 +957,6 @@ def _ulke_bul(metin):
 
 
 def clamp(x, lo, hi): return max(lo, min(hi, x))
-def ort_iki(a, b):
-    v = [x for x in [a, b] if x is not None and x > 0]
-    return sum(v) / len(v) if v else 0
 
 
 def guven_seviyesi_bul(o):
@@ -1171,24 +1133,6 @@ def sonuc_hesapla(kayit):
         d = "tam" if o == g else "yanlis"; return d == "tam", d
     t1, d1 = _t(o1, g1); tg_, dg_ = _t(og, "Üst" if gu else "Alt"); tk, dk = _t(okg, "Var" if gk else "Yok")
     return {"oneri_1x2": {"tahmin": o1, "tuttu": t1, "durum": d1}, "oneri_gol": {"tahmin": og, "tuttu": tg_, "durum": dg_}, "oneri_kg": {"tahmin": okg, "tuttu": tk, "durum": dk}, "gercek_1x2": g1, "gercek_gol": "Üst" if gu else "Alt", "gercek_kg": "Var" if gk else "Yok"}
-
-
-def oneri_istatistik_guncel(gecmis):
-    ist = {"1x2": {"tam": 0, "yakin": 0, "yanlis": 0}, "gol": {"tam": 0, "yakin": 0, "yanlis": 0}, "kg": {"tam": 0, "yakin": 0, "yanlis": 0}}
-    for g in gecmis:
-        try:
-            v = g["veri"]
-            if not v.get("skor_belli", False): continue
-            try: ya = yeniden_analiz(v)
-            except Exception: ya = g.get("analiz", {})
-            d = sonuc_hesapla({"veri": v, "analiz": ya})
-            if not d: continue
-            for key in ["oneri_1x2", "oneri_gol", "oneri_kg"]:
-                kisa = key.replace("oneri_", ""); durum = d[key].get("durum")
-                if durum == "tam": ist[kisa]["tam"] += 1
-                elif durum == "yanlis": ist[kisa]["yanlis"] += 1
-        except Exception: continue
-    return ist
 
 
 def _form_ppg(s):
@@ -1416,7 +1360,9 @@ def metinden_veri_cikar(metin):
     veri = {}; okunamayanlar = []
     veri["format"] = "genel"
     return veri, okunamayanlar
-    # ==========================================
+
+
+# ==========================================
 # VERİ ÇEKME MOTORU
 # ==========================================
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
@@ -1425,86 +1371,15 @@ TARAYICI_ESZAMANLI = int(os.environ.get("TARAYICI_ESZAMANLI", "3"))
 _TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
 
 
-def _js_tikla_kodu(mac_sec):
-    return """
-    (function() {
-        var macSayi = "%s";
-        function ok(el) { return el.children.length <= 1 && !el.closest('table'); }
-        function tikla(el) {
-            try { el.click(); } catch(e) {}
-            var inp = el.querySelector('input[type=radio], input[type=checkbox]');
-            if (inp && !inp.checked) { try { inp.click(); } catch(e) {} }
-        }
-        var tum = document.querySelectorAll('label, span, div, button, a, li');
-        var homes = [], aways = [];
-        for (var i = 0; i < tum.length; i++) {
-            var t = (tum[i].textContent || '').trim();
-            if (!ok(tum[i])) continue;
-            if (t === macSayi) tikla(tum[i]);
-            else if (t === 'Home') homes.push(tum[i]);
-            else if (t === 'Away') aways.push(tum[i]);
-        }
-        if (homes.length) tikla(homes[0]);
-        if (aways.length) tikla(aways[aways.length - 1]);
-        return true;
-    })()
-    """ % mac_sec
-
-
-def _son_n_oku(metin):
-    m = re.search(r'Last\s+(\d+)\s+games', metin or "")
-    return int(m.group(1)) if m else None
-
-
-def _playwright_html(url, mac_sec, timeout, dogrula=False):
-    from playwright.sync_api import sync_playwright
-    js_kod = _js_tikla_kodu(mac_sec)
-    hedef = int(mac_sec) if str(mac_sec).isdigit() else None
-    with _TARAYICI_SEM:
-        with sync_playwright() as p:
-            b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
-            try:
-                ctx = b.new_context(user_agent=UA, locale="en-US")
-                pg = ctx.new_page()
-                pg.route("**/*", lambda route: route.abort()
-                         if route.request.resource_type in ("image", "media", "font")
-                         else route.continue_())
-                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-                try:
-                    pg.wait_for_load_state("networkidle", timeout=15000)
-                except Exception:
-                    pass
-                pg.wait_for_timeout(3000)
-                pg.evaluate(js_kod)
-                pg.wait_for_timeout(3500)
-
-                if dogrula and hedef:
-                    n = _son_n_oku(pg.inner_text("body"))
-                    if n is not None and n != hedef:
-                        try:
-                            for el in pg.get_by_text(str(hedef), exact=True).all()[:20]:
-                                try:
-                                    if el.evaluate("e => !!e.closest('table')"):
-                                        continue
-                                    el.click(timeout=1500)
-                                except Exception:
-                                    pass
-                            pg.wait_for_timeout(1500)
-                            pg.evaluate(js_kod)
-                            pg.wait_for_timeout(3000)
-                        except Exception:
-                            pass
-                        n = _son_n_oku(pg.inner_text("body"))
-                    if n is not None and n != hedef:
-                        raise RuntimeError(f"{hedef} maç filtresi uygulanamadı (sayfa: Last {n} games)")
-                return pg.content()
-            finally:
-                try: b.close()
-                except Exception: pass
-
-
 def _playwright_skor_cek(url, timeout=25):
-    """Sadece FT skoru okumak için minimal tarayıcı çekimi. Filtre yapmaz, hızlıdır."""
+    """Sadece FT skoru okumak için minimal tarayıcı çekimi. Chromium lazy yüklenir."""
+    try:
+        import subprocess as _sp, sys as _sys
+        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
+                check=False, timeout=600,
+                stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    except Exception:
+        pass
     from playwright.sync_api import sync_playwright
     with _TARAYICI_SEM:
         with sync_playwright() as p:
@@ -1524,10 +1399,6 @@ def _playwright_skor_cek(url, timeout=25):
 
 
 def _scrapingbee_get(url, render_js=True, timeout=30, mac_sec="5", max_retry=3, dogrula=False):
-    """
-    1. koddaki _sayfa_getir yaklaşımı — sadece requests kullanır.
-    Playwright kullanılmaz. dogrula/mac_sec/render_js parametreleri uyumluluk için kabul edilir.
-    """
     hata = None
     for d in range(max_retry):
         try:
@@ -1602,7 +1473,6 @@ def _mac_html_parse(html, url=""):
             veri["takim_ev"] = p[0].strip()
             if len(p) > 1: veri["takim_dep"] = p[1].strip()
     metin = _html_metne_cevir(html)
-    veri["son_n"] = _son_n_oku(metin)
     m = re.search(r'(\d{1,2}\.\d{1,2}\.\d{4})', metin)
     if m: veri["tarih"] = m.group(1)
     m = re.search(r'(\d{1,2}:\d{2})', metin)
@@ -1695,12 +1565,10 @@ def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
         if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
-        # Gelecek maç saatine +2 saat ekle
         if veri.get("saat"): veri["saat"] = saat_2_saat_ileri(veri["saat"])
         veri["kaynak_url"] = mac["url"]
         if mac["url"] in mevcut_urls:
             return ("atlandi", veri, "Zaten var", None)
-        # Sadece eşiği geçen maçlar geleceğe
         if _mac_tahmin_var_mi(veri, esikler):
             kayit = kayit_olustur(veri, analiz_hesapla(veri))
             return ("eklendi", veri, "Gelecek'e eklendi", kayit)
@@ -1719,7 +1587,6 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
         u = g.get("veri", {}).get("kaynak_url", "")
         if u: mevcut_urls.add(u)
 
-    # Eşikleri ana thread'de kopyala, thread'lere aktar (thread'de session_state güvenli değil)
     try: esikler_kopya = dict(st.session_state.esikler)
     except Exception: esikler_kopya = {}
 
@@ -1749,7 +1616,6 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
                 try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
 
-    # Ana thread'de session_state'e yaz
     if eklenecekler:
         st.session_state.gelecek_analizler.extend(eklenecekler)
         gelecek_kaydet(st.session_state.gelecek_analizler)
@@ -1845,7 +1711,6 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
                 try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
 
-    # Ana thread'de session_state'e yaz
     if eklenecekler:
         st.session_state.gecmis_analizler.extend(eklenecekler)
         gecmis_kaydet(st.session_state.gecmis_analizler)
@@ -1854,20 +1719,7 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
     return basarili, hatali
 
 
-# ==========================================
-# SKOR ÇEKME - ÇOK KATMANLI SKOR ÇIKARIMI
-# ==========================================
 def _skor_parse(html):
-    """
-    FT etiketine bitişik skoru okur. Çok katmanlı arama:
-    1) 'FT' string'ini içeren TÜM elementleri bul, en derinden başlayarak:
-       - aynı element metni
-       - parent/grandparent metinleri
-       - next_elements (document order)
-       - parent'ın next_elements
-    2) Metin fallback
-    Bulamazsa None döner.
-    """
     if not html:
         return None
 
@@ -1891,7 +1743,6 @@ def _skor_parse(html):
         for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
 
-        # 'FT' string'ini içeren elementler (kısa metinli olanlar — yani gerçek FT etiketi)
         ft_elements = []
         for el in soup.find_all(True):
             try:
@@ -1901,15 +1752,12 @@ def _skor_parse(html):
             if "FT" in t and len(t) < 300:
                 ft_elements.append(el)
 
-        # En derin (en kısa metinli) elementten başla
         ft_elements.sort(key=lambda e: len(e.get_text(" ", strip=True)))
 
         for el in ft_elements:
-            # 1) Aynı element metni
             r = _find_in_text(el.get_text(" ", strip=True))
             if r: return r
 
-            # 2) Parent ve grandparent zinciri (4 seviye yukarı)
             p = el.parent
             for _ in range(4):
                 if p is None: break
@@ -1920,7 +1768,6 @@ def _skor_parse(html):
                     pass
                 p = p.parent
 
-            # 3) el.next_elements — document order'da her şey
             try:
                 cnt = 0
                 for nxt in el.next_elements:
@@ -1947,7 +1794,6 @@ def _skor_parse(html):
             except Exception:
                 pass
 
-            # 4) Parent'ın next_elements'ı
             try:
                 up = el.parent
                 if up is not None:
@@ -1978,7 +1824,6 @@ def _skor_parse(html):
     except Exception:
         pass
 
-    # Metin fallback
     try:
         metin = _html_metne_cevir(html)
         r = _find_in_text(metin)
@@ -2091,7 +1936,6 @@ def _donut_svg(yuzde, renk, boyut=82):
 
 
 def _sparkline_svg(degerler, renk, yukseklik=62, genislik=300):
-    """Gradient dolgulu, yumuşak bezier çizgi grafik SVG'si üretir."""
     if not degerler or len(degerler) < 2:
         return f'<svg class="fa-spark-svg" viewBox="0 0 {genislik} {yukseklik}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;"><text x="50%" y="50%" text-anchor="middle" fill="#64748b" font-size="10">Yetersiz veri</text></svg>'
     n = len(degerler)
@@ -2127,44 +1971,6 @@ def _sparkline_svg(degerler, renk, yukseklik=62, genislik=300):
 <path d="{path_d}" fill="none" stroke="{renk}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
 <circle cx="{son_x:.2f}" cy="{son_y:.2f}" r="3.2" fill="{renk}" stroke="#0b1220" stroke-width="1.6"/>
 </svg>'''
-
-
-def _pin_chart_svg(degerler, renk, genislik=112, yukseklik=82):
-    """Küçük pin/lollipop chart — her nokta bir daire halka + dikey çubuk."""
-    if not degerler or len(degerler) < 2:
-        return f'<svg viewBox="0 0 {genislik} {yukseklik}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;"><text x="50%" y="50%" text-anchor="middle" fill="#64748b" font-size="8">Yetersiz veri</text></svg>'
-
-    n = len(degerler)
-    pad_l = 11
-    pad_r = 11
-    pad_t = 12
-    pad_b = 6
-
-    ic_g = genislik - pad_l - pad_r
-    ic_h = yukseklik - pad_t - pad_b
-    alt_y = pad_t + ic_h
-
-    adim = ic_g / (n - 1) if n > 1 else ic_g
-
-    parts = [f'<svg viewBox="0 0 {genislik} {yukseklik}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">']
-
-    for yz in [0, 50, 100]:
-        gy = pad_t + (1 - yz / 100) * ic_h
-        parts.append(f'<line x1="{pad_l - 3}" y1="{gy:.1f}" x2="{genislik - pad_r + 3}" y2="{gy:.1f}" stroke="#1d2940" stroke-width="0.5" stroke-dasharray="2 3" opacity="0.55"/>')
-
-    for i, v in enumerate(degerler):
-        v = max(0.0, min(100.0, v))
-        x = pad_l + i * adim
-        y = pad_t + (1 - v / 100) * ic_h
-
-        parts.append(f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x:.1f}" y2="{alt_y:.1f}" stroke="{renk}" stroke-width="3.5" stroke-linecap="round" opacity="0.5"/>')
-        parts.append(f'<circle cx="{x:.1f}" cy="{alt_y:.1f}" r="1.6" fill="{renk}" opacity="0.9"/>')
-        parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5.5" fill="#0b1220" stroke="{renk}" stroke-width="2.3"/>')
-        parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.4" fill="{renk}"/>')
-        parts.append(f'<text x="{x:.1f}" y="{y - 8:.1f}" text-anchor="middle" fill="{renk}" font-size="6.5" font-weight="900" font-family="Rajdhani, Inter, sans-serif">{int(round(v))}</text>')
-
-    parts.append('</svg>')
-    return "".join(parts)
 
 
 def mac_karti(ev, dep, sb, se, sd, le, ld, saat="", ulke="", tarih=""):
@@ -2246,23 +2052,6 @@ def oneri_karti(b, s, y, e, poz, alt):
         ns = f'<div class="fa-mut">{_e(alt)} • Gerekli: %{e:.0f}</div>'
     bar = olasilik_bar("", y, e)
     return f'<div class="{sn}"><div class="fa-ttl">{_e(b)}</div><div class="fa-pickrow"><div><div class="fa-pick">{_e(s)}</div>{d}</div><div class="{ps}">%{y:.1f}</div></div>{bar}{ns}</div>'
-
-
-def okunan_veriler_paneli(v):
-    if v.get("format") in ("sportytrader", "mutating"):
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown(f"**{v.get('takim_ev', 'Ev')}**")
-            st.markdown(f"- Atılan: **{v.get('atilan_ev', 0):.2f}**")
-            st.markdown(f"- Yenen: **{v.get('yenen_ev', 0):.2f}**")
-            st.markdown(f"- CS: **{v.get('clean_sheets_ev', 0):.1f}%**")
-            st.markdown(f"- KG: **{v.get('kg_siklik_ev', 0):.1f}%**")
-        with c2:
-            st.markdown(f"**{v.get('takim_dep', 'Dep')}**")
-            st.markdown(f"- Atılan: **{v.get('atilan_dep', 0):.2f}**")
-            st.markdown(f"- Yenen: **{v.get('yenen_dep', 0):.2f}**")
-            st.markdown(f"- CS: **{v.get('clean_sheets_dep', 0):.1f}%**")
-            st.markdown(f"- KG: **{v.get('kg_siklik_dep', 0):.1f}%**")
 
 
 def _form_detay(form_str):
@@ -2695,7 +2484,6 @@ def gecmis_istatistik_hesapla():
 
 
 def _modern_seri_hesapla(gc, son_n=30):
-    """Her maç için kümülatif doğruluk yüzdesini hesaplar. Son N maçı döndürür."""
     seri_1x2, seri_gol, seri_kg = [], [], []
     t_1x2 = d_1x2 = 0
     t_gol = d_gol = 0
@@ -2729,30 +2517,6 @@ def _modern_seri_hesapla(gc, son_n=30):
     return seri_1x2, seri_gol, seri_kg, (d_1x2, t_1x2), (d_gol, t_gol), (d_kg, t_kg)
 
 
-def _modern_seri_v2(gc, son_n=20):
-    """Son N maç için her marketin doğru(1)/yanlış(0) dizisini döner."""
-    d_1x2 = []; d_gol = []; d_kg = []
-    for g in gc:
-        try:
-            vv = g.get("veri", {})
-            if not vv.get("skor_belli", False): continue
-            dd = sonuc_hesapla(g)
-            if not dd: continue
-            o = dd.get("oneri_1x2", {})
-            if o.get("tuttu") is not None: d_1x2.append(1 if o["tuttu"] else 0)
-            o = dd.get("oneri_gol", {})
-            if o.get("tuttu") is not None: d_gol.append(1 if o["tuttu"] else 0)
-            o = dd.get("oneri_kg", {})
-            if o.get("tuttu") is not None: d_kg.append(1 if o["tuttu"] else 0)
-        except Exception:
-            continue
-    d_1x2 = d_1x2[-son_n:]
-    d_gol = d_gol[-son_n:]
-    d_kg = d_kg[-son_n:]
-    def _y(d): return (sum(d) / len(d) * 100) if d else 0
-    return {"1x2": (d_1x2, _y(d_1x2)), "gol": (d_gol, _y(d_gol)), "kg": (d_kg, _y(d_kg))}
-
-
 def _trend_ok(seri):
     if len(seri) < 2: return ''
     son = seri[-1]; onceki = seri[-2]
@@ -2763,7 +2527,6 @@ def _trend_ok(seri):
 
 def modern_istatistik_grafik(baslik="📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="donut"):
     if stil == "line":
-        # === ANA SAYFA: 3 YAN YANA ÇİZGİ GRAFİK KART ===
         gc = st.session_state.gecmis_analizler
         seri_1x2, seri_gol, seri_kg, ist_1x2, ist_gol, ist_kg = _modern_seri_hesapla(gc, son_n=20)
         p1 = seri_1x2[-1] if seri_1x2 else 0
@@ -2800,7 +2563,6 @@ def modern_istatistik_grafik(baslik="📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", st
 
         st.markdown(f'<div class="fa-mini-line-grid">{"".join(kartlar_html)}</div>', unsafe_allow_html=True)
     else:
-        # === ESKİ DONUT GRAFİK (geçmiş maçlar sayfası) ===
         p1, t1, s1, pg, tg, sg, pk, tk, sk = gecmis_istatistik_hesapla()
         st.markdown(f'<div class="mh-hero-ust" style="text-align:center;margin-top:14px;">{_e(baslik)}</div>', unsafe_allow_html=True)
         st.markdown(f'''<div class="fa-donut-grid">
@@ -3141,9 +2903,7 @@ elif st.session_state.sayfa == "giris":
         yasal_metin_goster()
         misafir_aciklama()
         st.markdown('<div class="login-footer" style="margin-top:20px;">© <b>Futbol Analiz Pro</b> • Bilgi amaçlıdır</div>', unsafe_allow_html=True)
-        # ==========================================
-# SAYFA: KAYIT
-# ==========================================
+
 elif st.session_state.sayfa == "kayit":
     st.markdown('''<div class="login-hero"><div class="login-logo">✨</div><h1 class="login-title">Üye Ol</h1><p class="login-subtitle">Kullanıcı adı ve şifre belirle</p></div>''', unsafe_allow_html=True)
     with st.form("kayit_form"):
@@ -3174,9 +2934,6 @@ elif st.session_state.sayfa == "kayit":
     yasal_metin_goster()
 
 
-# ==========================================
-# SAYFA: ÜYE GİRİŞİ
-# ==========================================
 elif st.session_state.sayfa == "uyegirisi":
     st.markdown('''<div class="login-hero"><div class="login-logo">🔑</div><h1 class="login-title">Üye Girişi</h1></div>''', unsafe_allow_html=True)
     with st.form("uye_giris_form"):
@@ -3195,9 +2952,6 @@ elif st.session_state.sayfa == "uyegirisi":
         if gg: st.session_state.sayfa = "giris"; st.rerun()
 
 
-# ==========================================
-# SAYFA: ÖDEME
-# ==========================================
 elif st.session_state.sayfa == "odeme":
     hedef = st.session_state.get("odeme_hedef_kadi") or uye_adi()
     if not hedef:
@@ -3252,9 +3006,6 @@ elif st.session_state.sayfa == "odeme":
             else: st.info("⏳ Bekleniyor.")
 
 
-# ==========================================
-# SAYFA: ADMIN ÖDEMELER
-# ==========================================
 elif st.session_state.sayfa == "admin_odemeler":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>💳 Bekleyen Ödemeler</h1>", unsafe_allow_html=True)
@@ -3282,9 +3033,6 @@ elif st.session_state.sayfa == "admin_odemeler":
         st.session_state.sayfa = "giris"; st.rerun()
 
 
-# ==========================================
-# SAYFA: ADMIN ABONELER
-# ==========================================
 elif st.session_state.sayfa == "admin_aboneler":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>👥 Aboneler</h1>", unsafe_allow_html=True)
@@ -3328,9 +3076,6 @@ elif st.session_state.sayfa == "admin_aboneler":
         st.session_state.sayfa = "giris"; st.rerun()
 
 
-# ==========================================
-# SAYFA: ADMIN BİLDİRİMLER
-# ==========================================
 elif st.session_state.sayfa == "admin_bildirimler":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>📬 Bildirimler</h1>", unsafe_allow_html=True)
@@ -3362,9 +3107,6 @@ elif st.session_state.sayfa == "admin_bildirimler":
         st.session_state.sayfa = "giris"; st.rerun()
 
 
-# ==========================================
-# SAYFA: KULLANICI BİLDİRİM
-# ==========================================
 elif st.session_state.sayfa == "kullanici_bildirim":
     if not uye_mi(): st.error("❌ Giriş yap."); st.stop()
     st.markdown("<h1>📬 Bildirim Gönder</h1>", unsafe_allow_html=True)
@@ -3396,9 +3138,6 @@ elif st.session_state.sayfa == "kullanici_bildirim":
             st.divider()
 
 
-# ==========================================
-# SAYFA: GELECEK MAÇLAR (ADMİN)
-# ==========================================
 elif st.session_state.sayfa == "gelecek_admin":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>🔮 Gelecek Maçlar</h1>", unsafe_allow_html=True)
@@ -3490,9 +3229,6 @@ elif st.session_state.sayfa == "gelecek_admin":
         st.session_state.sayfa = "giris"; st.rerun()
 
 
-# ==========================================
-# SAYFA: GEÇMİŞ MAÇLAR
-# ==========================================
 elif st.session_state.sayfa == "gecmis":
     st.markdown("<h1>📊 Geçmiş Maçlar</h1>", unsafe_allow_html=True)
     gc = st.session_state.gecmis_analizler; top = len(gc)
@@ -3591,9 +3327,6 @@ elif st.session_state.sayfa == "gecmis":
         st.session_state.sayfa = "giris"; st.rerun()
 
 
-# ==========================================
-# SAYFA: BACKTEST (MODERN)
-# ==========================================
 elif st.session_state.sayfa == "backtest":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>🔬 Model Test (Backtest)</h1>", unsafe_allow_html=True)
@@ -3687,9 +3420,6 @@ elif st.session_state.sayfa == "backtest":
         st.session_state.sayfa = "giris"; st.rerun()
 
 
-# ==========================================
-# SAYFA: AYARLAR
-# ==========================================
 elif st.session_state.sayfa == "ayarlar":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>⚙️ Ayarlar</h1>", unsafe_allow_html=True)
@@ -3733,9 +3463,6 @@ elif st.session_state.sayfa == "ayarlar":
             st.session_state.sayfa = "giris"; st.rerun()
 
 
-# ==========================================
-# SAYFA: MANUEL GİRİŞ
-# ==========================================
 elif st.session_state.sayfa == "manuel_giris":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>📝 Eksik Alanlar</h1>", unsafe_allow_html=True)
@@ -3767,9 +3494,6 @@ elif st.session_state.sayfa == "manuel_giris":
     if st.button("⬅️ Geri"): st.session_state.sayfa = "giris"; st.rerun()
 
 
-# ==========================================
-# SAYFA: SONUÇ
-# ==========================================
 elif st.session_state.sayfa == "sonuc":
     v = st.session_state.form_verileri; a = analiz_hesapla(v)
     te = v.get("takim_ev", "Ev") or "Ev"; td = v.get("takim_dep", "Dep") or "Dep"
@@ -3794,25 +3518,55 @@ elif st.session_state.sayfa == "sonuc":
     else: ks = "KG Yok"; ky = a["kg_yok_model"]; ke = esik_al("kg_yok")
     st.markdown(oneri_karti("🤝 KG", ks, ky, ke, ky >= ke, f"Var:%{a['kg_var_model']:.1f} Yok:%{a['kg_yok_model']:.1f}"), unsafe_allow_html=True)
 
-    if st.session_state.gelecekten_gelindi and admin_mi():
-        ig = st.session_state.aktif_gelecek_idx
+    # ===== SKOR GİR VE GEÇMİŞE TAŞI (DÜZELTİLMİŞ) =====
+    if admin_mi() and st.session_state.get("gelecekten_gelindi"):
+        ig = st.session_state.get("aktif_gelecek_idx")
         if ig is not None and 0 <= ig < len(st.session_state.gelecek_analizler):
-            st.divider(); st.markdown("### 📥 Sonuç Gir")
-            c1, c2, c3 = st.columns([1, 1, 1])
-            with c1: yse = st.number_input("Ev", 0, 20, 0, 1, key=f"gse_{ig}")
-            with c2: ysd = st.number_input("Dep", 0, 20, 0, 1, key=f"gsd_{ig}")
-            with c3:
-                st.markdown(""); st.markdown("")
-                if st.button("📥 Taşı", key=f"ts_{ig}", use_container_width=True, type="primary"):
-                    k = st.session_state.gelecek_analizler[ig]
-                    k["veri"]["skor_ev"] = int(yse); k["veri"]["skor_dep"] = int(ysd); k["veri"]["skor_belli"] = True
-                    yd = sonuc_hesapla(k)
-                    if yd: k["dogruluk"] = yd
-                    st.session_state.gecmis_analizler.append(k)
-                    st.session_state.gelecek_analizler.pop(ig)
-                    gecmis_kaydet(st.session_state.gecmis_analizler); gelecek_kaydet(st.session_state.gelecek_analizler)
-                    st.session_state.gelecekten_gelindi = False; st.session_state.aktif_gelecek_idx = None
-                    st.session_state.sayfa = "giris"; st.rerun()
+            st.divider()
+            st.markdown("### 📥 Sonuç Gir ve Geçmişe Taşı")
+            mevcut = st.session_state.gelecek_analizler[ig]
+            st.caption(f"Maç: **{mevcut['veri'].get('takim_ev','?')} vs {mevcut['veri'].get('takim_dep','?')}**")
+            
+            with st.form(key=f"skor_form_{ig}"):
+                c1, c2, c3 = st.columns([1, 1, 2])
+                with c1: yse = st.number_input("Ev", 0, 20, 0, 1, key=f"gse_f_{ig}")
+                with c2: ysd = st.number_input("Dep", 0, 20, 0, 1, key=f"gsd_f_{ig}")
+                with c3:
+                    st.markdown(""); st.markdown("")
+                    tasi_btn = st.form_submit_button("📥 Geçmişe Taşı", use_container_width=True, type="primary")
+                
+                if tasi_btn:
+                    try:
+                        hedef_url = mevcut["veri"].get("kaynak_url", "")
+                        gercek_idx = ig
+                        if hedef_url:
+                            for i, gm in enumerate(st.session_state.gelecek_analizler):
+                                if gm.get("veri", {}).get("kaynak_url") == hedef_url:
+                                    gercek_idx = i
+                                    break
+                        
+                        k = st.session_state.gelecek_analizler[gercek_idx]
+                        k["veri"]["skor_ev"] = int(yse)
+                        k["veri"]["skor_dep"] = int(ysd)
+                        k["veri"]["skor_belli"] = True
+                        yd = sonuc_hesapla(k)
+                        if yd: k["dogruluk"] = yd
+                        
+                        st.session_state.gecmis_analizler.append(k)
+                        st.session_state.gelecek_analizler.pop(gercek_idx)
+                        
+                        gecmis_kaydet(st.session_state.gecmis_analizler)
+                        gelecek_kaydet(st.session_state.gelecek_analizler)
+                        
+                        st.session_state.gelecekten_gelindi = False
+                        st.session_state.aktif_gelecek_idx = None
+                        
+                        st.success(f"✅ {k['veri'].get('takim_ev','?')} vs {k['veri'].get('takim_dep','?')} → {int(yse)}-{int(ysd)} Geçmişe taşındı!")
+                        time.sleep(1.2)
+                        st.session_state.sayfa = "gecmis"
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ Taşıma hatası: {e}")
 
     km = (a["ust_25"] >= esik_al("ust") and a["ust_25"] >= a["alt_25"]) or (a["alt_25"] >= esik_al("alt") and a["alt_25"] >= a["ust_25"]) or p1
     if not st.session_state.kayit_yapildi and admin_mi():
