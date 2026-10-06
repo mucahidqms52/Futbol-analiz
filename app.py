@@ -17,11 +17,15 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
+import warnings
 import extra_streamlit_components as stx
 
 logging.getLogger('streamlit').setLevel(logging.ERROR)
 logging.getLogger('streamlit.runtime.scriptrunner.script_run_context').setLevel(logging.ERROR)
 logging.getLogger('streamlit.runtime.scriptrunner').setLevel(logging.ERROR)
+
+warnings.filterwarnings("ignore", message=".*CachedWidgetWarning.*")
+warnings.filterwarnings("ignore", category=UserWarning, module="streamlit")
 
 
 YASAL_METIN = """
