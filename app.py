@@ -1806,67 +1806,71 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 def _skor_parse(html):
     """HTML içinde FT etiketinin ALTINDAKI skoru bul.
-    Sadece 'FT' yazısının hemen altındaki skoru alır, diğerlerini atlar."""
+    Sadece 'FT' yazısının hemen altındaki skoru alır."""
     if not html:
         return None
 
     def _ok(e, d):
         return 0 <= e <= 10 and 0 <= d <= 10
 
+    def _skor_bul_metin(metin):
+        """Metin içinde skor kalıbı ara."""
+        if not metin:
+            return None
+        m = re.search(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})(?!\d)', metin)
+        if m:
+            e, d = int(m.group(1)), int(m.group(2))
+            if _ok(e, d):
+                return e, d
+        return None
+
     try:
         soup = BeautifulSoup(html, "html.parser")
         for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
 
+        # Yöntem 1: Satır satır tara - "FT" bulunca hemen altındaki skoru al
         tum_metin = soup.get_text("\n", strip=True)
         satirlar = [s.strip() for s in tum_metin.split("\n") if s.strip()]
 
-        # Yöntem 1: Satır satır tara, "FT" bulunca altındaki satırlarda skor ara
         for i, satir in enumerate(satirlar):
+            # Tam "FT" satırı mı?
             if satir == "FT" or satir.upper() == "FT":
-                # "Half Time-Full Time" kontrolü - önceki satırlara bak
-                onceki = " ".join(satirlar[max(0, i-3):i]).lower()
-                if "half time" in onceki or "win ht" in onceki or "draw ht" in onceki:
+                # "Half Time-Full Time" kontrolü
+                onceki = " ".join(satirlar[max(0, i-5):i]).lower()
+                if "half time" in onceki or "win ht" in onceki or "draw ht" in onceki or "lose ht" in onceki:
                     continue
 
-                # FT'den sonraki 5 satırda skor ara
-                for j in range(i+1, min(i+6, len(satirlar))):
-                    m = re.match(r'^(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})$', satirlar[j])
-                    if m:
-                        e, d = int(m.group(1)), int(m.group(2))
-                        if _ok(e, d):
-                            return e, d
+                # FT'den sonraki 3 satırda skor ara (kısa mesafe!)
+                for j in range(i+1, min(i+4, len(satirlar))):
+                    skor = _skor_bul_metin(satirlar[j])
+                    if skor:
+                        return skor
 
-                # FT ile aynı satırda skor ara (örn: "FT 2-2" veya "2-2 FT")
-                m = re.search(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})', satir)
-                if m:
-                    e, d = int(m.group(1)), int(m.group(2))
-                    if _ok(e, d):
-                        return e, d
+                # Aynı satırda skor ara
+                skor = _skor_bul_metin(satir)
+                if skor:
+                    return skor
 
         # Yöntem 2: "FT" kelimesini içeren satırlarda skor ara
         for i, satir in enumerate(satirlar):
             if re.search(r'\bFT\b', satir, re.IGNORECASE):
                 # İstatistik kontrolü
-                if re.search(r'(Half Time|Win HT|Draw HT|Lose HT|HT -)', satir, re.IGNORECASE):
+                if re.search(r'(Half Time|Win HT|Draw HT|Lose HT)', satir, re.IGNORECASE):
                     continue
 
                 # Aynı satırda skor ara
-                m = re.search(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})', satir)
-                if m:
-                    e, d = int(m.group(1)), int(m.group(2))
-                    if _ok(e, d):
-                        return e, d
+                skor = _skor_bul_metin(satir)
+                if skor:
+                    return skor
 
-                # Sonraki satırlarda skor ara
-                for j in range(i+1, min(i+4, len(satirlar))):
-                    m = re.match(r'^(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})$', satirlar[j])
-                    if m:
-                        e, d = int(m.group(1)), int(m.group(2))
-                        if _ok(e, d):
-                            return e, d
+                # Sonraki 2 satırda skor ara
+                for j in range(i+1, min(i+3, len(satirlar))):
+                    skor = _skor_bul_metin(satirlar[j])
+                    if skor:
+                        return skor
 
-        # Yöntem 3: HTML elementlerinde FT ara
+        # Yöntem 3: HTML elementlerinde "FT" ara
         for el in soup.find_all(True):
             try:
                 t = el.get_text(strip=True)
@@ -1876,16 +1880,14 @@ def _skor_parse(html):
             if t == "FT" or t.upper() == "FT":
                 # Parent elementte skor ara
                 p = el.parent
-                for _ in range(3):
+                for _ in range(2):
                     if p is None:
                         break
                     try:
                         pt = p.get_text(" ", strip=True)
-                        m = re.search(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})', pt)
-                        if m:
-                            e, d = int(m.group(1)), int(m.group(2))
-                            if _ok(e, d):
-                                return e, d
+                        skor = _skor_bul_metin(pt)
+                        if skor:
+                            return skor
                     except Exception:
                         pass
                     p = p.parent
