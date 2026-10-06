@@ -1949,95 +1949,53 @@ def _skor_cek(url, tarayici_yedek=False):
 
 
 def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
-    """Gelecek maçların skorlarını kontrol eder, bitenleri geçmişe taşır."""
-    gel = list(st.session_state.gelecek_analizler)
+    gel = st.session_state.gelecek_analizler
     isler = [(i, g) for i, g in enumerate(gel) if g.get("veri", {}).get("kaynak_url")]
     sonuc = {}
     tamam = 0
-
     if isler:
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
             fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], tarayici_yedek): (i, g) for i, g in isler}
             for f in as_completed(fut):
-                i, g = fut[f]
-                tamam += 1
+                i, g = fut[f]; tamam += 1
                 try:
                     sonuc[i] = f.result()
                 except Exception as e:
                     sonuc[i] = (None, str(e)[:80])
                 if progress_callback:
                     try:
-                        progress_callback(tamam, len(isler), g["veri"].get("takim_ev", ""))
+                        progress_callback(tamam - 1, len(isler), g["veri"].get("takim_ev", ""))
                     except Exception:
                         pass
 
     mevcut = {x.get("veri", {}).get("kaynak_url") for x in st.session_state.gecmis_analizler}
-    tasinan = 0
-    bitmemis = 0
-    hatalar = []
-    kalan = []
-
+    tasinan = 0; bitmemis = 0; hatalar = []; kalan = []
     for i, g in enumerate(gel):
-        v = g["veri"]
-        isim = f"{v.get('takim_ev', '?')} - {v.get('takim_dep', '?')}"
-
-        # URL'si olmayan maçlar direkt kalır
-        if not v.get("kaynak_url"):
-            kalan.append(g)
-            continue
-
         r = sonuc.get(i)
         if r is None:
-            kalan.append(g)
-            continue
-
+            kalan.append(g); continue
         skor, hata = r
-
+        v = g["veri"]; isim = f"{v.get('takim_ev', '?')} - {v.get('takim_dep', '?')}"
         if skor is None:
             if hata:
                 hatalar.append(f"{isim}: {hata}")
             else:
                 bitmemis += 1
-            kalan.append(g)
-            continue
-
-        # Skor bulundu — maçı geçmişe taşı
-        try:
-            v["skor_ev"], v["skor_dep"], v["skor_belli"] = int(skor[0]), int(skor[1]), True
-            d = sonuc_hesapla(g)
-            if d:
-                g["dogruluk"] = d
-            url = v.get("kaynak_url")
-            if url not in mevcut:
-                st.session_state.gecmis_analizler.append(g)
-                mevcut.add(url)
-            tasinan += 1
-        except Exception as e:
-            hatalar.append(f"{isim}: İşleme hatası: {str(e)[:60]}")
-            kalan.append(g)
-
-    # Önce DB'ye yaz, sonra hafızayı güncelle
-    try:
-        gecmis_kaydet(st.session_state.gecmis_analizler)
-    except Exception as e:
-        hatalar.append(f"DB kayıt hatası (gecmis): {str(e)[:60]}")
+            kalan.append(g); continue
+        v["skor_ev"], v["skor_dep"], v["skor_belli"] = skor[0], skor[1], True
+        d = sonuc_hesapla(g)
+        if d: g["dogruluk"] = d
+        if v.get("kaynak_url") not in mevcut:
+            st.session_state.gecmis_analizler.append(g)
+            mevcut.add(v.get("kaynak_url"))
+        tasinan += 1
 
     st.session_state.gelecek_analizler = kalan
     st.session_state.aktif_gelecek_idx = None
     st.session_state.gelecekten_gelindi = False
-
-    try:
-        gelecek_kaydet(st.session_state.gelecek_analizler)
-    except Exception as e:
-        hatalar.append(f"DB kayıt hatası (gelecek): {str(e)[:60]}")
-
-    return {
-        "tasinan": tasinan,
-        "bitmemis": bitmemis,
-        "hatalar": hatalar,
-        "toplam": len(isler),
-        "kalan": len(kalan),
-    }
+    gecmis_kaydet(st.session_state.gecmis_analizler)
+    gelecek_kaydet(st.session_state.gelecek_analizler)
+    return {"tasinan": tasinan, "bitmemis": bitmemis, "hatalar": hatalar, "toplam": len(isler)}
 
 
 # ==========================================
@@ -2876,6 +2834,21 @@ if st.session_state.admin_login_acik and not admin_mi():
     st.stop()
 
 ust_bar()
+# ==========================================
+# BİR DEFAYA MAHSUS GEÇMİŞ TEMİZLEME
+# ==========================================
+_FLAG_DOSYA = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".gecmis_temizlendi")
+
+if not os.path.exists(_FLAG_DOSYA):
+    try:
+        gecmis_kaydet([])
+        st.session_state.gecmis_analizler = []
+        with open(_FLAG_DOSYA, "w") as _f:
+            _f.write("done")
+    except Exception:
+        pass
+
+
 nav_bar()
 if st.session_state.sayfa == "giris_yap":
     admin_giris_ekrani()
@@ -2961,61 +2934,32 @@ elif st.session_state.sayfa == "giris":
                         st.success(f"✅ {len(bas)} maç eklendi!"); time.sleep(2); st.rerun()
                     else: st.error("Hiçbir maç eklenemedi.")
         with vs3:
-            st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}** maç")
-            sy = st.checkbox("Skor bulunamazsa tarayıcıyla da dene (yavaş)", value=False, key="skor_yedek")
-            c1, c2 = st.columns(2)
-            with c1: sw = st.number_input("Paralel işlem", 1, 8, 4, 1, key="skor_w")
-            with c2:
-                st.markdown("")
-                btn_skor = st.button("🏁 Biten Maçları Geçmişe Aktar", use_container_width=True, type="primary", key="skor_btn")
-
-            if btn_skor:
-                if not st.session_state.gelecek_analizler:
-                    st.warning("⚠️ Gelecek'te maç yok.")
-                else:
-                    toplam_mac = len(st.session_state.gelecek_analizler)
-                    ph = st.empty()
-                    pb = st.progress(0, text="Başlatılıyor...")
-
-                    def _p3(i, t, n):
-                        try:
-                            pb.progress(min(i / t, 1.0), text=f"{i}/{t} kontrol edildi: {n}")
-                        except Exception:
-                            pass
-
-                    try:
-                        with st.spinner(f"{toplam_mac} maçın skorları kontrol ediliyor..."):
-                            oz = sonuclari_isle(bool(sy), int(sw), _p3)
-                        st.session_state.skor_ozet = oz
-                        pb.progress(1.0, text="Tamamlandı!")
-                        time.sleep(0.5)
-                        pb.empty()
-                        ph.empty()
-                    except Exception as e:
-                        pb.empty()
-                        ph.empty()
-                        st.error(f"❌ Hata: {e}")
-
-            # Sonuç her zaman göster (butona basılmasa bile önceki sonuç varsa)
-            if st.session_state.get("skor_ozet"):
+            if st.session_state.skor_ozet:
                 oz = st.session_state.skor_ozet
                 hata_say = len(oz.get("hatalar", []))
-                st.markdown("---")
-                st.markdown("### 📋 Son İşlem Sonucu")
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    st.metric("✅ Taşınan", oz.get("tasinan", 0))
-                with c2:
-                    st.metric("⏳ Bitmemiş", oz.get("bitmemis", 0))
-                with c3:
-                    st.metric("❌ Hata", hata_say)
+                st.success(f"✅ {oz['tasinan']} maç Geçmişe taşındı • {oz['bitmemis']} maç henüz bitmemiş • {hata_say} hata")
                 if oz.get("hatalar"):
                     with st.expander(f"⚠️ {hata_say} hata detayı"):
                         for _h in oz["hatalar"][:50]:
                             st.caption(_h)
-                if st.button("🗑️ Sonucu Temizle", key="skor_ozet_temizle"):
-                    st.session_state.skor_ozet = None
-                    st.rerun()
+            st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}**")
+            sy = st.checkbox("Skor bulunamazsa tarayıcıyla da dene (yavaş)", value=False, key="skor_yedek")
+            c1, c2 = st.columns(2)
+            with c1: sw = st.number_input("Paralel", 1, 8, 4, 1, key="skor_w")
+            with c2:
+                st.markdown("")
+                if st.button("🏁 Biten Maçları Geçmişe Aktar", use_container_width=True, type="primary", key="skor_btn"):
+                    if not st.session_state.gelecek_analizler:
+                        st.warning("Gelecek'te maç yok")
+                    else:
+                        ph = st.empty()
+                        def _p3(i, t, n):
+                            try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
+                            except Exception: pass
+                        with st.spinner("Skorlar kontrol ediliyor..."):
+                            st.session_state.skor_ozet = sonuclari_isle(bool(sy), int(sw), _p3)
+                        ph.empty()
+                        st.rerun()
 
     else:
         gelecek = st.session_state.gelecek_analizler
