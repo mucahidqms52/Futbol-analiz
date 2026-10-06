@@ -496,7 +496,6 @@ def _cookie_manager_al():
 
 _cookie_mgr = _cookie_manager_al()
 
-
 def _token_uret():
     return _secrets.token_hex(32)
 
