@@ -1805,52 +1805,22 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 def _skor_parse(html):
-    """HTML içinde FT etiketinin altındaki skoru bul.
-    Sadece maç sonucu FT'sini alır, istatistik bölümlerindeki FT'leri atlar."""
     if not html:
         return None
 
     def _ok(e, d):
-        # Gerçek futbol maçlarında mantıklı skor sınırları
-        return 0 <= e <= 10 and 0 <= d <= 10
+        return 0 <= e <= 15 and 0 <= d <= 15
 
-    def _skor_bul(metin):
-        """Metin içinde skor kalıbı ara: 2-1, 2:1, 2 - 1, 2 : 1 vb."""
-        if not metin:
+    def _find_in_text(txt):
+        if not txt:
             return None
-        for m in re.finditer(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})(?!\d)', metin):
-            e, d = int(m.group(1)), int(m.group(2))
-            if _ok(e, d):
-                return e, d
-        return None
-
-    def _ft_ile_skor_bul(metin):
-        """FT etiketinin hemen altındaki/yanındaki skoru bul.
-        'Half Time-Full Time' gibi istatistik bölümlerini atlar."""
-        if not metin:
-            return None
-
-        for m in re.finditer(r'(?<![A-Za-z0-9])FT(?![A-Za-z0-9])', metin):
-            baslangic = max(0, m.start() - 100)
-            bitis = min(len(metin), m.end() + 100)
-            baglam = metin[baslangic:bitis]
-
-            # İstatistik bölümü mü kontrol et
-            if re.search(r'(Half Time|Win HT|Draw HT|Lose HT|HT -|Last \d+ Games)', baglam, re.IGNORECASE):
-                continue
-
-            # FT'den sonraki 150 karakterde skor ara
-            seg = metin[m.end():m.end() + 150]
-            skor = _skor_bul(seg)
-            if skor:
-                return skor
-
-            # FT'den önceki 150 karakterde skor ara
-            seg = metin[max(0, m.start() - 150):m.start()]
-            skor = _skor_bul(seg)
-            if skor:
-                return skor
-
+        for m in re.finditer(r'(?<![A-Za-z0-9])FT(?![A-Za-z0-9])', txt):
+            seg = txt[m.end():m.end() + 300]
+            mm = re.search(r'(\d{1,2})\s*[-:]\s*(\d{1,2})(?!\d)', seg)
+            if mm:
+                e, d = int(mm.group(1)), int(mm.group(2))
+                if _ok(e, d):
+                    return e, d
         return None
 
     try:
@@ -1858,40 +1828,27 @@ def _skor_parse(html):
         for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
 
-        # Yöntem 1: Tüm metinde FT + skor ara
-        tum_metin = soup.get_text(" ", strip=True)
-        r = _ft_ile_skor_bul(tum_metin)
-        if r:
-            return r
-
-        # Yöntem 2: FT içeren elementleri bul, skor ara
         ft_elements = []
         for el in soup.find_all(True):
             try:
                 t = el.get_text(" ", strip=True)
             except Exception:
                 continue
-            if t and len(t) < 200:
-                if re.search(r'\bFT\b', t) and not re.search(
-                    r'(Half Time|Win HT|Draw HT|Lose HT|Last \d+ Games)', t, re.IGNORECASE
-                ):
-                    ft_elements.append(el)
+            if "FT" in t and len(t) < 300:
+                ft_elements.append(el)
 
         ft_elements.sort(key=lambda e: len(e.get_text(" ", strip=True)))
 
         for el in ft_elements:
-            r = _ft_ile_skor_bul(el.get_text(" ", strip=True))
-            if r:
-                return r
+            r = _find_in_text(el.get_text(" ", strip=True))
+            if r: return r
 
             p = el.parent
-            for _ in range(3):
-                if p is None:
-                    break
+            for _ in range(4):
+                if p is None: break
                 try:
-                    r = _ft_ile_skor_bul(p.get_text(" ", strip=True))
-                    if r:
-                        return r
+                    r = _find_in_text(p.get_text(" ", strip=True))
+                    if r: return r
                 except Exception:
                     pass
                 p = p.parent
@@ -1900,54 +1857,74 @@ def _skor_parse(html):
                 cnt = 0
                 for nxt in el.next_elements:
                     cnt += 1
-                    if cnt > 40:
-                        break
+                    if cnt > 60: break
                     if isinstance(nxt, str):
                         t = str(nxt).strip()
-                        if not t:
-                            continue
-                        mm = re.match(r'^(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})$', t)
+                        if not t: continue
+                        mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
                         if mm:
                             e, d = int(mm.group(1)), int(mm.group(2))
                             if _ok(e, d):
                                 return e, d
+                    elif hasattr(nxt, 'get_text'):
+                        try:
+                            t = nxt.get_text(" ", strip=True)
+                            mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                            if mm:
+                                e, d = int(mm.group(1)), int(mm.group(2))
+                                if _ok(e, d):
+                                    return e, d
+                        except Exception:
+                            pass
             except Exception:
                 pass
 
-        # Yöntem 3: Skor class'larını ara
-        skor_classes = [
-            "score", "result", "skor", "mac-sonucu", "match-result",
-            "home-score", "away-score", "home-goal", "away-goal",
-            "score-home", "score-away", "ev-skor", "dep-skor",
-            "final-score", "match-score", "game-score"
-        ]
-        for cls in skor_classes:
-            elements = soup.find_all(class_=re.compile(cls, re.IGNORECASE))
-            if len(elements) >= 2:
-                try:
-                    s1 = elements[0].get_text(strip=True)
-                    s2 = elements[1].get_text(strip=True)
-                    if s1.isdigit() and s2.isdigit():
-                        e, d = int(s1), int(s2)
-                        if _ok(e, d):
-                            return e, d
-                except Exception:
-                    pass
+            try:
+                up = el.parent
+                if up is not None:
+                    cnt = 0
+                    for nxt in up.next_elements:
+                        cnt += 1
+                        if cnt > 60: break
+                        if isinstance(nxt, str):
+                            t = str(nxt).strip()
+                            if not t: continue
+                            mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                            if mm:
+                                e, d = int(mm.group(1)), int(mm.group(2))
+                                if _ok(e, d):
+                                    return e, d
+                        elif hasattr(nxt, 'get_text'):
+                            try:
+                                t = nxt.get_text(" ", strip=True)
+                                mm = re.match(r'^(\d{1,2})\s*[-:]\s*(\d{1,2})$', t)
+                                if mm:
+                                    e, d = int(mm.group(1)), int(mm.group(2))
+                                    if _ok(e, d):
+                                        return e, d
+                            except Exception:
+                                pass
+            except Exception:
+                pass
+    except Exception:
+        pass
 
-        # Yöntem 4 KALDIRILDI — rastgele sayı çiftlerini aramak
-        # saçma skorlara (9-0, 0-15 vb.) neden oluyor
-
+    try:
+        metin = _html_metne_cevir(html)
+        r = _find_in_text(metin)
+        if r: return r
     except Exception:
         pass
 
     return None
 
 
-
-def _skor_cek(url, tarayici_yedek=False):
+def _skor_cek(url, tarayici_yedek=None):
     if not url:
         return None, "URL yok"
     html = None; hata = None
+
+    # 1) Önce hızlı istek dene
     try:
         r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=15)
         if r.status_code == 200 and r.text:
@@ -1956,21 +1933,25 @@ def _skor_cek(url, tarayici_yedek=False):
             hata = f"HTTP {r.status_code}"
     except Exception as e:
         hata = f"Bağlantı: {str(e)[:80]}"
+
     skor = _skor_parse(html) if html else None
     if skor:
         return skor, None
-    if tarayici_yedek:
-        try:
-            h2 = _playwright_skor_cek(url, timeout=25)
-            if h2:
-                skor = _skor_parse(h2)
-                if skor:
-                    return skor, None
-        except Exception as e:
-            hata = f"Tarayıcı: {str(e)[:60]}"
+
+    # 2) Skor bulunamadıysa OTOMATİK tarayıcıya geç (JS ile yüklenen sayfalar için)
+    try:
+        h2 = _playwright_skor_cek(url, timeout=25)
+        if h2:
+            skor = _skor_parse(h2)
+            if skor:
+                return skor, None
+    except Exception as e:
+        hata = f"Tarayıcı: {str(e)[:60]}"
+
     if html:
         return None, None
     return None, hata or "Sayfa alınamadı"
+
 
 
 def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
@@ -1980,7 +1961,7 @@ def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
     tamam = 0
     if isler:
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], tarayici_yedek): (i, g) for i, g in isler}
+            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"]): (i, g) for i, g in isler}
             for f in as_completed(fut):
                 i, g = fut[f]; tamam += 1
                 try:
@@ -2944,18 +2925,10 @@ elif st.session_state.sayfa == "giris":
                         st.success(f"✅ {len(bas)} maç eklendi!"); time.sleep(2); st.rerun()
                     else: st.error("Hiçbir maç eklenemedi.")
         with vs3:
-            if st.session_state.skor_ozet:
-                oz = st.session_state.skor_ozet
-                hata_say = len(oz.get("hatalar", []))
-                st.success(f"✅ {oz['tasinan']} maç Geçmişe taşındı • {oz['bitmemis']} maç henüz bitmemiş • {hata_say} hata")
-                if oz.get("hatalar"):
-                    with st.expander(f"⚠️ {hata_say} hata detayı"):
-                        for _h in oz["hatalar"][:50]:
-                            st.caption(_h)
-            st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}**")
-            sy = st.checkbox("Skor bulunamazsa tarayıcıyla da dene (yavaş)", value=False, key="skor_yedek")
+            st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}** maç")
+            st.info("ℹ️ Her maçın sayfası ziyaret edilip FT skoru alınacak. Bu işlem zaman alabilir.")
             c1, c2 = st.columns(2)
-            with c1: sw = st.number_input("Paralel", 1, 8, 4, 1, key="skor_w")
+            with c1: sw = st.number_input("Paralel", 1, 4, 2, 1, key="skor_w")
             with c2:
                 st.markdown("")
                 if st.button("🏁 Biten Maçları Geçmişe Aktar", use_container_width=True, type="primary", key="skor_btn"):
@@ -2966,10 +2939,27 @@ elif st.session_state.sayfa == "giris":
                         def _p3(i, t, n):
                             try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
                             except Exception: pass
-                        with st.spinner("Skorlar kontrol ediliyor..."):
-                            st.session_state.skor_ozet = sonuclari_isle(bool(sy), int(sw), _p3)
+                        with st.spinner("Skorlar kontrol ediliyor... (tarayıcı kullanılıyor, sabırlı olun)"):
+                            st.session_state.skor_ozet = sonuclari_isle(False, int(sw), _p3)
                         ph.empty()
                         st.rerun()
+
+            if st.session_state.skor_ozet:
+                oz = st.session_state.skor_ozet
+                hata_say = len(oz.get("hatalar", []))
+                st.markdown("---")
+                st.markdown("### 📋 Son İşlem Sonucu")
+                c1, c2, c3 = st.columns(3)
+                with c1: st.metric("✅ Taşınan", oz.get("tasinan", 0))
+                with c2: st.metric("⏳ Bitmemiş", oz.get("bitmemis", 0))
+                with c3: st.metric("❌ Hata", hata_say)
+                if oz.get("hatalar"):
+                    with st.expander(f"⚠️ {hata_say} hata detayı"):
+                        for _h in oz["hatalar"][:50]:
+                            st.caption(_h)
+                if st.button("🗑️ Sonucu Temizle", key="skor_ozet_temizle"):
+                    st.session_state.skor_ozet = None
+                    st.rerun()
 
     else:
         gelecek = st.session_state.gelecek_analizler
