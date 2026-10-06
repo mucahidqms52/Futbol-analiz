@@ -496,11 +496,13 @@ except Exception:
     _ONLINE_SAYI = 0
 
 
-st.markdown(f'''<div style="text-align:center; margin:0 0 10px 0;">
-<span style="display:inline-block; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.5); border-radius:99px; padding:4px 14px; font-size:0.75rem; font-weight:800; color:#22c55e; letter-spacing:0.5px;">
-🟢 {_ONLINE_SAYI} KİŞİ ONLINE
-</span>
-</div>''', unsafe_allow_html=True)
+# ===== ONLINE GÖSTERGESİ SADECE ADMİN İÇİN =====
+if st.session_state.get("rol") == "admin":
+    st.markdown(f'''<div style="text-align:center; margin:0 0 10px 0;">
+    <span style="display:inline-block; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.5); border-radius:99px; padding:4px 14px; font-size:0.75rem; font-weight:800; color:#22c55e; letter-spacing:0.5px;">
+    🟢 {_ONLINE_SAYI} KİŞİ ONLINE
+    </span>
+    </div>''', unsafe_allow_html=True)
 
 
 def kullanicilar_yukle():
@@ -1372,7 +1374,6 @@ _TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
 
 
 def _playwright_skor_cek(url, timeout=25):
-    """Sadece FT skoru okumak için minimal tarayıcı çekimi. Chromium lazy yüklenir."""
     try:
         import subprocess as _sp, sys as _sys
         _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
@@ -1555,6 +1556,34 @@ def _mac_tahmin_var_mi(v, esikler=None):
         return False
     except Exception:
         return False
+
+
+# ===== INLINE SKOR TAŞIMA CALLBACK =====
+def _inline_skor_tasi_callback(idx):
+    """Gelecek listesindeki maçı skorla birlikte geçmişe taşır (global)."""
+    try:
+        yse_val = int(st.session_state.get(f"ise_{idx}", 0))
+        ysd_val = int(st.session_state.get(f"isd_{idx}", 0))
+        gel_list = st.session_state.get("gelecek_analizler", [])
+        if idx < 0 or idx >= len(gel_list):
+            st.session_state["_inline_msg"] = ("error", "❌ Maç bulunamadı (indeks geçersiz)")
+            return
+        k = gel_list[idx]
+        k["veri"]["skor_ev"] = yse_val
+        k["veri"]["skor_dep"] = ysd_val
+        k["veri"]["skor_belli"] = True
+        yd = sonuc_hesapla(k)
+        if yd: k["dogruluk"] = yd
+        st.session_state.gecmis_analizler.append(k)
+        st.session_state.gelecek_analizler.pop(idx)
+        gecmis_kaydet(st.session_state.gecmis_analizler)
+        gelecek_kaydet(st.session_state.gelecek_analizler)
+        st.session_state["_inline_msg"] = (
+            "success",
+            f"✅ {k['veri'].get('takim_ev','?')} vs {k['veri'].get('takim_dep','?')} → {yse_val}-{ysd_val} Geçmişe taşındı!"
+        )
+    except Exception as e:
+        st.session_state["_inline_msg"] = ("error", f"❌ Taşıma hatası: {e}")
 
 
 def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
@@ -3185,37 +3214,22 @@ elif st.session_state.sayfa == "gelecek_admin":
             th = mac_tahmin_karti(v, g)
             if th: st.markdown(th, unsafe_allow_html=True)
 
-            # ===== YENİ: INLINE SKOR GİRİŞİ + GEÇMİŞE TAŞI =====
-            with st.form(key=f"inline_skor_form_{idx}"):
-                c1, c2, c3 = st.columns([1, 1, 2])
-                with c1: yse = st.number_input("Ev", 0, 20, 0, 1, key=f"ise_{idx}")
-                with c2: ysd = st.number_input("Dep", 0, 20, 0, 1, key=f"isd_{idx}")
-                with c3:
-                    st.markdown(""); st.markdown("")
-                    inline_btn = st.form_submit_button("📥 Skor Gir & Geçmişe Taşı", use_container_width=True, type="primary")
+            c1, c2, c3 = st.columns([1, 1, 2])
+            with c1:
+                st.number_input("Ev", 0, 20, 0, 1, key=f"ise_{idx}")
+            with c2:
+                st.number_input("Dep", 0, 20, 0, 1, key=f"isd_{idx}")
+            with c3:
+                st.markdown(""); st.markdown("")
+                st.button(
+                    "📥 Skor Gir & Geçmişe Taşı",
+                    key=f"inline_skor_btn_{idx}",
+                    on_click=_inline_skor_tasi_callback,
+                    args=(idx,),
+                    use_container_width=True,
+                    type="primary"
+                )
 
-                if inline_btn:
-                    try:
-                        k = st.session_state.gelecek_analizler[idx]
-                        k["veri"]["skor_ev"] = int(yse)
-                        k["veri"]["skor_dep"] = int(ysd)
-                        k["veri"]["skor_belli"] = True
-                        yd2 = sonuc_hesapla(k)
-                        if yd2: k["dogruluk"] = yd2
-
-                        st.session_state.gecmis_analizler.append(k)
-                        st.session_state.gelecek_analizler.pop(idx)
-
-                        gecmis_kaydet(st.session_state.gecmis_analizler)
-                        gelecek_kaydet(st.session_state.gelecek_analizler)
-
-                        st.success(f"✅ {te} vs {td} → {int(yse)}-{int(ysd)} Geçmişe taşındı!")
-                        time.sleep(1.2)
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"❌ Taşıma hatası: {e}")
-
-            # ===== DETAY ve SİL BUTONLARI =====
             c1, c2 = st.columns([5, 1])
             with c1:
                 if st.button("🔍 Detay", use_container_width=True, key=f"gmac_{idx}"):
@@ -3239,6 +3253,15 @@ elif st.session_state.sayfa == "gelecek_admin":
                     if st.button("❌ İptal", key=f"gh_{idx}", use_container_width=True):
                         st.session_state.tek_silme_gelecek = None; st.rerun()
             st.divider()
+
+        if "_inline_msg" in st.session_state:
+            _msg_type, _msg_text = st.session_state.pop("_inline_msg")
+            if _msg_type == "success":
+                st.success(_msg_text)
+                time.sleep(1)
+                st.rerun()
+            else:
+                st.error(_msg_text)
 
     st.divider()
     if st.button("🗑️ Tüm Geleceği Temizle", use_container_width=True, key="temizle_gel"):
@@ -3315,21 +3338,28 @@ elif st.session_state.sayfa == "gecmis":
                         st.session_state.kayit_yapildi = True; st.session_state.gecmisten_gelindi = True
                         st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
                 with c2:
-                    if st.button("🗑️", key=f"sil_{idx}"):
-                        if st.session_state.tek_silme_onay == idx: st.session_state.tek_silme_onay = None
-                        else: st.session_state.tek_silme_onay = idx
+                    if st.button("🗑️ Sil", use_container_width=True, key=f"sil_{idx}"):
+                        st.session_state.tek_silme_onay = idx
                         st.rerun()
+
                 if st.session_state.tek_silme_onay == idx:
-                    st.warning(f"⚠️ **{te} vs {td}** silinsin mi?")
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        if st.button("✅ Sil", key=f"ev_{idx}", use_container_width=True, type="primary"):
-                            st.session_state.gecmis_analizler.pop(idx)
-                            gecmis_kaydet(st.session_state.gecmis_analizler)
-                            st.session_state.tek_silme_onay = None; st.rerun()
-                    with c2:
-                        if st.button("❌ İptal", key=f"hh_{idx}", use_container_width=True):
-                            st.session_state.tek_silme_onay = None; st.rerun()
+                    st.warning(f"⚠️ **{te} vs {td}** maçını silmek istediğinden emin misin?")
+                    oc1, oc2 = st.columns(2)
+                    with oc1:
+                        if st.button("✅ Evet, Sil", key=f"ev_{idx}", use_container_width=True, type="primary"):
+                            try:
+                                st.session_state.gecmis_analizler.pop(idx)
+                                gecmis_kaydet(st.session_state.gecmis_analizler)
+                                st.session_state.tek_silme_onay = None
+                                st.success(f"✅ {te} vs {td} silindi!")
+                                time.sleep(0.8)
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ Silme hatası: {e}")
+                    with oc2:
+                        if st.button("❌ Vazgeç", key=f"hh_{idx}", use_container_width=True):
+                            st.session_state.tek_silme_onay = None
+                            st.rerun()
             else:
                 if st.button("🔍 Detay", use_container_width=True, key=f"mac_{idx}"):
                     st.session_state.form_verileri = copy.deepcopy(v)
@@ -3549,55 +3579,6 @@ elif st.session_state.sayfa == "sonuc":
     if a["kg_var_model"] >= a["kg_yok_model"]: ks = "KG Var"; ky = a["kg_var_model"]; ke = esik_al("kg_var")
     else: ks = "KG Yok"; ky = a["kg_yok_model"]; ke = esik_al("kg_yok")
     st.markdown(oneri_karti("🤝 KG", ks, ky, ke, ky >= ke, f"Var:%{a['kg_var_model']:.1f} Yok:%{a['kg_yok_model']:.1f}"), unsafe_allow_html=True)
-
-    if admin_mi() and st.session_state.get("gelecekten_gelindi"):
-        ig = st.session_state.get("aktif_gelecek_idx")
-        if ig is not None and 0 <= ig < len(st.session_state.gelecek_analizler):
-            st.divider()
-            st.markdown("### 📥 Sonuç Gir ve Geçmişe Taşı")
-            mevcut = st.session_state.gelecek_analizler[ig]
-            st.caption(f"Maç: **{mevcut['veri'].get('takim_ev','?')} vs {mevcut['veri'].get('takim_dep','?')}**")
-
-            with st.form(key=f"skor_form_{ig}"):
-                c1, c2, c3 = st.columns([1, 1, 2])
-                with c1: yse = st.number_input("Ev", 0, 20, 0, 1, key=f"gse_f_{ig}")
-                with c2: ysd = st.number_input("Dep", 0, 20, 0, 1, key=f"gsd_f_{ig}")
-                with c3:
-                    st.markdown(""); st.markdown("")
-                    tasi_btn = st.form_submit_button("📥 Geçmişe Taşı", use_container_width=True, type="primary")
-
-                if tasi_btn:
-                    try:
-                        hedef_url = mevcut["veri"].get("kaynak_url", "")
-                        gercek_idx = ig
-                        if hedef_url:
-                            for i, gm in enumerate(st.session_state.gelecek_analizler):
-                                if gm.get("veri", {}).get("kaynak_url") == hedef_url:
-                                    gercek_idx = i
-                                    break
-
-                        k = st.session_state.gelecek_analizler[gercek_idx]
-                        k["veri"]["skor_ev"] = int(yse)
-                        k["veri"]["skor_dep"] = int(ysd)
-                        k["veri"]["skor_belli"] = True
-                        yd = sonuc_hesapla(k)
-                        if yd: k["dogruluk"] = yd
-
-                        st.session_state.gecmis_analizler.append(k)
-                        st.session_state.gelecek_analizler.pop(gercek_idx)
-
-                        gecmis_kaydet(st.session_state.gecmis_analizler)
-                        gelecek_kaydet(st.session_state.gelecek_analizler)
-
-                        st.session_state.gelecekten_gelindi = False
-                        st.session_state.aktif_gelecek_idx = None
-
-                        st.success(f"✅ {k['veri'].get('takim_ev','?')} vs {k['veri'].get('takim_dep','?')} → {int(yse)}-{int(ysd)} Geçmişe taşındı!")
-                        time.sleep(1.2)
-                        st.session_state.sayfa = "gecmis"
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"❌ Taşıma hatası: {e}")
 
     km = (a["ust_25"] >= esik_al("ust") and a["ust_25"] >= a["alt_25"]) or (a["alt_25"] >= esik_al("alt") and a["alt_25"] >= a["ust_25"]) or p1
     if not st.session_state.kayit_yapildi and admin_mi():
