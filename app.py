@@ -1811,7 +1811,8 @@ def _skor_parse(html):
         return None
 
     def _ok(e, d):
-        return 0 <= e <= 15 and 0 <= d <= 15
+        # Gerçek futbol maçlarında mantıklı skor sınırları
+        return 0 <= e <= 10 and 0 <= d <= 10
 
     def _skor_bul(metin):
         """Metin içinde skor kalıbı ara: 2-1, 2:1, 2 - 1, 2 : 1 vb."""
@@ -1829,9 +1830,7 @@ def _skor_parse(html):
         if not metin:
             return None
 
-        # FT'nin geçtiği tüm pozisyonları bul
         for m in re.finditer(r'(?<![A-Za-z0-9])FT(?![A-Za-z0-9])', metin):
-            # FT'nin etrafındaki bağlamı al
             baslangic = max(0, m.start() - 100)
             bitis = min(len(metin), m.end() + 100)
             baglam = metin[baslangic:bitis]
@@ -1873,7 +1872,6 @@ def _skor_parse(html):
             except Exception:
                 continue
             if t and len(t) < 200:
-                # Sadece "FT" kelimesi geçen, istatistik olmayan elementler
                 if re.search(r'\bFT\b', t) and not re.search(
                     r'(Half Time|Win HT|Draw HT|Lose HT|Last \d+ Games)', t, re.IGNORECASE
                 ):
@@ -1882,12 +1880,10 @@ def _skor_parse(html):
         ft_elements.sort(key=lambda e: len(e.get_text(" ", strip=True)))
 
         for el in ft_elements:
-            # Elementin kendi metninde FT + skor ara
             r = _ft_ile_skor_bul(el.get_text(" ", strip=True))
             if r:
                 return r
 
-            # Parent elementte ara
             p = el.parent
             for _ in range(3):
                 if p is None:
@@ -1900,7 +1896,6 @@ def _skor_parse(html):
                     pass
                 p = p.parent
 
-            # Kardeş elementlerde skor ara
             try:
                 cnt = 0
                 for nxt in el.next_elements:
@@ -1939,11 +1934,8 @@ def _skor_parse(html):
                 except Exception:
                     pass
 
-        # Yöntem 4: Sayı çiftlerini ara (son çare)
-        for m in re.finditer(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})(?!\d)', tum_metin):
-            e, d = int(m.group(1)), int(m.group(2))
-            if _ok(e, d):
-                return e, d
+        # Yöntem 4 KALDIRILDI — rastgele sayı çiftlerini aramak
+        # saçma skorlara (9-0, 0-15 vb.) neden oluyor
 
     except Exception:
         pass
