@@ -3184,6 +3184,38 @@ elif st.session_state.sayfa == "gelecek_admin":
             st.markdown(mac_karti(te, td, False, 0, 0, le, ld, saat, ulke, tarih), unsafe_allow_html=True)
             th = mac_tahmin_karti(v, g)
             if th: st.markdown(th, unsafe_allow_html=True)
+
+            # ===== YENİ: INLINE SKOR GİRİŞİ + GEÇMİŞE TAŞI =====
+            with st.form(key=f"inline_skor_form_{idx}"):
+                c1, c2, c3 = st.columns([1, 1, 2])
+                with c1: yse = st.number_input("Ev", 0, 20, 0, 1, key=f"ise_{idx}")
+                with c2: ysd = st.number_input("Dep", 0, 20, 0, 1, key=f"isd_{idx}")
+                with c3:
+                    st.markdown(""); st.markdown("")
+                    inline_btn = st.form_submit_button("📥 Skor Gir & Geçmişe Taşı", use_container_width=True, type="primary")
+
+                if inline_btn:
+                    try:
+                        k = st.session_state.gelecek_analizler[idx]
+                        k["veri"]["skor_ev"] = int(yse)
+                        k["veri"]["skor_dep"] = int(ysd)
+                        k["veri"]["skor_belli"] = True
+                        yd2 = sonuc_hesapla(k)
+                        if yd2: k["dogruluk"] = yd2
+
+                        st.session_state.gecmis_analizler.append(k)
+                        st.session_state.gelecek_analizler.pop(idx)
+
+                        gecmis_kaydet(st.session_state.gecmis_analizler)
+                        gelecek_kaydet(st.session_state.gelecek_analizler)
+
+                        st.success(f"✅ {te} vs {td} → {int(yse)}-{int(ysd)} Geçmişe taşındı!")
+                        time.sleep(1.2)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ Taşıma hatası: {e}")
+
+            # ===== DETAY ve SİL BUTONLARI =====
             c1, c2 = st.columns([5, 1])
             with c1:
                 if st.button("🔍 Detay", use_container_width=True, key=f"gmac_{idx}"):
@@ -3518,7 +3550,6 @@ elif st.session_state.sayfa == "sonuc":
     else: ks = "KG Yok"; ky = a["kg_yok_model"]; ke = esik_al("kg_yok")
     st.markdown(oneri_karti("🤝 KG", ks, ky, ke, ky >= ke, f"Var:%{a['kg_var_model']:.1f} Yok:%{a['kg_yok_model']:.1f}"), unsafe_allow_html=True)
 
-    # ===== SKOR GİR VE GEÇMİŞE TAŞI (DÜZELTİLMİŞ) =====
     if admin_mi() and st.session_state.get("gelecekten_gelindi"):
         ig = st.session_state.get("aktif_gelecek_idx")
         if ig is not None and 0 <= ig < len(st.session_state.gelecek_analizler):
@@ -3526,7 +3557,7 @@ elif st.session_state.sayfa == "sonuc":
             st.markdown("### 📥 Sonuç Gir ve Geçmişe Taşı")
             mevcut = st.session_state.gelecek_analizler[ig]
             st.caption(f"Maç: **{mevcut['veri'].get('takim_ev','?')} vs {mevcut['veri'].get('takim_dep','?')}**")
-            
+
             with st.form(key=f"skor_form_{ig}"):
                 c1, c2, c3 = st.columns([1, 1, 2])
                 with c1: yse = st.number_input("Ev", 0, 20, 0, 1, key=f"gse_f_{ig}")
@@ -3534,7 +3565,7 @@ elif st.session_state.sayfa == "sonuc":
                 with c3:
                     st.markdown(""); st.markdown("")
                     tasi_btn = st.form_submit_button("📥 Geçmişe Taşı", use_container_width=True, type="primary")
-                
+
                 if tasi_btn:
                     try:
                         hedef_url = mevcut["veri"].get("kaynak_url", "")
@@ -3544,23 +3575,23 @@ elif st.session_state.sayfa == "sonuc":
                                 if gm.get("veri", {}).get("kaynak_url") == hedef_url:
                                     gercek_idx = i
                                     break
-                        
+
                         k = st.session_state.gelecek_analizler[gercek_idx]
                         k["veri"]["skor_ev"] = int(yse)
                         k["veri"]["skor_dep"] = int(ysd)
                         k["veri"]["skor_belli"] = True
                         yd = sonuc_hesapla(k)
                         if yd: k["dogruluk"] = yd
-                        
+
                         st.session_state.gecmis_analizler.append(k)
                         st.session_state.gelecek_analizler.pop(gercek_idx)
-                        
+
                         gecmis_kaydet(st.session_state.gecmis_analizler)
                         gelecek_kaydet(st.session_state.gelecek_analizler)
-                        
+
                         st.session_state.gelecekten_gelindi = False
                         st.session_state.aktif_gelecek_idx = None
-                        
+
                         st.success(f"✅ {k['veri'].get('takim_ev','?')} vs {k['veri'].get('takim_dep','?')} → {int(yse)}-{int(ysd)} Geçmişe taşındı!")
                         time.sleep(1.2)
                         st.session_state.sayfa = "gecmis"
