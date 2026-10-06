@@ -940,6 +940,7 @@ if "kayit_yapildi" not in st.session_state: st.session_state.kayit_yapildi = Fal
 if "gecmisten_gelindi" not in st.session_state: st.session_state.gecmisten_gelindi = False
 if "gelecekten_gelindi" not in st.session_state: st.session_state.gelecekten_gelindi = False
 if "silme_onay" not in st.session_state: st.session_state.silme_onay = False
+if "silme_onay_gelecek" not in st.session_state: st.session_state.silme_onay_gelecek = False
 if "aktif_kayit_idx" not in st.session_state: st.session_state.aktif_kayit_idx = None
 if "aktif_gelecek_idx" not in st.session_state: st.session_state.aktif_gelecek_idx = None
 if "okunamayan_alanlar" not in st.session_state: st.session_state.okunamayan_alanlar = []
@@ -2771,6 +2772,8 @@ def nav_git(h):
     st.session_state.tek_silme_onay = None
     st.session_state.tek_silme_gelecek = None
     st.session_state.sil_onay_kadi = None
+    st.session_state.silme_onay = False
+    st.session_state.silme_onay_gelecek = False
     if h == "backtest": st.session_state.bt_sonuc = None; st.session_state.bt_detaylar = []
     st.rerun()
 
@@ -2821,9 +2824,8 @@ def nav_bar():
                         f'<div class="fa-nav-badge">{goster}</div>'
                         f'</div>',
                         unsafe_allow_html=True
-                    )
-
-
+        )
+        
 # ===== OTOMATİK GİRİŞ DENEMESİ =====
 _otomatik_giris_dene()
 
@@ -3335,7 +3337,11 @@ elif st.session_state.sayfa == "gelecek_admin":
                     st.session_state.aktif_gelecek_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
             with c2:
                 if st.button("🗑️ Sil", use_container_width=True, key=f"gsil_{idx}"):
-                    st.session_state.tek_silme_gelecek = idx
+                    if st.session_state.get("tek_silme_gelecek") == idx:
+                        st.session_state.tek_silme_gelecek = None
+                    else:
+                        st.session_state.tek_silme_gelecek = idx
+                    st.rerun()
 
             if st.session_state.get("tek_silme_gelecek") == idx:
                 st.warning(f"⚠️ **{te} vs {td}** silinsin mi? Bu işlem geri alınamaz.")
@@ -3346,8 +3352,6 @@ elif st.session_state.sayfa == "gelecek_admin":
                             st.session_state.gelecek_analizler.pop(idx)
                             gelecek_kaydet(st.session_state.gelecek_analizler)
                             st.session_state.tek_silme_gelecek = None
-                            st.success(f"✅ {te} vs {td} silindi!")
-                            time.sleep(0.8)
                             st.rerun()
                         except Exception as e:
                             st.error(f"❌ Silme hatası: {e}")
@@ -3367,12 +3371,24 @@ elif st.session_state.sayfa == "gelecek_admin":
                 st.error(_msg_text)
 
     st.divider()
-    st.markdown("### ⚠️ Toplu Silme İşlemleri")
-    if st.button(f"🗑️ TÜM GELECEĞİ TEMİZLE ({len(gel)} maç)", use_container_width=True, key="temizle_gel", type="primary"):
-        st.session_state.silme_onay_gelecek = True
+    st.markdown(f"""<div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));
+        border:1.5px solid rgba(239,68,68,0.5);border-radius:14px;padding:14px;margin-top:10px;">
+        <div style="font-size:0.95rem;font-weight:900;color:#ef4444;letter-spacing:0.5px;margin-bottom:4px;">
+        🚨 TEHLİKELİ BÖLGE — TOPLU SİLME</div>
+        <div style="font-size:0.78rem;color:#fca5a5;font-weight:600;">
+        Bu butona bastığınızda <b>TÜM GELECEK MAÇLAR ({len(gel)} maç)</b> kalıcı olarak silinir. Bu işlem geri alınamaz!</div>
+        </div>""", unsafe_allow_html=True)
+
+    if st.button(f"🗑️ TÜM GELECEĞİ SİL ({len(gel)} MAÇ)", use_container_width=True,
+                 key="temizle_gel", type="primary"):
+        if st.session_state.get("silme_onay_gelecek"):
+            st.session_state.silme_onay_gelecek = False
+        else:
+            st.session_state.silme_onay_gelecek = True
+        st.rerun()
 
     if st.session_state.get("silme_onay_gelecek"):
-        st.error(f"⚠️ **DİKKAT!** Tüm gelecek silinecek (**{len(gel)} maç**). Bu işlem geri alınamaz!")
+        st.error(f"⚠️ **SON ONAY:** Tüm gelecek silinecek (**{len(gel)} maç**). Emin misin?")
         oc1, oc2 = st.columns(2)
         with oc1:
             if st.button("✅ EVET, TÜMÜNÜ SİL", key="sil_gel_evet", use_container_width=True, type="primary"):
@@ -3381,8 +3397,6 @@ elif st.session_state.sayfa == "gelecek_admin":
                     gelecek_kaydet([])
                     st.session_state.silme_onay_gelecek = False
                     st.session_state.tek_silme_gelecek = None
-                    st.success("✅ Tüm gelecek silindi!")
-                    time.sleep(1)
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ Silme hatası: {e}")
@@ -3450,9 +3464,13 @@ elif st.session_state.sayfa == "gecmis":
                         st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
                 with c2:
                     if st.button("🗑️ Sil", use_container_width=True, key=f"sil_{idx}"):
-                        st.session_state.tek_silme_onay = idx
+                        if st.session_state.get("tek_silme_onay") == idx:
+                            st.session_state.tek_silme_onay = None
+                        else:
+                            st.session_state.tek_silme_onay = idx
+                        st.rerun()
 
-                if st.session_state.tek_silme_onay == idx:
+                if st.session_state.get("tek_silme_onay") == idx:
                     st.warning(f"⚠️ **{te} vs {td}** maçını silmek istediğinden emin misin?")
                     oc1, oc2 = st.columns(2)
                     with oc1:
@@ -3461,8 +3479,6 @@ elif st.session_state.sayfa == "gecmis":
                                 st.session_state.gecmis_analizler.pop(idx)
                                 gecmis_kaydet(st.session_state.gecmis_analizler)
                                 st.session_state.tek_silme_onay = None
-                                st.success(f"✅ {te} vs {td} silindi!")
-                                time.sleep(0.8)
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"❌ Silme hatası: {e}")
@@ -3479,12 +3495,24 @@ elif st.session_state.sayfa == "gecmis":
 
     if admin_mi():
         st.divider()
-        st.markdown("### ⚠️ Toplu Silme İşlemleri")
-        if st.button(f"🗑️ TÜM GEÇMİŞİ TEMİZLE ({top} maç)", use_container_width=True, key="temizle_g", type="primary"):
-            st.session_state.silme_onay = True
+        st.markdown("""<div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));
+            border:1.5px solid rgba(239,68,68,0.5);border-radius:14px;padding:14px;margin-top:10px;">
+            <div style="font-size:0.95rem;font-weight:900;color:#ef4444;letter-spacing:0.5px;margin-bottom:4px;">
+            🚨 TEHLİKELİ BÖLGE — TOPLU SİLME</div>
+            <div style="font-size:0.78rem;color:#fca5a5;font-weight:600;">
+            Bu butona bastığınızda <b>TÜM GEÇMİŞ MAÇLAR (""" + str(top) + """ maç)</b> kalıcı olarak silinir. Bu işlem geri alınamaz!</div>
+            </div>""", unsafe_allow_html=True)
 
-        if st.session_state.silme_onay:
-            st.error(f"⚠️ **DİKKAT!** Tüm geçmiş silinecek (**{top} maç**). Bu işlem geri alınamaz!")
+        if st.button(f"🗑️ TÜM GEÇMİŞİ SİL ({top} MAÇ)", use_container_width=True,
+                     key="temizle_g", type="primary"):
+            if st.session_state.get("silme_onay"):
+                st.session_state.silme_onay = False
+            else:
+                st.session_state.silme_onay = True
+            st.rerun()
+
+        if st.session_state.get("silme_onay"):
+            st.error(f"⚠️ **SON ONAY:** Tüm geçmiş silinecek (**{top} maç**). Emin misin?")
             oc1, oc2 = st.columns(2)
             with oc1:
                 if st.button("✅ EVET, TÜMÜNÜ SİL", key="sil_g_evet", use_container_width=True, type="primary"):
@@ -3493,8 +3521,6 @@ elif st.session_state.sayfa == "gecmis":
                         gecmis_kaydet([])
                         st.session_state.silme_onay = False
                         st.session_state.tek_silme_onay = None
-                        st.success("✅ Tüm geçmiş silindi!")
-                        time.sleep(1)
                         st.rerun()
                     except Exception as e:
                         st.error(f"❌ Silme hatası: {e}")
@@ -3705,4 +3731,4 @@ elif st.session_state.sayfa == "sonuc":
         elif km: st.session_state.gelecek_analizler.append(yk); gelecek_kaydet(st.session_state.gelecek_analizler)
         st.session_state.kayit_yapildi = True
     if st.button("🔄 Yeni", use_container_width=True, type="primary"):
-        st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI); st.session_state.sayfa = "giris"; st.rerun()
+        st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI); st.session_state.sayfa = "giris"; st.rerun()            
