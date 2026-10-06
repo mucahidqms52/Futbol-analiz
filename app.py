@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
+import extra_streamlit_components as stx
 
 logging.getLogger('streamlit').setLevel(logging.ERROR)
 logging.getLogger('streamlit.runtime.scriptrunner.script_run_context').setLevel(logging.ERROR)
@@ -448,6 +449,7 @@ def _admin_sifre_al():
     return os.environ.get("ADMIN_SIFRE", "Mg153759")
 
 ADMIN_SIFRE = _admin_sifre_al()
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "adm_" + hashlib.sha256(ADMIN_SIFRE.encode()).hexdigest()[:40])
 
 
 def _db_baglanti():
@@ -482,6 +484,75 @@ try:
 except Exception as _db_hata:
     st.error(f"❌ Veritabanı bağlantı hatası: {_db_hata}")
     st.stop()
+
+
+# ===== KALICI OTURUM (ÇEREZ) YÖNETİMİ =====
+@st.cache_resource(show_spinner=False)
+def _cookie_manager_al():
+    try:
+        return stx.CookieManager(key="fa_cookie_mgr_v1")
+    except Exception:
+        return None
+
+_cookie_mgr = _cookie_manager_al()
+
+
+def _token_uret():
+    return _secrets.token_hex(32)
+
+
+def _cerez_oku():
+    """Tüm çerezleri güvenli şekilde okur."""
+    if _cookie_mgr is None:
+        return {}
+    try:
+        return _cookie_mgr.get_all() or {}
+    except Exception:
+        return {}
+
+
+def _cerez_yaz(ad, deger):
+    if _cookie_mgr is None:
+        return
+    try:
+        _cookie_mgr.set(ad, deger, expires_at=datetime.now() + timedelta(days=30))
+    except Exception:
+        pass
+
+
+def _cerez_sil(ad):
+    if _cookie_mgr is None:
+        return
+    try:
+        _cookie_mgr.delete(ad)
+    except Exception:
+        pass
+
+
+def _otomatik_giris_dene():
+    """Çerezdeki token ile otomatik giriş yapmayı dener."""
+    if st.session_state.get("aktif_kullanici") or st.session_state.get("rol") == "admin":
+        return
+    cerezler = _cerez_oku()
+    if not cerezler:
+        return
+    token = cerezler.get("fa_token")
+    kadi = cerezler.get("fa_kadi")
+    if not token or not kadi:
+        return
+    if kadi == ADMIN_KULLANICI_ADI and token == ADMIN_TOKEN:
+        st.session_state.rol = "admin"
+        st.session_state._otomatik_giris_yapildi = True
+        return
+    try:
+        kullanicilar = kullanicilar_yukle()
+        k = kullanicilar.get(kadi)
+        if k and k.get("oturum_token") == token:
+            st.session_state.aktif_kullanici = kadi
+            st.session_state._otomatik_giris_yapildi = True
+    except Exception:
+        pass
+
 
 @st.cache_data(ttl=30, show_spinner=False)
 def _online_durum_guncelle(session_id):
@@ -691,6 +762,7 @@ def kullanici_ekle(kullanici_adi, sifre):
         "kayit_tarihi": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "abonelik_bitis": None, "son_odeme": None, "son_odeme_gun": 0,
         "yasal_kabul_tarihi": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "oturum_token": None,
     }
     kullanicilar_kaydet(kullanicilar)
     return True, "Kayıt başarılı."
@@ -1558,9 +1630,7 @@ def _mac_tahmin_var_mi(v, esikler=None):
         return False
 
 
-# ===== INLINE SKOR TAŞIMA CALLBACK =====
 def _inline_skor_tasi_callback(idx):
-    """Gelecek listesindeki maçı skorla birlikte geçmişe taşır (global)."""
     try:
         yse_val = int(st.session_state.get(f"ise_{idx}", 0))
         ysd_val = int(st.session_state.get(f"isd_{idx}", 0))
@@ -2624,8 +2694,20 @@ def admin_giris_ekrani():
         if giris_btn:
             if not kadi.strip() or not sifre: st.error("❌ Kullanıcı adı ve şifre gerekli.")
             elif kadi.strip() == ADMIN_KULLANICI_ADI and sifre == ADMIN_SIFRE:
+                _cerez_yaz("fa_token", ADMIN_TOKEN)
+                _cerez_yaz("fa_kadi", ADMIN_KULLANICI_ADI)
                 st.session_state.rol = "admin"; st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"; st.rerun()
             elif kullanici_dogrula(kadi.strip(), sifre):
+                try:
+                    _u_token = _token_uret()
+                    _kk = kullanicilar_yukle()
+                    if kadi.strip() in _kk:
+                        _kk[kadi.strip()]["oturum_token"] = _u_token
+                        kullanicilar_kaydet(_kk)
+                    _cerez_yaz("fa_token", _u_token)
+                    _cerez_yaz("fa_kadi", kadi.strip())
+                except Exception:
+                    pass
                 st.session_state.aktif_kullanici = kadi.strip(); st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"
                 st.success(f"✅ Hoş geldin, {kadi.strip()}!"); time.sleep(1); st.rerun()
             else: st.error("❌ Kullanıcı adı veya şifre hatalı.")
@@ -2665,10 +2747,19 @@ def ust_bar():
     with c2:
         if admin_mi():
             if st.button("🚪 Çıkış", use_container_width=True, key="cikis_btn"):
+                _cerez_sil("fa_token"); _cerez_sil("fa_kadi")
                 st.session_state.rol = "misafir"; st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"
                 st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI); st.rerun()
         elif uye_mi():
             if st.button("🚪 Çıkış", use_container_width=True, key="uye_cikis_btn"):
+                try:
+                    _kk = kullanicilar_yukle()
+                    if uye_adi() in _kk:
+                        _kk[uye_adi()]["oturum_token"] = None
+                        kullanicilar_kaydet(_kk)
+                except Exception:
+                    pass
+                _cerez_sil("fa_token"); _cerez_sil("fa_kadi")
                 st.session_state.aktif_kullanici = None; st.session_state.sayfa = "giris"; st.rerun()
 
 
@@ -2747,6 +2838,9 @@ def nav_bar():
                         unsafe_allow_html=True
                     )
 
+
+# ===== OTOMATİK GİRİŞ DENEMESİ (uygulama açılırken) =====
+_otomatik_giris_dene()
 
 if st.session_state.admin_login_acik and not admin_mi():
     admin_giris_ekrani()
@@ -2954,6 +3048,16 @@ elif st.session_state.sayfa == "kayit":
             else:
                 b, m = kullanici_ekle(yk.strip(), ys)
                 if b:
+                    try:
+                        _u_token = _token_uret()
+                        _kk = kullanicilar_yukle()
+                        if yk.strip() in _kk:
+                            _kk[yk.strip()]["oturum_token"] = _u_token
+                            kullanicilar_kaydet(_kk)
+                        _cerez_yaz("fa_token", _u_token)
+                        _cerez_yaz("fa_kadi", yk.strip())
+                    except Exception:
+                        pass
                     st.session_state["aktif_kullanici"] = yk.strip()
                     st.session_state["odeme_hedef_kadi"] = yk.strip()
                     st.success(f"✅ {m} Ödeme sayfasına yönlendiriliyorsun...")
@@ -2974,6 +3078,16 @@ elif st.session_state.sayfa == "uyegirisi":
         if g:
             if not k.strip() or not s: st.error("❌ Bilgiler gerekli.")
             elif kullanici_dogrula(k.strip(), s):
+                try:
+                    _u_token = _token_uret()
+                    _kk = kullanicilar_yukle()
+                    if k.strip() in _kk:
+                        _kk[k.strip()]["oturum_token"] = _u_token
+                        kullanicilar_kaydet(_kk)
+                    _cerez_yaz("fa_token", _u_token)
+                    _cerez_yaz("fa_kadi", k.strip())
+                except Exception:
+                    pass
                 st.session_state["aktif_kullanici"] = k.strip()
                 st.success(f"✅ Hoş geldin, {k.strip()}!")
                 time.sleep(1); st.session_state.sayfa = "giris"; st.rerun()
