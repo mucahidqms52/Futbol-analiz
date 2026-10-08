@@ -1948,7 +1948,7 @@ def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
     tamam = 0
     if isler:
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], True): (i, g) for i, g in isler}
+            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], tarayici_yedek): (i, g) for i, g in isler}
             for f in as_completed(fut):
                 i, g = fut[f]; tamam += 1
                 try:
@@ -3424,6 +3424,9 @@ elif st.session_state.sayfa == "gecmis":
             if yuk is not None:
                 try:
                     veri = json.loads(yuk.read().decode("utf-8"))
+                    # Tek obje ise listeye çevir
+                    if isinstance(veri, dict):
+                        veri = [veri]
                     if isinstance(veri, list):
                         st.session_state.gecmis_analizler = veri
                         gecmis_kaydet(veri)
