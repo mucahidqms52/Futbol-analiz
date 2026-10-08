@@ -1475,26 +1475,6 @@ def _playwright_html(url, mac_sec, timeout, dogrula=False, takim_ev="", takim_de
             try: pg.wait_for_load_state("networkidle", timeout=15000)
             except Exception: pass
             pg.wait_for_timeout(2500)
-            _tikla_mac_sayisi(pg, mac_sec)
-            pg.wait_for_timeout(3500)
-            if takim_ev:
-                _tikla_takim_sekmesi(pg, takim_ev, "Home")
-                pg.wait_for_timeout(3500)
-            if takim_dep:
-                _tikla_takim_sekmesi(pg, takim_dep, "Away")
-                pg.wait_for_timeout(3500)
-            if dogrula and hedef:
-                try: metin = pg.inner_text("body")
-                except Exception: metin = ""
-                n = _son_n_oku(metin)
-                if n is not None and n != hedef:
-                    _tikla_mac_sayisi(pg, mac_sec)
-                    pg.wait_for_timeout(3000)
-                    try: metin = pg.inner_text("body")
-                    except Exception: metin = ""
-                    n = _son_n_oku(metin)
-                    if n is not None and n != hedef:
-                        raise RuntimeError(f"{hedef} filtresi uygulanamadı (sayfa: Last {n} games)")
             return pg.content()
         finally:
             try: b.close()
