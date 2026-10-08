@@ -1652,14 +1652,27 @@ def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
         if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
         if veri.get("saat"): veri["saat"] = saat_2_saat_ileri(veri["saat"])
         veri["kaynak_url"] = mac["url"]
+
+        # Skoru çek - eğer varsa bu maç bitmiş demektir
+        skor_var = veri.get("skor_belli", False)
+
         if mac["url"] in mevcut_urls:
             return ("atlandi", veri, "Zaten var", None)
+
+        # Eşik kontrolü
         if _mac_tahmin_var_mi(veri, esikler):
             kayit = kayit_olustur(veri, analiz_hesapla(veri))
-            return ("eklendi", veri, "Gelecek'e eklendi", kayit)
+
+            # Skoru varsa geçmişe gönder, yoksa gelecekte kal
+            if skor_var:
+                kayit["dogruluk"] = sonuc_hesapla(kayit)
+                return ("gecmise_tasindi", veri, f"Skor: {veri.get('skor_ev',0)}-{veri.get('skor_dep',0)}", kayit)
+            else:
+                return ("eklendi", veri, "Gelecek'e eklendi (skor yok)", kayit)
         return ("atlandi", veri, "Tahmin yok (eşik altı)", None)
     except Exception as e:
         return ("hata", mac, str(e), None)
+
 
 
 def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_workers=2):
@@ -1671,13 +1684,18 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
     for g in st.session_state.gelecek_analizler:
         u = g.get("veri", {}).get("kaynak_url", "")
         if u: mevcut_urls.add(u)
+    # Geçmişteki URL'leri de kontrol et (aynı maç tekrar eklenmesin)
+    for g in st.session_state.gecmis_analizler:
+        u = g.get("veri", {}).get("kaynak_url", "")
+        if u: mevcut_urls.add(u)
 
     try: esikler_kopya = dict(st.session_state.esikler)
     except Exception: esikler_kopya = {}
 
     basarili = []; hatali = []
-    eklenecekler = []
-    eklenen = 0; atlanan = 0; tamamlanan = 0
+    eklenecekler = []  # Gelecek'e eklenecekler
+    gecmise_gidecekler = []  # Geçmiş'e eklenecekler
+    eklenen = 0; atlanan = 0; gecmise_tasinan = 0; tamamlanan = 0
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(_gelecek_mac_isle, m, mevcut_urls, esikler_kopya): m for m in maclar}
@@ -1688,9 +1706,13 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
                 r = fut.result()
                 sonuc, veri, mesaj = r[0], r[1], r[2]
                 kayit = r[3] if len(r) == 4 else None
+
                 if sonuc == "eklendi":
                     eklenen += 1; basarili.append(veri)
                     if kayit is not None: eklenecekler.append(kayit)
+                elif sonuc == "gecmise_tasindi":
+                    gecmise_tasinan += 1; basarili.append(veri)
+                    if kayit is not None: gecmise_gidecekler.append(kayit)
                 elif sonuc == "atlandi":
                     atlanan += 1; basarili.append(veri)
                 else:
@@ -1701,12 +1723,24 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
                 try: progress_callback(tamamlanan - 1, len(maclar), mac.get("takim_ev", ""))
                 except Exception: pass
 
+    # Gelecek'e ekle
     if eklenecekler:
         st.session_state.gelecek_analizler.extend(eklenecekler)
         gelecek_kaydet(st.session_state.gelecek_analizler)
 
-    st.session_state.toplu_cek_ozet = {"eklenen": eklenen, "atlanan": atlanan, "toplam": len(basarili)}
+    # Geçmiş'e ekle
+    if gecmise_gidecekler:
+        st.session_state.gecmis_analizler.extend(gecmise_gidecekler)
+        gecmis_kaydet(st.session_state.gecmis_analizler)
+
+    st.session_state.toplu_cek_ozet = {
+        "eklenen": eklenen, 
+        "atlanan": atlanan, 
+        "gecmise_tasinan": gecmise_tasinan,
+        "toplam": len(basarili)
+    }
     return basarili, hatali
+
 
 
 def _lig_son_mac_linklerini_al(lig_url, adet=10):
@@ -1912,28 +1946,33 @@ def _skor_parse(html):
 
 
 
-def _skor_cek(url, tarayici_yedek=False, debug=False):
-    """Gelecek Maçlar ile aynı yöntemle (ScrapingBee) sadece skoru çek."""
+def _skor_cek(url, tarayici_yedek=False):
     if not url:
         return None, "URL yok"
-
-    detaylar = []
-
-    # Gelecek Maçlar ile aynı yöntem: mutating_mac_detay_cek kullan
+    html = None; hata = None
     try:
-        veri, okunamayanlar = mutating_mac_detay_cek(url)
-        if veri and veri.get("skor_belli", False):
-            se = veri.get("skor_ev", 0)
-            sd = veri.get("skor_dep", 0)
-            detaylar.append(f"Skor bulundu: {se}-{sd}")
-            return (se, sd), " | ".join(detaylar) if debug else None
+        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=15)
+        if r.status_code == 200 and r.text:
+            html = r.text
         else:
-            detaylar.append("Skor bulunamadı (maç bitmemiş olabilir)")
-            return None, " | ".join(detaylar) if debug else None
+            hata = f"HTTP {r.status_code}"
     except Exception as e:
-        detaylar.append(f"Hata: {str(e)[:60]}")
-        return None, " | ".join(detaylar) if debug else str(e)[:60]
-
+        hata = f"Bağlantı: {str(e)[:80]}"
+    skor = _skor_parse(html) if html else None
+    if skor:
+        return skor, None
+    if tarayici_yedek:
+        try:
+            h2 = _playwright_skor_cek(url, timeout=25)
+            if h2:
+                skor = _skor_parse(h2)
+                if skor:
+                    return skor, None
+        except Exception as e:
+            hata = f"Tarayıcı: {str(e)[:60]}"
+    if html:
+        return None, None
+    return None, hata or "Sayfa alınamadı"
 
 
 def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
@@ -2865,7 +2904,7 @@ elif st.session_state.sayfa == "giris":
         with vs1:
             if st.session_state.toplu_cek_ozet:
                 oz = st.session_state.toplu_cek_ozet
-                st.markdown(f"**Son çekim:** Eklenen: **{oz.get('eklenen', 0)}** | Atlanan: **{oz.get('atlanan', 0)}** | Toplam: **{oz.get('toplam', 0)}**")
+                st.markdown(f"**Son çekim:** Gelecek'e eklenen: **{oz.get('eklenen', 0)}** | Geçmiş'e taşınan: **{oz.get('gecmise_tasinan', 0)}** | Atlanan: **{oz.get('atlanan', 0)}**")
             c1, c2 = st.columns(2)
             with c1: w = st.number_input("Paralel", 1, 6, 2, 1, key="fw")
             with c2:
@@ -2906,34 +2945,6 @@ elif st.session_state.sayfa == "giris":
                     if bas:
                         st.success(f"✅ {len(bas)} maç eklendi!"); time.sleep(2); st.rerun()
                     else: st.error("Hiçbir maç eklenemedi.")
-        with vs3:
-            if st.session_state.skor_ozet:
-                oz = st.session_state.skor_ozet
-                hata_say = len(oz.get("hatalar", []))
-                st.success(f"✅ {oz['tasinan']} maç Geçmişe taşındı • {oz['bitmemis']} maç henüz bitmemiş • {hata_say} hata")
-                if oz.get("hatalar"):
-                    with st.expander(f"⚠️ {hata_say} hata detayı"):
-                        for _h in oz["hatalar"][:50]:
-                            st.caption(_h)
-            st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}**")
-            sy = st.checkbox("Skor bulunamazsa tarayıcıyla da dene (yavaş)", value=False, key="skor_yedek")
-            c1, c2 = st.columns(2)
-            with c1: sw = st.number_input("Paralel", 1, 8, 4, 1, key="skor_w")
-            with c2:
-                st.markdown("")
-                if st.button("🏁 Biten Maçları Geçmişe Aktar", use_container_width=True, type="primary", key="skor_btn"):
-                    if not st.session_state.gelecek_analizler:
-                        st.warning("Gelecek'te maç yok")
-                    else:
-                        ph = st.empty()
-                        def _p3(i, t, n):
-                            try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
-                            except Exception: pass
-                        with st.spinner("Skorlar kontrol ediliyor..."):
-                            st.session_state.skor_ozet = sonuclari_isle(bool(sy), int(sw), _p3)
-                        ph.empty()
-                        st.rerun()
-
     else:
         gelecek = st.session_state.gelecek_analizler
         toplam = len(gelecek)
