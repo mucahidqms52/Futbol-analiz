@@ -1,7 +1,6 @@
 streamlit
 requests
 beautifulsoup4
-playwright
 lxml
 bcrypt
 psycopg2-binary
