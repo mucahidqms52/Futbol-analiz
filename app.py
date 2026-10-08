@@ -1912,28 +1912,33 @@ def _skor_parse(html):
 
 
 
-def _skor_cek(url, tarayici_yedek=None, debug=False):
-    """Gelecek Maçlar ile aynı yöntemle (Playwright/ScrapingBee) sadece skoru çek."""
+def _skor_cek(url, tarayici_yedek=False):
     if not url:
         return None, "URL yok"
-
-    detaylar = []
-
-    # Gelecek Maçlar ile aynı yöntem: mutating_mac_detay_cek kullan
+    html = None; hata = None
     try:
-        veri, okunamayanlar = mutating_mac_detay_cek(url)
-        if veri and veri.get("skor_belli", False):
-            se = veri.get("skor_ev", 0)
-            sd = veri.get("skor_dep", 0)
-            detaylar.append(f"Skor bulundu: {se}-{sd}")
-            return (se, sd), " | ".join(detaylar) if debug else None
+        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=15)
+        if r.status_code == 200 and r.text:
+            html = r.text
         else:
-            detaylar.append("Skor bulunamadı (maç bitmemiş olabilir)")
-            return None, " | ".join(detaylar) if debug else None
+            hata = f"HTTP {r.status_code}"
     except Exception as e:
-        detaylar.append(f"Hata: {str(e)[:60]}")
-        return None, " | ".join(detaylar) if debug else str(e)[:60]
-
+        hata = f"Bağlantı: {str(e)[:80]}"
+    skor = _skor_parse(html) if html else None
+    if skor:
+        return skor, None
+    if tarayici_yedek:
+        try:
+            h2 = _playwright_skor_cek(url, timeout=25)
+            if h2:
+                skor = _skor_parse(h2)
+                if skor:
+                    return skor, None
+        except Exception as e:
+            hata = f"Tarayıcı: {str(e)[:60]}"
+    if html:
+        return None, None
+    return None, hata or "Sayfa alınamadı"
 
 
 def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
@@ -1943,7 +1948,7 @@ def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
     tamam = 0
     if isler:
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"]): (i, g) for i, g in isler}
+            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], True): (i, g) for i, g in isler}
             for f in as_completed(fut):
                 i, g = fut[f]; tamam += 1
                 try:
