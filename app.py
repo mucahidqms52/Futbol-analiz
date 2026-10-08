@@ -1,3 +1,22 @@
+import subprocess
+import sys
+
+def _chromium_kur():
+    try:
+        subprocess.run(
+            [sys.executable, "-m", "playwright", "install", "chromium"],
+            check=True,
+            timeout=300,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        return True
+    except Exception:
+        return False
+
+# İlk çalıştırmada Chromium kur
+_chromium_kur()
+
 import streamlit as st
 import math
 import copy
