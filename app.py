@@ -1806,46 +1806,51 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 def _skor_parse(html):
     """HTML içinde FT etiketinin ALTINDAKI skoru bul.
-    Sayfa yapısı: 'FT' tek başına, hemen altında '2 - 0' formatında skor."""
+    Sadece 'FT' yazısının hemen altındaki skoru alır."""
     if not html:
         return None
 
     def _ok(e, d):
-        return 0 <= e <= 15 and 0 <= d <= 15
+        return 0 <= e <= 10 and 0 <= d <= 10
+
+    def _skor_bul_metin(metin):
+        """Metin içinde skor kalıbı ara."""
+        if not metin:
+            return None
+        m = re.search(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})(?!\d)', metin)
+        if m:
+            e, d = int(m.group(1)), int(m.group(2))
+            if _ok(e, d):
+                return e, d
+        return None
 
     try:
         soup = BeautifulSoup(html, "html.parser")
-        for tag in soup(["script", "style", "noscript", "svg"]):
+        for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
 
-        # Tüm metni al, satır satır böl
+        # Yöntem 1: Satır satır tara - "FT" bulunca hemen altındaki skoru al
         tum_metin = soup.get_text("\n", strip=True)
         satirlar = [s.strip() for s in tum_metin.split("\n") if s.strip()]
 
-        # Yöntem 1: "FT" satırını bul, hemen altındaki satırda skor ara
         for i, satir in enumerate(satirlar):
+            # Tam "FT" satırı mı?
             if satir == "FT" or satir.upper() == "FT":
-                # "Half Time-Full Time" kontrolü - önceki satırlara bak
-                onceki = " ".join(satirlar[max(0, i-10):i]).lower()
+                # "Half Time-Full Time" kontrolü
+                onceki = " ".join(satirlar[max(0, i-5):i]).lower()
                 if "half time" in onceki or "win ht" in onceki or "draw ht" in onceki or "lose ht" in onceki:
                     continue
 
-                # FT'den sonraki 5 satırda skor ara
-                for j in range(i+1, min(i+6, len(satirlar))):
-                    satir_j = satirlar[j]
-                    # "2 - 0" veya "2-0" veya "2:0" formatında mı?
-                    m = re.match(r'^(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})$', satir_j)
-                    if m:
-                        e, d = int(m.group(1)), int(m.group(2))
-                        if _ok(e, d):
-                            return e, d
+                # FT'den sonraki 3 satırda skor ara (kısa mesafe!)
+                for j in range(i+1, min(i+4, len(satirlar))):
+                    skor = _skor_bul_metin(satirlar[j])
+                    if skor:
+                        return skor
 
-                # Aynı satırda "FT 2-0" veya "FT 2 - 0" formatında mı?
-                m = re.search(r'FT\s*(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})', satir, re.IGNORECASE)
-                if m:
-                    e, d = int(m.group(1)), int(m.group(2))
-                    if _ok(e, d):
-                        return e, d
+                # Aynı satırda skor ara
+                skor = _skor_bul_metin(satir)
+                if skor:
+                    return skor
 
         # Yöntem 2: "FT" kelimesini içeren satırlarda skor ara
         for i, satir in enumerate(satirlar):
@@ -1855,19 +1860,15 @@ def _skor_parse(html):
                     continue
 
                 # Aynı satırda skor ara
-                m = re.search(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})', satir)
-                if m:
-                    e, d = int(m.group(1)), int(m.group(2))
-                    if _ok(e, d):
-                        return e, d
+                skor = _skor_bul_metin(satir)
+                if skor:
+                    return skor
 
-                # Sonraki 3 satırda skor ara
-                for j in range(i+1, min(i+4, len(satirlar))):
-                    m = re.match(r'^(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})$', satirlar[j])
-                    if m:
-                        e, d = int(m.group(1)), int(m.group(2))
-                        if _ok(e, d):
-                            return e, d
+                # Sonraki 2 satırda skor ara
+                for j in range(i+1, min(i+3, len(satirlar))):
+                    skor = _skor_bul_metin(satirlar[j])
+                    if skor:
+                        return skor
 
         # Yöntem 3: HTML elementlerinde "FT" ara
         for el in soup.find_all(True):
@@ -1879,16 +1880,14 @@ def _skor_parse(html):
             if t == "FT" or t.upper() == "FT":
                 # Parent elementte skor ara
                 p = el.parent
-                for _ in range(3):
+                for _ in range(2):
                     if p is None:
                         break
                     try:
                         pt = p.get_text(" ", strip=True)
-                        m = re.search(r'(\d{1,2})\s*[-:\u2013\u2014]\s*(\d{1,2})', pt)
-                        if m:
-                            e, d = int(m.group(1)), int(m.group(2))
-                            if _ok(e, d):
-                                return e, d
+                        skor = _skor_bul_metin(pt)
+                        if skor:
+                            return skor
                     except Exception:
                         pass
                     p = p.parent
@@ -2913,18 +2912,12 @@ elif st.session_state.sayfa == "giris":
                         st.success(f"✅ {len(bas)} maç eklendi!"); time.sleep(2); st.rerun()
                     else: st.error("Hiçbir maç eklenemedi.")
         with vs3:
-            if st.session_state.skor_ozet:
-                oz = st.session_state.skor_ozet
-                hata_say = len(oz.get("hatalar", []))
-                st.success(f"✅ {oz['tasinan']} maç Geçmişe taşındı • {oz['bitmemis']} maç henüz bitmemiş • {hata_say} hata")
-                if oz.get("hatalar"):
-                    with st.expander(f"⚠️ {hata_say} hata detayı"):
-                        for _h in oz["hatalar"][:50]:
-                            st.caption(_h)
-            st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}**")
-            sy = st.checkbox("Skor bulunamazsa tarayıcıyla da dene (yavaş)", value=False, key="skor_yedek")
+            st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}** maç")
+            st.info("ℹ️ Bu sekme, gelecek maçların skorlarını kontrol edip bitenleri geçmişe taşır.")
+
             c1, c2 = st.columns(2)
-            with c1: sw = st.number_input("Paralel", 1, 8, 4, 1, key="skor_w")
+            with c1:
+                sw = st.number_input("Paralel", 1, 4, 2, 1, key="skor_w")
             with c2:
                 st.markdown("")
                 if st.button("🏁 Biten Maçları Geçmişe Aktar", use_container_width=True, type="primary", key="skor_btn"):
@@ -2932,13 +2925,58 @@ elif st.session_state.sayfa == "giris":
                         st.warning("Gelecek'te maç yok")
                     else:
                         ph = st.empty()
+                        pb = st.progress(0, text="Başlatılıyor...")
                         def _p3(i, t, n):
-                            try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
+                            try: pb.progress(min(i / t, 1.0), text=f"{i}/{t}: {n}")
                             except Exception: pass
-                        with st.spinner("Skorlar kontrol ediliyor..."):
-                            st.session_state.skor_ozet = sonuclari_isle(bool(sy), int(sw), _p3)
+                        with st.spinner(f"{len(st.session_state.gelecek_analizler)} maç kontrol ediliyor..."):
+                            oz = sonuclari_isle(False, int(sw), _p3)
+                        st.session_state.skor_ozet = oz
+                        pb.progress(1.0, text="Tamamlandı!")
+                        time.sleep(0.5)
+                        pb.empty()
                         ph.empty()
                         st.rerun()
+
+            # Son skor çekme sonucu
+            if st.session_state.get("skor_ozet"):
+                oz = st.session_state.skor_ozet
+                hata_say = len(oz.get("hatalar", []))
+                st.markdown("---")
+                c1, c2, c3 = st.columns(3)
+                with c1: st.metric("✅ Taşınan", oz.get("tasinan", 0))
+                with c2: st.metric("⏳ Bitmemiş", oz.get("bitmemis", 0))
+                with c3: st.metric("❌ Hata", hata_say)
+                if oz.get("hatalar"):
+                    with st.expander(f"⚠️ {hata_say} hata detayı"):
+                        for _h in oz["hatalar"][:50]:
+                            st.caption(_h)
+                if st.button("🗑️ Sonucu Temizle", key="skor_ozet_temizle"):
+                    st.session_state.skor_ozet = None
+                    st.rerun()
+
+            st.divider()
+            st.markdown("### 📋 Gelecek Maçlar")
+            gel = st.session_state.gelecek_analizler
+            if not gel:
+                st.info("Henüz gelecek maç yok.")
+            else:
+                for i, g in enumerate(gel):
+                    v = g["veri"]
+                    te = v.get("takim_ev", "Ev")
+                    td = v.get("takim_dep", "Dep")
+                    saat = v.get("saat", "")
+                    ulke = v.get("ulke", "")
+                    tarih = v.get("tarih", "")
+                    st.markdown(mac_karti(te, td, False, 0, 0, 0, 0, saat, ulke, tarih), unsafe_allow_html=True)
+                    if st.button("🔍 Detay", use_container_width=True, key=f"det_{i}"):
+                        st.session_state.form_verileri = copy.deepcopy(v)
+                        st.session_state.kayit_yapildi = True
+                        st.session_state.aktif_gelecek_idx = i
+                        st.session_state.sayfa = "sonuc"
+                        st.rerun()
+                    st.divider()
+
 
     else:
         gelecek = st.session_state.gelecek_analizler
