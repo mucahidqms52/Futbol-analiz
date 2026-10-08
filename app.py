@@ -1,22 +1,3 @@
-import subprocess
-import sys
-
-def _chromium_kur():
-    try:
-        subprocess.run(
-            [sys.executable, "-m", "playwright", "install", "chromium"],
-            check=True,
-            timeout=300,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-        return True
-    except Exception:
-        return False
-
-# İlk çalıştırmada Chromium kur
-_chromium_kur()
-
 import streamlit as st
 import math
 import copy
@@ -1450,30 +1431,80 @@ TARAYICI_ESZAMANLI = int(os.environ.get("TARAYICI_ESZAMANLI", "3"))
 _TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
 
 
-def _playwright_skor_cek(url, timeout=25):
+def _chromium_kurulu_mu():
+    """Playwright Chromium kurulu mu kontrol et."""
     try:
-        import subprocess as _sp, sys as _sys
-        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
-                check=False, timeout=600,
-                stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            b = p.chromium.launch(headless=True)
+            b.close()
+        return True
     except Exception:
-        pass
-    from playwright.sync_api import sync_playwright
+        return False
+
+
+def _chromium_kur():
+    """Playwright Chromium ve sistem bağımlılıklarını kur."""
+    import subprocess
+    try:
+        # Önce chromium'u kur
+        subprocess.run(
+            [sys.executable, "-m", "playwright", "install", "chromium"],
+            check=False, timeout=300,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        # Sistem bağımlılıklarını kur (Linux için)
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "playwright", "install-deps", "chromium"],
+                check=False, timeout=300,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        except Exception:
+            pass
+        return True
+    except Exception:
+        return False
+
+
+_CHROMIUM_HAZIR = None
+
+def _chromium_hazirla():
+    """Chromium kurulu mu kontrol et, yoksa kur."""
+    global _CHROMIUM_HAZIR
+    if _CHROMIUM_HAZIR is not None:
+        return _CHROMIUM_HAZIR
+    if _chromium_kurulu_mu():
+        _CHROMIUM_HAZIR = True
+        return True
+    if _chromium_kur():
+        _CHROMIUM_HAZIR = _chromium_kurulu_mu()
+        return _CHROMIUM_HAZIR
+    _CHROMIUM_HAZIR = False
+    return False
+
+
+def _playwright_skor_cek(url, timeout=25):
+    """Playwright ile JS render edilmiş sayfa çek."""
+    if not _chromium_hazirla():
+        return None
+
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        return None
+
     with _TARAYICI_SEM:
         with sync_playwright() as p:
             b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
             try:
-                ctx = b.new_context(user_agent=UA, locale="en-US")
-                pg = ctx.new_page()
-                pg.route("**/*", lambda route: route.abort()
-                         if route.request.resource_type in ("image", "media", "font", "stylesheet")
-                         else route.continue_())
-                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-                pg.wait_for_timeout(2000)
+                pg = b.new_page()
+                pg.goto(url, timeout=timeout * 1000, wait_until="domcontentloaded")
+                pg.wait_for_timeout(3000)
                 return pg.content()
             finally:
-                try: b.close()
-                except Exception: pass
+                b.close()
+
 
 
 def _scrapingbee_get(url, render_js=True, timeout=30, mac_sec="5", max_retry=3, dogrula=False):
@@ -1931,28 +1962,33 @@ def _skor_parse(html):
 
 
 
-def _skor_cek(url, tarayici_yedek=False, debug=False):
-    """Gelecek Maçlar ile aynı yöntemle (ScrapingBee) sadece skoru çek."""
+def _skor_cek(url, tarayici_yedek=False):
     if not url:
         return None, "URL yok"
-
-    detaylar = []
-
-    # Gelecek Maçlar ile aynı yöntem: mutating_mac_detay_cek kullan
+    html = None; hata = None
     try:
-        veri, okunamayanlar = mutating_mac_detay_cek(url)
-        if veri and veri.get("skor_belli", False):
-            se = veri.get("skor_ev", 0)
-            sd = veri.get("skor_dep", 0)
-            detaylar.append(f"Skor bulundu: {se}-{sd}")
-            return (se, sd), " | ".join(detaylar) if debug else None
+        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=15)
+        if r.status_code == 200 and r.text:
+            html = r.text
         else:
-            detaylar.append("Skor bulunamadı (maç bitmemiş olabilir)")
-            return None, " | ".join(detaylar) if debug else None
+            hata = f"HTTP {r.status_code}"
     except Exception as e:
-        detaylar.append(f"Hata: {str(e)[:60]}")
-        return None, " | ".join(detaylar) if debug else str(e)[:60]
-
+        hata = f"Bağlantı: {str(e)[:80]}"
+    skor = _skor_parse(html) if html else None
+    if skor:
+        return skor, None
+    if tarayici_yedek:
+        try:
+            h2 = _playwright_skor_cek(url, timeout=25)
+            if h2:
+                skor = _skor_parse(h2)
+                if skor:
+                    return skor, None
+        except Exception as e:
+            hata = f"Tarayıcı: {str(e)[:60]}"
+    if html:
+        return None, None
+    return None, hata or "Sayfa alınamadı"
 
 
 def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
