@@ -1457,58 +1457,26 @@ def _playwright_skor_cek(url, timeout=25):
                 except Exception: pass
 
 
-def _playwright_html(url, mac_sec, timeout, dogrula=False, takim_ev="", takim_dep=""):
-    """Playwright ile JavaScript render edilmiş sayfa çek."""
-    from playwright.sync_api import sync_playwright
-    hedef = int(mac_sec) if str(mac_sec).isdigit() else None
-    with sync_playwright() as p:
-        b = p.chromium.launch(headless=True, args=[
-            "--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"
-        ])
+def _scrapingbee_get(url, render_js=True, timeout=30, mac_sec="5", max_retry=3, dogrula=False):
+    hata = None
+    for d in range(max_retry):
         try:
-            ctx = b.new_context(user_agent=UA, locale="en-US")
-            pg = ctx.new_page()
-            pg.route("**/*", lambda route: route.abort()
-                     if route.request.resource_type in ("image", "media", "font")
-                     else route.continue_())
-            pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-            try: pg.wait_for_load_state("networkidle", timeout=15000)
-            except Exception: pass
-            pg.wait_for_timeout(2500)
-            return pg.content()
-        finally:
-            try: b.close()
-            except Exception: pass
-
-
-def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3,
-                    dogrula=False, takim_ev="", takim_dep=""):
-    """Önce Playwright dene, başarısız olursa requests.get kullan."""
-    son_hata = None
-    try:
-        import playwright  # noqa: F401
-        playwright_var = True
-    except ImportError:
-        playwright_var = False; son_hata = "playwright kurulu değil"
-    if playwright_var:
-        for deneme in range(max_retry):
-            try:
-                html = _playwright_html(url, mac_sec, timeout, dogrula,
-                                        takim_ev=takim_ev, takim_dep=takim_dep)
-                if html and len(html) > 500: return html, None
-                son_hata = "Boş sayfa"
-            except Exception as e:
-                son_hata = f"Tarayıcı hatası: {str(e)[:150]}"
-            if deneme < max_retry - 1: time.sleep(2 + deneme * 2)
-    if dogrula: return None, son_hata or "Filtre uygulanamadı"
-    try:
-        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
-        if r.status_code == 200 and r.text: return r.text, None
-        son_hata = f"HTTP {r.status_code}" + (f" | {son_hata}" if son_hata else "")
-    except Exception as e:
-        son_hata = f"Bağlantı hatası: {str(e)[:100]}" + (f" | {son_hata}" if son_hata else "")
-    return None, son_hata or "Sayfa alınamadı."
-
+            r = requests.get(url,
+                headers={
+                    "User-Agent": UA,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Connection": "keep-alive",
+                    "Upgrade-Insecure-Requests": "1",
+                },
+                timeout=timeout)
+            if r.status_code == 200 and r.text and len(r.text) > 500:
+                return r.text, None
+            hata = f"HTTP {r.status_code} • Boyut: {len(r.text) if r.text else 0}"
+        except Exception as e:
+            hata = f"Bağlantı: {str(e)[:150]}"
+        if d < max_retry - 1: time.sleep(1 + d)
+    return None, hata or "Sayfa alınamadı."
 
 
 def _html_metne_cevir(html):
@@ -1944,33 +1912,28 @@ def _skor_parse(html):
 
 
 
-def _skor_cek(url, tarayici_yedek=False):
+def _skor_cek(url, tarayici_yedek=None, debug=False):
+    """Gelecek Maçlar ile aynı yöntemle (Playwright/ScrapingBee) sadece skoru çek."""
     if not url:
         return None, "URL yok"
-    html = None; hata = None
+
+    detaylar = []
+
+    # Gelecek Maçlar ile aynı yöntem: mutating_mac_detay_cek kullan
     try:
-        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=15)
-        if r.status_code == 200 and r.text:
-            html = r.text
+        veri, okunamayanlar = mutating_mac_detay_cek(url)
+        if veri and veri.get("skor_belli", False):
+            se = veri.get("skor_ev", 0)
+            sd = veri.get("skor_dep", 0)
+            detaylar.append(f"Skor bulundu: {se}-{sd}")
+            return (se, sd), " | ".join(detaylar) if debug else None
         else:
-            hata = f"HTTP {r.status_code}"
+            detaylar.append("Skor bulunamadı (maç bitmemiş olabilir)")
+            return None, " | ".join(detaylar) if debug else None
     except Exception as e:
-        hata = f"Bağlantı: {str(e)[:80]}"
-    skor = _skor_parse(html) if html else None
-    if skor:
-        return skor, None
-    if tarayici_yedek:
-        try:
-            h2 = _playwright_skor_cek(url, timeout=25)
-            if h2:
-                skor = _skor_parse(h2)
-                if skor:
-                    return skor, None
-        except Exception as e:
-            hata = f"Tarayıcı: {str(e)[:60]}"
-    if html:
-        return None, None
-    return None, hata or "Sayfa alınamadı"
+        detaylar.append(f"Hata: {str(e)[:60]}")
+        return None, " | ".join(detaylar) if debug else str(e)[:60]
+
 
 
 def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
@@ -1980,7 +1943,7 @@ def sonuclari_isle(tarayici_yedek=False, max_workers=4, progress_callback=None):
     tamam = 0
     if isler:
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], tarayici_yedek): (i, g) for i, g in isler}
+            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"]): (i, g) for i, g in isler}
             for f in as_completed(fut):
                 i, g = fut[f]; tamam += 1
                 try:
