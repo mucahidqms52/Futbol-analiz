@@ -1431,102 +1431,104 @@ TARAYICI_ESZAMANLI = int(os.environ.get("TARAYICI_ESZAMANLI", "3"))
 _TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
 
 
-def _chromium_kurulu_mu():
-    """Playwright Chromium kurulu mu kontrol et."""
-    try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as p:
-            b = p.chromium.launch(headless=True)
-            b.close()
-        return True
-    except Exception:
-        return False
-
-
-def _chromium_kur():
-    """Playwright Chromium ve sistem bağımlılıklarını kur."""
-    import subprocess
-    try:
-        # Önce chromium'u kur
-        subprocess.run(
-            [sys.executable, "-m", "playwright", "install", "chromium"],
-            check=False, timeout=300,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-        # Sistem bağımlılıklarını kur (Linux için)
-        try:
-            subprocess.run(
-                [sys.executable, "-m", "playwright", "install-deps", "chromium"],
-                check=False, timeout=300,
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
-        except Exception:
-            pass
-        return True
-    except Exception:
-        return False
-
-
-_CHROMIUM_HAZIR = None
-
-def _chromium_hazirla():
-    """Chromium kurulu mu kontrol et, yoksa kur."""
-    global _CHROMIUM_HAZIR
-    if _CHROMIUM_HAZIR is not None:
-        return _CHROMIUM_HAZIR
-    if _chromium_kurulu_mu():
-        _CHROMIUM_HAZIR = True
-        return True
-    if _chromium_kur():
-        _CHROMIUM_HAZIR = _chromium_kurulu_mu()
-        return _CHROMIUM_HAZIR
-    _CHROMIUM_HAZIR = False
-    return False
-
-
 def _playwright_skor_cek(url, timeout=25):
-    """Playwright ile JS render edilmiş sayfa çek."""
-    if not _chromium_hazirla():
-        return None
-
     try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        return None
-
+        import subprocess as _sp, sys as _sys
+        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
+                check=False, timeout=600,
+                stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    except Exception:
+        pass
+    from playwright.sync_api import sync_playwright
     with _TARAYICI_SEM:
         with sync_playwright() as p:
             b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
             try:
-                pg = b.new_page()
-                pg.goto(url, timeout=timeout * 1000, wait_until="domcontentloaded")
-                pg.wait_for_timeout(3000)
+                ctx = b.new_context(user_agent=UA, locale="en-US")
+                pg = ctx.new_page()
+                pg.route("**/*", lambda route: route.abort()
+                         if route.request.resource_type in ("image", "media", "font", "stylesheet")
+                         else route.continue_())
+                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+                pg.wait_for_timeout(2000)
                 return pg.content()
             finally:
-                b.close()
+                try: b.close()
+                except Exception: pass
 
 
-
-def _scrapingbee_get(url, render_js=True, timeout=30, mac_sec="5", max_retry=3, dogrula=False):
-    hata = None
-    for d in range(max_retry):
+def _playwright_html(url, mac_sec, timeout, dogrula=False, takim_ev="", takim_dep=""):
+    """Playwright ile JavaScript render edilmiş sayfa çek."""
+    from playwright.sync_api import sync_playwright
+    hedef = int(mac_sec) if str(mac_sec).isdigit() else None
+    with sync_playwright() as p:
+        b = p.chromium.launch(headless=True, args=[
+            "--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"
+        ])
         try:
-            r = requests.get(url,
-                headers={
-                    "User-Agent": UA,
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                    "Accept-Language": "en-US,en;q=0.9",
-                    "Connection": "keep-alive",
-                    "Upgrade-Insecure-Requests": "1",
-                },
-                timeout=timeout)
-            if r.status_code == 200 and r.text and len(r.text) > 500:
-                return r.text, None
-            hata = f"HTTP {r.status_code} • Boyut: {len(r.text) if r.text else 0}"
-        except Exception as e:
-            hata = f"Bağlantı: {str(e)[:150]}"
-        if d < max_retry - 1: time.sleep(1 + d)
-    return None, hata or "Sayfa alınamadı."
+            ctx = b.new_context(user_agent=UA, locale="en-US")
+            pg = ctx.new_page()
+            pg.route("**/*", lambda route: route.abort()
+                     if route.request.resource_type in ("image", "media", "font")
+                     else route.continue_())
+            pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+            try: pg.wait_for_load_state("networkidle", timeout=15000)
+            except Exception: pass
+            pg.wait_for_timeout(2500)
+            _tikla_mac_sayisi(pg, mac_sec)
+            pg.wait_for_timeout(3500)
+            if takim_ev:
+                _tikla_takim_sekmesi(pg, takim_ev, "Home")
+                pg.wait_for_timeout(3500)
+            if takim_dep:
+                _tikla_takim_sekmesi(pg, takim_dep, "Away")
+                pg.wait_for_timeout(3500)
+            if dogrula and hedef:
+                try: metin = pg.inner_text("body")
+                except Exception: metin = ""
+                n = _son_n_oku(metin)
+                if n is not None and n != hedef:
+                    _tikla_mac_sayisi(pg, mac_sec)
+                    pg.wait_for_timeout(3000)
+                    try: metin = pg.inner_text("body")
+                    except Exception: metin = ""
+                    n = _son_n_oku(metin)
+                    if n is not None and n != hedef:
+                        raise RuntimeError(f"{hedef} filtresi uygulanamadı (sayfa: Last {n} games)")
+            return pg.content()
+        finally:
+            try: b.close()
+            except Exception: pass
+
+
+def _scrapingbee_get(url, render_js=True, timeout=90, mac_sec="5", max_retry=3,
+                    dogrula=False, takim_ev="", takim_dep=""):
+    """Önce Playwright dene, başarısız olursa requests.get kullan."""
+    son_hata = None
+    try:
+        import playwright  # noqa: F401
+        playwright_var = True
+    except ImportError:
+        playwright_var = False; son_hata = "playwright kurulu değil"
+    if playwright_var:
+        for deneme in range(max_retry):
+            try:
+                html = _playwright_html(url, mac_sec, timeout, dogrula,
+                                        takim_ev=takim_ev, takim_dep=takim_dep)
+                if html and len(html) > 500: return html, None
+                son_hata = "Boş sayfa"
+            except Exception as e:
+                son_hata = f"Tarayıcı hatası: {str(e)[:150]}"
+            if deneme < max_retry - 1: time.sleep(2 + deneme * 2)
+    if dogrula: return None, son_hata or "Filtre uygulanamadı"
+    try:
+        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
+        if r.status_code == 200 and r.text: return r.text, None
+        son_hata = f"HTTP {r.status_code}" + (f" | {son_hata}" if son_hata else "")
+    except Exception as e:
+        son_hata = f"Bağlantı hatası: {str(e)[:100]}" + (f" | {son_hata}" if son_hata else "")
+    return None, son_hata or "Sayfa alınamadı."
+
 
 
 def _html_metne_cevir(html):
