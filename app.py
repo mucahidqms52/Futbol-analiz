@@ -2916,28 +2916,6 @@ elif st.session_state.sayfa == "giris":
             pass
 
         st.divider()
-        st.markdown("### 📋 İstatistik Metnini Yapıştır")
-        ym = st.text_area("Yapıştırma", height=200, key="yapistir_input", label_visibility="collapsed", placeholder="İstatistik metnini buraya yapıştır")
-        c1, c2, c3, c4, c5 = st.columns([2, 1, 1, 1, 1])
-        with c1: analiz_btn = st.button("🚀 ANALİZ ET", use_container_width=True, type="primary")
-        with c2: gecmis_btn = st.button("📊 Geçmiş", use_container_width=True)
-        with c3: gelecek_btn = st.button("🔮 Gelecek", use_container_width=True)
-        with c4: backtest_btn = st.button("🔬 Test", use_container_width=True)
-        with c5: ayarlar_btn = st.button("⚙️ Ayar", use_container_width=True)
-        if analiz_btn:
-            if not ym.strip(): st.warning("⚠️ Metin yapıştır.")
-            else:
-                cikan, okunamayanlar = metinden_veri_cikar(ym)
-                if not cikan: st.error("❌ Veri çıkarılamadı.")
-                else:
-                    yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(cikan)
-                    st.session_state.form_verileri = yv; st.session_state.kayit_yapildi = False
-                    st.session_state.manuel_bekleyen = okunamayanlar.copy() if okunamayanlar else []
-                    if not veri_yeterli_mi(yv): st.error("⚠️ Yetersiz veri.")
-                    else:
-                        if okunamayanlar: st.session_state.sayfa = "manuel_giris"
-                        else: st.session_state.sayfa = "sonuc"
-                        st.rerun()
         if gecmis_btn: nav_git("gecmis")
         if gelecek_btn: nav_git("gelecek_admin")
         if backtest_btn: nav_git("backtest")
