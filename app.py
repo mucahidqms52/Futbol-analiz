@@ -2916,10 +2916,7 @@ elif st.session_state.sayfa == "giris":
             pass
 
         st.divider()
-        if gecmis_btn: nav_git("gecmis")
-        if gelecek_btn: nav_git("gelecek_admin")
-        if backtest_btn: nav_git("backtest")
-        if ayarlar_btn: nav_git("ayarlar")
+        # Navigasyon butonları kaldırıldı - nav_bar kullanılıyor
 
         st.divider()
         st.markdown("### 🤖 Otomatik Veri Çekme")
