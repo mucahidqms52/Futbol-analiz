@@ -460,6 +460,7 @@ def _init_db():
             cur.execute("CREATE TABLE IF NOT EXISTS gecmis (id SERIAL PRIMARY KEY, veri JSONB NOT NULL)")
             cur.execute("CREATE TABLE IF NOT EXISTS gelecek (id SERIAL PRIMARY KEY, veri JSONB NOT NULL)")
             cur.execute("CREATE TABLE IF NOT EXISTS online_kullanicilar (session_id TEXT PRIMARY KEY, son_gorulme TIMESTAMP NOT NULL)")
+            cur.execute("CREATE TABLE IF NOT EXISTS gunluk_ziyaretler (tarih DATE PRIMARY KEY, ziyaret_sayisi INT NOT NULL DEFAULT 0)")
             cur.execute("CREATE TABLE IF NOT EXISTS ayarlar (id INT PRIMARY KEY DEFAULT 1, veri JSONB NOT NULL, CONSTRAINT ayarlar_tek_satir CHECK (id = 1))")
         conn.commit()
     finally:
@@ -709,7 +710,44 @@ def online_heartbeat(session_id):
                 (session_id,)
             )
             cur.execute("DELETE FROM online_kullanicilar WHERE son_gorulme < NOW() - INTERVAL '2 minutes'")
+            # Günlük ziyaretçi sayacı - session_id daha önce bugün kaydedilmediyse artır
+            cur.execute(
+                "INSERT INTO gunluk_ziyaretler (tarih, ziyaret_sayisi) VALUES (CURRENT_DATE, 1) "
+                "ON CONFLICT (tarih) DO UPDATE SET ziyaret_sayisi = gunluk_ziyaretler.ziyaret_sayisi + 1 "
+                "WHERE NOT EXISTS (SELECT 1 FROM online_kullanicilar WHERE session_id = %s AND son_gorulme > NOW() - INTERVAL '5 minutes')",
+                (session_id,)
+            )
         conn.commit()
+    finally:
+        conn.close()
+
+
+def gunluk_ziyaret_sayisi(tarih=None):
+    """Belirli bir günün ziyaretçi sayısını döndür. tarih=None ise bugün."""
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            if tarih is None:
+                cur.execute("SELECT ziyaret_sayisi FROM gunluk_ziyaretler WHERE tarih = CURRENT_DATE")
+            else:
+                cur.execute("SELECT ziyaret_sayisi FROM gunluk_ziyaretler WHERE tarih = %s", (tarih,))
+            row = cur.fetchone()
+            return row[0] if row else 0
+    finally:
+        conn.close()
+
+
+def son_7_gun_ziyaretler():
+    """Son 7 günün ziyaretçi sayılarını döndür."""
+    conn = _db_baglanti()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT tarih, ziyaret_sayisi FROM gunluk_ziyaretler "
+                "WHERE tarih >= CURRENT_DATE - INTERVAL '6 days' "
+                "ORDER BY tarih DESC"
+            )
+            return {str(row[0]): row[1] for row in cur.fetchall()}
     finally:
         conn.close()
 
@@ -2850,6 +2888,32 @@ elif st.session_state.sayfa == "giris":
     if admin_mi():
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:gray;'>Admin Paneli</p>", unsafe_allow_html=True)
+
+        # Günlük ziyaretçi istatistikleri
+        try:
+            bugun = gunluk_ziyaret_sayisi()
+            son7 = son_7_gun_ziyaretler()
+            st.markdown("### 📈 Ziyaretçi İstatistikleri")
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown(f"""<div class="mh-stat">
+<div class="mh-stat-icon">👥</div>
+<div class="mh-stat-num">{bugun}</div>
+<div class="mh-stat-lbl">Bugünkü Ziyaretçi</div>
+</div>""", unsafe_allow_html=True)
+            with c2:
+                toplam7 = sum(son7.values())
+                st.markdown(f"""<div class="mh-stat">
+<div class="mh-stat-icon">📊</div>
+<div class="mh-stat-num">{toplam7}</div>
+<div class="mh-stat-lbl">Son 7 Gün Toplam</div>
+</div>""", unsafe_allow_html=True)
+            if son7:
+                with st.expander("📅 Son 7 Gün Detayı"):
+                    for tarih, sayi in sorted(son7.items(), reverse=True):
+                        st.markdown(f"**{tarih}:** {sayi} kişi")
+        except Exception:
+            pass
 
         st.divider()
         st.markdown("### 📋 İstatistik Metnini Yapıştır")
