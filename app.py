@@ -2051,51 +2051,191 @@ def _sparkline_svg(degerler, renk, yukseklik=62, genislik=300):
 </svg>'''
 
 
-def mac_karti(ev, dep, sb, se, sd, le, ld, saat="", ulke="", tarih=""):
-    orta = f'<div class="fa-score">{int(se)} - {int(sd)}</div>' if sb else '<div class="fa-vs">VS</div>'
-    br = ulke_bayrak_bul(ulke); ust = ""
-    if saat or ulke or tarih:
-        p = []
-        if br != "🌍" or ulke: p.append(f"{br} {_e((ulke or '').title())}")
-        if tarih: p.append(f"📅 {_e(tarih)}")
-        if saat: p.append(f"🕐 {_e(saat)}")
-        if p: ust = f'<div class="fa-sub" style="margin-bottom:6px;">{" • ".join(p)}</div>'
-    alt = f'<div class="fa-sub">Model beklenen gol: {le:.2f} - {ld:.2f}</div>'
-    return f'<div class="fa-hero">{ust}<div class="fa-teams"><div class="fa-team">{_e(ev)}</div>{orta}<div class="fa-team">{_e(dep)}</div></div>{alt}</div>'
+def _tahmin_renk(yuzde, esik):
+    """Yüzdeye göre renk döndür."""
+    if yuzde >= esik:
+        return "#22c55e"
+    return "#64748b"
 
 
-def kilitli_mac_karti(ev, dep, saat="", ulke="", tarih=""):
-    br = ulke_bayrak_bul(ulke); ust = ""
+def _yatay_bar(yuzde, renk, genislik=100):
+    """Yatay progress bar HTML."""
+    return f'''
+    <div style="background:#1a2438;border-radius:99px;height:8px;overflow:hidden;margin:4px 0;">
+        <div style="background:{renk};height:100%;width:{yuzde}%;border-radius:99px;transition:width 0.6s;"></div>
+    </div>
+    '''
+
+
+def _skor_tahmini(lam_ev, lam_dep):
+    """Poisson ile en olası skoru hesapla."""
+    import math
+    def poisson(k, lam):
+        if lam <= 0: return 1.0 if k == 0 else 0.0
+        return (math.exp(-lam) * (lam ** k)) / math.factorial(k)
+
+    en_olası = (0, 0, 0.0)
+    for i in range(6):
+        for j in range(6):
+            p = poisson(i, lam_ev) * poisson(j, lam_dep)
+            if p > en_olası[2]:
+                en_olası = (i, j, p)
+    return en_olası[0], en_olası[1]
+
+
+def _devre_skor_tahmini(lam_ev, lam_dep):
+    """1. ve 2. devre skor tahmini."""
+    # Basit yaklaşım: toplam golün %45'i 1. devre, %55'i 2. devre
+    ev_ilk = round(lam_ev * 0.45)
+    dep_ilk = round(lam_dep * 0.45)
+    ev_ikinci = round(lam_ev * 0.55)
+    dep_ikinci = round(lam_dep * 0.55)
+    return ev_ilk, dep_ilk, ev_ikinci, dep_ikinci
+
+
+def mac_karti(ev, dep, skor_belli, skor_ev, skor_dep, lam_ev, lam_dep, saat="", ulke="", tarih=""):
+    """Yeni modern maç kartı tasarımı."""
+    # Skor tahmini
+    if not skor_belli and lam_ev > 0 and lam_dep > 0:
+        tahmin_ev, tahmin_dep = _skor_tahmini(lam_ev, lam_dep)
+        ev_ilk, dep_ilk, ev_ikinci, dep_ikinci = _devre_skor_tahmini(lam_ev, lam_dep)
+    else:
+        tahmin_ev, tahmin_dep = skor_ev, skor_dep
+        ev_ilk, dep_ilk = skor_ev, skor_dep
+        ev_ikinci, dep_ikinci = 0, 0
+
+    # 1X2 olasılıkları
+    a = analiz_hesapla({"takim_ev": ev, "takim_dep": dep, "atilan_ev": lam_ev * 0.8, "atilan_dep": lam_dep * 0.8, "yenen_ev": lam_dep * 0.5, "yenen_dep": lam_ev * 0.5})
+    p1, px, p2 = a["p1"], a["px"], a["p2"]
+
+    # En yüksek tahmin
+    en_yuksek = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
+    tahmin_secim, tahmin_yuzde = en_yuksek
+    tahmin_isim = {"1": f"{ev} KAZANIR", "X": "BERABERLİK", "2": f"{dep} KAZANIR"}[tahmin_secim]
+
+    # Gol tahmini
+    ust_25 = a["ust_25"]
+    alt_25 = 100 - ust_25
+    kg_var = a["kg_var_model"]
+    kg_yok = 100 - kg_var
+
+    # Skor gösterimi
+    if skor_belli:
+        skor_html = f'<div style="font-size:2.5rem;font-weight:900;color:#22c55e;text-shadow:0 0 20px rgba(34,197,94,0.5);">{skor_ev} - {skor_dep}</div>'
+        durum = "MAÇ SONUCU"
+    else:
+        skor_html = f'<div style="font-size:2.5rem;font-weight:900;color:#3b82f6;text-shadow:0 0 20px rgba(59,130,246,0.5);">{tahmin_ev} - {tahmin_dep}</div>'
+        durum = "TAHMİNİ SKOR"
+
+    # Üst bilgi
+    bayrak = ulke_bayrak_bul(ulke)
+    ust_bilgi = ""
     if saat or ulke or tarih:
-        p = []
-        if br != "🌍" or ulke: p.append(f"{br} {_e((ulke or '').title())}")
-        if tarih: p.append(f"📅 {_e(tarih)}")
-        if saat: p.append(f"🕐 {_e(saat)}")
-        if p: ust = f'<div class="fa-sub" style="margin-bottom:6px;">{" • ".join(p)}</div>'
-    return f'<div class="fa-locked">{ust}<div class="fa-locked-teams"><div class="fa-team">{_e(ev)}</div><div class="fa-vs">VS</div><div class="fa-team">{_e(dep)}</div></div><div class="fa-locked-overlay"><div class="fa-locked-text">🔒 PREMIUM\'A GEÇ</div></div></div>'
+        parcalar = []
+        if bayrak != "🌍" or ulke: parcalar.append(f"{bayrak} {(ulke or '').upper()}")
+        if tarih: parcalar.append(f"📅 {tarih}")
+        if saat: parcalar.append(f"🕐 {saat}")
+        if parcalar:
+            ust_bilgi = f'<div style="font-size:0.75rem;color:#7f92b3;margin-bottom:8px;letter-spacing:1px;">{" • ".join(parcalar)}</div>'
+
+    # Ana tahmin çubuğu
+    guven_renk = "#22c55e" if tahmin_yuzde >= 65 else "#f59e0b" if tahmin_yuzde >= 55 else "#64748b"
+
+    # Outcome probability bar
+    toplam = p1 + px + p2
+    if toplam > 0:
+        p1_w = p1 / toplam * 100
+        px_w = px / toplam * 100
+        p2_w = p2 / toplam * 100
+    else:
+        p1_w = px_w = p2_w = 33.33
+
+    # Match props
+    over_renk = "#22c55e" if ust_25 >= 65 else "#64748b"
+    btts_renk = "#22c55e" if kg_var >= 60 else "#64748b"
+
+    html = f'''
+    <div style="background:linear-gradient(135deg,#0d1b2e 0%,#1a2332 100%);border:1px solid #2a3a56;border-radius:16px;padding:20px;margin:10px 0;box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+        <!-- ÜST KISIM: Takımlar ve Skor -->
+        {ust_bilgi}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div style="flex:1;text-align:center;">
+                <div style="font-size:1.1rem;font-weight:800;color:#eaf1fb;">{ev}</div>
+            </div>
+            <div style="flex:1;text-align:center;">
+                {skor_html}
+                <div style="font-size:0.65rem;color:#7f92b3;margin-top:4px;letter-spacing:2px;">{durum}</div>
+            </div>
+            <div style="flex:1;text-align:center;">
+                <div style="font-size:1.1rem;font-weight:800;color:#eaf1fb;">{dep}</div>
+            </div>
+        </div>
+
+        <!-- ANA TAHMİN ÇUBUĞU -->
+        <div style="background:linear-gradient(90deg,{guven_renk}22,{guven_renk}11);border:1px solid {guven_renk}44;border-radius:12px;padding:12px;text-align:center;margin-bottom:16px;">
+            <div style="font-size:0.7rem;color:#7f92b3;letter-spacing:2px;margin-bottom:4px;">AI TAHMİNİ</div>
+            <div style="font-size:1rem;font-weight:900;color:{guven_renk};">{tahmin_isim} · %{tahmin_yuzde:.0f} GÜVEN</div>
+        </div>
+
+        <!-- OUTCOME PROBABILITY -->
+        <div style="margin-bottom:16px;">
+            <div style="font-size:0.7rem;color:#7f92b3;letter-spacing:2px;margin-bottom:8px;">📊 OLASILIK DAĞILIMI</div>
+            <div style="display:flex;height:12px;border-radius:99px;overflow:hidden;background:#1a2438;">
+                <div style="width:{p1_w}%;background:#3b82f6;transition:width 0.6s;"></div>
+                <div style="width:{px_w}%;background:#f59e0b;transition:width 0.6s;"></div>
+                <div style="width:{p2_w}%;background:#ef4444;transition:width 0.6s;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.75rem;">
+                <span style="color:#3b82f6;font-weight:700;">%{p1:.0f} {ev[:12]}...</span>
+                <span style="color:#f59e0b;font-weight:700;">%{px:.0f} Beraberlik</span>
+                <span style="color:#ef4444;font-weight:700;">%{p2:.0f} {dep[:12]}...</span>
+            </div>
+        </div>
+
+        <!-- PREDICTED SCOREBOARD -->
+        <div style="background:#0f1626;border-radius:12px;padding:12px;margin-bottom:16px;">
+            <div style="font-size:0.7rem;color:#7f92b3;letter-spacing:2px;margin-bottom:10px;">⚽ SKOR TAHMİNİ</div>
+            <div style="display:flex;text-align:center;">
+                <div style="flex:1;">
+                    <div style="font-size:0.65rem;color:#7f92b3;">1. DEVRE</div>
+                    <div style="font-size:1.3rem;font-weight:900;color:#3b82f6;">{ev_ilk} - {dep_ilk}</div>
+                </div>
+                <div style="flex:1;border-left:1px solid #2a3a56;border-right:1px solid #2a3a56;">
+                    <div style="font-size:0.65rem;color:#7f92b3;">2. DEVRE</div>
+                    <div style="font-size:1.3rem;font-weight:900;color:#f59e0b;">{ev_ikinci} - {dep_ikinci}</div>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:0.65rem;color:#7f92b3;font-weight:800;">MAÇ SONU</div>
+                    <div style="font-size:1.3rem;font-weight:900;color:#22c55e;">{tahmin_ev} - {tahmin_dep}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MATCH PROPS -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+            <div style="background:#0f1626;border-radius:10px;padding:10px;text-align:center;">
+                <div style="font-size:0.65rem;color:#7f92b3;">OVER 2.5</div>
+                <div style="font-size:1.1rem;font-weight:900;color:{over_renk};">%{ust_25:.0f}</div>
+            </div>
+            <div style="background:#0f1626;border-radius:10px;padding:10px;text-align:center;">
+                <div style="font-size:0.65rem;color:#7f92b3;">KG VAR</div>
+                <div style="font-size:1.1rem;font-weight:900;color:{btts_renk};">%{kg_var:.0f}</div>
+            </div>
+            <div style="background:#0f1626;border-radius:10px;padding:10px;text-align:center;">
+                <div style="font-size:0.65rem;color:#7f92b3;">ALT 2.5</div>
+                <div style="font-size:1.1rem;font-weight:900;color:#64748b;">%{alt_25:.0f}</div>
+            </div>
+        </div>
+    </div>
+    '''
+
+    return html
 
 
 def mac_tahmin_karti(v_g, g=None):
-    try:
-        try: ya = yeniden_analiz(v_g)
-        except Exception: ya = (g or {}).get("analiz", {})
-        p1 = ya.get("p1", 33.33); px = ya.get("px", 33.33); p2 = ya.get("p2", 33.34)
-        u25 = ya.get("ust_25", 50); a25 = 100 - u25
-        kgv = ya.get("kg_var_model", 50); kgy = 100 - kgv
-        e1 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
-        s1, y1 = e1; es1 = esik_1x2_al(s1); poz1 = y1 >= es1
-        isim1 = {"1": "1 — Ev Kazanır", "X": "X — Beraberlik", "2": "2 — Dep Kazanır"}[s1]
-        if u25 >= a25: gs = "Üst 2.5"; gy = u25; ge_ = esik_al("ust")
-        else: gs = "Alt 2.5"; gy = a25; ge_ = esik_al("alt")
-        gp = gy >= ge_
-        if kgv >= kgy: ks = "KG Var"; ky = kgv; ke = esik_al("kg_var")
-        else: ks = "KG Yok"; ky = kgy; ke = esik_al("kg_yok")
-        kp = ky >= ke
-        def r(p): return "pass" if p else "off"
-        def b(p): return "ok" if p else "no"
-        def bt(p): return "✅" if p else "⚪"
-        return f'''<div class="fa-mk"><div class="fa-mk-row"><span class="fa-mk-lbl">🎯 1X2</span><span class="fa-mk-pick {r(poz1)}">{_e(isim1)}</span><span class="fa-mk-pct">%{y1:.0f} <span class="fa-mk-badge {b(poz1)}">{bt(poz1)} eşik %{es1:.0f}</span></span></div><div class="fa-mk-row"><span class="fa-mk-lbl">⚽ Gol</span><span class="fa-mk-pick {r(gp)}">{_e(gs)}</span><span class="fa-mk-pct">%{gy:.0f} <span class="fa-mk-badge {b(gp)}">{bt(gp)} eşik %{ge_:.0f}</span></span></div><div class="fa-mk-row"><span class="fa-mk-lbl">🤝 KG</span><span class="fa-mk-pick {r(kp)}">{_e(ks)}</span><span class="fa-mk-pct">%{ky:.0f} <span class="fa-mk-badge {b(kp)}">{bt(kp)} eşik %{ke:.0f}</span></span></div></div>'''
-    except Exception: return ""
+    """Eski tahmin kartı - artık mac_karti içinde gösteriliyor."""
+    return ""
+
 
 
 def olasilik_bar(e, y, esik=None, renk="#3b82f6"):
@@ -3424,9 +3564,6 @@ elif st.session_state.sayfa == "gecmis":
             if yuk is not None:
                 try:
                     veri = json.loads(yuk.read().decode("utf-8"))
-                    # Tek obje ise listeye çevir
-                    if isinstance(veri, dict):
-                        veri = [veri]
                     if isinstance(veri, list):
                         st.session_state.gecmis_analizler = veri
                         gecmis_kaydet(veri)
