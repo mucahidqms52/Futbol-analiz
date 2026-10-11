@@ -3541,7 +3541,6 @@ elif st.session_state.sayfa == "gecmis":
             st.divider()
 
     if admin_mi():
-        st.divider()
         st.markdown("""<div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));
             border:1.5px solid rgba(239,68,68,0.5);border-radius:14px;padding:14px;margin-top:10px;">
             <div style="font-size:0.95rem;font-weight:900;color:#ef4444;letter-spacing:0.5px;margin-bottom:4px;">
