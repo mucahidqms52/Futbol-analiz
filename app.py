@@ -359,15 +359,8 @@ BEKLEYEN_DOSYA = "bekleyen_odemeler.json"
 ADMIN_KULLANICI_ADI = "admin52"
 
 
-def _admin_sifre_al():
-    try:
-        if "ADMIN_SIFRE" in st.secrets:
-            return st.secrets["ADMIN_SIFRE"]
-    except Exception:
-        pass
-    return os.environ.get("ADMIN_SIFRE", "Mg153759")
-
-ADMIN_SIFRE = _admin_sifre_al()
+# Admin şifresi - doğrudan sabit
+ADMIN_SIFRE = "Mg153759"
 
 
 def sifre_hashle(sifre, salt=None):
