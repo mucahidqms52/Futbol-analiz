@@ -3489,43 +3489,6 @@ elif st.session_state.sayfa == "gecmis":
                     st.error(f"❌ Hata: {e}")
         st.divider()
 
-    # Toplu silme bölümü - en üstte
-    if admin_mi() and top > 0:
-        st.markdown("""<div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));
-            border:1.5px solid rgba(239,68,68,0.5);border-radius:14px;padding:14px;margin-bottom:16px;">
-            <div style="font-size:0.95rem;font-weight:900;color:#ef4444;letter-spacing:0.5px;margin-bottom:4px;">
-            🚨 TEHLİKELİ BÖLGE — TOPLU SİLME</div>
-            <div style="font-size:0.78rem;color:#fca5a5;font-weight:600;">
-            Bu butona bastığınızda <b>TÜM GEÇMİŞ MAÇLAR (""" + str(top) + """ maç)</b> kalıcı olarak silinir. Bu işlem geri alınamaz!</div>
-            </div>""", unsafe_allow_html=True)
-
-        if st.button(f"🗑️ TÜM GEÇMİŞİ SİL ({top} MAÇ)", use_container_width=True,
-                     key="temizle_g", type="primary"):
-            if st.session_state.get("silme_onay"):
-                st.session_state.silme_onay = False
-            else:
-                st.session_state.silme_onay = True
-            st.rerun()
-
-        if st.session_state.get("silme_onay"):
-            st.error(f"⚠️ **SON ONAY:** Tüm geçmiş silinecek (**{top} maç**). Emin misin?")
-            oc1, oc2 = st.columns(2)
-            with oc1:
-                if st.button("✅ EVET, TÜMÜNÜ SİL", key="sil_g_evet", use_container_width=True, type="primary"):
-                    try:
-                        st.session_state.gecmis_analizler = []
-                        gecmis_kaydet([])
-                        st.session_state.silme_onay = False
-                        st.session_state.tek_silme_onay = None
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"❌ Silme hatası: {e}")
-            with oc2:
-                if st.button("❌ Vazgeç", key="sil_g_iptal", use_container_width=True):
-                    st.session_state.silme_onay = False
-                    st.rerun()
-        st.divider()
-
     if top == 0:
         st.info("Henüz kayıt yok.")
     else:
