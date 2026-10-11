@@ -970,6 +970,15 @@ MAX_GOL = 8; BELIRSIZLIK = 0.20; MAX_MAC_SINIRI = 200
 _kilit = threading.Lock(); _ESIK_CACHE = {}
 
 
+# BİR DEFAYA MAHSUS GEÇMİŞ SİLME - İlk çalıştırmada tüm geçmişi siler
+if "_gecmis_temizlendi_v1" not in st.session_state:
+    try:
+        gecmis_kaydet([])
+        st.session_state.gecmis_analizler = []
+        st.session_state._gecmis_temizlendi_v1 = True
+    except Exception:
+        pass
+
 if "sayfa" not in st.session_state: st.session_state.sayfa = "giris"
 if "form_verileri" not in st.session_state: st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
 if "gecmis_analizler" not in st.session_state: st.session_state.gecmis_analizler = gecmis_yukle()
@@ -3489,51 +3498,6 @@ elif st.session_state.sayfa == "gecmis":
                     st.error(f"❌ Hata: {e}")
         st.divider()
 
-    # Toplu silme bölümü - en üstte
-    if admin_mi() and top > 0:
-        st.markdown("""<div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));
-            border:1.5px solid rgba(239,68,68,0.5);border-radius:14px;padding:14px;margin-bottom:16px;">
-            <div style="font-size:0.95rem;font-weight:900;color:#ef4444;letter-spacing:0.5px;margin-bottom:4px;">
-            🚨 TEHLİKELİ BÖLGE — TOPLU SİLME</div>
-            <div style="font-size:0.78rem;color:#fca5a5;font-weight:600;">
-            Bu butona bastığınızda <b>TÜM GEÇMİŞ MAÇLAR (""" + str(top) + """ maç)</b> kalıcı olarak silinir. Bu işlem geri alınamaz!</div>
-            </div>""", unsafe_allow_html=True)
-
-        # Onay penceresi göster
-        if st.session_state.get("silme_onay"):
-            st.error(f"⚠️ **SON ONAY:** Tüm geçmiş silinecek (**{top} maç**). Emin misin?")
-            oc1, oc2 = st.columns(2)
-            with oc1:
-                if st.button("✅ EVET, TÜMÜNÜ SİL", key="sil_g_evet", use_container_width=True, type="primary"):
-                    try:
-                        st.session_state.gecmis_analizler = []
-                        gecmis_kaydet([])
-                        st.session_state.silme_onay = False
-                        st.session_state.tek_silme_onay = None
-                        st.success("✅ Tüm geçmiş silindi!")
-                        time.sleep(1)
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"❌ Silme hatası: {e}")
-            with oc2:
-                if st.button("❌ Vazgeç", key="sil_g_iptal", use_container_width=True):
-                    st.session_state.silme_onay = False
-                    st.rerun()
-        else:
-            # Ana silme butonu - on_click callback kullan
-            def _toplu_sil_toggle():
-                st.session_state.silme_onay = True
-
-            st.button(
-                f"🗑️ TÜM GEÇMİŞİ SİL ({top} MAÇ)",
-                use_container_width=True,
-                key="temizle_g",
-                type="primary",
-                on_click=_toplu_sil_toggle
-            )
-        st.divider()
-
-
     if top == 0:
         st.info("Henüz kayıt yok.")
     else:
@@ -3585,6 +3549,40 @@ elif st.session_state.sayfa == "gecmis":
                     st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
             st.divider()
 
+    if admin_mi():
+        st.markdown("""<div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));
+            border:1.5px solid rgba(239,68,68,0.5);border-radius:14px;padding:14px;margin-top:10px;">
+            <div style="font-size:0.95rem;font-weight:900;color:#ef4444;letter-spacing:0.5px;margin-bottom:4px;">
+            🚨 TEHLİKELİ BÖLGE — TOPLU SİLME</div>
+            <div style="font-size:0.78rem;color:#fca5a5;font-weight:600;">
+            Bu butona bastığınızda <b>TÜM GEÇMİŞ MAÇLAR (""" + str(top) + """ maç)</b> kalıcı olarak silinir. Bu işlem geri alınamaz!</div>
+            </div>""", unsafe_allow_html=True)
+
+        if st.button(f"🗑️ TÜM GEÇMİŞİ SİL ({top} MAÇ)", use_container_width=True,
+                     key="temizle_g", type="primary"):
+            if st.session_state.get("silme_onay"):
+                st.session_state.silme_onay = False
+            else:
+                st.session_state.silme_onay = True
+            st.rerun()
+
+        if st.session_state.get("silme_onay"):
+            st.error(f"⚠️ **SON ONAY:** Tüm geçmiş silinecek (**{top} maç**). Emin misin?")
+            oc1, oc2 = st.columns(2)
+            with oc1:
+                if st.button("✅ EVET, TÜMÜNÜ SİL", key="sil_g_evet", use_container_width=True, type="primary"):
+                    try:
+                        st.session_state.gecmis_analizler = []
+                        gecmis_kaydet([])
+                        st.session_state.silme_onay = False
+                        st.session_state.tek_silme_onay = None
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ Silme hatası: {e}")
+            with oc2:
+                if st.button("❌ Vazgeç", key="sil_g_iptal", use_container_width=True):
+                    st.session_state.silme_onay = False
+                    st.rerun()
 
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gc_geri"):
         st.session_state.sayfa = "giris"; st.rerun()
