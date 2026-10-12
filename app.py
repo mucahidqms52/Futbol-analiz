@@ -2012,6 +2012,35 @@ def mac_karti(ev, dep, skor_belli, skor_ev, skor_dep, lam_ev, lam_dep, saat="", 
 
 
 
+def kilitli_mac_karti(ev, dep, saat="", ulke="", tarih=""):
+    """Kilitli maç kartı - premium olmayanlar için."""
+    bayrak = ulke_bayrak_bul(ulke)
+    ust_bilgi = ""
+    if saat or ulke or tarih:
+        parcalar = []
+        if bayrak != "🌍" or ulke: parcalar.append(f"{bayrak} {(ulke or '').title()}")
+        if tarih: parcalar.append(f"📅 {tarih}")
+        if saat: parcalar.append(f"🕐 {saat}")
+        if parcalar:
+            ust_bilgi = f'<div style="font-size:0.7rem;color:#7f92b3;margin-bottom:10px;text-align:center;">{" • ".join(parcalar)}</div>'
+
+    return f'''
+    <div style="background:linear-gradient(145deg,#131c2e,#0f1829);border:1px solid #1f2c44;border-radius:16px;padding:16px;margin:8px 0;box-shadow:0 4px 20px rgba(0,0,0,0.3);position:relative;overflow:hidden;opacity:0.7;">
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3rem;opacity:0.15;">🔒</div>
+        {ust_bilgi}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;filter:blur(3px);">
+            <div style="flex:1;text-align:center;font-weight:800;font-size:0.95rem;color:#eaf1fb;">{ev}</div>
+            <div style="flex:1;text-align:center;font-size:1.2rem;font-weight:800;color:#7f92b3;">VS</div>
+            <div style="flex:1;text-align:center;font-weight:800;font-size:0.95rem;color:#eaf1fb;">{dep}</div>
+        </div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(59,130,246,0.08));z-index:2;">
+            <div style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#04130a;font-weight:900;font-size:0.85rem;padding:10px 20px;border-radius:99px;box-shadow:0 8px 24px rgba(34,197,94,0.4);letter-spacing:0.5px;">🔒 PREMIUM'A GEÇ</div>
+        </div>
+    </div>
+    '''
+
+
+
 def mac_tahmin_karti(v_g, g=None):
     try:
         try: ya = yeniden_analiz(v_g)
