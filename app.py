@@ -1,3 +1,4 @@
+import streamlit as st
 import math
 import copy
 import re
@@ -624,7 +625,7 @@ except Exception as _db_hata:
     st.stop()
 
 
-# === DÜZELTME 1: CookieManager'ı cache_resource ile tek instance yap ===
+# === DÜZELTME 1: CookieManager tek instance ===
 @st.cache_resource(show_spinner=False)
 def _cookie_manager_al():
     try:
@@ -690,7 +691,7 @@ def _otomatik_giris_dene():
         pass
 
 
-# === DÜZELTME 2: cache_data kaldırıldı (yan etkili DB yazımı cache'lenmemeli) ===
+# === DÜZELTME 2: yan etkili fonksiyon cache'lenmez ===
 def _online_durum_guncelle(session_id):
     online_heartbeat(session_id)
     return online_say()
@@ -849,36 +850,29 @@ def ayarlar_kaydet(v):
         conn.close()
 
 
-# === DÜZELTME 3: online_heartbeat — günlük ziyaretçi sayacı doğru çalışsın ===
+# === DÜZELTME 3: günlük ziyaretçi sayacı doğru çalışsın ===
 def online_heartbeat(session_id):
     conn = _db_baglanti()
     try:
         with conn.cursor() as cur:
-            # Session daha önce görülmüş mü, son görülme ne zamandı?
             cur.execute("SELECT son_gorulme FROM online_kullanicilar WHERE session_id = %s", (session_id,))
             row = cur.fetchone()
-            # Yeni ziyaret: hiç kaydı yoksa VEYA 5 dakikadan uzun süredir görülmediyse
             yeni_ziyaret = False
             if row is None:
                 yeni_ziyaret = True
             else:
                 try:
                     son = row[0]
-                    if son is not None:
-                        # timezone-naive karşılaştırma — DB'den gelen değer local time
-                        if (datetime.now() - son) > timedelta(minutes=5):
-                            yeni_ziyaret = True
+                    if son is not None and (datetime.now() - son) > timedelta(minutes=5):
+                        yeni_ziyaret = True
                 except Exception:
                     yeni_ziyaret = True
-            # Online tabloya upsert
             cur.execute(
                 "INSERT INTO online_kullanicilar (session_id, son_gorulme) VALUES (%s, NOW()) "
                 "ON CONFLICT (session_id) DO UPDATE SET son_gorulme = NOW()",
                 (session_id,)
             )
-            # 2 dakikadan eski kayıtları temizle
             cur.execute("DELETE FROM online_kullanicilar WHERE son_gorulme < NOW() - INTERVAL '2 minutes'")
-            # Yeni ziyaretse sayacı artır
             if yeni_ziyaret:
                 cur.execute(
                     "INSERT INTO gunluk_ziyaretler (tarih, ziyaret_sayisi) VALUES (CURRENT_DATE, 1) "
@@ -1636,7 +1630,6 @@ TARAYICI_ESZAMANLI = int(os.environ.get("TARAYICI_ESZAMANLI", "3"))
 _TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
 
 
-# === DÜZELTME 4: Playwright chromium kurulumu bir kez yapılır ===
 @st.cache_resource(show_spinner=False)
 def _playwright_kur():
     try:
@@ -1649,20 +1642,14 @@ def _playwright_kur():
     return True
 
 
-def _playwright_5mac_cek(url, timeout=30):
 def _last_games_5_sec(pg):
-    """Sayfa açıldığında 'Last games: 5' seçeneğini seçmeye çalışır (varsayılan 10 yerine).
-
-    SportyTrader / Mutating şablonunda 'Last games:' satırında 5 / 10 / 15
-    şeklinde radio-benzeri buton grubu bulunur. 10 varsayılan seçilidir.
-    """
-    # --- Strateji 1: 'Last games:' etiketinin bulunduğu satırdaki '5' seçeneği ---
+    """Sayfa açıldığında 'Last games: 5' seçeneğini seçmeye çalışır (varsayılan 10 yerine)."""
+    # Strateji 1: 'Last games:' etiketinin bulunduğu satırdaki '5' seçeneği
     try:
         lbl = pg.locator('text=/Last games:?/i').first
         if lbl.count() > 0:
             row = lbl.locator('xpath=ancestor::*[self::div or self::tr or self::li][1]')
-            # Aynı satırdaki tam '5' metnini içeren clickable'ı bul
-            for sel in ['text=/^\\s*5\\s*$/', '[data-value="5"]', 'input[value="5"]']:
+            for sel in [r'text=/^\s*5\s*$/', '[data-value="5"]', 'input[value="5"]']:
                 five = row.locator(sel).first
                 if five.count() > 0:
                     try:
@@ -1674,7 +1661,7 @@ def _last_games_5_sec(pg):
     except Exception:
         pass
 
-    # --- Strateji 2: radio grubu (genelde 5/10/15 → ilk olan '5') ---
+    # Strateji 2: radio grubu (5/10/15 → ilk olan '5')
     try:
         radios = pg.locator('input[type="radio"]')
         if radios.count() >= 3:
@@ -1692,7 +1679,7 @@ def _last_games_5_sec(pg):
     except Exception:
         pass
 
-    # --- Strateji 3: doğrudan value / data-value / data-last ---
+    # Strateji 3: doğrudan value / data-value / data-last
     for sel in ['input[value="5"]', '[data-value="5"]', '[data-last="5"]', '[data-games="5"]']:
         try:
             el = pg.locator(sel).first
@@ -1703,7 +1690,7 @@ def _last_games_5_sec(pg):
         except Exception:
             continue
 
-    # --- Strateji 4: label text-is ---
+    # Strateji 4: label text-is
     try:
         el = pg.locator('label:text-is("5")').first
         if el.count() > 0:
@@ -1713,7 +1700,7 @@ def _last_games_5_sec(pg):
     except Exception:
         pass
 
-    # --- Strateji 5: Son çare — 'Last games:' yakınındaki tüm '5' adayları ---
+    # Strateji 5: son çare — görünür tüm '5' adayları
     try:
         candidates = pg.locator('span, button, a, div').filter(has_text=re.compile(r'^\s*5\s*$'))
         n = candidates.count()
@@ -1731,7 +1718,9 @@ def _last_games_5_sec(pg):
         pass
 
     return False
-    def _playwright_5mac_cek(url, timeout=30):
+
+
+def _playwright_5mac_cek(url, timeout=30):
     """Playwright ile maç sayfasını açar ve 'Last games: 5' seçeneğine tıklar."""
     _playwright_kur()
     from playwright.sync_api import sync_playwright
@@ -2026,7 +2015,6 @@ def mutating_toplu_cek(max_mac=MAX_GELECEK, progress_callback=None, max_workers=
 
     if eklenecekler:
         st.session_state.gelecek_analizler.extend(eklenecekler)
-        # Max 200 sınırı — en eski maçları sil (FIFO)
         if len(st.session_state.gelecek_analizler) > MAX_GELECEK:
             fazla = len(st.session_state.gelecek_analizler) - MAX_GELECEK
             st.session_state.gelecek_analizler = st.session_state.gelecek_analizler[fazla:]
@@ -2311,7 +2299,7 @@ def _skor_cek(url, takim_ev="", takim_dep="", tarih="", tarayici_yedek=False):
     return skor, (hata if skor is None else None)
 
 
-# === DÜZELTME 5: sonuclari_isle — None kaynak_url filtrelenir ===
+# === DÜZELTME 5: kaynaksız maçlar yanlışlıkla "zaten var" sayılmaz ===
 def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
     gel = st.session_state.gelecek_analizler
     isler = [(i, g) for i, g in enumerate(gel)
@@ -2336,7 +2324,6 @@ def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
                 if progress_callback:
                     try: progress_callback(tamam - 1, len(isler), g["veri"].get("takim_ev", ""))
                     except Exception: pass
-    # Boş/None kaynak_url'leri set'e koymuyoruz — aksi halde birden çok kaynaksız maç "zaten var" sayılırdı
     mevcut = {x.get("veri", {}).get("kaynak_url") for x in st.session_state.gecmis_analizler
               if x.get("veri", {}).get("kaynak_url")}
     tasinan = 0; bitmemis = 0; hatalar = []; kalan = []
@@ -2356,7 +2343,6 @@ def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
             mevcut.add(url)
             tasinan += 1
         elif not url:
-            # Kaynaksız maç her zaman taşınır (URL'i olmadığı için "zaten var" kontrolü anlamsız)
             st.session_state.gecmis_analizler.append(g)
             tasinan += 1
     st.session_state.gelecek_analizler = kalan
@@ -4248,6 +4234,6 @@ elif st.session_state.sayfa == "sonuc":
             st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
             st.session_state.kayit_yapildi = False
             st.session_state.gecmisten_gelindi = False
-            st.session_state.gelecekten_gelendi = False
+            st.session_state.gelecekten_gelindi = False
             st.session_state.sayfa = "giris"
             st.rerun()
