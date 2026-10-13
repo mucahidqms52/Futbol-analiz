@@ -1,3 +1,4 @@
+
 import streamlit as st
 import math
 import copy
@@ -2986,37 +2987,6 @@ elif st.session_state.sayfa == "giris":
             pass
 
         st.divider()
-        st.markdown("### 📋 Manuel Analiz Et")
-        st.caption("İstatistik metnini yapıştır → analiz et.")
-
-        manuel_metin = st.text_area("Metin", height=200, key="manuel_analiz_input", label_visibility="collapsed", placeholder="İstatistik metnini buraya yapıştır...")
-
-        if st.button("🚀 ANALİZ ET", use_container_width=True, type="primary", key="manuel_analiz_btn"):
-            if not manuel_metin.strip():
-                st.warning("⚠️ Önce metni yapıştır.")
-            else:
-                cikan, okunamayanlar = metinden_veri_cikar(manuel_metin)
-                if not cikan:
-                    st.error("❌ Metinden hiçbir veri çıkarılamadı.")
-                else:
-                    yeni_veri = copy.deepcopy(VARSAYILAN_VERI)
-                    yeni_veri.update(cikan)
-                    st.session_state.form_verileri = yeni_veri
-                    st.session_state.kayit_yapildi = False
-                    st.session_state.gecmisten_gelindi = False
-                    st.session_state.gelecekten_gelindi = False
-                    st.session_state.aktif_kayit_idx = None
-                    st.session_state.aktif_gelecek_idx = None
-                    st.session_state.okunamayan_alanlar = okunamayanlar
-                    st.session_state.manuel_bekleyen = okunamayanlar.copy()
-                    if not veri_yeterli_mi(yeni_veri):
-                        st.error("⚠️ Analiz için yeterli veri yok.")
-                    else:
-                        if okunamayanlar:
-                            st.session_state.sayfa = "manuel_giris"
-                        else:
-                            st.session_state.sayfa = "sonuc"
-                        st.rerun()
 
         st.divider()
         st.markdown("### 🤖 Otomatik Veri Çekme")
