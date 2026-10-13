@@ -1,4 +1,3 @@
-import streamlit as st
 import math
 import copy
 import re
@@ -1651,6 +1650,88 @@ def _playwright_kur():
 
 
 def _playwright_5mac_cek(url, timeout=30):
+def _last_games_5_sec(pg):
+    """Sayfa açıldığında 'Last games: 5' seçeneğini seçmeye çalışır (varsayılan 10 yerine).
+
+    SportyTrader / Mutating şablonunda 'Last games:' satırında 5 / 10 / 15
+    şeklinde radio-benzeri buton grubu bulunur. 10 varsayılan seçilidir.
+    """
+    # --- Strateji 1: 'Last games:' etiketinin bulunduğu satırdaki '5' seçeneği ---
+    try:
+        lbl = pg.locator('text=/Last games:?/i').first
+        if lbl.count() > 0:
+            row = lbl.locator('xpath=ancestor::*[self::div or self::tr or self::li][1]')
+            # Aynı satırdaki tam '5' metnini içeren clickable'ı bul
+            for sel in ['text=/^\\s*5\\s*$/', '[data-value="5"]', 'input[value="5"]']:
+                five = row.locator(sel).first
+                if five.count() > 0:
+                    try:
+                        five.click(timeout=2500, force=True)
+                        pg.wait_for_timeout(800)
+                        return True
+                    except Exception:
+                        continue
+    except Exception:
+        pass
+
+    # --- Strateji 2: radio grubu (genelde 5/10/15 → ilk olan '5') ---
+    try:
+        radios = pg.locator('input[type="radio"]')
+        if radios.count() >= 3:
+            try:
+                radios.nth(0).check(timeout=2500, force=True)
+                pg.wait_for_timeout(800)
+                return True
+            except Exception:
+                try:
+                    radios.nth(0).click(timeout=2500, force=True)
+                    pg.wait_for_timeout(800)
+                    return True
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    # --- Strateji 3: doğrudan value / data-value / data-last ---
+    for sel in ['input[value="5"]', '[data-value="5"]', '[data-last="5"]', '[data-games="5"]']:
+        try:
+            el = pg.locator(sel).first
+            if el.count() > 0:
+                el.click(timeout=2000, force=True)
+                pg.wait_for_timeout(800)
+                return True
+        except Exception:
+            continue
+
+    # --- Strateji 4: label text-is ---
+    try:
+        el = pg.locator('label:text-is("5")').first
+        if el.count() > 0:
+            el.click(timeout=2000, force=True)
+            pg.wait_for_timeout(800)
+            return True
+    except Exception:
+        pass
+
+    # --- Strateji 5: Son çare — 'Last games:' yakınındaki tüm '5' adayları ---
+    try:
+        candidates = pg.locator('span, button, a, div').filter(has_text=re.compile(r'^\s*5\s*$'))
+        n = candidates.count()
+        for i in range(min(n, 8)):
+            try:
+                el = candidates.nth(i)
+                box = el.bounding_box()
+                if box and box.get("width", 0) > 0 and box.get("height", 0) > 0:
+                    el.click(timeout=1500, force=True)
+                    pg.wait_for_timeout(800)
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    return False
+    def _playwright_5mac_cek(url, timeout=30):
     """Playwright ile maç sayfasını açar ve 'Last games: 5' seçeneğine tıklar."""
     _playwright_kur()
     from playwright.sync_api import sync_playwright
@@ -1665,23 +1746,8 @@ def _playwright_5mac_cek(url, timeout=30):
                          else route.continue_())
                 pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
                 pg.wait_for_timeout(1500)
-                try:
-                    for secici in [
-                        '.containerbutton:has-text("5")',
-                        'label:has-text("5")',
-                        'text="5"',
-                        'input[value="5"]',
-                    ]:
-                        try:
-                            el = pg.locator(secici).first
-                            if el.count() > 0:
-                                el.click(timeout=3000)
-                                break
-                        except Exception:
-                            continue
-                    pg.wait_for_timeout(2500)
-                except Exception:
-                    pass
+                _last_games_5_sec(pg)
+                pg.wait_for_timeout(2500)
                 return pg.content()
             finally:
                 try: b.close()
