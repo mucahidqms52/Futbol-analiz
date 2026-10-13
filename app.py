@@ -418,6 +418,10 @@ st.markdown("""
     .stApp .fa-ai-bolum-metin .kotu { color: #ef4444 !important; font-weight: 800; }
     .stApp .fa-ai-karar { background: rgba(34,197,94,0.08); border-left: 3px solid #22c55e; border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: 0.84rem; line-height: 1.55; color: #eaf1fb !important; }
     .stApp .fa-ai-karar b { color: #22c55e !important; font-weight: 900; }
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""<style>
 
 /* ============================================
    🎬 ANİMASYONLU MODERN ANALİZ SİSTEMİ
