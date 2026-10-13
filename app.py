@@ -81,7 +81,7 @@ Uygulama, **"AS IS" (olduğu gibi)** ve **"AS AVAILABLE" (mevcut olduğu şekild
 **BU HİZMETTE SUNULAN TÜM TAHMİN, ANALİZ, İSTATİSTİK VE YORUMLAR;**
 
 - Geçmiş verilerin matematiksel modellenmesine dayanır,
-- **Gelecekteki sonuçları garanti etmez**,
+- **Gelecektek sonuçları garanti etmez**,
 - **Doğruluk oranı %100 değildir ve hiçbir zaman olamaz**,
 - **Kayıp veya kazanç garantisi içermez.**
 
@@ -426,6 +426,7 @@ st.markdown("""
 # POSTGRESQL VERİ KATMANI
 # ==========================================
 ADMIN_KULLANICI_ADI = "admin52"
+GECMIS_LIMIT = 200  # Geçmişte en fazla bu kadar maç tutulur
 
 
 def _admin_sifre_al():
@@ -628,16 +629,21 @@ def bildirimler_kaydet(v):
 
 
 def gecmis_yukle():
+    """En son 200 maçı yükler."""
     conn = _db_baglanti()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT veri FROM gecmis ORDER BY id")
-            return [row[0] for row in cur.fetchall()]
+            cur.execute(f"SELECT veri FROM gecmis ORDER BY id DESC LIMIT {GECMIS_LIMIT}")
+            rows = cur.fetchall()
+            return [row[0] for row in reversed(rows)]
     finally:
         conn.close()
 
 
 def gecmis_kaydet(v):
+    """Sadece son 200 maç saklanır — eski maçlar otomatik silinir."""
+    if isinstance(v, list) and len(v) > GECMIS_LIMIT:
+        del v[:len(v) - GECMIS_LIMIT]
     conn = _db_baglanti()
     try:
         with conn.cursor() as cur:
@@ -964,14 +970,6 @@ VARSAYILAN_VERI = {k: v for k, v in {
 MAX_GOL = 8; BELIRSIZLIK = 0.20; MAX_MAC_SINIRI = 500
 _kilit = threading.Lock(); _ESIK_CACHE = {}
 
-
-if "_gecmis_temizlendi_v1" not in st.session_state:
-    try:
-        gecmis_kaydet([])
-        st.session_state.gecmis_analizler = []
-        st.session_state._gecmis_temizlendi_v1 = True
-    except Exception:
-        pass
 
 if "sayfa" not in st.session_state: st.session_state.sayfa = "giris"
 if "form_verileri" not in st.session_state: st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
@@ -3083,6 +3081,7 @@ elif st.session_state.sayfa == "giris":
         toplam = len(gelecek)
         premium = uye_premium_mu()
         kota = int(ayar_al("ucretsiz_kotasi", 3))
+        gecmis_sayi = len(st.session_state.gecmis_analizler)
 
         if premium:
             kl = ""
@@ -3092,15 +3091,15 @@ elif st.session_state.sayfa == "giris":
                     kk = (datetime.strptime(bs, "%Y-%m-%d") - datetime.now()).days
                     if kk >= 0: kl = f'<div class="mh-hero-badge">🌟 PREMIUM — {kk} gün kaldı</div>'
             except Exception: pass
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">Premium aktif — tüm analizler açık</div>{kl}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">📊 Son {gecmis_sayi} maç verisi • Premium aktif — tüm analizler açık</div>{kl}</div>', unsafe_allow_html=True)
             modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="line")
         elif uye_mi():
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz açık</div><div class="mh-hero-badge" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.5);color:#f59e0b !important;">⚠️ ABONELİK YOK</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">📊 Son {gecmis_sayi} maç verisi • İlk {kota} maç ücretsiz açık</div><div class="mh-hero-badge" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.5);color:#f59e0b !important;">⚠️ ABONELİK YOK</div></div>', unsafe_allow_html=True)
             modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="line")
             if st.button("💳 Premium'a Geç  •  ✨ Üye Ol", use_container_width=True, type="primary", key="ana_premium_btn"):
                 st.session_state["odeme_hedef_kadi"] = uye_adi(); st.session_state.sayfa = "odeme"; st.rerun()
         else:
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Bugün {toplam} Maç</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz açık</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Bugün {toplam} Maç</div><div class="mh-hero-sub">📊 Son {gecmis_sayi} maç verisi • İlk {kota} maç ücretsiz açık</div></div>', unsafe_allow_html=True)
             modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="line")
             if st.button("💳 Premium'a Geç  •  ✨ Üye Ol", use_container_width=True, type="primary", key="mis_prem"):
                 st.session_state.sayfa = "kayit"; st.rerun()
@@ -3545,6 +3544,8 @@ elif st.session_state.sayfa == "gecmis":
     st.markdown("<h1>📊 Geçmiş Maçlar</h1>", unsafe_allow_html=True)
     gc = st.session_state.gecmis_analizler; top = len(gc)
 
+    st.markdown(f'<div style="text-align:center;margin:8px 0;"><span style="display:inline-block; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.5); border-radius:99px; padding:6px 18px; font-size:0.8rem; font-weight:800; color:#22c55e; letter-spacing:0.5px;">📊 Son {top} Maç Verisi</span></div>', unsafe_allow_html=True)
+
     if admin_mi():
         st.markdown("### 💾 Yedekleme")
         c1, c2 = st.columns(2)
@@ -3579,7 +3580,7 @@ elif st.session_state.sayfa == "gecmis":
     else:
         modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ")
         st.divider()
-        st.markdown(f"### 📋 Toplam: {top} maç")
+        st.markdown(f"### 📋 Toplam: {top} maç (en fazla 200)")
         for i, g in enumerate(reversed(gc)):
             idx = len(gc) - 1 - i; v = g["veri"]
             te = v.get("takim_ev", "Ev"); td = v.get("takim_dep", "Dep")
