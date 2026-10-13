@@ -1959,6 +1959,18 @@ def mutating_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI):
     return maclar, []
 
 
+def _mac_url_5_games(url):
+    """Maç URL'sini 'son 5 maç' filtresiyle günceller."""
+    if not url:
+        return url
+    # Mevcut last_games parametresini 5 yap
+    if re.search(r'([?&])last_games=\d+', url):
+        return re.sub(r'([?&])last_games=\d+', r'\g<1>last_games=5', url)
+    # Parametre yoksa ekle
+    ayrac = '&' if '?' in url else '?'
+    return f"{url}{ayrac}last_games=5"
+
+
 def mutating_mac_detay_cek(url):
     html, hata = _scrapingbee_get(url, render_js=True, mac_sec="5", dogrula=True)
     if hata: return None, [hata]
@@ -2089,13 +2101,16 @@ def _inline_skor_tasi_callback(idx):
 
 def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
     try:
-        veri, _ = mutating_mac_detay_cek(mac["url"])
+        # ⚡ 5 MAÇLIK VERİYİ ÇEKMEK İÇİN URL'Yİ GÜNCELLE
+        url_5 = _mac_url_5_games(mac["url"])
+        veri, _ = mutating_mac_detay_cek(url_5)
         if not veri:
             return ("hata", mac, "Veri çekilemedi", None)
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
         if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
         if veri.get("saat"): veri["saat"] = saat_2_saat_ileri(veri["saat"])
+        # Orijinal URL'yi kaynak olarak sakla (tekrar çekme kontrolü için)
         veri["kaynak_url"] = mac["url"]
         if mac["url"] in mevcut_urls:
             return ("atlandi", veri, "Zaten var", None)
