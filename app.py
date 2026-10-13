@@ -832,6 +832,358 @@ st.markdown("""<style>
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown("""<style>
+/* ============================================
+   🏠 MODERN ANA SAYFA (Üye & Misafir)
+   ============================================ */
+@keyframes hpPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.5); } 50% { box-shadow: 0 0 20px 4px rgba(34,197,94,.6); } }
+@keyframes hpLive { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .55; transform: scale(1.2); } }
+@keyframes hpSlide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes hpFadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes hpSlideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes hpSlideInR { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes hpGrowBar { from { width: 0 !important; } to { width: var(--w) !important; } }
+@keyframes hpSpin { to { transform: rotate(360deg); } }
+@keyframes hpFlash { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+.hp-hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #14243e 0%, #0d1729 55%, #060a14 100%);
+    border: 1.5px solid rgba(34,197,94,0.28);
+    border-radius: 22px;
+    padding: 24px 16px 20px 16px;
+    margin: 6px 0 16px 0;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: hpFadeUp .6s cubic-bezier(.2,.9,.3,1.2);
+}
+.hp-hero::before {
+    content: ""; position: absolute; inset: -50%;
+    background: conic-gradient(from 0deg, transparent 0deg, rgba(34,197,94,.15) 60deg, transparent 120deg, rgba(59,130,246,.10) 240deg, transparent 360deg);
+    animation: hpSpin 15s linear infinite;
+    pointer-events: none;
+}
+.hp-hero::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(34,197,94,0.2), transparent 60%);
+    pointer-events: none;
+}
+.hp-hero > * { position: relative; z-index: 2; }
+.hp-hero-ust {
+    text-align: center; font-size: 0.65rem; color: #8fa0bd !important;
+    letter-spacing: 2.5px; text-transform: uppercase;
+    font-weight: 800; margin-bottom: 8px;
+}
+.hp-hero-title {
+    text-align: center;
+    font-size: 1.55rem; font-weight: 900;
+    font-family: 'Rajdhani', 'Inter', sans-serif;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 1px;
+    margin: 0;
+    animation: hpSlideIn .6s ease-out .1s both;
+}
+.hp-hero-sub {
+    text-align: center;
+    font-size: 0.8rem; color: #8fa0bd !important;
+    margin-top: 6px; font-weight: 500;
+    animation: hpSlideInR .6s ease-out .2s both;
+}
+.hp-hero-badge-wrap { text-align: center; }
+.hp-hero-badge {
+    display: inline-block;
+    margin: 14px auto 0;
+    padding: 5px 16px;
+    border-radius: 99px;
+    font-size: 0.7rem; font-weight: 800;
+    letter-spacing: 0.8px;
+    animation: hpFadeUp .6s ease-out .3s both;
+}
+.hp-hero-badge.premium { background: rgba(34,197,94,.12); border: 1.5px solid rgba(34,197,94,.55); color: #22c55e !important; box-shadow: 0 0 20px rgba(34,197,94,.3); }
+.hp-hero-badge.free { background: rgba(245,158,11,.12); border: 1.5px solid rgba(245,158,11,.5); color: #f59e0b !important; }
+.hp-hero-badge.guest { background: rgba(59,130,246,.12); border: 1.5px solid rgba(59,130,246,.5); color: #3b82f6 !important; }
+
+.hp-ticker-wrap {
+    position: relative; overflow: hidden;
+    background: linear-gradient(90deg, rgba(19,28,46,.9), rgba(11,18,32,.95));
+    border: 1px solid rgba(34,197,94,.25);
+    border-radius: 12px;
+    padding: 8px 0;
+    margin: 0 0 14px 0;
+    box-shadow: 0 4px 14px rgba(0,0,0,.3);
+    animation: hpFadeUp .5s ease-out .3s both;
+}
+.hp-ticker-wrap::before, .hp-ticker-wrap::after {
+    content: ""; position: absolute; top: 0; bottom: 0; width: 36px; z-index: 2; pointer-events: none;
+}
+.hp-ticker-wrap::before { left: 0; background: linear-gradient(90deg, #0b1220, transparent); }
+.hp-ticker-wrap::after { right: 0; background: linear-gradient(270deg, #0b1220, transparent); }
+.hp-ticker {
+    display: flex; gap: 28px;
+    animation: hpSlide 26s linear infinite;
+    white-space: nowrap;
+    padding-left: 40px;
+    width: max-content;
+}
+.hp-ticker-item {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 0.75rem; font-weight: 800;
+    color: #cbd5e1 !important;
+    letter-spacing: .3px;
+}
+.hp-ticker-item .hp-ticker-dot {
+    display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: #22c55e;
+    box-shadow: 0 0 10px #22c55e;
+    animation: hpLive 1.5s ease-in-out infinite;
+}
+.hp-ticker-val { color: #22c55e !important; font-weight: 900; font-family: 'Rajdhani', sans-serif; font-size: .9rem; }
+
+.hp-mini-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px; margin: 0 0 16px 0;
+}
+.hp-mini {
+    position: relative; overflow: hidden;
+    background: linear-gradient(145deg, rgba(19,28,46,.94), rgba(11,18,32,1));
+    border: 1px solid #1d2940;
+    border-radius: 14px;
+    padding: 12px 6px 10px 6px;
+    text-align: center;
+    animation: hpFadeUp .5s ease-out both;
+    transition: all .3s ease;
+}
+.hp-mini:nth-child(1) { animation-delay: .05s; }
+.hp-mini:nth-child(2) { animation-delay: .12s; }
+.hp-mini:nth-child(3) { animation-delay: .19s; }
+.hp-mini:nth-child(4) { animation-delay: .26s; }
+.hp-mini:hover {
+    border-color: var(--c);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(34,197,94,.15);
+}
+.hp-mini::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--c);
+    box-shadow: 0 0 12px var(--c);
+}
+.hp-mini-ikon { font-size: 1rem; margin-bottom: 4px; }
+.hp-mini-num {
+    font-size: 1.15rem; font-weight: 900;
+    font-family: 'Rajdhani', sans-serif;
+    color: #eaf1fb !important;
+    letter-spacing: -0.3px;
+    line-height: 1;
+}
+.hp-mini-lbl {
+    font-size: 0.52rem; color: #7f92b3 !important;
+    font-weight: 800; letter-spacing: .5px;
+    text-transform: uppercase; margin-top: 5px;
+}
+
+.hp-card {
+    position: relative; overflow: hidden;
+    background: linear-gradient(145deg, rgba(19,28,46,.95), rgba(11,18,32,1));
+    border: 1px solid #1d2940;
+    border-radius: 18px;
+    padding: 16px 16px 14px 16px;
+    margin: 0 0 12px 0;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    animation: hpFadeUp .5s ease-out both;
+    transition: all .3s ease;
+}
+.hp-card:hover {
+    border-color: rgba(34,197,94,.45);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 36px rgba(34,197,94,.12);
+}
+.hp-card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #22c55e, #3b82f6);
+    opacity: .75;
+}
+.hp-card-ust {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; font-size: 0.66rem;
+    color: #8fa0bd !important; font-weight: 700;
+    letter-spacing: .5px;
+}
+.hp-card-ust-l { display: flex; align-items: center; gap: 6px; }
+.hp-card-live {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 10px #22c55e;
+    animation: hpLive 1.5s ease-in-out infinite;
+}
+.hp-card-teams {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 10px; align-items: center;
+    margin-bottom: 12px;
+}
+.hp-card-team {
+    text-align: center;
+    font-weight: 900;
+    font-family: 'Rajdhani', 'Inter', sans-serif;
+    font-size: 1.02rem;
+    line-height: 1.2;
+    word-break: break-word;
+    letter-spacing: .3px;
+}
+.hp-card-team.ev { color: #93c5fd !important; animation: hpSlideIn .5s ease-out .1s both; }
+.hp-card-team.dep { color: #fbbf24 !important; animation: hpSlideInR .5s ease-out .1s both; }
+.hp-card-vs {
+    font-size: 1rem; font-weight: 900;
+    color: #64748b !important;
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 2px;
+    animation: hpFlash 2.4s ease-in-out infinite;
+}
+.hp-card-xg {
+    display: flex; justify-content: center; align-items: center; gap: 8px;
+    padding: 8px 0;
+    border-top: 1px dashed rgba(34,197,94,.2);
+    border-bottom: 1px dashed rgba(34,197,94,.2);
+    margin-bottom: 12px;
+    font-size: 0.72rem;
+    color: #8fa0bd !important;
+    font-weight: 700;
+}
+.hp-card-xg b { color: #22c55e !important; font-weight: 900; font-family: 'Rajdhani', sans-serif; font-size: .88rem; }
+.hp-card-xg .hp-xg-mid { color: #64748b !important; }
+.hp-probs { display: grid; gap: 7px; margin-bottom: 4px; }
+.hp-prob-row {
+    display: grid;
+    grid-template-columns: 46px 1fr 46px;
+    gap: 8px; align-items: center;
+}
+.hp-prob-lbl {
+    color: #8fa0bd !important;
+    font-weight: 800;
+    letter-spacing: .4px;
+    font-size: .62rem;
+    text-transform: uppercase;
+}
+.hp-prob-bar {
+    position: relative; height: 7px;
+    background: #0d1626;
+    border-radius: 99px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.7);
+}
+.hp-prob-fill {
+    height: 100%; border-radius: 99px;
+    animation: hpGrowBar 1s cubic-bezier(.3,.8,.4,1) .3s both;
+    position: relative;
+}
+.hp-prob-fill::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+    animation: anShimmer 2.2s ease-in-out infinite;
+}
+.hp-prob-val {
+    font-weight: 900;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: .82rem;
+    text-align: right;
+}
+.hp-prob-val.pass { color: #22c55e !important; text-shadow: 0 0 10px rgba(34,197,94,.5); }
+.hp-prob-val.off { color: #64748b !important; }
+
+.hp-locked {
+    position: relative; overflow: hidden;
+    background: linear-gradient(145deg, rgba(19,28,46,.6), rgba(11,18,32,.85));
+    border: 1.5px dashed rgba(148,163,184,.35);
+    border-radius: 18px;
+    padding: 18px 16px 16px 16px;
+    margin: 0 0 12px 0;
+    animation: hpFadeUp .5s ease-out both;
+    min-height: 160px;
+}
+.hp-locked-teams {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    gap: 10px; align-items: center;
+    filter: blur(4px);
+    user-select: none;
+    margin-bottom: 10px;
+}
+.hp-locked-team {
+    text-align: center;
+    font-weight: 900;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    color: #94a3b8 !important;
+}
+.hp-locked-vs {
+    font-size: 1rem; font-weight: 900;
+    color: #64748b !important;
+    letter-spacing: 2px;
+}
+.hp-locked-overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 50%, rgba(34,197,94,.06), rgba(11,18,32,.5));
+    z-index: 2;
+}
+.hp-locked-icon { font-size: 1.6rem; opacity: .5; margin-bottom: 6px; }
+.hp-locked-badge {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    color: #04130a !important;
+    font-weight: 900;
+    font-size: .78rem;
+    padding: 8px 18px;
+    border-radius: 99px;
+    box-shadow: 0 8px 24px rgba(34,197,94,.45);
+    letter-spacing: .5px;
+}
+.hp-locked-info {
+    font-size: .68rem; color: #8fa0bd !important;
+    margin-top: 6px; font-weight: 700;
+    text-align: center; padding: 0 10px;
+}
+.hp-section-ttl {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.72rem; font-weight: 900;
+    letter-spacing: 1.4px; text-transform: uppercase;
+    color: #22c55e !important;
+    margin: 18px 0 12px 0; padding-bottom: 8px;
+    border-bottom: 1px solid rgba(34,197,94,.2);
+}
+.hp-section-ttl::before {
+    content: ""; width: 4px; height: 14px;
+    background: linear-gradient(180deg, #22c55e, #16a34a);
+    border-radius: 2px;
+    box-shadow: 0 0 12px rgba(34,197,94,.8);
+    animation: anPulseGlow 2s ease-in-out infinite;
+    --glow: rgba(34,197,94,.6);
+}
+.hp-section-ttl-count {
+    margin-left: auto;
+    font-size: .62rem;
+    color: #8fa0bd !important;
+    background: rgba(34,197,94,.1);
+    border: 1px solid rgba(34,197,94,.35);
+    padding: 2px 9px;
+    border-radius: 99px;
+    font-weight: 900;
+    letter-spacing: .3px;
+}
+.hp-empty {
+    text-align: center; padding: 32px 20px;
+    background: linear-gradient(145deg, rgba(19,28,46,.6), rgba(11,18,32,.85));
+    border: 1.5px dashed rgba(148,163,184,.25);
+    border-radius: 18px;
+    animation: hpFadeUp .5s ease-out;
+}
+.hp-empty-ikon { font-size: 2.4rem; opacity: .55; margin-bottom: 10px; display: block; }
+.hp-empty-txt { font-size: .86rem; color: #8fa0bd !important; font-weight: 700; line-height: 1.5; }
+</style>
+""", unsafe_allow_html=True)
+
 
 # ==========================================
 # POSTGRESQL VERİ KATMANI
@@ -2559,7 +2911,6 @@ def mac_karti(ev, dep, skor_belli, skor_ev, skor_dep, lam_ev, lam_dep, saat="", 
     return html
 
 
-
 def kilitli_mac_karti(ev, dep, saat="", ulke="", tarih=""):
     bayrak = ulke_bayrak_bul(ulke)
     ust_bilgi = ""
@@ -2585,7 +2936,6 @@ def kilitli_mac_karti(ev, dep, saat="", ulke="", tarih=""):
         </div>
     </div>
     '''
-
 
 
 def mac_tahmin_karti(v_g, g=None):
@@ -3175,6 +3525,178 @@ def modern_istatistik_grafik(baslik="📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", st
 </div>''', unsafe_allow_html=True)
 
 
+# ==========================================
+# 🏠 MODERN ANA SAYFA YARDIMCILARI
+# ==========================================
+def hp_hero(uye, premium, kalan_gun, toplam_mac, kota):
+    if premium:
+        badge = f'<div class="hp-hero-badge premium">🌟 PREMIUM — {kalan_gun} GÜN KALDI</div>'
+        title = f"Hoş Geldin, {_e(uye)}"
+        sub = "Premium üyelik aktif — tüm analizler açık"
+    elif uye:
+        badge = f'<div class="hp-hero-badge free">⚠️ ÜCRETSİZ ÜYELİK — İLK {kota} MAÇ AÇIK</div>'
+        title = f"Hoş Geldin, {_e(uye)}"
+        sub = f"Bugün {toplam_mac} maç • İlk {kota} maç ücretsiz"
+    else:
+        badge = f'<div class="hp-hero-badge guest">👤 MİSAFİR MODU</div>'
+        title = "Futbol Analiz Pro"
+        sub = f"Bugün {toplam_mac} maç • İlk {kota} maç ücretsiz"
+    return f'''
+    <div class="hp-hero">
+        <div class="hp-hero-ust">⚡ CANLI MAÇ ANALİZİ</div>
+        <div class="hp-hero-title">{title}</div>
+        <div class="hp-hero-sub">{sub}</div>
+        <div class="hp-hero-badge-wrap">{badge}</div>
+    </div>
+    '''
+
+
+def hp_ticker(gelecek):
+    if not gelecek: return ""
+    ust_count = alt_count = kgv_count = kgy_count = 0
+    ev_count = ber_count = dep_count = 0
+    yuksek_count = 0
+    for g in gelecek:
+        try:
+            v = g.get("veri", {})
+            ya = yeniden_analiz(v)
+            p1 = ya.get("p1", 0); px = ya.get("px", 0); p2 = ya.get("p2", 0)
+            u25 = ya.get("ust_25", 50); a25 = 100 - u25
+            kgv = ya.get("kg_var_model", 50); kgy = 100 - kgv
+            s1, y1 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
+            if y1 >= 65: yuksek_count += 1
+            if s1 == "1": ev_count += 1
+            elif s1 == "X": ber_count += 1
+            else: dep_count += 1
+            if u25 >= a25: ust_count += 1
+            else: alt_count += 1
+            if kgv >= kgy: kgv_count += 1
+            else: kgy_count += 1
+        except Exception:
+            continue
+
+    items = [
+        ("CANLI", f"{len(gelecek)} maç"),
+        ("🎯 YÜKSEK GÜVEN", f"{yuksek_count} maç"),
+        ("⚽ ÜST 2.5", f"{ust_count}"),
+        ("⚽ ALT 2.5", f"{alt_count}"),
+        ("🤝 KG VAR", f"{kgv_count}"),
+        ("🤝 KG YOK", f"{kgy_count}"),
+        ("🏠 EV FAVORİ", f"{ev_count}"),
+        ("➖ BERABERLİK", f"{ber_count}"),
+        ("✈️ DEP FAVORİ", f"{dep_count}"),
+    ]
+
+    html = ""
+    for label, val in items:
+        html += f'''
+        <div class="hp-ticker-item">
+            <span class="hp-ticker-dot"></span>
+            <span>{label}</span>
+            <span class="hp-ticker-val">{val}</span>
+        </div>
+        '''
+    return f'<div class="hp-ticker-wrap"><div class="hp-ticker">{html}{html}</div></div>'
+
+
+def hp_mac_karti(idx, g):
+    v = g["veri"]
+    te = v.get("takim_ev", "Ev") or "Ev"
+    td = v.get("takim_dep", "Dep") or "Dep"
+    ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
+    bayrak = ulke_bayrak_bul(ulke)
+
+    try:
+        a = analiz_hesapla(v)
+        le, ld = a["lam_ev"], a["lam_dep"]
+        p1, px, p2 = a["p1"], a["px"], a["p2"]
+        u25, a25 = a["ust_25"], a["alt_25"]
+        kgv, kgy = a["kg_var_model"], a["kg_yok_model"]
+    except Exception:
+        le = ld = 0; p1 = px = p2 = 0
+        u25 = a25 = kgv = kgy = 0
+
+    s1, y1 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1]) if (p1 + px + p2) > 0 else ("X", 0)
+    es1 = esik_1x2_al(s1)
+
+    meta_parts = []
+    if bayrak != "🌍" or ulke: meta_parts.append(f"{bayrak} {(ulke or '').title()}")
+    if tarih: meta_parts.append(f"📅 {tarih}")
+    if saat: meta_parts.append(f"🕐 {saat}")
+    meta = " • ".join(meta_parts) if meta_parts else "MAÇ"
+
+    def _row(lbl, val, esik, renk):
+        gecti = val >= esik
+        cls = "pass" if gecti else "off"
+        return f'''<div class="hp-prob-row">
+            <span class="hp-prob-lbl">{lbl}</span>
+            <div class="hp-prob-bar"><div class="hp-prob-fill" style="--w:{val:.1f}%; width:{val:.1f}%; background:linear-gradient(90deg, {renk}, {renk}cc); box-shadow:0 0 10px {renk}88;"></div></div>
+            <span class="hp-prob-val {cls}">%{val:.0f}</span>
+        </div>'''
+
+    s1_isim = {"1": "1X2", "X": "X", "2": "2"}[s1]
+    probs = (
+        _row(s1_isim, y1, es1, "#3b82f6") +
+        _row("ÜST", u25, esik_al("ust"), "#22c55e") +
+        _row("ALT", a25, esik_al("alt"), "#ef4444") +
+        _row("KG+", kgv, esik_al("kg_var"), "#8b5cf6") +
+        _row("KG-", kgy, esik_al("kg_yok"), "#ec4899")
+    )
+
+    return f'''
+    <div class="hp-card">
+        <div class="hp-card-ust">
+            <div class="hp-card-ust-l"><span class="hp-card-live"></span> {meta}</div>
+            <span style="color:#22c55e; font-weight:900; font-size:.62rem; letter-spacing:.5px;">● HAZIR</span>
+        </div>
+        <div class="hp-card-teams">
+            <div class="hp-card-team ev">{_e(te)}</div>
+            <div class="hp-card-vs">VS</div>
+            <div class="hp-card-team dep">{_e(td)}</div>
+        </div>
+        <div class="hp-card-xg">
+            <span>⚡ Beklenen Gol:</span>
+            <b>{le:.2f}</b>
+            <span class="hp-xg-mid">–</span>
+            <b>{ld:.2f}</b>
+            <span class="hp-xg-mid">•</span>
+            <span>Toplam: <b>{le+ld:.2f}</b></span>
+        </div>
+        <div class="hp-probs">{probs}</div>
+    </div>
+    '''
+
+
+def hp_kilitli_kart(idx, g):
+    v = g["veri"]
+    te = v.get("takim_ev", "Ev") or "Ev"
+    td = v.get("takim_dep", "Dep") or "Dep"
+    ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
+    bayrak = ulke_bayrak_bul(ulke)
+
+    meta_parts = []
+    if bayrak != "🌍" or ulke: meta_parts.append(f"{bayrak} {(ulke or '').title()}")
+    if tarih: meta_parts.append(f"📅 {tarih}")
+    if saat: meta_parts.append(f"🕐 {saat}")
+    meta = " • ".join(meta_parts) if meta_parts else ""
+
+    return f'''
+    <div class="hp-locked">
+        <div style="text-align:center; font-size:.62rem; color:#8fa0bd; font-weight:800; letter-spacing:.5px; margin-bottom:10px; filter:blur(2px);">{meta}</div>
+        <div class="hp-locked-teams">
+            <div class="hp-locked-team">{_e(te)}</div>
+            <div class="hp-locked-vs">VS</div>
+            <div class="hp-locked-team">{_e(td)}</div>
+        </div>
+        <div class="hp-locked-overlay">
+            <div class="hp-locked-icon">🔒</div>
+            <div class="hp-locked-badge">PREMIUM'A GEÇ</div>
+            <div class="hp-locked-info">Bu maçın detaylı analizi için abonelik gerekli</div>
+        </div>
+    </div>
+    '''
+
+
 def admin_giris_ekrani():
     st.markdown('''<div class="login-hero"><div class="login-logo">🔐</div><h1 class="login-title">Giriş Yap</h1><p class="login-subtitle">Admin veya üye girişi</p></div>''', unsafe_allow_html=True)
     with st.form("admin_giris_form"):
@@ -3458,61 +3980,119 @@ elif st.session_state.sayfa == "giris":
         premium = uye_premium_mu()
         kota = int(ayar_al("ucretsiz_kotasi", 3))
 
+        # Premium kalan gün
+        kalan_gun = 0
         if premium:
-            kl = ""
             try:
                 bs = kullanicilar_yukle().get(uye_adi(), {}).get("abonelik_bitis")
                 if bs:
                     kk = (datetime.strptime(bs, "%Y-%m-%d") - datetime.now()).days
-                    if kk >= 0: kl = f'<div class="mh-hero-badge">🌟 PREMIUM — {kk} gün kaldı</div>'
-            except Exception: pass
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">Premium aktif — tüm analizler açık</div>{kl}</div>', unsafe_allow_html=True)
-            modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="line")
-        elif uye_mi():
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Hoş Geldin, {_e(uye_adi())}</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz açık</div><div class="mh-hero-badge" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.5);color:#f59e0b !important;">⚠️ ABONELİK YOK</div></div>', unsafe_allow_html=True)
-            modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="line")
-            if st.button("💳 Premium'a Geç  •  ✨ Üye Ol", use_container_width=True, type="primary", key="ana_premium_btn"):
-                st.session_state["odeme_hedef_kadi"] = uye_adi(); st.session_state.sayfa = "odeme"; st.rerun()
-        else:
-            st.markdown(f'<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-title" style="font-size:1.25rem;">Bugün {toplam} Maç</div><div class="mh-hero-sub">İlk {kota} maç ücretsiz açık</div></div>', unsafe_allow_html=True)
-            modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="line")
-            if st.button("💳 Premium'a Geç  •  ✨ Üye Ol", use_container_width=True, type="primary", key="mis_prem"):
-                st.session_state.sayfa = "kayit"; st.rerun()
-            if st.button("🔐 Giriş Yap", use_container_width=True, key="mis_giris_btn"):
-                st.session_state.sayfa = "giris_yap"; st.rerun()
+                    if kk >= 0: kalan_gun = kk
+            except Exception:
+                pass
 
-        st.divider()
-        if not gelecek: st.info("ℹ️ Henüz maç yok.")
+        # ===== MODERN HERO =====
+        st.markdown(hp_hero(uye_adi() if uye_mi() else "", premium, kalan_gun, toplam, kota), unsafe_allow_html=True)
+
+        # ===== CANLI TICKER =====
+        if gelecek:
+            st.markdown(hp_ticker(gelecek), unsafe_allow_html=True)
+
+        # ===== MİNİ İSTATİSTİK GRID =====
+        if premium:
+            acik_say = toplam
+        else:
+            acik_say = min(kota, toplam)
+        kilitli_say = max(0, toplam - acik_say)
+
+        st.markdown(f'''
+        <div class="hp-mini-grid">
+            <div class="hp-mini" style="--c:#3b82f6;">
+                <div class="hp-mini-ikon">📅</div>
+                <div class="hp-mini-num">{toplam}</div>
+                <div class="hp-mini-lbl">Toplam</div>
+            </div>
+            <div class="hp-mini" style="--c:#22c55e;">
+                <div class="hp-mini-ikon">👁️</div>
+                <div class="hp-mini-num">{acik_say}</div>
+                <div class="hp-mini-lbl">Açık</div>
+            </div>
+            <div class="hp-mini" style="--c:#f59e0b;">
+                <div class="hp-mini-ikon">🔒</div>
+                <div class="hp-mini-num">{kilitli_say}</div>
+                <div class="hp-mini-lbl">Kilitli</div>
+            </div>
+            <div class="hp-mini" style="--c:#8b5cf6;">
+                <div class="hp-mini-ikon">📊</div>
+                <div class="hp-mini-num">{len(st.session_state.gecmis_analizler)}</div>
+                <div class="hp-mini-lbl">Geçmiş</div>
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+
+        # ===== CTA BUTONLARI =====
+        if not premium:
+            if uye_mi():
+                if st.button("💳 Premium'a Geç  •  ✨ Sınırsız Erişim", use_container_width=True, type="primary", key="hp_cta_prem_uye"):
+                    st.session_state["odeme_hedef_kadi"] = uye_adi()
+                    st.session_state.sayfa = "odeme"
+                    st.rerun()
+            else:
+                c1, c2 = st.columns(2)
+                with c1:
+                    if st.button("💳 Premium'a Geç", use_container_width=True, type="primary", key="hp_cta_prem_mis"):
+                        st.session_state.sayfa = "kayit"
+                        st.rerun()
+                with c2:
+                    if st.button("🔐 Giriş Yap", use_container_width=True, key="hp_cta_giris_mis"):
+                        st.session_state.sayfa = "giris_yap"
+                        st.rerun()
+
+        # ===== GEÇMİŞ İSTATİSTİK (Modern sparkline) =====
+        modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="line")
+
+        # ===== GELECEK MAÇLAR =====
+        st.markdown(f'<div class="hp-section-ttl">🔮 GELECEK MAÇLAR <span class="hp-section-ttl-count">{toplam} MAÇ</span></div>', unsafe_allow_html=True)
+
+        if not gelecek:
+            st.markdown('''
+            <div class="hp-empty">
+                <span class="hp-empty-ikon">📭</span>
+                <div class="hp-empty-txt">Henüz maç eklenmemiş.<br>Admin kısa süre içinde maçları ekleyecek.</div>
+            </div>
+            ''', unsafe_allow_html=True)
         else:
             sirali = sorted(enumerate(gelecek), key=lambda x: saat_sirala_anahtari(x[1]))
             acik = 0
             for idx, g in sirali:
-                v = g["veri"]; te = v.get("takim_ev", "Ev") or "Ev"; td = v.get("takim_dep", "Dep") or "Dep"
-                ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
+                v = g["veri"]
                 if premium or acik < kota:
-                    try:
-                        af = analiz_hesapla(v); le = af["lam_ev"]; ld = af["lam_dep"]
-                    except Exception: le = ld = 0
-                    st.markdown(mac_karti(te, td, False, 0, 0, le, ld, saat, ulke, tarih), unsafe_allow_html=True)
-                    th = mac_tahmin_karti(v, g)
-                    if th: st.markdown(th, unsafe_allow_html=True)
+                    # AÇIK MAÇ
+                    st.markdown(hp_mac_karti(idx, g), unsafe_allow_html=True)
                     if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gmac_{idx}"):
-                        st.session_state.form_verileri = copy.deepcopy(v); st.session_state.kayit_yapildi = True
-                        st.session_state.gelecekten_gelindi = True; st.session_state.aktif_gelecek_idx = idx
-                        st.session_state.sayfa = "sonuc"; st.rerun()
+                        st.session_state.form_verileri = copy.deepcopy(v)
+                        st.session_state.kayit_yapildi = True
+                        st.session_state.gelecekten_gelindi = True
+                        st.session_state.aktif_gelecek_idx = idx
+                        st.session_state.sayfa = "sonuc"
+                        st.rerun()
                     acik += 1
                 else:
-                    st.markdown(kilitli_mac_karti(te, td, saat, ulke, tarih), unsafe_allow_html=True)
+                    # KİLİTLİ MAÇ
+                    st.markdown(hp_kilitli_kart(idx, g), unsafe_allow_html=True)
                     c1, c2 = st.columns(2)
                     with c1:
                         if st.button("💳 Premium", use_container_width=True, key=f"kp_{idx}", type="primary"):
-                            if uye_mi(): st.session_state["odeme_hedef_kadi"] = uye_adi(); st.session_state.sayfa = "odeme"
-                            else: st.session_state.sayfa = "kayit"
+                            if uye_mi():
+                                st.session_state["odeme_hedef_kadi"] = uye_adi()
+                                st.session_state.sayfa = "odeme"
+                            else:
+                                st.session_state.sayfa = "kayit"
                             st.rerun()
                     with c2:
                         if st.button("🔑 Giriş", use_container_width=True, key=f"kg_{idx}"):
-                            st.session_state.sayfa = "giris_yap"; st.rerun()
-                st.divider()
+                            st.session_state.sayfa = "giris_yap"
+                            st.rerun()
 
         yasal_metin_goster()
         misafir_aciklama()
