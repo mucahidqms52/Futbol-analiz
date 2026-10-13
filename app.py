@@ -81,7 +81,7 @@ Uygulama, **"AS IS" (olduğu gibi)** ve **"AS AVAILABLE" (mevcut olduğu şekild
 **BU HİZMETTE SUNULAN TÜM TAHMİN, ANALİZ, İSTATİSTİK VE YORUMLAR;**
 
 - Geçmiş verilerin matematiksel modellenmesine dayanır,
-- **Gelecekteki sonuçları garanti etmez**,
+- **Gelecektek sonuçları garanti etmez**,
 - **Doğruluk oranı %100 değildir ve hiçbir zaman olamaz**,
 - **Kayıp veya kazanç garantisi içermez.**
 
@@ -710,7 +710,6 @@ def online_heartbeat(session_id):
                 (session_id,)
             )
             cur.execute("DELETE FROM online_kullanicilar WHERE son_gorulme < NOW() - INTERVAL '2 minutes'")
-            # Günlük ziyaretçi sayacı - session_id daha önce bugün kaydedilmediyse artır
             cur.execute(
                 "INSERT INTO gunluk_ziyaretler (tarih, ziyaret_sayisi) VALUES (CURRENT_DATE, 1) "
                 "ON CONFLICT (tarih) DO UPDATE SET ziyaret_sayisi = gunluk_ziyaretler.ziyaret_sayisi + 1 "
@@ -723,7 +722,6 @@ def online_heartbeat(session_id):
 
 
 def gunluk_ziyaret_sayisi(tarih=None):
-    """Belirli bir günün ziyaretçi sayısını döndür. tarih=None ise bugün."""
     conn = _db_baglanti()
     try:
         with conn.cursor() as cur:
@@ -738,7 +736,6 @@ def gunluk_ziyaret_sayisi(tarih=None):
 
 
 def son_7_gun_ziyaretler():
-    """Son 7 günün ziyaretçi sayılarını döndür."""
     conn = _db_baglanti()
     try:
         with conn.cursor() as cur:
@@ -1851,37 +1848,202 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
     return basarili, hatali
 
 
-def _skor_parse(html):
-    metin = _html_metne_cevir(html)
-    m = re.search(r'(?<![A-Za-z])FT\s*\n+\s*(\d{1,2})\s*[-:]\s*(\d{1,2})', metin)
-    if m: return int(m.group(1)), int(m.group(2))
+# ==========================================
+# FLASHSCORE SKOR ENTEGRASYONU (YENİ)
+# ==========================================
+def _takim_normalize(isim):
+    """Takım isimlerini karşılaştırma için normalize eder."""
+    if not isim:
+        return ""
+    s = str(isim).lower().strip()
+    s = (s.replace("ı", "i").replace("ğ", "g").replace("ü", "u")
+          .replace("ş", "s").replace("ö", "o").replace("ç", "c")
+          .replace("İ", "i").replace("Ğ", "g").replace("Ü", "u")
+          .replace("Ş", "s").replace("Ö", "o").replace("Ç", "c"))
+    s = re.sub(r'[^\w\s]', ' ', s)
+    for ek in [" fc", " sc", " cf", " sk", " ac", " as", " fk", " if", " bk"]:
+        if s.endswith(ek):
+            s = s[:-len(ek)].strip()
+    return re.sub(r'\s+', ' ', s).strip()
+
+
+def _benzerlik(a, b):
+    """İki string arasındaki kelime bazlı Jaccard benzerliği (0-1)."""
+    if not a or not b:
+        return 0.0
+    if a == b:
+        return 1.0
+    sa, sb = set(a.split()), set(b.split())
+    if not sa or not sb:
+        return 0.0
+    return len(sa & sb) / len(sa | sb)
+
+
+def _flashscore_feed_parse(metin):
+    """FlashScore feed formatını parse eder (¬~ blok, ¬ alan, ÷ K/V)."""
+    maclar = []
+    if not metin:
+        return maclar
+    for blok in metin.split("¬~"):
+        if not blok.strip():
+            continue
+        alanlar = {}
+        for parca in blok.split("¬"):
+            if "÷" not in parca:
+                continue
+            k, _, v = parca.partition("÷")
+            if k and k not in alanlar:
+                alanlar[k] = v
+        if "AA" not in alanlar or "AE" not in alanlar or "AF" not in alanlar:
+            continue
+        se, sd = alanlar.get("AG"), alanlar.get("AH")
+        if se in (None, "") or sd in (None, ""):
+            continue
+        try:
+            maclar.append({
+                "id": alanlar["AA"],
+                "ev": alanlar["AE"].strip(),
+                "dep": alanlar["AF"].strip(),
+                "skor_ev": int(se),
+                "skor_dep": int(sd),
+                "durum": alanlar.get("AB", ""),
+            })
+        except (ValueError, TypeError):
+            continue
+    return maclar
+
+
+@st.cache_data(ttl=120, show_spinner=False)
+def _flashscore_gun_maclari(day_offset=0):
+    """FlashScore'un günlük feed'inden maçları çeker (-7..+7 gün)."""
+    url = f"https://global.flashscore.ninja/2/x/feed/f_1_{day_offset}_3_en_1"
+    try:
+        r = requests.get(url, headers={
+            "x-fsign": "SW9D1eZo",
+            "User-Agent": UA,
+            "Accept": "*/*",
+            "Referer": "https://www.flashscore.com/",
+        }, timeout=20)
+        if r.status_code != 200:
+            return []
+        return _flashscore_feed_parse(r.text)
+    except Exception:
+        return []
+
+
+def _flashscore_skor_bul(takim_ev, takim_dep, tarih=""):
+    """FlashScore feed'inden takım isimleri + tarihe göre BİTMİŞ maç skorunu bulur."""
+    ev_n = _takim_normalize(takim_ev)
+    dep_n = _takim_normalize(takim_dep)
+    if not ev_n or not dep_n:
+        return None
+
+    offsets = [0]
+    if tarih:
+        try:
+            m = re.match(r'(\d{1,2})\.(\d{1,2})\.(\d{4})', tarih)
+            if m:
+                mac_t = datetime(int(m.group(3)), int(m.group(2)), int(m.group(1))).date()
+                off = (mac_t - datetime.now().date()).days
+                if -7 <= off <= 7:
+                    offsets = [off, 0, off - 1, off + 1]
+        except Exception:
+            pass
+
+    tum = []
+    for off in dict.fromkeys(offsets):
+        try:
+            tum.extend(_flashscore_gun_maclari(off))
+        except Exception:
+            continue
+    if not tum:
+        return None
+
+    # Önce tam eşleşme (durum=3 → FT)
+    for m in tum:
+        if m.get("durum") != "3":
+            continue
+        if _takim_normalize(m["ev"]) == ev_n and _takim_normalize(m["dep"]) == dep_n:
+            return (m["skor_ev"], m["skor_dep"])
+
+    # Sonra benzerlik skoru
+    en_iyi_puan, en_iyi_skor = 0.0, None
+    for m in tum:
+        if m.get("durum") != "3":
+            continue
+        puan = (_benzerlik(ev_n, _takim_normalize(m["ev"]))
+              + _benzerlik(dep_n, _takim_normalize(m["dep"])))
+        if puan > en_iyi_puan:
+            en_iyi_puan, en_iyi_skor = puan, (m["skor_ev"], m["skor_dep"])
+
+    if en_iyi_puan >= 1.4:
+        return en_iyi_skor
     return None
 
 
-def _skor_cek(url, tarayici_yedek=False):
-    html = None; hata = None
-    try:
-        r = requests.get(url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=30)
-        if r.status_code == 200 and r.text: html = r.text
-        else: hata = f"HTTP {r.status_code}"
-    except Exception as e:
-        hata = f"Bağlantı: {str(e)[:80]}"
+def _skor_parse(html):
+    metin = _html_metne_cevir(html)
+    m = re.search(r'\bFT\b[\s\r\n:]*(\d{1,2})\s*[-:]\s*(\d{1,2})\b', metin)
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    return None
+
+
+def _skor_cek(url, takim_ev="", takim_dep="", tarih="", tarayici_yedek=False):
+    """Önce FlashScore'dan skoru bul, bulamazsa mutating.com'a düş."""
+    # 1) FlashScore (öncelikli)
+    if takim_ev and takim_dep:
+        try:
+            skor = _flashscore_skor_bul(takim_ev, takim_dep, tarih)
+            if skor:
+                return skor, None
+        except Exception:
+            pass
+
+    # 2) Fallback: mutating.com
+    html = None
+    hata = None
+    if url:
+        try:
+            r = requests.get(url,
+                             headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"},
+                             timeout=30)
+            if r.status_code == 200 and r.text:
+                html = r.text
+            else:
+                hata = f"HTTP {r.status_code}"
+        except Exception as e:
+            hata = f"Bağlantı: {str(e)[:80]}"
+
     skor = _skor_parse(html) if html else None
-    if skor is None and tarayici_yedek:
-        h2, hata2 = _scrapingbee_get(url, render_js=True, mac_sec="5")
-        if h2: skor = _skor_parse(h2); hata = None
-        elif hata2: hata = hata2
-    if skor is None and html: hata = None
-    return skor, hata
+    if skor is None and tarayici_yedek and url:
+        try:
+            h2 = _playwright_skor_cek(url, timeout=25)
+            if h2:
+                skor = _skor_parse(h2)
+        except Exception as e:
+            hata = f"Tarayıcı: {str(e)[:120]}"
+    return skor, (hata if skor is None else None)
 
 
 def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
     gel = st.session_state.gelecek_analizler
-    isler = [(i, g) for i, g in enumerate(gel) if g.get("veri", {}).get("kaynak_url")]
+    # Artık kaynak_url şart değil, takım isimleri yeterli (FlashScore için)
+    isler = [(i, g) for i, g in enumerate(gel)
+             if g.get("veri", {}).get("takim_ev") and g.get("veri", {}).get("takim_dep")]
     sonuc = {}; tamam = 0
     if isler:
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            fut = {ex.submit(_skor_cek, g["veri"]["kaynak_url"], tarayici_yedek): (i, g) for i, g in isler}
+            fut = {
+                ex.submit(
+                    _skor_cek,
+                    g["veri"].get("kaynak_url", ""),
+                    g["veri"].get("takim_ev", ""),
+                    g["veri"].get("takim_dep", ""),
+                    g["veri"].get("tarih", ""),
+                    tarayici_yedek,
+                ): (i, g) for i, g in isler
+            }
             for f in as_completed(fut):
                 i, g = fut[f]; tamam += 1
                 try: sonuc[i] = f.result()
@@ -1974,8 +2136,6 @@ def _sparkline_svg(degerler, renk, yukseklik=62, genislik=300):
 
 
 def mac_karti(ev, dep, skor_belli, skor_ev, skor_dep, lam_ev, lam_dep, saat="", ulke="", tarih=""):
-    """Ekran görüntüsündeki gibi modern maç kartı."""
-    # Üst bilgi
     bayrak = ulke_bayrak_bul(ulke)
     ust_bilgi = ""
     if saat or ulke or tarih:
@@ -1986,13 +2146,11 @@ def mac_karti(ev, dep, skor_belli, skor_ev, skor_dep, lam_ev, lam_dep, saat="", 
         if parcalar:
             ust_bilgi = f'<div style="font-size:0.7rem;color:#7f92b3;margin-bottom:10px;text-align:center;">{" • ".join(parcalar)}</div>'
 
-    # Skor gösterimi
     if skor_belli:
         skor_html = f'<div style="font-size:1.8rem;font-weight:900;color:#22c55e;">{skor_ev} - {skor_dep}</div>'
     else:
         skor_html = '<div style="font-size:1.2rem;font-weight:800;color:#7f92b3;">VS</div>'
 
-    # Beklenen gol
     gol_bilgi = ""
     if lam_ev > 0 or lam_dep > 0:
         gol_bilgi = f'<div style="font-size:0.75rem;color:#7f92b3;margin-top:6px;">Model beklenen gol: {lam_ev:.2f} - {lam_dep:.2f}</div>'
@@ -2013,7 +2171,6 @@ def mac_karti(ev, dep, skor_belli, skor_ev, skor_dep, lam_ev, lam_dep, saat="", 
 
 
 def kilitli_mac_karti(ev, dep, saat="", ulke="", tarih=""):
-    """Kilitli maç kartı - premium olmayanlar için."""
     bayrak = ulke_bayrak_bul(ulke)
     ust_bilgi = ""
     if saat or ulke or tarih:
@@ -2784,7 +2941,8 @@ def nav_bar():
                         f'</div>',
                         unsafe_allow_html=True
         )
-        
+
+
 # ===== OTOMATİK GİRİŞ DENEMESİ =====
 _otomatik_giris_dene()
 
@@ -2802,7 +2960,6 @@ elif st.session_state.sayfa == "giris":
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:gray;'>Admin Paneli</p>", unsafe_allow_html=True)
 
-        # Günlük ziyaretçi istatistikleri
         try:
             bugun = gunluk_ziyaret_sayisi()
             son7 = son_7_gun_ziyaretler()
@@ -2829,7 +2986,6 @@ elif st.session_state.sayfa == "giris":
             pass
 
         st.divider()
-        # Navigasyon butonları kaldırıldı - nav_bar kullanılıyor
 
         st.divider()
         st.markdown("### 🤖 Otomatik Veri Çekme")
@@ -3330,7 +3486,6 @@ elif st.session_state.sayfa == "gelecek_admin":
             else:
                 st.error(_msg_text)
 
-    # Toplu silme bölümü - en üstte
     if admin_mi() and len(gel) > 0:
         st.markdown(f'<div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));border:1.5px solid rgba(239,68,68,0.5);border-radius:14px;padding:14px;margin-bottom:16px;"><div style="font-size:0.95rem;font-weight:900;color:#ef4444;letter-spacing:0.5px;margin-bottom:4px;">🚨 TEHLİKELİ BÖLGE — TOPLU SİLME</div><div style="font-size:0.78rem;color:#fca5a5;font-weight:600;">Bu butona bastığınızda <b>TÜM GELECEK MAÇLAR ({len(gel)} maç)</b> kalıcı olarak silinir. Bu işlem geri alınamaz!</div></div>', unsafe_allow_html=True)
 
@@ -3456,7 +3611,6 @@ elif st.session_state.sayfa == "gecmis":
                     st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
             st.divider()
 
-    # Toplu silme bölümü - en üstte
     if admin_mi() and top > 0:
         st.markdown(f'<div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));border:1.5px solid rgba(239,68,68,0.5);border-radius:14px;padding:14px;margin-bottom:16px;"><div style="font-size:0.95rem;font-weight:900;color:#ef4444;letter-spacing:0.5px;margin-bottom:4px;">🚨 TEHLİKELİ BÖLGE — TOPLU SİLME</div><div style="font-size:0.78rem;color:#fca5a5;font-weight:600;">Bu butona bastığınızda <b>TÜM GEÇMİŞ MAÇLAR ({top} maç)</b> kalıcı olarak silinir. Bu işlem geri alınamaz!</div></div>', unsafe_allow_html=True)
 
@@ -3696,4 +3850,4 @@ elif st.session_state.sayfa == "sonuc":
         elif km: st.session_state.gelecek_analizler.append(yk); gelecek_kaydet(st.session_state.gelecek_analizler)
         st.session_state.kayit_yapildi = True
     if st.button("🔄 Yeni", use_container_width=True, type="primary"):
-        st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI); st.session_state.sayfa = "giris"; st.rerun()            
+        st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI); st.session_state.sayfa = "giris"; st.rerun()
