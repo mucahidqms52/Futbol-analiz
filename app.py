@@ -625,6 +625,8 @@ except Exception as _db_hata:
     st.stop()
 
 
+# === DÜZELTME 1: CookieManager'ı cache_resource ile tek instance yap ===
+@st.cache_resource(show_spinner=False)
 def _cookie_manager_al():
     try:
         return stx.CookieManager(key="fa_cookie_mgr_v1")
@@ -689,7 +691,7 @@ def _otomatik_giris_dene():
         pass
 
 
-@st.cache_data(ttl=30, show_spinner=False)
+# === DÜZELTME 2: cache_data kaldırıldı (yan etkili DB yazımı cache'lenmemeli) ===
 def _online_durum_guncelle(session_id):
     online_heartbeat(session_id)
     return online_say()
@@ -848,22 +850,41 @@ def ayarlar_kaydet(v):
         conn.close()
 
 
+# === DÜZELTME 3: online_heartbeat — günlük ziyaretçi sayacı doğru çalışsın ===
 def online_heartbeat(session_id):
     conn = _db_baglanti()
     try:
         with conn.cursor() as cur:
+            # Session daha önce görülmüş mü, son görülme ne zamandı?
+            cur.execute("SELECT son_gorulme FROM online_kullanicilar WHERE session_id = %s", (session_id,))
+            row = cur.fetchone()
+            # Yeni ziyaret: hiç kaydı yoksa VEYA 5 dakikadan uzun süredir görülmediyse
+            yeni_ziyaret = False
+            if row is None:
+                yeni_ziyaret = True
+            else:
+                try:
+                    son = row[0]
+                    if son is not None:
+                        # timezone-naive karşılaştırma — DB'den gelen değer local time
+                        if (datetime.now() - son) > timedelta(minutes=5):
+                            yeni_ziyaret = True
+                except Exception:
+                    yeni_ziyaret = True
+            # Online tabloya upsert
             cur.execute(
                 "INSERT INTO online_kullanicilar (session_id, son_gorulme) VALUES (%s, NOW()) "
                 "ON CONFLICT (session_id) DO UPDATE SET son_gorulme = NOW()",
                 (session_id,)
             )
+            # 2 dakikadan eski kayıtları temizle
             cur.execute("DELETE FROM online_kullanicilar WHERE son_gorulme < NOW() - INTERVAL '2 minutes'")
-            cur.execute(
-                "INSERT INTO gunluk_ziyaretler (tarih, ziyaret_sayisi) VALUES (CURRENT_DATE, 1) "
-                "ON CONFLICT (tarih) DO UPDATE SET ziyaret_sayisi = gunluk_ziyaretler.ziyaret_sayisi + 1 "
-                "WHERE NOT EXISTS (SELECT 1 FROM online_kullanicilar WHERE session_id = %s AND son_gorulme > NOW() - INTERVAL '5 minutes')",
-                (session_id,)
-            )
+            # Yeni ziyaretse sayacı artır
+            if yeni_ziyaret:
+                cur.execute(
+                    "INSERT INTO gunluk_ziyaretler (tarih, ziyaret_sayisi) VALUES (CURRENT_DATE, 1) "
+                    "ON CONFLICT (tarih) DO UPDATE SET ziyaret_sayisi = gunluk_ziyaretler.ziyaret_sayisi + 1"
+                )
         conn.commit()
     finally:
         conn.close()
@@ -1115,7 +1136,6 @@ MAX_GOL = 8
 BELIRSIZLIK = 0.20
 MAX_MAC_SINIRI = 500
 MAX_GELECEK = 200
-_kilit = threading.Lock()
 _ESIK_CACHE = {}
 
 if "sayfa" not in st.session_state: st.session_state.sayfa = "giris"
@@ -1617,8 +1637,9 @@ TARAYICI_ESZAMANLI = int(os.environ.get("TARAYICI_ESZAMANLI", "3"))
 _TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
 
 
-def _playwright_5mac_cek(url, timeout=30):
-    """Playwright ile maç sayfasını açar ve 'Last games: 5' seçeneğine tıklar."""
+# === DÜZELTME 4: Playwright chromium kurulumu bir kez yapılır ===
+@st.cache_resource(show_spinner=False)
+def _playwright_kur():
     try:
         import subprocess as _sp, sys as _sys
         _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
@@ -1626,6 +1647,12 @@ def _playwright_5mac_cek(url, timeout=30):
                 stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
     except Exception:
         pass
+    return True
+
+
+def _playwright_5mac_cek(url, timeout=30):
+    """Playwright ile maç sayfasını açar ve 'Last games: 5' seçeneğine tıklar."""
+    _playwright_kur()
     from playwright.sync_api import sync_playwright
     with _TARAYICI_SEM:
         with sync_playwright() as p:
@@ -1662,13 +1689,7 @@ def _playwright_5mac_cek(url, timeout=30):
 
 
 def _playwright_skor_cek(url, timeout=25):
-    try:
-        import subprocess as _sp, sys as _sys
-        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
-                check=False, timeout=600,
-                stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
-    except Exception:
-        pass
+    _playwright_kur()
     from playwright.sync_api import sync_playwright
     with _TARAYICI_SEM:
         with sync_playwright() as p:
@@ -2224,6 +2245,7 @@ def _skor_cek(url, takim_ev="", takim_dep="", tarih="", tarayici_yedek=False):
     return skor, (hata if skor is None else None)
 
 
+# === DÜZELTME 5: sonuclari_isle — None kaynak_url filtrelenir ===
 def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
     gel = st.session_state.gelecek_analizler
     isler = [(i, g) for i, g in enumerate(gel)
@@ -2248,7 +2270,9 @@ def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
                 if progress_callback:
                     try: progress_callback(tamam - 1, len(isler), g["veri"].get("takim_ev", ""))
                     except Exception: pass
-    mevcut = {x.get("veri", {}).get("kaynak_url") for x in st.session_state.gecmis_analizler}
+    # Boş/None kaynak_url'leri set'e koymuyoruz — aksi halde birden çok kaynaksız maç "zaten var" sayılırdı
+    mevcut = {x.get("veri", {}).get("kaynak_url") for x in st.session_state.gecmis_analizler
+              if x.get("veri", {}).get("kaynak_url")}
     tasinan = 0; bitmemis = 0; hatalar = []; kalan = []
     for i, g in enumerate(gel):
         r = sonuc.get(i)
@@ -2260,10 +2284,15 @@ def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
         v["skor_ev"], v["skor_dep"], v["skor_belli"] = skor[0], skor[1], True
         d = sonuc_hesapla(g)
         if d: g["dogruluk"] = d
-        if v.get("kaynak_url") not in mevcut:
+        url = v.get("kaynak_url")
+        if url and url not in mevcut:
             st.session_state.gecmis_analizler.append(g)
-            mevcut.add(v.get("kaynak_url"))
-        tasinan += 1
+            mevcut.add(url)
+            tasinan += 1
+        elif not url:
+            # Kaynaksız maç her zaman taşınır (URL'i olmadığı için "zaten var" kontrolü anlamsız)
+            st.session_state.gecmis_analizler.append(g)
+            tasinan += 1
     st.session_state.gelecek_analizler = kalan
     st.session_state.aktif_gelecek_idx = None
     st.session_state.gelecekten_gelindi = False
@@ -3128,7 +3157,7 @@ def nav_bar():
                         f'<div class="fa-nav-badge">{goster}</div>'
                         f'</div>',
                         unsafe_allow_html=True
-        )
+                    )
 
 
 # ===== OTOMATİK GİRİŞ DENEMESİ =====
@@ -4153,6 +4182,6 @@ elif st.session_state.sayfa == "sonuc":
             st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
             st.session_state.kayit_yapildi = False
             st.session_state.gecmisten_gelindi = False
-            st.session_state.gelecekten_gelindi = False
+            st.session_state.gelecekten_gelendi = False
             st.session_state.sayfa = "giris"
             st.rerun()
