@@ -199,30 +199,18 @@ st.markdown("""
         overscroll-behavior-y: none !important;
         touch-action: pan-y !important;
     }
-    .stApp {
-        overscroll-behavior: none !important;
-    }
+    .stApp { overscroll-behavior: none !important; }
     html { font-size: 13px !important; }
     body, .stApp { font-size: 0.85rem !important; }
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
-    span[data-testid="stIconMaterial"],
-    [data-testid="stIconMaterial"],
-    [data-testid="stIconMaterial"] span,
-    .stApp .material-symbols-rounded,
-    .stApp .material-symbols-outlined,
-    .stApp .material-icons,
-    .stApp [class*="material-symbols"],
-    .stApp [class*="material-icons"] {
+    span[data-testid="stIconMaterial"], [data-testid="stIconMaterial"], [data-testid="stIconMaterial"] span,
+    .stApp .material-symbols-rounded, .stApp .material-symbols-outlined, .stApp .material-icons,
+    .stApp [class*="material-symbols"], .stApp [class*="material-icons"] {
         font-family: "Material Symbols Rounded", "Material Symbols Outlined", "Material Icons" !important;
-        font-weight: normal !important;
-        font-style: normal !important;
-        letter-spacing: normal !important;
-        text-transform: none !important;
-        white-space: nowrap !important;
-        word-wrap: normal !important;
-        direction: ltr !important;
-        -webkit-font-feature-settings: 'liga' !important;
-        font-feature-settings: 'liga' !important;
+        font-weight: normal !important; font-style: normal !important;
+        letter-spacing: normal !important; text-transform: none !important;
+        white-space: nowrap !important; word-wrap: normal !important; direction: ltr !important;
+        -webkit-font-feature-settings: 'liga' !important; font-feature-settings: 'liga' !important;
         -webkit-font-smoothing: antialiased !important;
         font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
     }
@@ -422,10 +410,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("""<style>
-/* ============================================
-   🎬 ANİMASYONLU MODERN ANALİZ SİSTEMİ
-   ============================================ */
-
 @keyframes anFadeUp { from {opacity:0; transform:translateY(24px);} to {opacity:1; transform:translateY(0);} }
 @keyframes anFadeIn { from {opacity:0;} to {opacity:1;} }
 @keyframes anScaleIn { from {opacity:0; transform:scale(.85);} to {opacity:1; transform:scale(1);} }
@@ -433,409 +417,82 @@ st.markdown("""<style>
 @keyframes anGrowBarR { from {right: 50% !important;} to {right: var(--r) !important;} }
 @keyframes anGrowBarL { from {left: 50% !important;} to {left: var(--l) !important;} }
 @keyframes anDrawDonut { from {stroke-dashoffset: var(--full);} to {stroke-dashoffset: var(--off);} }
-@keyframes anPulseGlow {
-  0%,100% { box-shadow: 0 0 0 0 var(--glow); }
-  50% { box-shadow: 0 0 24px 6px var(--glow); }
-}
-@keyframes anShimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
-}
-@keyframes anRingPulse {
-  0%,100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.08); opacity: .85; }
-}
+@keyframes anPulseGlow { 0%,100% { box-shadow: 0 0 0 0 var(--glow); } 50% { box-shadow: 0 0 24px 6px var(--glow); } }
+@keyframes anShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+@keyframes anRingPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: .85; } }
 @keyframes anSlideRight { from { opacity:0; transform: translateX(-30px); } to { opacity:1; transform: translateX(0); } }
 @keyframes anSlideLeft { from { opacity:0; transform: translateX(30px); } to { opacity:1; transform: translateX(0); } }
 @keyframes anRotateGrad { to { transform: rotate(360deg); } }
 @keyframes anFlash { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-.stApp .an-hero {
-    position: relative; overflow: hidden;
-    background: linear-gradient(135deg, #14243e 0%, #0d1729 55%, #060a14 100%);
-    border: 1.5px solid rgba(34,197,94,0.28);
-    border-radius: 22px; padding: 22px 16px 18px 16px;
-    margin: 6px 0 16px 0;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(34,197,94,0.08) inset;
-    animation: anFadeUp .5s cubic-bezier(.2,.9,.3,1.3);
-}
-.stApp .an-hero::before {
-    content: ""; position: absolute; inset: -50%;
-    background: conic-gradient(from 0deg, transparent 0deg, rgba(34,197,94,.12) 60deg, transparent 120deg, rgba(59,130,246,.08) 240deg, transparent 360deg);
-    animation: anRotateGrad 12s linear infinite;
-    pointer-events: none;
-}
-.stApp .an-hero::after {
-    content: ""; position: absolute; inset: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(34,197,94,0.18), transparent 62%);
-    pointer-events: none;
-}
+.stApp .an-hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #14243e 0%, #0d1729 55%, #060a14 100%); border: 1.5px solid rgba(34,197,94,0.28); border-radius: 22px; padding: 22px 16px 18px 16px; margin: 6px 0 16px 0; box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(34,197,94,0.08) inset; animation: anFadeUp .5s cubic-bezier(.2,.9,.3,1.3); }
+.stApp .an-hero::before { content: ""; position: absolute; inset: -50%; background: conic-gradient(from 0deg, transparent 0deg, rgba(34,197,94,.12) 60deg, transparent 120deg, rgba(59,130,246,.08) 240deg, transparent 360deg); animation: anRotateGrad 12s linear infinite; pointer-events: none; }
+.stApp .an-hero::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 0%, rgba(34,197,94,0.18), transparent 62%); pointer-events: none; }
 .stApp .an-hero > * { position: relative; z-index: 2; }
-
-.stApp .an-hero-meta {
-    text-align: center; font-size: 0.68rem; color: #8fa0bd !important;
-    font-weight: 800; letter-spacing: 1.2px; margin-bottom: 14px;
-    text-transform: uppercase;
-}
-.stApp .an-hero-teams {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 10px; margin-bottom: 14px;
-}
-.stApp .an-team {
-    flex: 1; text-align: center; font-size: 1rem; font-weight: 900;
-    line-height: 1.25; word-break: break-word;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    letter-spacing: 0.3px;
-}
+.stApp .an-hero-meta { text-align: center; font-size: 0.68rem; color: #8fa0bd !important; font-weight: 800; letter-spacing: 1.2px; margin-bottom: 14px; text-transform: uppercase; }
+.stApp .an-hero-teams { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.stApp .an-team { flex: 1; text-align: center; font-size: 1rem; font-weight: 900; line-height: 1.25; word-break: break-word; font-family: 'Rajdhani', 'Inter', sans-serif; letter-spacing: 0.3px; }
 .stApp .an-team-ev { color: #93c5fd !important; animation: anSlideRight .6s ease-out .1s both; text-shadow: 0 0 20px rgba(147,197,253,0.35); }
 .stApp .an-team-dep { color: #fbbf24 !important; animation: anSlideLeft .6s ease-out .1s both; text-shadow: 0 0 20px rgba(251,191,36,0.35); }
 .stApp .an-hero-mid { min-width: 100px; text-align: center; animation: anScaleIn .5s ease-out .2s both; }
-.stApp .an-skor {
-    font-size: 2.1rem; font-weight: 900; color: #22c55e !important;
-    letter-spacing: 1px; text-shadow: 0 0 28px rgba(34,197,94,0.7);
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-}
-.stApp .an-vs {
-    font-size: 1.8rem; font-weight: 900; color: #64748b !important;
-    letter-spacing: 3px; font-family: 'Rajdhani', 'Inter', sans-serif;
-    animation: anFlash 2.4s ease-in-out infinite;
-}
-.stApp .an-hero-xg {
-    text-align: center; padding-top: 12px;
-    border-top: 1px dashed rgba(34,197,94,0.3);
-    font-size: 0.72rem; color: #8fa0bd !important; font-weight: 700;
-    letter-spacing: 0.3px;
-}
+.stApp .an-skor { font-size: 2.1rem; font-weight: 900; color: #22c55e !important; letter-spacing: 1px; text-shadow: 0 0 28px rgba(34,197,94,0.7); font-family: 'Rajdhani', 'Inter', sans-serif; }
+.stApp .an-vs { font-size: 1.8rem; font-weight: 900; color: #64748b !important; letter-spacing: 3px; font-family: 'Rajdhani', 'Inter', sans-serif; animation: anFlash 2.4s ease-in-out infinite; }
+.stApp .an-hero-xg { text-align: center; padding-top: 12px; border-top: 1px dashed rgba(34,197,94,0.3); font-size: 0.72rem; color: #8fa0bd !important; font-weight: 700; letter-spacing: 0.3px; }
 .stApp .an-hero-xg b { color: #22c55e !important; font-weight: 900; }
-
-.stApp .an-stat-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 9px; margin: 0 0 14px 0;
-}
+.stApp .an-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 0 0 14px 0; }
 .stApp .an-stat-grid.an-2col { grid-template-columns: 1fr 1fr; }
-.stApp .an-stat {
-    background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98));
-    border: 1px solid #1d2940; border-radius: 14px;
-    padding: 12px 8px 10px 8px; text-align: center;
-    position: relative; overflow: hidden;
-    animation: anFadeUp .5s ease-out both;
-    transition: all .3s ease;
-}
-.stApp .an-stat:nth-child(1) { animation-delay: .05s; }
-.stApp .an-stat:nth-child(2) { animation-delay: .10s; }
-.stApp .an-stat:nth-child(3) { animation-delay: .15s; }
-.stApp .an-stat:nth-child(4) { animation-delay: .20s; }
-.stApp .an-stat:nth-child(5) { animation-delay: .25s; }
-.stApp .an-stat:nth-child(6) { animation-delay: .30s; }
+.stApp .an-stat { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 14px; padding: 12px 8px 10px 8px; text-align: center; position: relative; overflow: hidden; animation: anFadeUp .5s ease-out both; transition: all .3s ease; }
+.stApp .an-stat:nth-child(1) { animation-delay: .05s; } .stApp .an-stat:nth-child(2) { animation-delay: .10s; } .stApp .an-stat:nth-child(3) { animation-delay: .15s; } .stApp .an-stat:nth-child(4) { animation-delay: .20s; } .stApp .an-stat:nth-child(5) { animation-delay: .25s; } .stApp .an-stat:nth-child(6) { animation-delay: .30s; }
 .stApp .an-stat:hover { border-color: rgba(34,197,94,.5); transform: translateY(-3px) scale(1.02); }
-.stApp .an-stat::after {
-    content: ""; position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent);
-    transform: translateX(-100%); pointer-events: none;
-}
+.stApp .an-stat::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent); transform: translateX(-100%); pointer-events: none; }
 .stApp .an-stat:hover::after { animation: anShimmer 1.2s ease-out; }
 .stApp .an-stat-ikon { font-size: 1.05rem; margin-bottom: 5px; opacity: .95; }
-.stApp .an-stat-deger {
-    font-size: 1.1rem; font-weight: 900; color: #eaf1fb !important;
-    letter-spacing: -0.4px; line-height: 1.15;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-}
-.stApp .an-stat-lbl {
-    font-size: 0.55rem; color: #7f92b3 !important; font-weight: 800;
-    text-transform: uppercase; letter-spacing: 0.8px; margin-top: 5px;
-}
+.stApp .an-stat-deger { font-size: 1.1rem; font-weight: 900; color: #eaf1fb !important; letter-spacing: -0.4px; line-height: 1.15; font-family: 'Rajdhani', 'Inter', sans-serif; }
+.stApp .an-stat-lbl { font-size: 0.55rem; color: #7f92b3 !important; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 5px; }
 .stApp .an-stat.an-good .an-stat-deger { color: #22c55e !important; text-shadow: 0 0 14px rgba(34,197,94,.5); }
 .stApp .an-stat.an-bad .an-stat-deger { color: #ef4444 !important; text-shadow: 0 0 14px rgba(239,68,68,.5); }
 .stApp .an-stat.an-warn .an-stat-deger { color: #f59e0b !important; text-shadow: 0 0 14px rgba(245,158,11,.5); }
-
-.stApp .an-section-ttl {
-    display: flex; align-items: center; gap: 9px;
-    font-size: 0.74rem; font-weight: 900; letter-spacing: 1.4px;
-    text-transform: uppercase; color: #22c55e !important;
-    margin: 20px 0 12px 0; padding-bottom: 9px;
-    border-bottom: 1px solid rgba(34,197,94,0.22);
-    animation: anFadeUp .4s ease-out both;
-}
-.stApp .an-section-ttl::before {
-    content: ""; width: 4px; height: 15px;
-    background: linear-gradient(180deg, #22c55e, #16a34a);
-    border-radius: 2px; box-shadow: 0 0 12px rgba(34,197,94,.8);
-    animation: anPulseGlow 2s ease-in-out infinite;
-    --glow: rgba(34,197,94,.6);
-}
-
+.stApp .an-section-ttl { display: flex; align-items: center; gap: 9px; font-size: 0.74rem; font-weight: 900; letter-spacing: 1.4px; text-transform: uppercase; color: #22c55e !important; margin: 20px 0 12px 0; padding-bottom: 9px; border-bottom: 1px solid rgba(34,197,94,0.22); animation: anFadeUp .4s ease-out both; }
+.stApp .an-section-ttl::before { content: ""; width: 4px; height: 15px; background: linear-gradient(180deg, #22c55e, #16a34a); border-radius: 2px; box-shadow: 0 0 12px rgba(34,197,94,.8); animation: anPulseGlow 2s ease-in-out infinite; --glow: rgba(34,197,94,.6); }
 .stApp .an-form-row { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin-top: 7px; }
-.stApp .an-form-box {
-    width: 23px; height: 23px;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 0.64rem; font-weight: 900; border-radius: 6px;
-    color: #fff !important;
-    animation: anScaleIn .35s cubic-bezier(.3,1.3,.5,1) both;
-}
-.stApp .an-form-box:nth-child(1) { animation-delay: .05s; }
-.stApp .an-form-box:nth-child(2) { animation-delay: .10s; }
-.stApp .an-form-box:nth-child(3) { animation-delay: .15s; }
-.stApp .an-form-box:nth-child(4) { animation-delay: .20s; }
-.stApp .an-form-box:nth-child(5) { animation-delay: .25s; }
+.stApp .an-form-box { width: 23px; height: 23px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.64rem; font-weight: 900; border-radius: 6px; color: #fff !important; animation: anScaleIn .35s cubic-bezier(.3,1.3,.5,1) both; }
+.stApp .an-form-box:nth-child(1) { animation-delay: .05s; } .stApp .an-form-box:nth-child(2) { animation-delay: .10s; } .stApp .an-form-box:nth-child(3) { animation-delay: .15s; } .stApp .an-form-box:nth-child(4) { animation-delay: .20s; } .stApp .an-form-box:nth-child(5) { animation-delay: .25s; }
 .stApp .an-form-W { background: linear-gradient(135deg,#16a34a,#22c55e); box-shadow: 0 3px 10px rgba(34,197,94,.5); }
 .stApp .an-form-D { background: linear-gradient(135deg,#64748b,#94a3b8); box-shadow: 0 3px 10px rgba(148,163,184,.35); }
 .stApp .an-form-L { background: linear-gradient(135deg,#dc2626,#ef4444); box-shadow: 0 3px 10px rgba(239,68,68,.5); }
-
-.stApp .an-olasilik-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 9px; margin: 10px 0 12px 0;
-}
+.stApp .an-olasilik-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 10px 0 12px 0; }
 .stApp .an-olasilik-grid.an-2col { grid-template-columns: 1fr 1fr; }
-.stApp .an-prob-kart {
-    background: linear-gradient(145deg, rgba(19,28,46,0.94), rgba(11,18,32,1));
-    border: 1px solid #1d2940; border-radius: 16px;
-    padding: 14px 8px 12px 8px; text-align: center;
-    position: relative; overflow: hidden;
-    animation: anScaleIn .45s cubic-bezier(.3,1.1,.5,1.05) both;
-    transition: all .3s ease;
-}
-.stApp .an-prob-kart:nth-child(1) { animation-delay: .05s; }
-.stApp .an-prob-kart:nth-child(2) { animation-delay: .12s; }
-.stApp .an-prob-kart:nth-child(3) { animation-delay: .19s; }
-.stApp .an-prob-kart::before {
-    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: var(--c); box-shadow: 0 0 16px var(--c);
-}
-.stApp .an-prob-kart.an-active {
-    border-color: var(--c);
-    background: linear-gradient(145deg, rgba(19,28,46,1), rgba(11,18,32,1));
-    box-shadow: 0 0 0 1px var(--c) inset, 0 10px 30px rgba(0,0,0,.5), 0 0 32px var(--c);
-}
+.stApp .an-prob-kart { background: linear-gradient(145deg, rgba(19,28,46,0.94), rgba(11,18,32,1)); border: 1px solid #1d2940; border-radius: 16px; padding: 14px 8px 12px 8px; text-align: center; position: relative; overflow: hidden; animation: anScaleIn .45s cubic-bezier(.3,1.1,.5,1.05) both; transition: all .3s ease; }
+.stApp .an-prob-kart:nth-child(1) { animation-delay: .05s; } .stApp .an-prob-kart:nth-child(2) { animation-delay: .12s; } .stApp .an-prob-kart:nth-child(3) { animation-delay: .19s; }
+.stApp .an-prob-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c); box-shadow: 0 0 16px var(--c); }
+.stApp .an-prob-kart.an-active { border-color: var(--c); background: linear-gradient(145deg, rgba(19,28,46,1), rgba(11,18,32,1)); box-shadow: 0 0 0 1px var(--c) inset, 0 10px 30px rgba(0,0,0,.5), 0 0 32px var(--c); }
 .stApp .an-prob-kart.an-active { animation: anScaleIn .45s cubic-bezier(.3,1.1,.5,1.05) both, anPulseGlow 2.5s ease-in-out 1s infinite; --glow: var(--c); }
-.stApp .an-prob-lbl {
-    font-size: 0.6rem; font-weight: 900; color: #8fa0bd !important;
-    letter-spacing: .6px; text-transform: uppercase; margin-bottom: 8px;
-}
-.stApp .an-prob-donut {
-    width: 82px; height: 82px; margin: 0 auto 6px auto;
-    display: block;
-}
+.stApp .an-prob-lbl { font-size: 0.6rem; font-weight: 900; color: #8fa0bd !important; letter-spacing: .6px; text-transform: uppercase; margin-bottom: 8px; }
+.stApp .an-prob-donut { width: 82px; height: 82px; margin: 0 auto 6px auto; display: block; }
 .stApp .an-prob-donut circle.an-ring-bg { stroke: #0d1626; }
-.stApp .an-prob-donut circle.an-ring-fg {
-    animation: anDrawDonut 1.2s cubic-bezier(.3,.8,.4,1) .2s both;
-    transform: rotate(-90deg); transform-origin: 50% 50%;
-}
-.stApp .an-prob-donut text {
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    font-weight: 900; letter-spacing: -0.5px;
-}
-.stApp .an-prob-alt {
-    font-size: 0.58rem; color: #64748b !important; font-weight: 700;
-    letter-spacing: .2px;
-}
-
-.stApp .an-cmp-row {
-    display: grid; grid-template-columns: 1fr auto 1fr;
-    gap: 8px; align-items: center; margin: 8px 0;
-    animation: anFadeIn .5s ease-out both;
-}
-.stApp .an-cmp-row:nth-child(1) { animation-delay: .05s; }
-.stApp .an-cmp-row:nth-child(2) { animation-delay: .12s; }
-.stApp .an-cmp-row:nth-child(3) { animation-delay: .19s; }
-.stApp .an-cmp-row:nth-child(4) { animation-delay: .26s; }
-.stApp .an-cmp-row:nth-child(5) { animation-delay: .33s; }
-.stApp .an-cmp-row:nth-child(6) { animation-delay: .40s; }
-.stApp .an-cmp-bar {
-    position: relative; height: 8px; background: #0d1626;
-    border-radius: 99px; overflow: hidden;
-    box-shadow: inset 0 1px 4px rgba(0,0,0,.7);
-}
-.stApp .an-cmp-bar.ev .an-cmp-fill {
-    position: absolute; top: 0; bottom: 0; right: 0;
-    background: linear-gradient(270deg, #3b82f6, #93c5fd);
-    border-radius: 99px;
-    animation: anGrowBarR 1.1s cubic-bezier(.3,.8,.4,1) .3s both;
-    box-shadow: 0 0 12px rgba(59,130,246,.6);
-}
-.stApp .an-cmp-bar.dep .an-cmp-fill {
-    position: absolute; top: 0; bottom: 0; left: 0;
-    background: linear-gradient(90deg, #f59e0b, #fbbf24);
-    border-radius: 99px;
-    animation: anGrowBarL 1.1s cubic-bezier(.3,.8,.4,1) .3s both;
-    box-shadow: 0 0 12px rgba(245,158,11,.6);
-}
-.stApp .an-cmp-val {
-    font-size: 0.72rem; font-weight: 900;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    letter-spacing: -0.2px;
-}
+.stApp .an-prob-donut circle.an-ring-fg { animation: anDrawDonut 1.2s cubic-bezier(.3,.8,.4,1) .2s both; transform: rotate(-90deg); transform-origin: 50% 50%; }
+.stApp .an-prob-donut text { font-family: 'Rajdhani', 'Inter', sans-serif; font-weight: 900; letter-spacing: -0.5px; }
+.stApp .an-prob-alt { font-size: 0.58rem; color: #64748b !important; font-weight: 700; letter-spacing: .2px; }
+.stApp .an-cmp-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin: 8px 0; animation: anFadeIn .5s ease-out both; }
+.stApp .an-cmp-row:nth-child(1) { animation-delay: .05s; } .stApp .an-cmp-row:nth-child(2) { animation-delay: .12s; } .stApp .an-cmp-row:nth-child(3) { animation-delay: .19s; } .stApp .an-cmp-row:nth-child(4) { animation-delay: .26s; } .stApp .an-cmp-row:nth-child(5) { animation-delay: .33s; } .stApp .an-cmp-row:nth-child(6) { animation-delay: .40s; }
+.stApp .an-cmp-bar { position: relative; height: 8px; background: #0d1626; border-radius: 99px; overflow: hidden; box-shadow: inset 0 1px 4px rgba(0,0,0,.7); }
+.stApp .an-cmp-bar.ev .an-cmp-fill { position: absolute; top: 0; bottom: 0; right: 0; background: linear-gradient(270deg, #3b82f6, #93c5fd); border-radius: 99px; animation: anGrowBarR 1.1s cubic-bezier(.3,.8,.4,1) .3s both; box-shadow: 0 0 12px rgba(59,130,246,.6); }
+.stApp .an-cmp-bar.dep .an-cmp-fill { position: absolute; top: 0; bottom: 0; left: 0; background: linear-gradient(90deg, #f59e0b, #fbbf24); border-radius: 99px; animation: anGrowBarL 1.1s cubic-bezier(.3,.8,.4,1) .3s both; box-shadow: 0 0 12px rgba(245,158,11,.6); }
+.stApp .an-cmp-val { font-size: 0.72rem; font-weight: 900; font-family: 'Rajdhani', 'Inter', sans-serif; letter-spacing: -0.2px; }
 .stApp .an-cmp-val.ev { color: #93c5fd !important; text-align: right; }
 .stApp .an-cmp-val.dep { color: #fbbf24 !important; text-align: left; }
-.stApp .an-cmp-lbl {
-    font-size: 0.55rem; font-weight: 800; color: #8fa0bd !important;
-    text-transform: uppercase; letter-spacing: .8px;
-    white-space: nowrap; padding: 0 4px;
-    min-width: 76px; text-align: center;
-}
-.stApp .an-cmp-wrap {
-    background: linear-gradient(145deg, rgba(19,28,46,.7), rgba(11,18,32,.9));
-    border: 1px solid #1d2940; border-radius: 16px;
-    padding: 14px 12px 12px 12px; margin-bottom: 12px;
-}
-.stApp .an-cmp-header {
-    display: grid; grid-template-columns: 1fr auto 1fr;
-    gap: 8px; align-items: center; margin-bottom: 12px;
-    padding-bottom: 10px; border-bottom: 1px dashed rgba(59,130,246,.2);
-}
-.stApp .an-cmp-header .an-team-name {
-    font-size: 0.78rem; font-weight: 900;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    letter-spacing: .3px;
-}
+.stApp .an-cmp-lbl { font-size: 0.55rem; font-weight: 800; color: #8fa0bd !important; text-transform: uppercase; letter-spacing: .8px; white-space: nowrap; padding: 0 4px; min-width: 76px; text-align: center; }
+.stApp .an-cmp-wrap { background: linear-gradient(145deg, rgba(19,28,46,.7), rgba(11,18,32,.9)); border: 1px solid #1d2940; border-radius: 16px; padding: 14px 12px 12px 12px; margin-bottom: 12px; }
+.stApp .an-cmp-header { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed rgba(59,130,246,.2); }
+.stApp .an-cmp-header .an-team-name { font-size: 0.78rem; font-weight: 900; font-family: 'Rajdhani', 'Inter', sans-serif; letter-spacing: .3px; }
 .stApp .an-cmp-header .an-team-name.ev { color: #93c5fd !important; text-align: right; }
 .stApp .an-cmp-header .an-team-name.dep { color: #fbbf24 !important; text-align: left; }
-.stApp .an-cmp-header .an-cmp-vs {
-    font-size: 0.66rem; font-weight: 900; color: #64748b !important;
-    letter-spacing: 2px;
-}
-
-.stApp .an-bar-row { margin: 9px 0; animation: anFadeUp .4s ease-out both; }
-.stApp .an-bar-top {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 0.78rem; margin-bottom: 5px;
-}
-.stApp .an-bar-lbl { color: #cbd5e1 !important; font-weight: 700; letter-spacing: .2px; }
-.stApp .an-bar-val {
-    font-weight: 900; font-family: 'Rajdhani', 'Inter', sans-serif;
-    letter-spacing: -0.3px; font-size: 0.88rem;
-}
-.stApp .an-bar {
-    position: relative; height: 10px; background: #0d1626;
-    border-radius: 99px; overflow: hidden;
-    box-shadow: inset 0 1px 4px rgba(0,0,0,.7);
-}
-.stApp .an-bar-fill {
-    height: 100%; border-radius: 99px;
-    animation: anGrowBar 1.1s cubic-bezier(.3,.8,.4,1) .15s both;
-    position: relative;
-}
-.stApp .an-bar-fill::after {
-    content: ""; position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
-    animation: anShimmer 2.2s ease-in-out infinite;
-}
-.stApp .an-bar-tick {
-    position: absolute; top: 0; bottom: 0; width: 2px;
-    background: #eaf1fb; opacity: .85;
-    box-shadow: 0 0 8px #fff;
-}
-
-.stApp .an-glow-kart {
-    position: relative;
-    background: linear-gradient(145deg, rgba(19,28,46,.95), rgba(11,18,32,1));
-    border: 1px solid rgba(34,197,94,.3);
-    border-radius: 18px; padding: 14px 14px 12px 14px;
-    margin-bottom: 12px;
-    animation: anFadeUp .5s ease-out both;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    overflow: hidden;
-}
-.stApp .an-glow-kart::after {
-    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, #22c55e, transparent);
-    animation: anShimmer 3s ease-in-out infinite;
-}
-
-.stApp .an-final-kart {
-    position: relative; overflow: hidden;
-    border-radius: 18px; padding: 16px 16px 14px 16px;
-    margin-bottom: 12px;
-    animation: anFadeUp .5s ease-out both;
-    box-shadow: 0 12px 36px rgba(0,0,0,.45);
-    transition: transform .3s ease;
-}
-.stApp .an-final-kart:hover { transform: translateY(-2px); }
-.stApp .an-final-kart.an-hit {
-    background: linear-gradient(145deg, rgba(22,163,74,.15), rgba(11,18,32,.95));
-    border: 1.5px solid rgba(34,197,94,.55);
-    box-shadow: 0 12px 40px rgba(34,197,94,.2), 0 0 0 1px rgba(34,197,94,.15) inset;
-}
-.stApp .an-final-kart.an-hit::before {
-    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, #22c55e, #4ade80, #22c55e);
-    box-shadow: 0 0 16px rgba(34,197,94,.9);
-    animation: anShimmer 2.5s ease-in-out infinite;
-}
-.stApp .an-final-kart.an-miss {
-    background: linear-gradient(145deg, rgba(30,41,59,.7), rgba(11,18,32,.95));
-    border: 1.5px solid rgba(148,163,184,.25);
-    opacity: .92;
-}
-.stApp .an-final-top {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 10px;
-}
-.stApp .an-final-ttl {
-    font-size: 0.68rem; font-weight: 900; color: #8fa0bd !important;
-    letter-spacing: 1.2px; text-transform: uppercase;
-}
-.stApp .an-final-pick {
-    font-size: 1.15rem; font-weight: 900; letter-spacing: .3px;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    margin: 4px 0 8px 0;
-}
-.stApp .an-final-pick.an-hit { color: #22c55e !important; text-shadow: 0 0 18px rgba(34,197,94,.5); }
-.stApp .an-final-pick.an-miss { color: #94a3b8 !important; }
-.stApp .an-final-pct {
-    font-size: 2.1rem; font-weight: 900;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    letter-spacing: -1.2px; line-height: 1;
-}
-.stApp .an-final-pct.an-hit { color: #22c55e !important; text-shadow: 0 0 24px rgba(34,197,94,.6); }
-.stApp .an-final-pct.an-miss { color: #64748b !important; }
-.stApp .an-final-bar {
-    position: relative; height: 10px; background: #0d1626;
-    border-radius: 99px; overflow: hidden; margin-top: 6px;
-    box-shadow: inset 0 1px 4px rgba(0,0,0,.7);
-}
-.stApp .an-final-bar-fill {
-    height: 100%; border-radius: 99px;
-    animation: anGrowBar 1.2s cubic-bezier(.3,.8,.4,1) .3s both;
-    position: relative;
-}
-.stApp .an-final-bar-fill::after {
-    content: ""; position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
-    animation: anShimmer 2s ease-in-out infinite;
-}
-.stApp .an-final-badge {
-    display: inline-block; padding: 3px 10px; border-radius: 99px;
-    font-size: 0.6rem; font-weight: 900; letter-spacing: .6px;
-    text-transform: uppercase;
-}
-.stApp .an-final-badge.an-hit {
-    background: rgba(34,197,94,.18); color: #22c55e !important;
-    border: 1px solid rgba(34,197,94,.55);
-    box-shadow: 0 0 12px rgba(34,197,94,.4);
-}
-.stApp .an-final-badge.an-miss {
-    background: rgba(148,163,184,.12); color: #94a3b8 !important;
-    border: 1px solid rgba(148,163,184,.3);
-}
-.stApp .an-final-mut {
-    font-size: 0.66rem; color: #8fa0bd !important;
-    font-weight: 700; margin-top: 6px; letter-spacing: .2px;
-}
-
-.stApp .an-pulse-dot {
-    display: inline-block; width: 8px; height: 8px;
-    background: #22c55e; border-radius: 50%;
-    margin-right: 6px; vertical-align: middle;
-    box-shadow: 0 0 0 0 rgba(34,197,94,.7);
-    animation: anRingPulse 1.8s ease-in-out infinite;
-}
+.stApp .an-cmp-header .an-cmp-vs { font-size: 0.66rem; font-weight: 900; color: #64748b !important; letter-spacing: 2px; }
+.stApp .an-pulse-dot { display: inline-block; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; margin-right: 6px; vertical-align: middle; box-shadow: 0 0 0 0 rgba(34,197,94,.7); animation: anRingPulse 1.8s ease-in-out infinite; }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown("""<style>
-/* ============================================
-   🏠 MODERN ANA SAYFA (Üye & Misafir)
-   ============================================ */
 @keyframes hpPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.5); } 50% { box-shadow: 0 0 20px 4px rgba(34,197,94,.6); } }
 @keyframes hpLive { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .55; transform: scale(1.2); } }
 @keyframes hpSlide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
@@ -846,339 +503,69 @@ st.markdown("""<style>
 @keyframes hpSpin { to { transform: rotate(360deg); } }
 @keyframes hpFlash { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 
-.hp-hero {
-    position: relative; overflow: hidden;
-    background: linear-gradient(135deg, #14243e 0%, #0d1729 55%, #060a14 100%);
-    border: 1.5px solid rgba(34,197,94,0.28);
-    border-radius: 22px;
-    padding: 24px 16px 20px 16px;
-    margin: 6px 0 16px 0;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    animation: hpFadeUp .6s cubic-bezier(.2,.9,.3,1.2);
-}
-.hp-hero::before {
-    content: ""; position: absolute; inset: -50%;
-    background: conic-gradient(from 0deg, transparent 0deg, rgba(34,197,94,.15) 60deg, transparent 120deg, rgba(59,130,246,.10) 240deg, transparent 360deg);
-    animation: hpSpin 15s linear infinite;
-    pointer-events: none;
-}
-.hp-hero::after {
-    content: ""; position: absolute; inset: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(34,197,94,0.2), transparent 60%);
-    pointer-events: none;
-}
+.hp-hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #14243e 0%, #0d1729 55%, #060a14 100%); border: 1.5px solid rgba(34,197,94,0.28); border-radius: 22px; padding: 24px 16px 20px 16px; margin: 6px 0 16px 0; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: hpFadeUp .6s cubic-bezier(.2,.9,.3,1.2); }
+.hp-hero::before { content: ""; position: absolute; inset: -50%; background: conic-gradient(from 0deg, transparent 0deg, rgba(34,197,94,.15) 60deg, transparent 120deg, rgba(59,130,246,.10) 240deg, transparent 360deg); animation: hpSpin 15s linear infinite; pointer-events: none; }
+.hp-hero::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 0%, rgba(34,197,94,0.2), transparent 60%); pointer-events: none; }
 .hp-hero > * { position: relative; z-index: 2; }
-.hp-hero-ust {
-    text-align: center; font-size: 0.65rem; color: #8fa0bd !important;
-    letter-spacing: 2.5px; text-transform: uppercase;
-    font-weight: 800; margin-bottom: 8px;
-}
-.hp-hero-title {
-    text-align: center;
-    font-size: 1.55rem; font-weight: 900;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 1px;
-    margin: 0;
-    animation: hpSlideIn .6s ease-out .1s both;
-}
-.hp-hero-sub {
-    text-align: center;
-    font-size: 0.8rem; color: #8fa0bd !important;
-    margin-top: 6px; font-weight: 500;
-    animation: hpSlideInR .6s ease-out .2s both;
-}
+.hp-hero-ust { text-align: center; font-size: 0.65rem; color: #8fa0bd !important; letter-spacing: 2.5px; text-transform: uppercase; font-weight: 800; margin-bottom: 8px; }
+.hp-hero-title { text-align: center; font-size: 1.55rem; font-weight: 900; font-family: 'Rajdhani', 'Inter', sans-serif; background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: 1px; margin: 0; animation: hpSlideIn .6s ease-out .1s both; }
+.hp-hero-sub { text-align: center; font-size: 0.8rem; color: #8fa0bd !important; margin-top: 6px; font-weight: 500; animation: hpSlideInR .6s ease-out .2s both; }
 .hp-hero-badge-wrap { text-align: center; }
-.hp-hero-badge {
-    display: inline-block;
-    margin: 14px auto 0;
-    padding: 5px 16px;
-    border-radius: 99px;
-    font-size: 0.7rem; font-weight: 800;
-    letter-spacing: 0.8px;
-    animation: hpFadeUp .6s ease-out .3s both;
-}
+.hp-hero-badge { display: inline-block; margin: 14px auto 0; padding: 5px 16px; border-radius: 99px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.8px; animation: hpFadeUp .6s ease-out .3s both; }
 .hp-hero-badge.premium { background: rgba(34,197,94,.12); border: 1.5px solid rgba(34,197,94,.55); color: #22c55e !important; box-shadow: 0 0 20px rgba(34,197,94,.3); }
 .hp-hero-badge.free { background: rgba(245,158,11,.12); border: 1.5px solid rgba(245,158,11,.5); color: #f59e0b !important; }
 .hp-hero-badge.guest { background: rgba(59,130,246,.12); border: 1.5px solid rgba(59,130,246,.5); color: #3b82f6 !important; }
-
-.hp-ticker-wrap {
-    position: relative; overflow: hidden;
-    background: linear-gradient(90deg, rgba(19,28,46,.9), rgba(11,18,32,.95));
-    border: 1px solid rgba(34,197,94,.25);
-    border-radius: 12px;
-    padding: 8px 0;
-    margin: 0 0 14px 0;
-    box-shadow: 0 4px 14px rgba(0,0,0,.3);
-    animation: hpFadeUp .5s ease-out .3s both;
-}
-.hp-ticker-wrap::before, .hp-ticker-wrap::after {
-    content: ""; position: absolute; top: 0; bottom: 0; width: 36px; z-index: 2; pointer-events: none;
-}
+.hp-ticker-wrap { position: relative; overflow: hidden; background: linear-gradient(90deg, rgba(19,28,46,.9), rgba(11,18,32,.95)); border: 1px solid rgba(34,197,94,.25); border-radius: 12px; padding: 8px 0; margin: 0 0 14px 0; box-shadow: 0 4px 14px rgba(0,0,0,.3); animation: hpFadeUp .5s ease-out .3s both; }
+.hp-ticker-wrap::before, .hp-ticker-wrap::after { content: ""; position: absolute; top: 0; bottom: 0; width: 36px; z-index: 2; pointer-events: none; }
 .hp-ticker-wrap::before { left: 0; background: linear-gradient(90deg, #0b1220, transparent); }
 .hp-ticker-wrap::after { right: 0; background: linear-gradient(270deg, #0b1220, transparent); }
-.hp-ticker {
-    display: flex; gap: 28px;
-    animation: hpSlide 26s linear infinite;
-    white-space: nowrap;
-    padding-left: 40px;
-    width: max-content;
-}
-.hp-ticker-item {
-    display: inline-flex; align-items: center; gap: 7px;
-    font-size: 0.75rem; font-weight: 800;
-    color: #cbd5e1 !important;
-    letter-spacing: .3px;
-}
-.hp-ticker-item .hp-ticker-dot {
-    display: inline-block; width: 6px; height: 6px;
-    border-radius: 50%; background: #22c55e;
-    box-shadow: 0 0 10px #22c55e;
-    animation: hpLive 1.5s ease-in-out infinite;
-}
+.hp-ticker { display: flex; gap: 28px; animation: hpSlide 26s linear infinite; white-space: nowrap; padding-left: 40px; width: max-content; }
+.hp-ticker-item { display: inline-flex; align-items: center; gap: 7px; font-size: 0.75rem; font-weight: 800; color: #cbd5e1 !important; letter-spacing: .3px; }
+.hp-ticker-item .hp-ticker-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 10px #22c55e; animation: hpLive 1.5s ease-in-out infinite; }
 .hp-ticker-val { color: #22c55e !important; font-weight: 900; font-family: 'Rajdhani', sans-serif; font-size: .9rem; }
-
-.hp-mini-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 8px; margin: 0 0 16px 0;
-}
-.hp-mini {
-    position: relative; overflow: hidden;
-    background: linear-gradient(145deg, rgba(19,28,46,.94), rgba(11,18,32,1));
-    border: 1px solid #1d2940;
-    border-radius: 14px;
-    padding: 12px 6px 10px 6px;
-    text-align: center;
-    animation: hpFadeUp .5s ease-out both;
-    transition: all .3s ease;
-}
-.hp-mini:nth-child(1) { animation-delay: .05s; }
-.hp-mini:nth-child(2) { animation-delay: .12s; }
-.hp-mini:nth-child(3) { animation-delay: .19s; }
-.hp-mini:nth-child(4) { animation-delay: .26s; }
-.hp-mini:hover {
-    border-color: var(--c);
-    transform: translateY(-3px);
-    box-shadow: 0 10px 24px rgba(34,197,94,.15);
-}
-.hp-mini::before {
-    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: var(--c);
-    box-shadow: 0 0 12px var(--c);
-}
+.hp-mini-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 16px 0; }
+.hp-mini { position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(19,28,46,.94), rgba(11,18,32,1)); border: 1px solid #1d2940; border-radius: 14px; padding: 12px 6px 10px 6px; text-align: center; animation: hpFadeUp .5s ease-out both; transition: all .3s ease; }
+.hp-mini:nth-child(1) { animation-delay: .05s; } .hp-mini:nth-child(2) { animation-delay: .12s; } .hp-mini:nth-child(3) { animation-delay: .19s; } .hp-mini:nth-child(4) { animation-delay: .26s; }
+.hp-mini:hover { border-color: var(--c); transform: translateY(-3px); box-shadow: 0 10px 24px rgba(34,197,94,.15); }
+.hp-mini::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c); box-shadow: 0 0 12px var(--c); }
 .hp-mini-ikon { font-size: 1rem; margin-bottom: 4px; }
-.hp-mini-num {
-    font-size: 1.15rem; font-weight: 900;
-    font-family: 'Rajdhani', sans-serif;
-    color: #eaf1fb !important;
-    letter-spacing: -0.3px;
-    line-height: 1;
-}
-.hp-mini-lbl {
-    font-size: 0.52rem; color: #7f92b3 !important;
-    font-weight: 800; letter-spacing: .5px;
-    text-transform: uppercase; margin-top: 5px;
-}
-
-.hp-card {
-    position: relative; overflow: hidden;
-    background: linear-gradient(145deg, rgba(19,28,46,.95), rgba(11,18,32,1));
-    border: 1px solid #1d2940;
-    border-radius: 18px;
-    padding: 16px 16px 14px 16px;
-    margin: 0 0 12px 0;
-    box-shadow: 0 8px 24px rgba(0,0,0,.35);
-    animation: hpFadeUp .5s ease-out both;
-    transition: all .3s ease;
-}
-.hp-card:hover {
-    border-color: rgba(34,197,94,.45);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 36px rgba(34,197,94,.12);
-}
-.hp-card::before {
-    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, #22c55e, #3b82f6);
-    opacity: .75;
-}
-.hp-card-ust {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 12px; font-size: 0.66rem;
-    color: #8fa0bd !important; font-weight: 700;
-    letter-spacing: .5px;
-}
+.hp-mini-num { font-size: 1.15rem; font-weight: 900; font-family: 'Rajdhani', sans-serif; color: #eaf1fb !important; letter-spacing: -0.3px; line-height: 1; }
+.hp-mini-lbl { font-size: 0.52rem; color: #7f92b3 !important; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; margin-top: 5px; }
+.hp-card { position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(19,28,46,.95), rgba(11,18,32,1)); border: 1px solid #1d2940; border-radius: 18px; padding: 16px 16px 14px 16px; margin: 0 0 12px 0; box-shadow: 0 8px 24px rgba(0,0,0,.35); animation: hpFadeUp .5s ease-out both; transition: all .3s ease; }
+.hp-card:hover { border-color: rgba(34,197,94,.45); transform: translateY(-2px); box-shadow: 0 12px 36px rgba(34,197,94,.12); }
+.hp-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #22c55e, #3b82f6); opacity: .75; }
+.hp-card-ust { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.66rem; color: #8fa0bd !important; font-weight: 700; letter-spacing: .5px; }
 .hp-card-ust-l { display: flex; align-items: center; gap: 6px; }
-.hp-card-live {
-    display: inline-block;
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #22c55e;
-    box-shadow: 0 0 10px #22c55e;
-    animation: hpLive 1.5s ease-in-out infinite;
-}
-.hp-card-teams {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 10px; align-items: center;
-    margin-bottom: 12px;
-}
-.hp-card-team {
-    text-align: center;
-    font-weight: 900;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    font-size: 1.02rem;
-    line-height: 1.2;
-    word-break: break-word;
-    letter-spacing: .3px;
-}
+.hp-card-live { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 10px #22c55e; animation: hpLive 1.5s ease-in-out infinite; }
+.hp-card-teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; margin-bottom: 12px; }
+.hp-card-team { text-align: center; font-weight: 900; font-family: 'Rajdhani', 'Inter', sans-serif; font-size: 1.02rem; line-height: 1.2; word-break: break-word; letter-spacing: .3px; }
 .hp-card-team.ev { color: #93c5fd !important; animation: hpSlideIn .5s ease-out .1s both; }
 .hp-card-team.dep { color: #fbbf24 !important; animation: hpSlideInR .5s ease-out .1s both; }
-.hp-card-vs {
-    font-size: 1rem; font-weight: 900;
-    color: #64748b !important;
-    font-family: 'Rajdhani', sans-serif;
-    letter-spacing: 2px;
-    animation: hpFlash 2.4s ease-in-out infinite;
-}
-.hp-card-xg {
-    display: flex; justify-content: center; align-items: center; gap: 8px;
-    padding: 8px 0;
-    border-top: 1px dashed rgba(34,197,94,.2);
-    border-bottom: 1px dashed rgba(34,197,94,.2);
-    margin-bottom: 12px;
-    font-size: 0.72rem;
-    color: #8fa0bd !important;
-    font-weight: 700;
-}
+.hp-card-vs { font-size: 1rem; font-weight: 900; color: #64748b !important; font-family: 'Rajdhani', sans-serif; letter-spacing: 2px; animation: hpFlash 2.4s ease-in-out infinite; }
+.hp-card-xg { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px dashed rgba(34,197,94,.2); border-bottom: 1px dashed rgba(34,197,94,.2); margin-bottom: 12px; font-size: 0.72rem; color: #8fa0bd !important; font-weight: 700; }
 .hp-card-xg b { color: #22c55e !important; font-weight: 900; font-family: 'Rajdhani', sans-serif; font-size: .88rem; }
 .hp-card-xg .hp-xg-mid { color: #64748b !important; }
 .hp-probs { display: grid; gap: 7px; margin-bottom: 4px; }
-.hp-prob-row {
-    display: grid;
-    grid-template-columns: 46px 1fr 46px;
-    gap: 8px; align-items: center;
-}
-.hp-prob-lbl {
-    color: #8fa0bd !important;
-    font-weight: 800;
-    letter-spacing: .4px;
-    font-size: .62rem;
-    text-transform: uppercase;
-}
-.hp-prob-bar {
-    position: relative; height: 7px;
-    background: #0d1626;
-    border-radius: 99px;
-    overflow: hidden;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,.7);
-}
-.hp-prob-fill {
-    height: 100%; border-radius: 99px;
-    animation: hpGrowBar 1s cubic-bezier(.3,.8,.4,1) .3s both;
-    position: relative;
-}
-.hp-prob-fill::after {
-    content: ""; position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
-    animation: anShimmer 2.2s ease-in-out infinite;
-}
-.hp-prob-val {
-    font-weight: 900;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: .82rem;
-    text-align: right;
-}
+.hp-prob-row { display: grid; grid-template-columns: 46px 1fr 46px; gap: 8px; align-items: center; }
+.hp-prob-lbl { color: #8fa0bd !important; font-weight: 800; letter-spacing: .4px; font-size: .62rem; text-transform: uppercase; }
+.hp-prob-bar { position: relative; height: 7px; background: #0d1626; border-radius: 99px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,.7); }
+.hp-prob-fill { height: 100%; border-radius: 99px; animation: hpGrowBar 1s cubic-bezier(.3,.8,.4,1) .3s both; position: relative; }
+.hp-prob-fill::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation: anShimmer 2.2s ease-in-out infinite; }
+.hp-prob-val { font-weight: 900; font-family: 'Rajdhani', sans-serif; font-size: .82rem; text-align: right; }
 .hp-prob-val.pass { color: #22c55e !important; text-shadow: 0 0 10px rgba(34,197,94,.5); }
 .hp-prob-val.off { color: #64748b !important; }
-
-.hp-locked {
-    position: relative; overflow: hidden;
-    background: linear-gradient(145deg, rgba(19,28,46,.6), rgba(11,18,32,.85));
-    border: 1.5px dashed rgba(148,163,184,.35);
-    border-radius: 18px;
-    padding: 18px 16px 16px 16px;
-    margin: 0 0 12px 0;
-    animation: hpFadeUp .5s ease-out both;
-    min-height: 160px;
-}
-.hp-locked-teams {
-    display: grid; grid-template-columns: 1fr auto 1fr;
-    gap: 10px; align-items: center;
-    filter: blur(4px);
-    user-select: none;
-    margin-bottom: 10px;
-}
-.hp-locked-team {
-    text-align: center;
-    font-weight: 900;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 1rem;
-    color: #94a3b8 !important;
-}
-.hp-locked-vs {
-    font-size: 1rem; font-weight: 900;
-    color: #64748b !important;
-    letter-spacing: 2px;
-}
-.hp-locked-overlay {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    background: radial-gradient(circle at 50% 50%, rgba(34,197,94,.06), rgba(11,18,32,.5));
-    z-index: 2;
-}
+.hp-locked { position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(19,28,46,.6), rgba(11,18,32,.85)); border: 1.5px dashed rgba(148,163,184,.35); border-radius: 18px; padding: 18px 16px 16px 16px; margin: 0 0 12px 0; animation: hpFadeUp .5s ease-out both; min-height: 160px; }
+.hp-locked-teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; filter: blur(4px); user-select: none; margin-bottom: 10px; }
+.hp-locked-team { text-align: center; font-weight: 900; font-family: 'Rajdhani', sans-serif; font-size: 1rem; color: #94a3b8 !important; }
+.hp-locked-vs { font-size: 1rem; font-weight: 900; color: #64748b !important; letter-spacing: 2px; }
+.hp-locked-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 50%, rgba(34,197,94,.06), rgba(11,18,32,.5)); z-index: 2; }
 .hp-locked-icon { font-size: 1.6rem; opacity: .5; margin-bottom: 6px; }
-.hp-locked-badge {
-    background: linear-gradient(135deg, #16a34a, #22c55e);
-    color: #04130a !important;
-    font-weight: 900;
-    font-size: .78rem;
-    padding: 8px 18px;
-    border-radius: 99px;
-    box-shadow: 0 8px 24px rgba(34,197,94,.45);
-    letter-spacing: .5px;
-}
-.hp-locked-info {
-    font-size: .68rem; color: #8fa0bd !important;
-    margin-top: 6px; font-weight: 700;
-    text-align: center; padding: 0 10px;
-}
-.hp-section-ttl {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 0.72rem; font-weight: 900;
-    letter-spacing: 1.4px; text-transform: uppercase;
-    color: #22c55e !important;
-    margin: 18px 0 12px 0; padding-bottom: 8px;
-    border-bottom: 1px solid rgba(34,197,94,.2);
-}
-.hp-section-ttl::before {
-    content: ""; width: 4px; height: 14px;
-    background: linear-gradient(180deg, #22c55e, #16a34a);
-    border-radius: 2px;
-    box-shadow: 0 0 12px rgba(34,197,94,.8);
-    animation: anPulseGlow 2s ease-in-out infinite;
-    --glow: rgba(34,197,94,.6);
-}
-.hp-section-ttl-count {
-    margin-left: auto;
-    font-size: .62rem;
-    color: #8fa0bd !important;
-    background: rgba(34,197,94,.1);
-    border: 1px solid rgba(34,197,94,.35);
-    padding: 2px 9px;
-    border-radius: 99px;
-    font-weight: 900;
-    letter-spacing: .3px;
-}
-.hp-empty {
-    text-align: center; padding: 32px 20px;
-    background: linear-gradient(145deg, rgba(19,28,46,.6), rgba(11,18,32,.85));
-    border: 1.5px dashed rgba(148,163,184,.25);
-    border-radius: 18px;
-    animation: hpFadeUp .5s ease-out;
-}
+.hp-locked-badge { background: linear-gradient(135deg, #16a34a, #22c55e); color: #04130a !important; font-weight: 900; font-size: .78rem; padding: 8px 18px; border-radius: 99px; box-shadow: 0 8px 24px rgba(34,197,94,.45); letter-spacing: .5px; }
+.hp-locked-info { font-size: .68rem; color: #8fa0bd !important; margin-top: 6px; font-weight: 700; text-align: center; padding: 0 10px; }
+.hp-section-ttl { display: flex; align-items: center; gap: 8px; font-size: 0.72rem; font-weight: 900; letter-spacing: 1.4px; text-transform: uppercase; color: #22c55e !important; margin: 18px 0 12px 0; padding-bottom: 8px; border-bottom: 1px solid rgba(34,197,94,.2); }
+.hp-section-ttl::before { content: ""; width: 4px; height: 14px; background: linear-gradient(180deg, #22c55e, #16a34a); border-radius: 2px; box-shadow: 0 0 12px rgba(34,197,94,.8); animation: anPulseGlow 2s ease-in-out infinite; --glow: rgba(34,197,94,.6); }
+.hp-section-ttl-count { margin-left: auto; font-size: .62rem; color: #8fa0bd !important; background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.35); padding: 2px 9px; border-radius: 99px; font-weight: 900; letter-spacing: .3px; }
+.hp-empty { text-align: center; padding: 32px 20px; background: linear-gradient(145deg, rgba(19,28,46,.6), rgba(11,18,32,.85)); border: 1.5px dashed rgba(148,163,184,.25); border-radius: 18px; animation: hpFadeUp .5s ease-out; }
 .hp-empty-ikon { font-size: 2.4rem; opacity: .55; margin-bottom: 10px; display: block; }
 .hp-empty-txt { font-size: .86rem; color: #8fa0bd !important; font-weight: 700; line-height: 1.5; }
 </style>
@@ -1238,7 +625,6 @@ except Exception as _db_hata:
     st.stop()
 
 
-# ===== KALICI OTURUM (ÇEREZ) YÖNETİMİ =====
 def _cookie_manager_al():
     try:
         return stx.CookieManager(key="fa_cookie_mgr_v1")
@@ -1316,7 +702,6 @@ except Exception:
     _ONLINE_SAYI = 0
 
 
-# ===== ONLINE GÖSTERGESİ SADECE ADMİN İÇİN =====
 if st.session_state.get("rol") == "admin":
     st.markdown(f'''<div style="text-align:center; margin:0 0 10px 0;">
     <span style="display:inline-block; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.5); border-radius:99px; padding:4px 14px; font-size:0.75rem; font-weight:800; color:#22c55e; letter-spacing:0.5px;">
@@ -1726,8 +1111,12 @@ VARSAYILAN_VERI = {k: v for k, v in {
     "trends_ev": [], "trends_dep": [],
 }.items()}
 
-MAX_GOL = 8; BELIRSIZLIK = 0.20; MAX_MAC_SINIRI = 500
-_kilit = threading.Lock(); _ESIK_CACHE = {}
+MAX_GOL = 8
+BELIRSIZLIK = 0.20
+MAX_MAC_SINIRI = 500
+MAX_GELECEK = 200
+_kilit = threading.Lock()
+_ESIK_CACHE = {}
 
 if "sayfa" not in st.session_state: st.session_state.sayfa = "giris"
 if "form_verileri" not in st.session_state: st.session_state.form_verileri = copy.deepcopy(VARSAYILAN_VERI)
@@ -2228,6 +1617,50 @@ TARAYICI_ESZAMANLI = int(os.environ.get("TARAYICI_ESZAMANLI", "3"))
 _TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
 
 
+def _playwright_5mac_cek(url, timeout=30):
+    """Playwright ile maç sayfasını açar ve 'Last games: 5' seçeneğine tıklar."""
+    try:
+        import subprocess as _sp, sys as _sys
+        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
+                check=False, timeout=600,
+                stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    except Exception:
+        pass
+    from playwright.sync_api import sync_playwright
+    with _TARAYICI_SEM:
+        with sync_playwright() as p:
+            b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
+            try:
+                ctx = b.new_context(user_agent=UA, locale="en-US")
+                pg = ctx.new_page()
+                pg.route("**/*", lambda route: route.abort()
+                         if route.request.resource_type in ("image", "media", "font")
+                         else route.continue_())
+                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+                pg.wait_for_timeout(1500)
+                try:
+                    for secici in [
+                        '.containerbutton:has-text("5")',
+                        'label:has-text("5")',
+                        'text="5"',
+                        'input[value="5"]',
+                    ]:
+                        try:
+                            el = pg.locator(secici).first
+                            if el.count() > 0:
+                                el.click(timeout=3000)
+                                break
+                        except Exception:
+                            continue
+                    pg.wait_for_timeout(2500)
+                except Exception:
+                    pass
+                return pg.content()
+            finally:
+                try: b.close()
+                except Exception: pass
+
+
 def _playwright_skor_cek(url, timeout=25):
     try:
         import subprocess as _sp, sys as _sys
@@ -2312,8 +1745,14 @@ def mutating_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI):
 
 
 def mutating_mac_detay_cek(url):
-    html, hata = _scrapingbee_get(url, render_js=True, mac_sec="5", dogrula=True)
-    if hata: return None, [hata]
+    html = None
+    try:
+        html = _playwright_5mac_cek(url, timeout=30)
+    except Exception:
+        pass
+    if not html:
+        html, hata = _scrapingbee_get(url, render_js=True, mac_sec="5", dogrula=True)
+        if hata: return None, [hata]
     if not html: return None, ["Sayfa indirilemedi."]
     return _mac_html_parse(html, url)
 
@@ -2459,7 +1898,7 @@ def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
         return ("hata", mac, str(e), None)
 
 
-def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_workers=2):
+def mutating_toplu_cek(max_mac=MAX_GELECEK, progress_callback=None, max_workers=2):
     maclar, hatalar = mutating_ana_sayfa_linklerini_al(max_mac=max_mac)
     if hatalar: return [], hatalar
     if not maclar: return [], ["Ana sayfada maç linki bulunamadı."]
@@ -2500,15 +1939,25 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
 
     if eklenecekler:
         st.session_state.gelecek_analizler.extend(eklenecekler)
+        # Max 200 sınırı — en eski maçları sil (FIFO)
+        if len(st.session_state.gelecek_analizler) > MAX_GELECEK:
+            fazla = len(st.session_state.gelecek_analizler) - MAX_GELECEK
+            st.session_state.gelecek_analizler = st.session_state.gelecek_analizler[fazla:]
         gelecek_kaydet(st.session_state.gelecek_analizler)
 
     st.session_state.toplu_cek_ozet = {"eklenen": eklenen, "atlanan": atlanan, "toplam": len(basarili)}
     return basarili, hatali
 
 
-def _lig_son_mac_linklerini_al(lig_url, adet=10):
-    html, hata = _scrapingbee_get(lig_url, render_js=True, mac_sec="10")
-    if hata: return [], [hata]
+def _lig_son_mac_linklerini_al(lig_url, adet=5):
+    html = None
+    try:
+        html = _playwright_5mac_cek(lig_url, timeout=30)
+    except Exception:
+        pass
+    if not html:
+        html, hata = _scrapingbee_get(lig_url, render_js=True, mac_sec="10")
+        if hata: return [], [hata]
     if not html: return [], ["Lig sayfası indirilemedi."]
     soup = BeautifulSoup(html, "html.parser")
     maclar = []; gorulen = set()
@@ -2538,9 +1987,15 @@ def _gecmis_mac_isle(mac, mevcut_urls):
     try:
         if mac["url"] in mevcut_urls:
             return ("atlandi", None, "Zaten var", None)
-        html, hata = _scrapingbee_get(mac["url"], render_js=True, mac_sec="5", dogrula=True)
-        if hata or not html:
-            return ("hata", mac, hata or "HTML yok", None)
+        html = None
+        try:
+            html = _playwright_5mac_cek(mac["url"], timeout=30)
+        except Exception:
+            pass
+        if not html:
+            html, hata = _scrapingbee_get(mac["url"], render_js=True, mac_sec="5", dogrula=True)
+            if hata or not html:
+                return ("hata", mac, hata or "HTML yok", None)
         veri, _ = _mac_html_parse(html, mac["url"])
         if not veri.get("skor_belli", False):
             return ("atlandi", None, "Skor yok (bitmemiş maç)", None)
@@ -2557,7 +2012,7 @@ def _gecmis_mac_isle(mac, mevcut_urls):
         return ("hata", mac, str(e), None)
 
 
-def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
+def lig_gecmis_cek(lig_url, adet=5, max_workers=2, progress_callback=None):
     maclar, hatalar = _lig_son_mac_linklerini_al(lig_url, adet=adet)
     if hatalar: return [], hatalar
     if not maclar: return [], ["Lig sayfasında maç linki bulunamadı."]
@@ -2843,29 +2298,24 @@ def _sparkline_svg(degerler, renk, yukseklik=62, genislik=300):
     if not degerler or len(degerler) < 2:
         return f'<svg class="fa-spark-svg" viewBox="0 0 {genislik} {yukseklik}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;"><text x="50%" y="50%" text-anchor="middle" fill="#64748b" font-size="10">Yetersiz veri</text></svg>'
     n = len(degerler)
-    pad_top = 8
-    pad_bot = 6
+    pad_top = 8; pad_bot = 6
     h = yukseklik - pad_top - pad_bot
     step_x = genislik / (n - 1) if n > 1 else genislik
-
     noktalar = []
     for i, v in enumerate(degerler):
         v = max(0.0, min(100.0, v))
         x = i * step_x
         y = pad_top + (1 - v / 100) * h
         noktalar.append((x, y))
-
     path_d = f"M {noktalar[0][0]:.2f} {noktalar[0][1]:.2f}"
     for i in range(1, n):
         x0, y0 = noktalar[i - 1]
         x1, y1 = noktalar[i]
         cx = (x0 + x1) / 2
         path_d += f" C {cx:.2f} {y0:.2f}, {cx:.2f} {y1:.2f}, {x1:.2f} {y1:.2f}"
-
     alan_d = path_d + f" L {genislik} {yukseklik} L 0 {yukseklik} Z"
     son_x, son_y = noktalar[-1]
     grad_id = f"grad_{renk.replace('#','').replace(':','').replace('.','')}"
-
     return f'''<svg viewBox="0 0 {genislik} {yukseklik}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">
 <defs><linearGradient id="{grad_id}" x1="0" y1="0" x2="0" y2="1">
 <stop offset="0%" stop-color="{renk}" stop-opacity="0.45"/>
@@ -2887,16 +2337,13 @@ def mac_karti(ev, dep, skor_belli, skor_ev, skor_dep, lam_ev, lam_dep, saat="", 
         if saat: parcalar.append(f"🕐 {saat}")
         if parcalar:
             ust_bilgi = f'<div style="font-size:0.7rem;color:#7f92b3;margin-bottom:10px;text-align:center;">{" • ".join(parcalar)}</div>'
-
     if skor_belli:
         skor_html = f'<div style="font-size:1.8rem;font-weight:900;color:#22c55e;">{skor_ev} - {skor_dep}</div>'
     else:
         skor_html = '<div style="font-size:1.2rem;font-weight:800;color:#7f92b3;">VS</div>'
-
     gol_bilgi = ""
     if lam_ev > 0 or lam_dep > 0:
         gol_bilgi = f'<div style="font-size:0.75rem;color:#7f92b3;margin-top:6px;">Model beklenen gol: {lam_ev:.2f} - {lam_dep:.2f}</div>'
-
     html = f"""
     <div style="background:linear-gradient(145deg,#131c2e,#0f1829);border:1px solid #1f2c44;border-radius:16px;padding:16px;margin:8px 0;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
         {ust_bilgi}
@@ -2909,33 +2356,6 @@ def mac_karti(ev, dep, skor_belli, skor_ev, skor_dep, lam_ev, lam_dep, saat="", 
     </div>
     """
     return html
-
-
-def kilitli_mac_karti(ev, dep, saat="", ulke="", tarih=""):
-    bayrak = ulke_bayrak_bul(ulke)
-    ust_bilgi = ""
-    if saat or ulke or tarih:
-        parcalar = []
-        if bayrak != "🌍" or ulke: parcalar.append(f"{bayrak} {(ulke or '').title()}")
-        if tarih: parcalar.append(f"📅 {tarih}")
-        if saat: parcalar.append(f"🕐 {saat}")
-        if parcalar:
-            ust_bilgi = f'<div style="font-size:0.7rem;color:#7f92b3;margin-bottom:10px;text-align:center;">{" • ".join(parcalar)}</div>'
-
-    return f'''
-    <div style="background:linear-gradient(145deg,#131c2e,#0f1829);border:1px solid #1f2c44;border-radius:16px;padding:16px;margin:8px 0;box-shadow:0 4px 20px rgba(0,0,0,0.3);position:relative;overflow:hidden;opacity:0.7;">
-        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:3rem;opacity:0.15;">🔒</div>
-        {ust_bilgi}
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;filter:blur(3px);">
-            <div style="flex:1;text-align:center;font-weight:800;font-size:0.95rem;color:#eaf1fb;">{ev}</div>
-            <div style="flex:1;text-align:center;font-size:1.2rem;font-weight:800;color:#7f92b3;">VS</div>
-            <div style="flex:1;text-align:center;font-weight:800;font-size:0.95rem;color:#eaf1fb;">{dep}</div>
-        </div>
-        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(59,130,246,0.08));z-index:2;">
-            <div style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#04130a;font-weight:900;font-size:0.85rem;padding:10px 20px;border-radius:99px;box-shadow:0 8px 24px rgba(34,197,94,0.4);letter-spacing:0.5px;">🔒 PREMIUM'A GEÇ</div>
-        </div>
-    </div>
-    '''
 
 
 def mac_tahmin_karti(v_g, g=None):
@@ -2959,40 +2379,6 @@ def mac_tahmin_karti(v_g, g=None):
         def bt(p): return "✅" if p else "⚪"
         return f'''<div class="fa-mk"><div class="fa-mk-row"><span class="fa-mk-lbl">🎯 1X2</span><span class="fa-mk-pick {r(poz1)}">{_e(isim1)}</span><span class="fa-mk-pct">%{y1:.0f} <span class="fa-mk-badge {b(poz1)}">{bt(poz1)} eşik %{es1:.0f}</span></span></div><div class="fa-mk-row"><span class="fa-mk-lbl">⚽ Gol</span><span class="fa-mk-pick {r(gp)}">{_e(gs)}</span><span class="fa-mk-pct">%{gy:.0f} <span class="fa-mk-badge {b(gp)}">{bt(gp)} eşik %{ge_:.0f}</span></span></div><div class="fa-mk-row"><span class="fa-mk-lbl">🤝 KG</span><span class="fa-mk-pick {r(kp)}">{_e(ks)}</span><span class="fa-mk-pct">%{ky:.0f} <span class="fa-mk-badge {b(kp)}">{bt(kp)} eşik %{ke:.0f}</span></span></div></div>'''
     except Exception: return ""
-
-
-def olasilik_bar(e, y, esik=None, renk="#3b82f6"):
-    y = max(0.0, min(100.0, y)); isr = ""
-    if esik is not None:
-        renk = "#22c55e" if y >= esik else "#475569"
-        isr = f'<div class="fa-tick" style="left:{esik:.0f}%"></div>'
-    return f'<div class="fa-row"><div class="fa-row-top"><span class="fa-lbl">{_e(e)}</span><span class="fa-val">%{y:.1f}</span></div><div class="fa-bar"><div class="fa-fill" style="width:{y:.1f}%;background:{renk}"></div>{isr}</div></div>'
-
-
-def olasilik_paneli(a):
-    s = ('<div class="fa-ttl">Maç Sonucu</div>'
-        + olasilik_bar("Ev (1)", a["p1"], esik_1x2_al("1"), "#3b82f6")
-        + olasilik_bar("Beraberlik (X)", a["px"], esik_1x2_al("X"), "#94a3b8")
-        + olasilik_bar("Dep (2)", a["p2"], esik_1x2_al("2"), "#f59e0b")
-        + '<div class="fa-ttl" style="margin-top:10px">Piyasalar</div>'
-        + olasilik_bar("Üst 2.5", a["ust_25"], esik_al("ust"))
-        + olasilik_bar("Alt 2.5", a["alt_25"], esik_al("alt"))
-        + olasilik_bar("KG Var", a["kg_var_model"], esik_al("kg_var"))
-        + olasilik_bar("KG Yok", a["kg_yok_model"], esik_al("kg_yok")))
-    return f'<div class="fa-card">{s}</div>'
-
-
-def oneri_karti(b, s, y, e, poz, alt):
-    if poz:
-        sv, _, _, et = guven_seviyesi_bul(y)
-        t = "green" if sv == "yuksek" else "yellow" if sv == "orta" else "gray"
-        d = rozet(f"{et} güven", t); sn = "fa-card fa-pos"; ps = "fa-pct"
-        ns = f'<div class="fa-mut">{_e(alt)}</div>'
-    else:
-        d = rozet("Eşik altı", "gray"); sn = "fa-card fa-neg"; ps = "fa-pct fa-off"
-        ns = f'<div class="fa-mut">{_e(alt)} • Gerekli: %{e:.0f}</div>'
-    bar = olasilik_bar("", y, e)
-    return f'<div class="{sn}"><div class="fa-ttl">{_e(b)}</div><div class="fa-pickrow"><div><div class="fa-pick">{_e(s)}</div>{d}</div><div class="{ps}">%{y:.1f}</div></div>{bar}{ns}</div>'
 
 
 def _form_detay(form_str):
@@ -3034,7 +2420,6 @@ def _trend_cumleleri(v, taraf):
 def ai_yorum_olustur(v, a):
     te = (v.get("takim_ev", "Ev") or "Ev").strip()
     td = (v.get("takim_dep", "Dep") or "Dep").strip()
-
     ppg_ev = float(v.get("ppg_ev", 0.0) or 0.0)
     mpg_dep = float(v.get("mpg_dep", 0.0) or 0.0)
     ae = float(v.get("atilan_ev", 0.0) or 0.0)
@@ -3057,7 +2442,6 @@ def ai_yorum_olustur(v, a):
     xg_dep = float(v.get("xg_dep", 0.0) or 0.0)
     trends_ev = _trend_cumleleri(v, "ev")
     trends_dep = _trend_cumleleri(v, "dep")
-
     lam_ev = a["lam_ev"]; lam_dep = a["lam_dep"]
     ust25 = a["ust_25"]; alt25 = a["alt_25"]
     kgvar = a["kg_var_model"]; kgyok = a["kg_yok_model"]
@@ -3070,7 +2454,6 @@ def ai_yorum_olustur(v, a):
     def DP(x): return f"<span class='dep'>{x}</span>"
 
     bolumler = []
-
     hp = []
     if s_ev and s_dep:
         if s_ev < s_dep:
@@ -3094,10 +2477,8 @@ def ai_yorum_olustur(v, a):
 
     f_ev_c = _form_hikaye(form_ev, te, ev_mi=True)
     f_dep_c = _form_hikaye(form_dep, td, ev_mi=False)
-    if f_ev_c:
-        hp.append(f_ev_c + ". Form grafiği işi ilginç bir yere taşıyor.")
-    if f_dep_c:
-        hp.append(f_dep_c + ".")
+    if f_ev_c: hp.append(f_ev_c + ". Form grafiği işi ilginç bir yere taşıyor.")
+    if f_dep_c: hp.append(f_dep_c + ".")
 
     if ae > 0 and ye > 0 and ad > 0 and yd > 0:
         if ye <= 0.8 and yd >= 1.5:
@@ -3124,221 +2505,143 @@ def ai_yorum_olustur(v, a):
         if xg_dep > 0: xs.append(f"{DP(td)} {V(f'{xg_dep:.2f}')}")
         hp.append("Beklenen gol (xG) verileri de bu tabloyu destekliyor: " + ", ".join(xs) + ".")
 
-    if trends_ev:
-        hp.append(f"<b>📈 {te} trendleri:</b> " + " ".join(trends_ev[:3]))
-    if trends_dep:
-        hp.append(f"<b>📈 {td} trendleri:</b> " + " ".join(trends_dep[:3]))
-
-    if hp:
-        bolumler.append(("📖", "MAÇIN TABLOSU", " ".join(hp)))
+    if trends_ev: hp.append(f"<b>📈 {te} trendleri:</b> " + " ".join(trends_ev[:3]))
+    if trends_dep: hp.append(f"<b>📈 {td} trendleri:</b> " + " ".join(trends_dep[:3]))
+    if hp: bolumler.append(("📖", "MAÇIN TABLOSU", " ".join(hp)))
 
     s1, y1 = max([("1", p1v), ("X", pxv), ("2", p2v)], key=lambda x: x[1])
     p1 = p1v; px = pxv; p2 = p2v
     kp = []
-
     if s1 == "1":
         kp.append(f"Model bu maçta {EV(te)} tarafını yaklaşık {V(f'%{p1:.0f}')} olasılıkla işaret ediyor. Bunu söylerken birkaç kritik noktaya birlikte baktık:")
         nedenler = []
-        if ppg_ev >= 2.2:
-            nedenler.append(f"{EV(te)}'in evindeki puan ortalaması {V(f'{ppg_ev:.2f}')} — bu elit seviye bir rakam")
-        elif ppg_ev >= 1.7:
-            nedenler.append(f"{EV(te)}'in evindeki PPG'si {V(f'{ppg_ev:.2f}')} ile sağlam")
-        if mpg_dep <= 0.8 and mpg_dep > 0:
-            nedenler.append(f"{DP(td)}'in deplasman MPG'si sadece {K(f'{mpg_dep:.2f}')} — dış sahada adeta kayıp")
-        elif mpg_dep <= 1.3 and mpg_dep > 0:
-            nedenler.append(f"{DP(td)} deplasmanda {U(f'{mpg_dep:.2f}')} MPG ile zorlanıyor")
-        if ye <= 0.8:
-            nedenler.append(f"ev sahibi kendi sahasında maç başına yalnızca {V(f'{ye:.2f}')} gol yiyor (neredeyse her 2-3 maçta bir gol)")
-        if yd >= 1.5:
-            nedenler.append(f"deplasman ekibi dışarıda {K(f'{yd:.2f}')} gol yiyor — savunması delik deşik")
-        if ts_ev >= 70:
-            nedenler.append(f"ev sahibi maçlarının %{V(f'{ts_ev:.0f}')}'inde gol atmış")
-        if 0 < s_ev < s_dep:
-            nedenler.append(f"sıralama farkı ({V(f'{s_ev}.')} vs {V(f'{s_dep}.')}) ev sahibinin lehine")
-        if cs_ev >= 50:
-            nedenler.append(f"evinde %{V(f'{cs_ev:.0f}')} clean sheet yapıyor")
+        if ppg_ev >= 2.2: nedenler.append(f"{EV(te)}'in evindeki puan ortalaması {V(f'{ppg_ev:.2f}')} — bu elit seviye bir rakam")
+        elif ppg_ev >= 1.7: nedenler.append(f"{EV(te)}'in evindeki PPG'si {V(f'{ppg_ev:.2f}')} ile sağlam")
+        if mpg_dep <= 0.8 and mpg_dep > 0: nedenler.append(f"{DP(td)}'in deplasman MPG'si sadece {K(f'{mpg_dep:.2f}')} — dış sahada adeta kayıp")
+        elif mpg_dep <= 1.3 and mpg_dep > 0: nedenler.append(f"{DP(td)} deplasmanda {U(f'{mpg_dep:.2f}')} MPG ile zorlanıyor")
+        if ye <= 0.8: nedenler.append(f"ev sahibi kendi sahasında maç başına yalnızca {V(f'{ye:.2f}')} gol yiyor (neredeyse her 2-3 maçta bir gol)")
+        if yd >= 1.5: nedenler.append(f"deplasman ekibi dışarıda {K(f'{yd:.2f}')} gol yiyor — savunması delik deşik")
+        if ts_ev >= 70: nedenler.append(f"ev sahibi maçlarının %{V(f'{ts_ev:.0f}')}'inde gol atmış")
+        if 0 < s_ev < s_dep: nedenler.append(f"sıralama farkı ({V(f'{s_ev}.')} vs {V(f'{s_dep}.')}) ev sahibinin lehine")
+        if cs_ev >= 50: nedenler.append(f"evinde %{V(f'{cs_ev:.0f}')} clean sheet yapıyor")
         f_ev_d = _form_detay(form_ev)
-        if f_ev_d and f_ev_d["W"] >= f_ev_d["n"] - 1 and f_ev_d["n"] >= 3:
-            nedenler.append(f"form grafiği ({V(form_ev)}) çok güçlü")
-        if nedenler:
-            kp.append("Öncelikle " + ", ".join(nedenler[:5]) + ".")
+        if f_ev_d and f_ev_d["W"] >= f_ev_d["n"] - 1 and f_ev_d["n"] >= 3: nedenler.append(f"form grafiği ({V(form_ev)}) çok güçlü")
+        if nedenler: kp.append("Öncelikle " + ", ".join(nedenler[:5]) + ".")
         karsi = []
         if px > 20: karsi.append(f"beraberlik ihtimali %{px:.0f} ile hiç de az değil")
         if p2 > 15: karsi.append(f"deplasmanın kazanma şansı da %{p2:.0f} seviyesinde")
-        if karsi:
-            kp.append("Elbette " + " ve ".join(karsi) + " — futbol sürprizlere açık bir oyun. Ama mevcut veriler ışığında ev sahibinin kazanması en olası senaryo olarak öne çıkıyor.")
+        if karsi: kp.append("Elbette " + " ve ".join(karsi) + " — futbol sürprizlere açık bir oyun. Ama mevcut veriler ışığında ev sahibinin kazanması en olası senaryo olarak öne çıkıyor.")
         kp.append(f"Tüm bunları birleştirdiğimizde <b>1 ({te} Kazanır)</b> demek en mantıklısı oldu.")
     elif s1 == "2":
         kp.append(f"Model bu maçta {DP(td)} tarafını yaklaşık {V(f'%{p2:.0f}')} olasılıkla öne çıkarıyor. Bunu söylerken şu noktalara baktık:")
         nedenler = []
-        if mpg_dep >= 2.2:
-            nedenler.append(f"{DP(td)}'in deplasman MPG'si {V(f'{mpg_dep:.2f}')} — deplasmanda bile canavar gibi")
-        elif mpg_dep >= 1.7:
-            nedenler.append(f"{DP(td)} dış sahada {V(f'{mpg_dep:.2f}')} MPG ile etkili")
-        if ppg_ev <= 0.8 and ppg_ev > 0:
-            nedenler.append(f"{EV(te)}'in evindeki PPG'si {K(f'{ppg_ev:.2f}')} — kendi sahasında bile kayıp")
-        elif ppg_ev <= 1.3 and ppg_ev > 0:
-            nedenler.append(f"{EV(te)} evinde {U(f'{ppg_ev:.2f}')} PPG ile zorlanıyor")
-        if yd <= 0.8:
-            nedenler.append(f"deplasman dış sahada sadece {V(f'{yd:.2f}')} gol yiyor")
-        if ye >= 1.5:
-            nedenler.append(f"ev sahibi {K(f'{ye:.2f}')} gol yiyor")
-        if 0 < s_dep < s_ev:
-            nedenler.append(f"sıralama farkı ({V(f'{s_dep}.')} vs {V(f'{s_ev}.')}) deplasmanın lehine")
+        if mpg_dep >= 2.2: nedenler.append(f"{DP(td)}'in deplasman MPG'si {V(f'{mpg_dep:.2f}')} — deplasmanda bile canavar gibi")
+        elif mpg_dep >= 1.7: nedenler.append(f"{DP(td)} dış sahada {V(f'{mpg_dep:.2f}')} MPG ile etkili")
+        if ppg_ev <= 0.8 and ppg_ev > 0: nedenler.append(f"{EV(te)}'in evindeki PPG'si {K(f'{ppg_ev:.2f}')} — kendi sahasında bile kayıp")
+        elif ppg_ev <= 1.3 and ppg_ev > 0: nedenler.append(f"{EV(te)} evinde {U(f'{ppg_ev:.2f}')} PPG ile zorlanıyor")
+        if yd <= 0.8: nedenler.append(f"deplasman dış sahada sadece {V(f'{yd:.2f}')} gol yiyor")
+        if ye >= 1.5: nedenler.append(f"ev sahibi {K(f'{ye:.2f}')} gol yiyor")
+        if 0 < s_dep < s_ev: nedenler.append(f"sıralama farkı ({V(f'{s_dep}.')} vs {V(f'{s_ev}.')}) deplasmanın lehine")
         f_dep_d = _form_detay(form_dep)
-        if f_dep_d and f_dep_d["W"] >= f_dep_d["n"] - 1 and f_dep_d["n"] >= 3:
-            nedenler.append(f"deplasman formu ({V(form_dep)}) mükemmel")
-        if nedenler:
-            kp.append("Öncelikle " + ", ".join(nedenler[:5]) + ".")
+        if f_dep_d and f_dep_d["W"] >= f_dep_d["n"] - 1 and f_dep_d["n"] >= 3: nedenler.append(f"deplasman formu ({V(form_dep)}) mükemmel")
+        if nedenler: kp.append("Öncelikle " + ", ".join(nedenler[:5]) + ".")
         karsi = []
         if px > 20: karsi.append(f"beraberlik %{px:.0f} ile hâlâ masada")
         if p1 > 20: karsi.append(f"ev sahibinin de %{p1:.0f} şansı var")
-        if karsi:
-            kp.append("Ancak " + " ve ".join(karsi) + ". Yani bu maçta kesin bir şey söylemek zor, fakat tüm veriler deplasman lehine eğiliyor.")
+        if karsi: kp.append("Ancak " + " ve ".join(karsi) + ". Yani bu maçta kesin bir şey söylemek zor, fakat tüm veriler deplasman lehine eğiliyor.")
         kp.append(f"Bu veriler ışığında <b>2 ({td} Kazanır)</b> en mantıklı tercih olarak öne çıkıyor.")
     else:
         kp.append(f"Model bu maçta beraberliği yaklaşık {V(f'%{px:.0f}')} olasılıkla işaret ediyor. Bu tip maçlarda genelde iki takım birbirini nötralize eder. Neden böyle düşündük:")
         nedenler = []
-        if ppg_ev > 0 and mpg_dep > 0 and abs(ppg_ev - mpg_dep) < 0.4:
-            nedenler.append(f"iki takımın form ortalamaları neredeyse eşit ({V(f'{ppg_ev:.2f}')} vs {V(f'{mpg_dep:.2f}')})")
-        if ae > 0 and ad > 0 and abs(ae - ad) < 0.4:
-            nedenler.append(f"hücum güçleri birbirine çok yakın ({V(f'{ae:.2f}')} vs {V(f'{ad:.2f}')})")
-        if ye > 0 and yd > 0 and abs(ye - yd) < 0.5:
-            nedenler.append("iki savunma da benzer seviyede")
-        if s_ev and s_dep and abs(s_ev - s_dep) <= 3:
-            nedenler.append(f"lig sıralamaları çok yakın ({V(f'{s_ev}.')} vs {V(f'{s_dep}.')})")
-        if nedenler:
-            kp.append("Öncelikle " + ", ".join(nedenler[:4]) + ".")
+        if ppg_ev > 0 and mpg_dep > 0 and abs(ppg_ev - mpg_dep) < 0.4: nedenler.append(f"iki takımın form ortalamaları neredeyse eşit ({V(f'{ppg_ev:.2f}')} vs {V(f'{mpg_dep:.2f}')})")
+        if ae > 0 and ad > 0 and abs(ae - ad) < 0.4: nedenler.append(f"hücum güçleri birbirine çok yakın ({V(f'{ae:.2f}')} vs {V(f'{ad:.2f}')})")
+        if ye > 0 and yd > 0 and abs(ye - yd) < 0.5: nedenler.append("iki savunma da benzer seviyede")
+        if s_ev and s_dep and abs(s_ev - s_dep) <= 3: nedenler.append(f"lig sıralamaları çok yakın ({V(f'{s_ev}.')} vs {V(f'{s_dep}.')})")
+        if nedenler: kp.append("Öncelikle " + ", ".join(nedenler[:4]) + ".")
         kp.append(f"Yine de 1 ve 2 ihtimalleri de yabana atılmamalı — ev sahibi %{p1:.0f}, deplasman %{p2:.0f}. Ama beraberlik {V(f'%{px:.0f}')} ile en yüksek olasılık olarak öne çıkıyor.")
         kp.append("Bu veriler ışığında <b>X (Beraberlik)</b> en dengeli tercih gibi görünüyor.")
-
-    if kp:
-        bolumler.append(("🎯", "NEDEN BU SONUÇ?", " ".join(kp)))
+    if kp: bolumler.append(("🎯", "NEDEN BU SONUÇ?", " ".join(kp)))
 
     gp = []
     u25 = ust25; a25 = alt25
     top_at = ae + ad
     top_ye = ye + yd
     lam_top = lam_ev + lam_dep
-
     if u25 >= a25:
         gp.append(f"Bu maçta <b>Üst 2.5</b> tarafı ağır basıyor (%{u25:.1f}). Neden mi?")
         gn = []
-        if top_at >= 3.0:
-            gn.append(f"iki takım toplamda maç başına {V(f'{top_at:.2f}')} gol üretiyor")
-        if top_ye >= 3.0:
-            gn.append(f"toplam {V(f'{top_ye:.2f}')} gol yiyorlar — yani savunmalar delik deşik")
-        if u25_ev >= 55 and u25_dep >= 55:
-            gn.append(f"her iki takımın da maçlarının yarısından fazlası 2.5 üstü bitmiş (ev %{V(f'{u25_ev:.0f}')}, dep %{V(f'{u25_dep:.0f}')})")
-        elif u25_ev >= 55:
-            gn.append(f"{EV(te)} maçlarının %{V(f'{u25_ev:.0f}')}'inde 2.5 üstü görmüş")
-        elif u25_dep >= 55:
-            gn.append(f"{DP(td)} maçlarının %{V(f'{u25_dep:.0f}')}'inde 2.5 üstü görmüş")
-        if gn:
-            gp.append("Çünkü " + ", ".join(gn[:3]) + ".")
+        if top_at >= 3.0: gn.append(f"iki takım toplamda maç başına {V(f'{top_at:.2f}')} gol üretiyor")
+        if top_ye >= 3.0: gn.append(f"toplam {V(f'{top_ye:.2f}')} gol yiyorlar — yani savunmalar delik deşik")
+        if u25_ev >= 55 and u25_dep >= 55: gn.append(f"her iki takımın da maçlarının yarısından fazlası 2.5 üstü bitmiş (ev %{V(f'{u25_ev:.0f}')}, dep %{V(f'{u25_dep:.0f}')})")
+        elif u25_ev >= 55: gn.append(f"{EV(te)} maçlarının %{V(f'{u25_ev:.0f}')}'inde 2.5 üstü görmüş")
+        elif u25_dep >= 55: gn.append(f"{DP(td)} maçlarının %{V(f'{u25_dep:.0f}')}'inde 2.5 üstü görmüş")
+        if gn: gp.append("Çünkü " + ", ".join(gn[:3]) + ".")
         gp.append(f"Modelin beklediği toplam gol sayısı {V(f'{lam_top:.2f}')} seviyesinde — ev sahibi {V(f'{lam_ev:.2f}')}, deplasman {V(f'{lam_dep:.2f}')} gol beklentisiyle oynuyor.")
         gp.append("Bu yüzden <b>Üst 2.5</b> demek daha mantıklı.")
     else:
         gp.append(f"Bu maçta <b>Alt 2.5</b> tarafı öne çıkıyor (%{a25:.1f}). Sebeplerine bakalım:")
         gn = []
-        if top_at <= 2.4 and top_at > 0:
-            gn.append(f"iki takım toplamda sadece {V(f'{top_at:.2f}')} gol ortalaması yakalamış")
-        if ye <= 1.0 and ye > 0:
-            gn.append(f"{EV(te)} evinde maç başına yalnızca {V(f'{ye:.2f}')} gol yiyor — sağlam savunma")
-        if yd <= 1.0 and yd > 0:
-            gn.append(f"{DP(td)} dışarıda {V(f'{yd:.2f}')} gol yiyor")
-        if cs_ev >= 40:
-            gn.append(f"{EV(te)} maçlarının %{V(f'{cs_ev:.0f}')}'inde gol yememiş")
-        if cs_dep >= 40:
-            gn.append(f"{DP(td)} maçlarının %{V(f'{cs_dep:.0f}')}'inde kalesini gole kapatmış")
-        if u25_ev > 0 and u25_ev <= 40:
-            gn.append(f"{EV(te)} maçlarının sadece %{U(f'{u25_ev:.0f}')}'inde 2.5 üstü görmüş")
-        if u25_dep > 0 and u25_dep <= 40:
-            gn.append(f"{DP(td)} maçlarında bu oran %{U(f'{u25_dep:.0f}')}")
-        if gn:
-            gp.append("Çünkü " + ", ".join(gn[:3]) + ".")
+        if top_at <= 2.4 and top_at > 0: gn.append(f"iki takım toplamda sadece {V(f'{top_at:.2f}')} gol ortalaması yakalamış")
+        if ye <= 1.0 and ye > 0: gn.append(f"{EV(te)} evinde maç başına yalnızca {V(f'{ye:.2f}')} gol yiyor — sağlam savunma")
+        if yd <= 1.0 and yd > 0: gn.append(f"{DP(td)} dışarıda {V(f'{yd:.2f}')} gol yiyor")
+        if cs_ev >= 40: gn.append(f"{EV(te)} maçlarının %{V(f'{cs_ev:.0f}')}'inde gol yememiş")
+        if cs_dep >= 40: gn.append(f"{DP(td)} maçlarının %{V(f'{cs_dep:.0f}')}'inde kalesini gole kapatmış")
+        if u25_ev > 0 and u25_ev <= 40: gn.append(f"{EV(te)} maçlarının sadece %{U(f'{u25_ev:.0f}')}'inde 2.5 üstü görmüş")
+        if u25_dep > 0 and u25_dep <= 40: gn.append(f"{DP(td)} maçlarında bu oran %{U(f'{u25_dep:.0f}')}")
+        if gn: gp.append("Çünkü " + ", ".join(gn[:3]) + ".")
         gp.append(f"Modelin beklediği toplam gol de {V(f'{lam_top:.2f}')} seviyesinde — yani 2.5 barajının altı.")
         gp.append("Tüm bu veriler ışığında <b>Alt 2.5</b> demek daha akıllıca.")
-
-    if gp:
-        bolumler.append(("⚽", "GOL BEKLENTİSİ", " ".join(gp)))
+    if gp: bolumler.append(("⚽", "GOL BEKLENTİSİ", " ".join(gp)))
 
     kgp = []
     if kgvar >= kgyok:
         kgp.append(f"<b>Karşılıklı Gol Var</b> tarafı ağır basıyor (%{kgvar:.1f}). Neden böyle düşünüyoruz:")
         kn = []
-        if kg_ev >= 60:
-            kn.append(f"{EV(te)} maçlarının %{V(f'{kg_ev:.0f}')}'inde karşılıklı gol görmüş")
-        elif kg_ev >= 50:
-            kn.append(f"{EV(te)} maçlarının yaklaşık yarısında iki takım da gol atmış (%{V(f'{kg_ev:.0f}')})")
-        if kg_dep >= 60:
-            kn.append(f"{DP(td)} maçlarının %{V(f'{kg_dep:.0f}')}'inde KG gerçekleşmiş")
-        elif kg_dep >= 50:
-            kn.append(f"{DP(td)}'te bu oran %{V(f'{kg_dep:.0f}')} civarında")
-        if ye >= 1.0 and yd >= 1.0:
-            kn.append(f"her iki takım da maç başına ortalama {V(f'{(ye+yd)/2:.2f}')} gol yiyor")
-        if ae >= 1.0 and ad >= 1.0:
-            kn.append(f"iki taraf da hücumda etkili ({V(f'{ae:.2f}')} vs {V(f'{ad:.2f}')} gol ortalaması)")
-        if kn:
-            kgp.append("Çünkü " + ", ".join(kn[:3]) + ".")
+        if kg_ev >= 60: kn.append(f"{EV(te)} maçlarının %{V(f'{kg_ev:.0f}')}'inde karşılıklı gol görmüş")
+        elif kg_ev >= 50: kn.append(f"{EV(te)} maçlarının yaklaşık yarısında iki takım da gol atmış (%{V(f'{kg_ev:.0f}')})")
+        if kg_dep >= 60: kn.append(f"{DP(td)} maçlarının %{V(f'{kg_dep:.0f}')}'inde KG gerçekleşmiş")
+        elif kg_dep >= 50: kn.append(f"{DP(td)}'te bu oran %{V(f'{kg_dep:.0f}')} civarında")
+        if ye >= 1.0 and yd >= 1.0: kn.append(f"her iki takım da maç başına ortalama {V(f'{(ye+yd)/2:.2f}')} gol yiyor")
+        if ae >= 1.0 and ad >= 1.0: kn.append(f"iki taraf da hücumda etkili ({V(f'{ae:.2f}')} vs {V(f'{ad:.2f}')} gol ortalaması)")
+        if kn: kgp.append("Çünkü " + ", ".join(kn[:3]) + ".")
         kgp.append("Yani hem ev sahibi hem deplasman gol atma eğiliminde. Bu durumda <b>KG Var</b> tercihi mantıklı.")
     else:
         kgp.append(f"<b>Karşılıklı Gol Yok</b> tarafı açık ara öne çıkıyor (%{kgyok:.1f}). Neden böyle düşünüyoruz:")
         kn = []
-        if kg_ev <= 40 and kg_ev > 0:
-            kn.append(f"{EV(te)} maçlarının yalnızca %{K(f'{kg_ev:.0f}')}'inde iki takım da gol atmış")
-        if kg_dep <= 40 and kg_dep > 0:
-            kn.append(f"{DP(td)}'te bu oran sadece %{K(f'{kg_dep:.0f}')}")
-        if ye <= 1.0 and ye > 0:
-            kn.append(f"{EV(te)} savunması evinde {V(f'{ye:.2f}')} gol yiyor — sağlam")
-        if yd <= 1.0 and yd > 0:
-            kn.append(f"{DP(td)} dışarıda {V(f'{yd:.2f}')} gol yiyor")
-        if cs_ev >= 45:
-            kn.append(f"{EV(te)} maçlarının %{V(f'{cs_ev:.0f}')}'inde kalesini gole kapatmış")
-        if cs_dep >= 45:
-            kn.append(f"{DP(td)} de %{V(f'{cs_dep:.0f}')}'inde gol yememiş")
-        if kn:
-            kgp.append("Çünkü " + ", ".join(kn[:3]) + ".")
+        if kg_ev <= 40 and kg_ev > 0: kn.append(f"{EV(te)} maçlarının yalnızca %{K(f'{kg_ev:.0f}')}'inde iki takım da gol atmış")
+        if kg_dep <= 40 and kg_dep > 0: kn.append(f"{DP(td)}'te bu oran sadece %{K(f'{kg_dep:.0f}')}")
+        if ye <= 1.0 and ye > 0: kn.append(f"{EV(te)} savunması evinde {V(f'{ye:.2f}')} gol yiyor — sağlam")
+        if yd <= 1.0 and yd > 0: kn.append(f"{DP(td)} dışarıda {V(f'{yd:.2f}')} gol yiyor")
+        if cs_ev >= 45: kn.append(f"{EV(te)} maçlarının %{V(f'{cs_ev:.0f}')}'inde kalesini gole kapatmış")
+        if cs_dep >= 45: kn.append(f"{DP(td)} de %{V(f'{cs_dep:.0f}')}'inde gol yememiş")
+        if kn: kgp.append("Çünkü " + ", ".join(kn[:3]) + ".")
         kgp.append("Bu tabloda en az bir takımın gol atamama ihtimali yüksek görünüyor. Bu yüzden <b>KG Yok</b> daha mantıklı.")
-
-    if kgp:
-        bolumler.append(("🤝", "KARŞILIKLI GOL (KG)", " ".join(kgp)))
+    if kgp: bolumler.append(("🤝", "KARŞILIKLI GOL (KG)", " ".join(kgp)))
 
     sn = []
-    yorum_ev = []
-    yorum_dep = []
+    yorum_ev = []; yorum_dep = []
     if ye <= 0.6: yorum_ev.append(f"{EV(te)} evinde son derece sağlam")
     elif ye >= 1.8: yorum_ev.append(f"{EV(te)} evinde savunmada sıkıntılı")
     if ae >= 1.8: yorum_ev.append(f"hücumda etkili ({V(f'{ae:.2f}')} gol/maç)")
     elif ae <= 0.8: yorum_ev.append(f"hücumda kısır ({K(f'{ae:.2f}')} gol/maç)")
-
     if yd >= 1.8: yorum_dep.append(f"{DP(td)} deplasmanda savunma faciası yaşıyor")
     elif yd <= 0.8: yorum_dep.append(f"{DP(td)} dış sahada sağlam")
     if ad >= 1.8: yorum_dep.append(f"deplasmanda gol bulmayı biliyor ({V(f'{ad:.2f}')} gol/maç)")
     elif ad <= 0.8: yorum_dep.append(f"dış sahada gol üretmekte zorlanıyor ({U(f'{ad:.2f}')} gol/maç)")
-
-    if yorum_ev:
-        sn.append(" ".join(yorum_ev).capitalize() + ".")
-    if yorum_dep:
-        sn.append(" ".join(yorum_dep).capitalize() + ".")
-
+    if yorum_ev: sn.append(" ".join(yorum_ev).capitalize() + ".")
+    if yorum_dep: sn.append(" ".join(yorum_dep).capitalize() + ".")
     se_t = int(round(lam_ev)); sd_t = int(round(lam_dep))
     if se_t == sd_t: skor_t = f"{se_t}-{sd_t}"
     elif s1 == "1": skor_t = f"{max(1, se_t)}-{max(0, sd_t)}"
     else: skor_t = f"{max(0, se_t)}-{max(1, sd_t)}"
     sn.append(f"<b>En olası skor tahmini:</b> {V(skor_t)} civarı. Fakat futbolun sürprizlere açık bir oyun olduğunu unutmayın — hiçbir tahmin %100 kesinlik taşımaz.")
-
-    if sn:
-        bolumler.append(("📌", "GERÇEKÇİ SENARYO", " ".join(sn)))
-
+    if sn: bolumler.append(("📌", "GERÇEKÇİ SENARYO", " ".join(sn)))
     return bolumler
 
 
 def ai_yorum_paneli(v, a):
     bolumler = ai_yorum_olustur(v, a)
-    if not bolumler:
-        return ""
-
+    if not bolumler: return ""
     html_parcalar = []
     for ikon, baslik, metin in bolumler:
         html_parcalar.append(
@@ -3347,25 +2650,18 @@ def ai_yorum_paneli(v, a):
             f'<div class="fa-ai-bolum-metin">{metin}</div>'
             f'</div>'
         )
-
     s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
     te = v.get("takim_ev", "Ev"); td = v.get("takim_dep", "Dep")
     karar_isim = {"1": f"1 ({te} Kazanır)", "X": "X (Beraberlik)", "2": f"2 ({td} Kazanır)"}[s1]
-    if a["ust_25"] >= a["alt_25"]:
-        gol_isim = f"Üst 2.5 (%{a['ust_25']:.0f})"
-    else:
-        gol_isim = f"Alt 2.5 (%{a['alt_25']:.0f})"
-    if a["kg_var_model"] >= a["kg_yok_model"]:
-        kg_isim = f"KG Var (%{a['kg_var_model']:.0f})"
-    else:
-        kg_isim = f"KG Yok (%{a['kg_yok_model']:.0f})"
-
+    if a["ust_25"] >= a["alt_25"]: gol_isim = f"Üst 2.5 (%{a['ust_25']:.0f})"
+    else: gol_isim = f"Alt 2.5 (%{a['alt_25']:.0f})"
+    if a["kg_var_model"] >= a["kg_yok_model"]: kg_isim = f"KG Var (%{a['kg_var_model']:.0f})"
+    else: kg_isim = f"KG Yok (%{a['kg_yok_model']:.0f})"
     karar_html = (
         f'<div class="fa-ai-karar">'
         f'<b>🎯 MODEL ÖZETİ:</b> {karar_isim} &nbsp;•&nbsp; {gol_isim} &nbsp;•&nbsp; {kg_isim}'
         f'</div>'
     )
-
     return (
         f'<div class="fa-ai-kart">'
         f'<div class="fa-ai-baslik">🤖 AI MAÇ YORUMU</div>'
@@ -3473,17 +2769,14 @@ def modern_istatistik_grafik(baslik="📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", st
         p1 = seri_1x2[-1] if seri_1x2 else 0
         pg = seri_gol[-1] if seri_gol else 0
         pk = seri_kg[-1] if seri_kg else 0
-
         st.markdown(f'<div class="mh-hero-ust" style="text-align:center;margin-top:14px;">{_e(baslik)}</div>', unsafe_allow_html=True)
-
         kartlar_html = []
         for ikon, etiket, seri, yuz, ist, renk in [
             ("🎯", "1X2", seri_1x2, p1, ist_1x2, "#22c55e"),
             ("⚽", "GOL", seri_gol, pg, ist_gol, "#3b82f6"),
             ("🤝", "KG", seri_kg, pk, ist_kg, "#f59e0b"),
         ]:
-            if not seri:
-                continue
+            if not seri: continue
             dog, top = ist
             yan = top - dog
             spark = _sparkline_svg(seri, renk, yukseklik=52, genislik=140)
@@ -3501,7 +2794,6 @@ def modern_istatistik_grafik(baslik="📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", st
                 f'</div>'
                 f'</div>'
             )
-
         st.markdown(f'<div class="fa-mini-line-grid">{"".join(kartlar_html)}</div>', unsafe_allow_html=True)
     else:
         p1, t1, s1, pg, tg, sg, pk, tk, sk = gecmis_istatistik_hesapla()
@@ -3574,7 +2866,6 @@ def hp_ticker(gelecek):
             else: kgy_count += 1
         except Exception:
             continue
-
     items = [
         ("CANLI", f"{len(gelecek)} maç"),
         ("🎯 YÜKSEK GÜVEN", f"{yuksek_count} maç"),
@@ -3586,7 +2877,6 @@ def hp_ticker(gelecek):
         ("➖ BERABERLİK", f"{ber_count}"),
         ("✈️ DEP FAVORİ", f"{dep_count}"),
     ]
-
     html = ""
     for label, val in items:
         html += f'''
@@ -3605,7 +2895,6 @@ def hp_mac_karti(idx, g):
     td = v.get("takim_dep", "Dep") or "Dep"
     ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
     bayrak = ulke_bayrak_bul(ulke)
-
     try:
         a = analiz_hesapla(v)
         le, ld = a["lam_ev"], a["lam_dep"]
@@ -3615,10 +2904,8 @@ def hp_mac_karti(idx, g):
     except Exception:
         le = ld = 0; p1 = px = p2 = 0
         u25 = a25 = kgv = kgy = 0
-
     s1, y1 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1]) if (p1 + px + p2) > 0 else ("X", 0)
     es1 = esik_1x2_al(s1)
-
     meta_parts = []
     if bayrak != "🌍" or ulke: meta_parts.append(f"{bayrak} {(ulke or '').title()}")
     if tarih: meta_parts.append(f"📅 {tarih}")
@@ -3633,7 +2920,6 @@ def hp_mac_karti(idx, g):
             <div class="hp-prob-bar"><div class="hp-prob-fill" style="--w:{val:.1f}%; width:{val:.1f}%; background:linear-gradient(90deg, {renk}, {renk}cc); box-shadow:0 0 10px {renk}88;"></div></div>
             <span class="hp-prob-val {cls}">%{val:.0f}</span>
         </div>'''
-
     s1_isim = {"1": "1X2", "X": "X", "2": "2"}[s1]
     probs = (
         _row(s1_isim, y1, es1, "#3b82f6") +
@@ -3642,7 +2928,6 @@ def hp_mac_karti(idx, g):
         _row("KG+", kgv, esik_al("kg_var"), "#8b5cf6") +
         _row("KG-", kgy, esik_al("kg_yok"), "#ec4899")
     )
-
     return f'''
     <div class="hp-card">
         <div class="hp-card-ust">
@@ -3673,13 +2958,11 @@ def hp_kilitli_kart(idx, g):
     td = v.get("takim_dep", "Dep") or "Dep"
     ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
     bayrak = ulke_bayrak_bul(ulke)
-
     meta_parts = []
     if bayrak != "🌍" or ulke: meta_parts.append(f"{bayrak} {(ulke or '').title()}")
     if tarih: meta_parts.append(f"📅 {tarih}")
     if saat: meta_parts.append(f"🕐 {saat}")
     meta = " • ".join(meta_parts) if meta_parts else ""
-
     return f'''
     <div class="hp-locked">
         <div style="text-align:center; font-size:.62rem; color:#8fa0bd; font-weight:800; letter-spacing:.5px; margin-bottom:10px; filter:blur(2px);">{meta}</div>
@@ -3813,26 +3096,19 @@ def nav_bar():
     with kutu:
         badge_map = {}
         if admin_mi():
-            try:
-                odeme_say = len(bekleyen_yukle())
-            except Exception:
-                odeme_say = 0
+            try: odeme_say = len(bekleyen_yukle())
+            except Exception: odeme_say = 0
             try:
                 bd_list = bildirimler_yukle()
                 bildirim_say = sum(1 for b in bd_list if b.get("durum") == "okunmadi")
-            except Exception:
-                bildirim_say = 0
-            try:
-                abone_say = yeni_kayit_say(24)
-            except Exception:
-                abone_say = 0
-
+            except Exception: bildirim_say = 0
+            try: abone_say = yeni_kayit_say(24)
+            except Exception: abone_say = 0
             badge_map = {
                 "admin_odemeler": odeme_say,
                 "admin_bildirimler": bildirim_say,
                 "admin_aboneler": abone_say,
             }
-
             sec = [("🏠 Ana Sayfa", "giris"), ("🔮 Gelecek", "gelecek_admin"), ("📊 Geçmiş", "gecmis"), ("🔬 Test", "backtest"), ("💳 Ödemeler", "admin_odemeler"), ("👥 Aboneler", "admin_aboneler"), ("📬 Bildirimler", "admin_bildirimler"), ("⚙️ Ayar", "ayarlar")]
         elif uye_mi():
             sec = [("🏠 Ana Sayfa", "giris"), ("📊 Geçmiş Maçlar", "gecmis"), ("📬 Bildirim", "kullanici_bildirim")]
@@ -3871,7 +3147,6 @@ elif st.session_state.sayfa == "giris":
     if admin_mi():
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:gray;'>Admin Paneli</p>", unsafe_allow_html=True)
-
         try:
             bugun = gunluk_ziyaret_sayisi()
             son7 = son_7_gun_ziyaretler()
@@ -3896,9 +3171,6 @@ elif st.session_state.sayfa == "giris":
                         st.markdown(f"**{tarih}:** {sayi} kişi")
         except Exception:
             pass
-
-        st.divider()
-
         st.divider()
         st.markdown("### 🤖 Otomatik Veri Çekme")
         vs1, vs2, vs3 = st.tabs(["🔄 Gelecek Maçlar", "📜 Lig Geçmişi", "🏁 Sonuçları İşle"])
@@ -3916,7 +3188,7 @@ elif st.session_state.sayfa == "giris":
                         try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
                         except Exception: pass
                     with st.spinner("Çekiliyor..."):
-                        bas, hat = mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=_p, max_workers=int(w))
+                        bas, hat = mutating_toplu_cek(max_mac=MAX_GELECEK, progress_callback=_p, max_workers=int(w))
                     ph.empty()
                     if hat:
                         with st.expander(f"⚠️ {len(hat)} hata"):
@@ -3928,7 +3200,7 @@ elif st.session_state.sayfa == "giris":
         with vs2:
             lurl = st.text_input("Lig URL", key="lig_url_input", placeholder="https://www.mutating.com/football-stats/league-...")
             c1, c2 = st.columns(2)
-            with c1: la = st.number_input("Kaç maç?", 5, 30, 10, 1, key="lig_adet")
+            with c1: la = st.number_input("Kaç maç?", 5, 30, 5, 1, key="lig_adet")
             with c2: lw = st.number_input("Paralel", 1, 6, 2, 1, key="lig_workers")
             if st.button("📜 Ligi Çek", use_container_width=True, type="primary", key="lig_cek_btn"):
                 if not lurl.strip(): st.warning("URL gerekli")
@@ -3953,8 +3225,7 @@ elif st.session_state.sayfa == "giris":
                 st.success(f"✅ {oz['tasinan']} maç Geçmişe taşındı • {oz['bitmemis']} maç henüz bitmemiş • {hata_say} hata")
                 if oz.get("hatalar"):
                     with st.expander(f"⚠️ {hata_say} hata detayı"):
-                        for _h in oz["hatalar"][:50]:
-                            st.caption(_h)
+                        for _h in oz["hatalar"][:50]: st.caption(_h)
             st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}**")
             sy = st.checkbox("Skor bulunamazsa tarayıcıyla da dene (yavaş)", value=False, key="skor_yedek")
             c1, c2 = st.columns(2)
@@ -3962,8 +3233,7 @@ elif st.session_state.sayfa == "giris":
             with c2:
                 st.markdown("")
                 if st.button("🏁 Biten Maçları Geçmişe Aktar", use_container_width=True, type="primary", key="skor_btn"):
-                    if not st.session_state.gelecek_analizler:
-                        st.warning("Gelecek'te maç yok")
+                    if not st.session_state.gelecek_analizler: st.warning("Gelecek'te maç yok")
                     else:
                         ph = st.empty()
                         def _p3(i, t, n):
@@ -3979,8 +3249,6 @@ elif st.session_state.sayfa == "giris":
         toplam = len(gelecek)
         premium = uye_premium_mu()
         kota = int(ayar_al("ucretsiz_kotasi", 3))
-
-        # Premium kalan gün
         kalan_gun = 0
         if premium:
             try:
@@ -3990,21 +3258,12 @@ elif st.session_state.sayfa == "giris":
                     if kk >= 0: kalan_gun = kk
             except Exception:
                 pass
-
-        # ===== MODERN HERO =====
         st.markdown(hp_hero(uye_adi() if uye_mi() else "", premium, kalan_gun, toplam, kota), unsafe_allow_html=True)
-
-        # ===== CANLI TICKER =====
         if gelecek:
             st.markdown(hp_ticker(gelecek), unsafe_allow_html=True)
-
-        # ===== MİNİ İSTATİSTİK GRID =====
-        if premium:
-            acik_say = toplam
-        else:
-            acik_say = min(kota, toplam)
+        if premium: acik_say = toplam
+        else: acik_say = min(kota, toplam)
         kilitli_say = max(0, toplam - acik_say)
-
         st.markdown(f'''
         <div class="hp-mini-grid">
             <div class="hp-mini" style="--c:#3b82f6;">
@@ -4029,8 +3288,6 @@ elif st.session_state.sayfa == "giris":
             </div>
         </div>
         ''', unsafe_allow_html=True)
-
-        # ===== CTA BUTONLARI =====
         if not premium:
             if uye_mi():
                 if st.button("💳 Premium'a Geç  •  ✨ Sınırsız Erişim", use_container_width=True, type="primary", key="hp_cta_prem_uye"):
@@ -4047,13 +3304,8 @@ elif st.session_state.sayfa == "giris":
                     if st.button("🔐 Giriş Yap", use_container_width=True, key="hp_cta_giris_mis"):
                         st.session_state.sayfa = "giris_yap"
                         st.rerun()
-
-        # ===== GEÇMİŞ İSTATİSTİK (Modern sparkline) =====
         modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="line")
-
-        # ===== GELECEK MAÇLAR =====
         st.markdown(f'<div class="hp-section-ttl">🔮 GELECEK MAÇLAR <span class="hp-section-ttl-count">{toplam} MAÇ</span></div>', unsafe_allow_html=True)
-
         if not gelecek:
             st.markdown('''
             <div class="hp-empty">
@@ -4067,7 +3319,6 @@ elif st.session_state.sayfa == "giris":
             for idx, g in sirali:
                 v = g["veri"]
                 if premium or acik < kota:
-                    # AÇIK MAÇ
                     st.markdown(hp_mac_karti(idx, g), unsafe_allow_html=True)
                     if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gmac_{idx}"):
                         st.session_state.form_verileri = copy.deepcopy(v)
@@ -4078,7 +3329,6 @@ elif st.session_state.sayfa == "giris":
                         st.rerun()
                     acik += 1
                 else:
-                    # KİLİTLİ MAÇ
                     st.markdown(hp_kilitli_kart(idx, g), unsafe_allow_html=True)
                     c1, c2 = st.columns(2)
                     with c1:
@@ -4093,7 +3343,6 @@ elif st.session_state.sayfa == "giris":
                         if st.button("🔑 Giriş", use_container_width=True, key=f"kg_{idx}"):
                             st.session_state.sayfa = "giris_yap"
                             st.rerun()
-
         yasal_metin_goster()
         misafir_aciklama()
         st.markdown('<div class="login-footer" style="margin-top:20px;">© <b>Futbol Analiz Pro</b> • Bilgi amaçlıdır</div>', unsafe_allow_html=True)
@@ -4357,7 +3606,6 @@ elif st.session_state.sayfa == "gelecek_admin":
     st.markdown("<h1>🔮 Gelecek Maçlar</h1>", unsafe_allow_html=True)
     gel = st.session_state.gelecek_analizler
     toplam_g = len(gel)
-
     st.markdown("### 💾 Yedekleme")
     c1, c2 = st.columns(2)
     with c1:
@@ -4385,7 +3633,6 @@ elif st.session_state.sayfa == "gelecek_admin":
             except Exception as e:
                 st.error(f"❌ Hata: {e}")
     st.divider()
-
     if not gel:
         st.info("ℹ️ Gelecek maç yok. Admin ana sayfadan maç çekebilirsin.")
     else:
@@ -4398,12 +3645,9 @@ elif st.session_state.sayfa == "gelecek_admin":
             st.markdown(mac_karti(te, td, False, 0, 0, le, ld, saat, ulke, tarih), unsafe_allow_html=True)
             th = mac_tahmin_karti(v, g)
             if th: st.markdown(th, unsafe_allow_html=True)
-
             c1, c2, c3 = st.columns([1, 1, 2])
-            with c1:
-                st.number_input("Ev", 0, 20, 0, 1, key=f"ise_{idx}")
-            with c2:
-                st.number_input("Dep", 0, 20, 0, 1, key=f"isd_{idx}")
+            with c1: st.number_input("Ev", 0, 20, 0, 1, key=f"ise_{idx}")
+            with c2: st.number_input("Dep", 0, 20, 0, 1, key=f"isd_{idx}")
             with c3:
                 st.markdown(""); st.markdown("")
                 st.button(
@@ -4414,7 +3658,6 @@ elif st.session_state.sayfa == "gelecek_admin":
                     use_container_width=True,
                     type="primary"
                 )
-
             c1, c2 = st.columns([5, 1])
             with c1:
                 if st.button("🔍 Detay", use_container_width=True, key=f"gmac_{idx}"):
@@ -4428,7 +3671,6 @@ elif st.session_state.sayfa == "gelecek_admin":
                     else:
                         st.session_state.tek_silme_gelecek = idx
                     st.rerun()
-
             if st.session_state.get("tek_silme_gelecek") == idx:
                 st.warning(f"⚠️ **{te} vs {td}** silinsin mi? Bu işlem geri alınamaz.")
                 oc1, oc2 = st.columns(2)
@@ -4446,7 +3688,6 @@ elif st.session_state.sayfa == "gelecek_admin":
                         st.session_state.tek_silme_gelecek = None
                         st.rerun()
             st.divider()
-
         if "_inline_msg" in st.session_state:
             _msg_type, _msg_text = st.session_state.pop("_inline_msg")
             if _msg_type == "success":
@@ -4455,10 +3696,8 @@ elif st.session_state.sayfa == "gelecek_admin":
                 st.rerun()
             else:
                 st.error(_msg_text)
-
     if admin_mi() and len(gel) > 0:
         st.markdown(f'<div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));border:1.5px solid rgba(239,68,68,0.5);border-radius:14px;padding:14px;margin-bottom:16px;"><div style="font-size:0.95rem;font-weight:900;color:#ef4444;letter-spacing:0.5px;margin-bottom:4px;">🚨 TEHLİKELİ BÖLGE — TOPLU SİLME</div><div style="font-size:0.78rem;color:#fca5a5;font-weight:600;">Bu butona bastığınızda <b>TÜM GELECEK MAÇLAR ({len(gel)} maç)</b> kalıcı olarak silinir. Bu işlem geri alınamaz!</div></div>', unsafe_allow_html=True)
-
         if st.session_state.get("silme_onay_gelecek"):
             st.error(f"⚠️ **SON ONAY:** Tüm gelecek silinecek (**{len(gel)} maç**). Emin misin?")
             oc1, oc2 = st.columns(2)
@@ -4481,7 +3720,6 @@ elif st.session_state.sayfa == "gelecek_admin":
         else:
             def _toplu_sil_gelecek_toggle():
                 st.session_state.silme_onay_gelecek = True
-
             st.button(
                 f"🗑️ TÜM GELECEĞİ SİL ({len(gel)} MAÇ)",
                 use_container_width=True,
@@ -4490,9 +3728,6 @@ elif st.session_state.sayfa == "gelecek_admin":
                 on_click=_toplu_sil_gelecek_toggle
             )
         st.divider()
-
-
-
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gg_geri"):
         st.session_state.sayfa = "giris"; st.rerun()
 
@@ -4500,7 +3735,6 @@ elif st.session_state.sayfa == "gelecek_admin":
 elif st.session_state.sayfa == "gecmis":
     st.markdown("<h1>📊 Geçmiş Maçlar</h1>", unsafe_allow_html=True)
     gc = st.session_state.gecmis_analizler; top = len(gc)
-
     if admin_mi():
         st.markdown("### 💾 Yedekleme")
         c1, c2 = st.columns(2)
@@ -4529,7 +3763,6 @@ elif st.session_state.sayfa == "gecmis":
                 except Exception as e:
                     st.error(f"❌ Hata: {e}")
         st.divider()
-
     if top == 0:
         st.info("Henüz kayıt yok.")
     else:
@@ -4557,7 +3790,6 @@ elif st.session_state.sayfa == "gecmis":
                         else:
                             st.session_state.tek_silme_onay = idx
                         st.rerun()
-
                 if st.session_state.get("tek_silme_onay") == idx:
                     st.warning(f"⚠️ **{te} vs {td}** maçını silmek istediğinden emin misin?")
                     oc1, oc2 = st.columns(2)
@@ -4580,10 +3812,8 @@ elif st.session_state.sayfa == "gecmis":
                     st.session_state.kayit_yapildi = True; st.session_state.gecmisten_gelindi = True
                     st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
             st.divider()
-
     if admin_mi() and top > 0:
         st.markdown(f'<div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));border:1.5px solid rgba(239,68,68,0.5);border-radius:14px;padding:14px;margin-bottom:16px;"><div style="font-size:0.95rem;font-weight:900;color:#ef4444;letter-spacing:0.5px;margin-bottom:4px;">🚨 TEHLİKELİ BÖLGE — TOPLU SİLME</div><div style="font-size:0.78rem;color:#fca5a5;font-weight:600;">Bu butona bastığınızda <b>TÜM GEÇMİŞ MAÇLAR ({top} maç)</b> kalıcı olarak silinir. Bu işlem geri alınamaz!</div></div>', unsafe_allow_html=True)
-
         if st.session_state.get("silme_onay"):
             st.error(f"⚠️ **SON ONAY:** Tüm geçmiş silinecek (**{top} maç**). Emin misin?")
             oc1, oc2 = st.columns(2)
@@ -4606,7 +3836,6 @@ elif st.session_state.sayfa == "gecmis":
         else:
             def _toplu_sil_toggle():
                 st.session_state.silme_onay = True
-
             st.button(
                 f"🗑️ TÜM GEÇMİŞİ SİL ({top} MAÇ)",
                 use_container_width=True,
@@ -4615,9 +3844,6 @@ elif st.session_state.sayfa == "gecmis":
                 on_click=_toplu_sil_toggle
             )
         st.divider()
-
-
-
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gc_geri"):
         st.session_state.sayfa = "giris"; st.rerun()
 
@@ -4625,7 +3851,6 @@ elif st.session_state.sayfa == "gecmis":
 elif st.session_state.sayfa == "backtest":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>🔬 Model Test (Backtest)</h1>", unsafe_allow_html=True)
-
     with st.expander("📊 Test Ayarları", expanded=(st.session_state.bt_sonuc is None)):
         st.caption("Hangi marketleri ve hangi eşikleri test etmek istediğini seç.")
         c1, c2, c3 = st.columns(3)
@@ -4640,7 +3865,6 @@ elif st.session_state.sayfa == "backtest":
         with c3:
             su = st.checkbox("⬆️ Üst 2.5", key="bt_ust"); eu = st.slider("Üst eşiği", 0, 100, 70, key="sl_ust")
             sa = st.checkbox("⬇️ Alt 2.5", key="bt_alt"); ea = st.slider("Alt eşiği", 0, 100, 70, key="sl_alt")
-
         if st.button("🚀 TESTİ ÇALIŞTIR", use_container_width=True, type="primary", key="bt_run"):
             with st.spinner("Test ediliyor..."):
                 sec = {"1x2": s1x2, "kg_var": skv, "kg_yok": sky, "ust": su, "alt": sa}
@@ -4652,18 +3876,15 @@ elif st.session_state.sayfa == "backtest":
                     st.session_state.bt_sonuc = s
                     st.session_state.bt_detaylar = d
                     st.session_state.bt_sec = sec
-
     if st.session_state.bt_sonuc and st.session_state.get("bt_sec"):
         sec = st.session_state.bt_sec
         sonuc = st.session_state.bt_sonuc
         gecmis_len = len(st.session_state.gecmis_analizler)
-
         st.markdown(f'''<div style="text-align:center;margin:10px 0 6px 0;">
 <span style="display:inline-block; background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.5); border-radius:99px; padding:4px 14px; font-size:0.72rem; font-weight:800; color:#3b82f6; letter-spacing:0.5px;">
 🔎 {gecmis_len} MAÇ ÜZERİNDE TEST EDİLDİ
 </span>
 </div>''', unsafe_allow_html=True)
-
         def _bt_kart(baslik, ikon, d, renk, acik_renk):
             dog = d["dogru"]; yan = d["yanlis"]; tt = dog + yan
             yuzde = (dog / tt * 100) if tt > 0 else 0
@@ -4678,24 +3899,16 @@ elif st.session_state.sayfa == "backtest":
 <div class="fa-bt-bar"><div class="fa-bt-fill" style="width:{yuzde:.1f}%"></div></div>
 <div class="fa-bt-sub"><span><span class="fa-bt-dog">✓ {dog} doğru</span> &nbsp; <span class="fa-bt-yan">✗ {yan} yanlış</span></span><span>Başarı %{yuzde:.1f}</span></div>
 </div>'''
-
         kartlar = []
-        if sec.get("1x2"):
-            kartlar.append(_bt_kart("1X2", "⚽", sonuc["1x2"], "#22c55e", "#4ade80"))
-        if sec.get("kg_var"):
-            kartlar.append(_bt_kart("KG Var", "🤝", sonuc["kg_var"], "#3b82f6", "#60a5fa"))
-        if sec.get("kg_yok"):
-            kartlar.append(_bt_kart("KG Yok", "🚫", sonuc["kg_yok"], "#8b5cf6", "#a78bfa"))
-        if sec.get("ust"):
-            kartlar.append(_bt_kart("Üst 2.5", "⬆️", sonuc["ust"], "#f59e0b", "#fbbf24"))
-        if sec.get("alt"):
-            kartlar.append(_bt_kart("Alt 2.5", "⬇️", sonuc["alt"], "#ef4444", "#f87171"))
-
+        if sec.get("1x2"): kartlar.append(_bt_kart("1X2", "⚽", sonuc["1x2"], "#22c55e", "#4ade80"))
+        if sec.get("kg_var"): kartlar.append(_bt_kart("KG Var", "🤝", sonuc["kg_var"], "#3b82f6", "#60a5fa"))
+        if sec.get("kg_yok"): kartlar.append(_bt_kart("KG Yok", "🚫", sonuc["kg_yok"], "#8b5cf6", "#a78bfa"))
+        if sec.get("ust"): kartlar.append(_bt_kart("Üst 2.5", "⬆️", sonuc["ust"], "#f59e0b", "#fbbf24"))
+        if sec.get("alt"): kartlar.append(_bt_kart("Alt 2.5", "⬇️", sonuc["alt"], "#ef4444", "#f87171"))
         if not kartlar:
             st.markdown('<div class="fa-bt-bos"><span class="fa-bt-bos-ikon">📭</span>Hiç market seçilmedi.</div>', unsafe_allow_html=True)
         else:
             st.markdown(f'<div class="fa-bt-grid">{"".join(kartlar)}</div>', unsafe_allow_html=True)
-
         tum_dog = sum(sonuc[k]["dogru"] for k in sonuc)
         tum_yan = sum(sonuc[k]["yanlis"] for k in sonuc)
         tum_tt = tum_dog + tum_yan
@@ -4710,7 +3923,6 @@ elif st.session_state.sayfa == "backtest":
 </div>''', unsafe_allow_html=True)
     else:
         st.markdown('<div class="fa-bt-bos"><span class="fa-bt-bos-ikon">🔬</span>Yukarıdaki ayarları yap ve <b>Testi Çalıştır</b> butonuna bas.</div>', unsafe_allow_html=True)
-
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="btg"):
         st.session_state.sayfa = "giris"; st.rerun()
 
@@ -4797,8 +4009,6 @@ elif st.session_state.sayfa == "sonuc":
     sb = v.get("skor_belli", False)
     se = v.get("skor_ev", 0); sd = v.get("skor_dep", 0)
     ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
-
-    # ===== HERO =====
     bayrak = ulke_bayrak_bul(ulke)
     meta_parcalar = []
     if ulke: meta_parcalar.append(f"{bayrak} {ulke.title()}")
@@ -4806,9 +4016,7 @@ elif st.session_state.sayfa == "sonuc":
     if tarih: meta_parcalar.append(f"📅 {tarih}")
     if saat: meta_parcalar.append(f"🕐 {saat}")
     meta = " &nbsp;•&nbsp; ".join(meta_parcalar) if meta_parcalar else "MAÇ ANALİZİ"
-
     skor_html = f'<div class="an-skor">{se} - {sd}</div>' if sb else '<div class="an-vs">VS</div>'
-
     st.markdown(f'''
     <div class="an-hero">
         <div class="an-hero-meta"><span class="an-pulse-dot"></span> {meta}</div>
@@ -4824,29 +4032,24 @@ elif st.session_state.sayfa == "sonuc":
     </div>
     ''', unsafe_allow_html=True)
 
-    # ===== FORM KUTULARI =====
     def _form_html(form_str, takim):
         if not form_str: return ""
         s = "".join(c for c in str(form_str).upper() if c in "WDL")
         if not s: return ""
         boxes = "".join(f'<span class="an-form-box an-form-{c}">{c}</span>' for c in s)
         return f'<div class="an-stat"><div class="an-stat-lbl" style="margin-top:0;margin-bottom:4px;">{_e(takim)} FORMU</div><div class="an-form-row">{boxes}</div></div>'
-
     f_ev = _form_html(v.get("form_str_ev", ""), te)
     f_dep = _form_html(v.get("form_str_dep", ""), td)
     if f_ev or f_dep:
         st.markdown(f'<div class="an-stat-grid an-2col">{f_ev}{f_dep}</div>', unsafe_allow_html=True)
 
-    # ===== ANİMASYONLU KARŞILAŞTIRMA PANELİ =====
     st.markdown('<div class="an-section-ttl">⚔️ Takım Karşılaştırması</div>', unsafe_allow_html=True)
-
     ae = float(v.get("atilan_ev", 0) or 0); ad = float(v.get("atilan_dep", 0) or 0)
     ye = float(v.get("yenen_ev", 0) or 0); yd = float(v.get("yenen_dep", 0) or 0)
     xge = float(v.get("xg_ev", 0) or 0); xgd = float(v.get("xg_dep", 0) or 0)
     u25e = float(v.get("ust25_ev", 0) or 0); u25d = float(v.get("ust25_dep", 0) or 0)
     kge = float(v.get("kg_siklik_ev", 0) or 0); kgd = float(v.get("kg_siklik_dep", 0) or 0)
     cs_e = float(v.get("clean_sheets_ev", 0) or 0); cs_d = float(v.get("clean_sheets_dep", 0) or 0)
-
     def _cmp_row(lbl, ev_val, dep_val, ev_max=100, dep_max=100, fmt=".1f", suffix=""):
         ev_p = max(0, min(100, (ev_val / ev_max * 100) if ev_max else 0))
         dep_p = max(0, min(100, (dep_val / dep_max * 100) if dep_max else 0))
@@ -4855,7 +4058,6 @@ elif st.session_state.sayfa == "sonuc":
         <div class="an-cmp-lbl">{lbl}</div>
         <div><div class="an-cmp-val dep">{dep_val:{fmt}}{suffix}</div><div class="an-cmp-bar dep"><div class="an-cmp-fill" style="--l:0%; width:{dep_p:.0f}%"></div></div></div>
         </div>'''
-
     rows = []
     if ae or ad: rows.append(_cmp_row("Atılan Gol", ae, ad, 4.0, 4.0, ".2f"))
     if ye or yd: rows.append(_cmp_row("Yenen Gol", ye, yd, 4.0, 4.0, ".2f"))
@@ -4863,7 +4065,6 @@ elif st.session_state.sayfa == "sonuc":
     if u25e or u25d: rows.append(_cmp_row("Üst 2.5", u25e, u25d, 100, 100, ".0f", "%"))
     if kge or kgd: rows.append(_cmp_row("KG Sıklık", kge, kgd, 100, 100, ".0f", "%"))
     if cs_e or cs_d: rows.append(_cmp_row("Clean Sheet", cs_e, cs_d, 100, 100, ".0f", "%"))
-
     if rows:
         st.markdown(f'''<div class="an-cmp-wrap">
         <div class="an-cmp-header">
@@ -4874,9 +4075,7 @@ elif st.session_state.sayfa == "sonuc":
         {"".join(rows)}
         </div>''', unsafe_allow_html=True)
 
-    # ===== OLASILIK DONUT KARTLARI =====
     st.markdown('<div class="an-section-ttl">🎯 Maç Sonucu Olasılıkları</div>', unsafe_allow_html=True)
-
     def _donut(yuzde, renk, boyut=82):
         y = max(0.0, min(100.0, yuzde))
         r = 34; cevre = 2 * 3.14159 * r
@@ -4889,7 +4088,6 @@ elif st.session_state.sayfa == "sonuc":
         <text x="41" y="41" text-anchor="middle" dominant-baseline="central"
             fill="{renk}" font-size="20" font-weight="900">%{y:.0f}</text>
         </svg>'''
-
     def _prob_donut(lbl, yuzde, renk, aktif=False, esik=""):
         cls = "an-active" if aktif else ""
         return f'''<div class="an-prob-kart {cls}" style="--c:{renk};">
@@ -4897,7 +4095,6 @@ elif st.session_state.sayfa == "sonuc":
         {_donut(yuzde, renk)}
         <div class="an-prob-alt">{esik}</div>
         </div>'''
-
     p1, px, p2 = a["p1"], a["px"], a["p2"]
     en1x2 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])[0]
     st.markdown(f'''<div class="an-olasilik-grid">
@@ -4911,7 +4108,6 @@ elif st.session_state.sayfa == "sonuc":
     kgv, kgy = a["kg_var_model"], a["kg_yok_model"]
     en_gol = "Üst" if u25 >= a25 else "Alt"
     en_kg = "Var" if kgv >= kgy else "Yok"
-
     st.markdown(f'''<div class="an-olasilik-grid an-2col">
     {_prob_donut("ÜST 2.5", u25, "#22c55e", en_gol == "Üst", f"Eşik %{esik_al('ust'):.0f}")}
     {_prob_donut("ALT 2.5", a25, "#ef4444", en_gol == "Alt", f"Eşik %{esik_al('alt'):.0f}")}
@@ -4921,13 +4117,11 @@ elif st.session_state.sayfa == "sonuc":
     {_prob_donut("KG YOK", kgy, "#ec4899", en_kg == "Yok", f"Eşik %{esik_al('kg_yok'):.0f}")}
     </div>''', unsafe_allow_html=True)
 
-    # ===== AI ANALİZ =====
     ai_html = ai_yorum_paneli(v, a)
     if ai_html:
         st.markdown('<div class="an-section-ttl">🤖 Yapay Zeka Detaylı Analizi</div>', unsafe_allow_html=True)
         st.markdown(ai_html, unsafe_allow_html=True)
 
-    # ===== KAYIT =====
     s1, y1 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
     e1 = esik_1x2_al(s1)
     km = (u25 >= esik_al("ust") and u25 >= a25) or (a25 >= esik_al("alt") and a25 >= u25) or (y1 >= e1)
@@ -4941,7 +4135,6 @@ elif st.session_state.sayfa == "sonuc":
             gelecek_kaydet(st.session_state.gelecek_analizler)
         st.session_state.kayit_yapildi = True
 
-    # ===== BUTONLAR =====
     st.markdown("<br>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
