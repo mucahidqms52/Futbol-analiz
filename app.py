@@ -422,7 +422,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("""<style>
-
 /* ============================================
    🎬 ANİMASYONLU MODERN ANALİZ SİSTEMİ
    ============================================ */
@@ -2251,10 +2250,9 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 # ==========================================
-# FLASHSCORE SKOR ENTEGRASYONU (YENİ)
+# FLASHSCORE SKOR ENTEGRASYONU
 # ==========================================
 def _takim_normalize(isim):
-    """Takım isimlerini karşılaştırma için normalize eder."""
     if not isim:
         return ""
     s = str(isim).lower().strip()
@@ -2270,7 +2268,6 @@ def _takim_normalize(isim):
 
 
 def _benzerlik(a, b):
-    """İki string arasındaki kelime bazlı Jaccard benzerliği (0-1)."""
     if not a or not b:
         return 0.0
     if a == b:
@@ -2282,7 +2279,6 @@ def _benzerlik(a, b):
 
 
 def _flashscore_feed_parse(metin):
-    """FlashScore feed formatını parse eder (¬~ blok, ¬ alan, ÷ K/V)."""
     maclar = []
     if not metin:
         return maclar
@@ -2317,7 +2313,6 @@ def _flashscore_feed_parse(metin):
 
 @st.cache_data(ttl=120, show_spinner=False)
 def _flashscore_gun_maclari(day_offset=0):
-    """FlashScore'un günlük feed'inden maçları çeker (-7..+7 gün)."""
     url = f"https://global.flashscore.ninja/2/x/feed/f_1_{day_offset}_3_en_1"
     try:
         r = requests.get(url, headers={
@@ -2334,7 +2329,6 @@ def _flashscore_gun_maclari(day_offset=0):
 
 
 def _flashscore_skor_bul(takim_ev, takim_dep, tarih=""):
-    """FlashScore feed'inden takım isimleri + tarihe göre BİTMİŞ maç skorunu bulur."""
     ev_n = _takim_normalize(takim_ev)
     dep_n = _takim_normalize(takim_dep)
     if not ev_n or not dep_n:
@@ -2361,14 +2355,12 @@ def _flashscore_skor_bul(takim_ev, takim_dep, tarih=""):
     if not tum:
         return None
 
-    # Önce tam eşleşme (durum=3 → FT)
     for m in tum:
         if m.get("durum") != "3":
             continue
         if _takim_normalize(m["ev"]) == ev_n and _takim_normalize(m["dep"]) == dep_n:
             return (m["skor_ev"], m["skor_dep"])
 
-    # Sonra benzerlik skoru
     en_iyi_puan, en_iyi_skor = 0.0, None
     for m in tum:
         if m.get("durum") != "3":
@@ -2392,8 +2384,6 @@ def _skor_parse(html):
 
 
 def _skor_cek(url, takim_ev="", takim_dep="", tarih="", tarayici_yedek=False):
-    """Önce FlashScore'dan skoru bul, bulamazsa mutating.com'a düş."""
-    # 1) FlashScore (öncelikli)
     if takim_ev and takim_dep:
         try:
             skor = _flashscore_skor_bul(takim_ev, takim_dep, tarih)
@@ -2402,7 +2392,6 @@ def _skor_cek(url, takim_ev="", takim_dep="", tarih="", tarayici_yedek=False):
         except Exception:
             pass
 
-    # 2) Fallback: mutating.com
     html = None
     hata = None
     if url:
@@ -2430,7 +2419,6 @@ def _skor_cek(url, takim_ev="", takim_dep="", tarih="", tarayici_yedek=False):
 
 def sonuclari_isle(tarayici_yedek=False, max_workers=3, progress_callback=None):
     gel = st.session_state.gelecek_analizler
-    # Artık kaynak_url şart değil, takım isimleri yeterli (FlashScore için)
     isler = [(i, g) for i, g in enumerate(gel)
              if g.get("veri", {}).get("takim_ev") and g.get("veri", {}).get("takim_dep")]
     sonuc = {}; tamam = 0
@@ -4256,35 +4244,6 @@ elif st.session_state.sayfa == "sonuc":
     </div>
     ''', unsafe_allow_html=True)
 
-    # ===== ÖNE ÇIKAN İSTATİSTİKLER =====
-    def _stat(ikon, deger, lbl, snf=""):
-        return f'<div class="an-stat {snf}"><div class="an-stat-ikon">{ikon}</div><div class="an-stat-deger">{deger}</div><div class="an-stat-lbl">{lbl}</div></div>'
-
-    kartlar = []
-    xge = float(v.get("xg_ev", 0) or 0); xgd = float(v.get("xg_dep", 0) or 0)
-    if xge or xgd: kartlar.append(_stat("⚡", f"{xge:.2f} – {xgd:.2f}", "xG (Ev–Dep)"))
-    s_ev = int(v.get("siralama_ev", 0) or 0); s_dep = int(v.get("siralama_dep", 0) or 0)
-    if s_ev and s_dep:
-        snf = "an-good" if s_ev < s_dep else ("an-bad" if s_dep < s_ev else "")
-        kartlar.append(_stat("🏆", f"{s_ev}. – {s_dep}.", "Sıralama", snf))
-    ae = float(v.get("atilan_ev", 0) or 0); ad = float(v.get("atilan_dep", 0) or 0)
-    if ae or ad: kartlar.append(_stat("⚽", f"{ae:.2f} – {ad:.2f}", "Atılan Gol"))
-    ye = float(v.get("yenen_ev", 0) or 0); yd = float(v.get("yenen_dep", 0) or 0)
-    if ye or yd:
-        ort = (ye + yd) / 2
-        snf = "an-good" if ort < 1.2 else ("an-bad" if ort > 1.8 else "")
-        kartlar.append(_stat("🛡️", f"{ye:.2f} – {yd:.2f}", "Yenen Gol", snf))
-    u25e = float(v.get("ust25_ev", 0) or 0); u25d = float(v.get("ust25_dep", 0) or 0)
-    if u25e or u25d:
-        ort = (u25e + u25d) / 2
-        snf = "an-good" if ort >= 55 else ("an-bad" if ort <= 40 else "an-warn")
-        kartlar.append(_stat("📈", f"%{ort:.0f}", "Üst 2.5", snf))
-    kge = float(v.get("kg_siklik_ev", 0) or 0); kgd = float(v.get("kg_siklik_dep", 0) or 0)
-    if kge or kgd: kartlar.append(_stat("🤝", f"%{(kge+kgd)/2:.0f}", "KG Ort."))
-
-    if kartlar:
-        st.markdown(f'<div class="an-stat-grid">{"".join(kartlar[:6])}</div>', unsafe_allow_html=True)
-
     # ===== FORM KUTULARI =====
     def _form_html(form_str, takim):
         if not form_str: return ""
@@ -4301,6 +4260,13 @@ elif st.session_state.sayfa == "sonuc":
     # ===== ANİMASYONLU KARŞILAŞTIRMA PANELİ =====
     st.markdown('<div class="an-section-ttl">⚔️ Takım Karşılaştırması</div>', unsafe_allow_html=True)
 
+    ae = float(v.get("atilan_ev", 0) or 0); ad = float(v.get("atilan_dep", 0) or 0)
+    ye = float(v.get("yenen_ev", 0) or 0); yd = float(v.get("yenen_dep", 0) or 0)
+    xge = float(v.get("xg_ev", 0) or 0); xgd = float(v.get("xg_dep", 0) or 0)
+    u25e = float(v.get("ust25_ev", 0) or 0); u25d = float(v.get("ust25_dep", 0) or 0)
+    kge = float(v.get("kg_siklik_ev", 0) or 0); kgd = float(v.get("kg_siklik_dep", 0) or 0)
+    cs_e = float(v.get("clean_sheets_ev", 0) or 0); cs_d = float(v.get("clean_sheets_dep", 0) or 0)
+
     def _cmp_row(lbl, ev_val, dep_val, ev_max=100, dep_max=100, fmt=".1f", suffix=""):
         ev_p = max(0, min(100, (ev_val / ev_max * 100) if ev_max else 0))
         dep_p = max(0, min(100, (dep_val / dep_max * 100) if dep_max else 0))
@@ -4316,7 +4282,6 @@ elif st.session_state.sayfa == "sonuc":
     if xge or xgd: rows.append(_cmp_row("xG", xge, xgd, 3.0, 3.0, ".2f"))
     if u25e or u25d: rows.append(_cmp_row("Üst 2.5", u25e, u25d, 100, 100, ".0f", "%"))
     if kge or kgd: rows.append(_cmp_row("KG Sıklık", kge, kgd, 100, 100, ".0f", "%"))
-    cs_e = float(v.get("clean_sheets_ev", 0) or 0); cs_d = float(v.get("clean_sheets_dep", 0) or 0)
     if cs_e or cs_d: rows.append(_cmp_row("Clean Sheet", cs_e, cs_d, 100, 100, ".0f", "%"))
 
     if rows:
@@ -4376,72 +4341,15 @@ elif st.session_state.sayfa == "sonuc":
     {_prob_donut("KG YOK", kgy, "#ec4899", en_kg == "Yok", f"Eşik %{esik_al('kg_yok'):.0f}")}
     </div>''', unsafe_allow_html=True)
 
-    # ===== ANİMASYONLU ANA OLASILIK BARLARI =====
-    st.markdown('<div class="an-section-ttl">📊 Detaylı Olasılık Dağılımı</div>', unsafe_allow_html=True)
-
-    def _bar(lbl, y, renk, esik=None):
-        isr = f'<div class="an-bar-tick" style="left:{esik:.0f}%"></div>' if esik is not None else ""
-        gecti = (y >= esik) if esik is not None else True
-        clr = "#22c55e" if gecti and esik is not None else (renk if esik is None else "#475569")
-        return f'''<div class="an-bar-row">
-        <div class="an-bar-top"><span class="an-bar-lbl">{lbl}</span><span class="an-bar-val" style="color:{clr} !important; text-shadow:0 0 12px {clr};">%{y:.1f}</span></div>
-        <div class="an-bar"><div class="an-bar-fill" style="--w:{y:.1f}%; width:{y:.1f}%; background:linear-gradient(90deg, {clr}, {clr}cc); box-shadow:0 0 12px {clr}88;">{isr}</div></div>
-        </div>'''
-
-    bars_html = (
-        _bar("Ev (1)", p1, "#3b82f6", esik_1x2_al("1")) +
-        _bar("Beraberlik (X)", px, "#94a3b8", esik_1x2_al("X")) +
-        _bar("Deplasman (2)", p2, "#f59e0b", esik_1x2_al("2")) +
-        _bar("Üst 2.5", u25, "#22c55e", esik_al("ust")) +
-        _bar("Alt 2.5", a25, "#ef4444", esik_al("alt")) +
-        _bar("KG Var", kgv, "#8b5cf6", esik_al("kg_var")) +
-        _bar("KG Yok", kgy, "#ec4899", esik_al("kg_yok"))
-    )
-    st.markdown(f'<div class="an-glow-kart">{bars_html}</div>', unsafe_allow_html=True)
-
     # ===== AI ANALİZ =====
     ai_html = ai_yorum_paneli(v, a)
     if ai_html:
         st.markdown('<div class="an-section-ttl">🤖 Yapay Zeka Detaylı Analizi</div>', unsafe_allow_html=True)
         st.markdown(ai_html, unsafe_allow_html=True)
 
-    # ===== FİNAL ÖNERİ =====
-    st.markdown('<div class="an-section-ttl">🏆 Final Öneri</div>', unsafe_allow_html=True)
-
-    def _final_kart(baslik, ikon, secim, yuzde, esik):
-        gecti = yuzde >= esik
-        cls = "an-hit" if gecti else "an-miss"
-        badge = f'<span class="an-final-badge an-hit">✅ EŞİK GEÇTİ</span>' if gecti else f'<span class="an-final-badge an-miss">⚪ EŞİK ALTINDA · %{esik:.0f}</span>'
-        renk = "#22c55e" if gecti else "#64748b"
-        return f'''<div class="an-final-kart {cls}">
-        <div class="an-final-top">
-            <span class="an-final-ttl">{ikon} {baslik}</span>
-            {badge}
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:10px;">
-            <div style="flex:1;">
-                <div class="an-final-pick {cls}">{_e(secim)}</div>
-                <div class="an-final-mut">Eşik: %{esik:.0f}</div>
-            </div>
-            <div class="an-final-pct {cls}">%{yuzde:.0f}</div>
-        </div>
-        <div class="an-final-bar"><div class="an-final-bar-fill" style="--w:{yuzde:.0f}%; width:{yuzde:.0f}%; background:linear-gradient(90deg, {renk}, {renk}99); box-shadow:0 0 12px {renk}88;"></div></div>
-        </div>'''
-
+    # ===== KAYIT =====
     s1, y1 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])
     e1 = esik_1x2_al(s1)
-    im = {"1": f"1 — {te} Kazanır", "X": "X — Beraberlik", "2": f"2 — {td} Kazanır"}
-    st.markdown(_final_kart("1X2", "🎯", im[s1], y1, e1), unsafe_allow_html=True)
-
-    if u25 >= a25: gs = "Üst 2.5"; gy = u25; ge_ = esik_al("ust")
-    else: gs = "Alt 2.5"; gy = a25; ge_ = esik_al("alt")
-    st.markdown(_final_kart("Gol", "⚽", gs, gy, ge_), unsafe_allow_html=True)
-
-    if kgv >= kgy: ks = "KG Var"; ky = kgv; ke = esik_al("kg_var")
-    else: ks = "KG Yok"; ky = kgy; ke = esik_al("kg_yok")
-    st.markdown(_final_kart("Karşılıklı Gol", "🤝", ks, ky, ke), unsafe_allow_html=True)
-
-    # ===== KAYIT =====
     km = (u25 >= esik_al("ust") and u25 >= a25) or (a25 >= esik_al("alt") and a25 >= u25) or (y1 >= e1)
     if not st.session_state.kayit_yapildi and admin_mi():
         yk = kayit_olustur(v, a)
