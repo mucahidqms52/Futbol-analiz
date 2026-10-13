@@ -426,7 +426,7 @@ st.markdown("""
 # POSTGRESQL VERİ KATMANI
 # ==========================================
 ADMIN_KULLANICI_ADI = "admin52"
-GECMIS_LIMIT = 200
+GECMIS_LIMIT = 200  # Geçmişte en fazla bu kadar maç tutulur
 
 
 def _admin_sifre_al():
@@ -629,6 +629,7 @@ def bildirimler_kaydet(v):
 
 
 def gecmis_yukle():
+    """En son 200 maçı yükler."""
     conn = _db_baglanti()
     try:
         with conn.cursor() as cur:
@@ -640,6 +641,7 @@ def gecmis_yukle():
 
 
 def gecmis_kaydet(v):
+    """Sadece son 200 maç saklanır — eski maçlar otomatik silinir."""
     if isinstance(v, list) and len(v) > GECMIS_LIMIT:
         del v[:len(v) - GECMIS_LIMIT]
     conn = _db_baglanti()
@@ -1653,28 +1655,30 @@ def _mac_tahmin_var_mi(v, esikler=None):
         return False
 
 
-def _mac_gecmise_tasi(idx, skor_ev, skor_dep, kaynak=""):
-    """Belirtilen maçı verilen skorla geçmişe taşır."""
+def _inline_skor_tasi_callback(idx):
     try:
-        gel_list = st.session_state.gelecek_analizler
+        yse_val = int(st.session_state.get(f"ise_{idx}", 0))
+        ysd_val = int(st.session_state.get(f"isd_{idx}", 0))
+        gel_list = st.session_state.get("gelecek_analizler", [])
         if idx < 0 or idx >= len(gel_list):
-            return False
+            st.session_state["_inline_msg"] = ("error", "❌ Maç bulunamadı (indeks geçersiz)")
+            return
         k = gel_list[idx]
-        k["veri"]["skor_ev"] = skor_ev
-        k["veri"]["skor_dep"] = skor_dep
+        k["veri"]["skor_ev"] = yse_val
+        k["veri"]["skor_dep"] = ysd_val
         k["veri"]["skor_belli"] = True
-        k["veri"]["_skor_kaynak"] = kaynak
         yd = sonuc_hesapla(k)
-        if yd:
-            k["dogruluk"] = yd
+        if yd: k["dogruluk"] = yd
         st.session_state.gecmis_analizler.append(k)
         st.session_state.gelecek_analizler.pop(idx)
         gecmis_kaydet(st.session_state.gecmis_analizler)
         gelecek_kaydet(st.session_state.gelecek_analizler)
-        st.session_state._arama_sonuclari = {}
-        return True
-    except Exception:
-        return False
+        st.session_state["_inline_msg"] = (
+            "success",
+            f"✅ {k['veri'].get('takim_ev','?')} vs {k['veri'].get('takim_dep','?')} → {yse_val}-{ysd_val} Geçmişe taşındı!"
+        )
+    except Exception as e:
+        st.session_state["_inline_msg"] = ("error", f"❌ Taşıma hatası: {e}")
 
 
 def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
@@ -1924,66 +1928,48 @@ def _flashscore_skor_bul(takim_ev, takim_dep, tarih=""):
     if not ev_n or not dep_n:
         return None
 
-    offsets = [0, -1, 1, -2, -3, -4, -5, -6, -7]
+    offsets = [0]
     if tarih:
         try:
             m = re.match(r'(\d{1,2})\.(\d{1,2})\.(\d{4})', tarih)
             if m:
                 mac_t = datetime(int(m.group(3)), int(m.group(2)), int(m.group(1))).date()
                 off = (mac_t - datetime.now().date()).days
-                if -15 <= off <= 15:
-                    offsets = [off] + [o for o in offsets if o != off]
+                if -7 <= off <= 7:
+                    offsets = [off, 0, off - 1, off + 1]
         except Exception:
             pass
 
     tum = []
-    gorulen_ids = set()
-    for off in offsets:
+    for off in dict.fromkeys(offsets):
         try:
-            for m in _flashscore_gun_maclari(off):
-                if m["id"] not in gorulen_ids:
-                    tum.append(m)
-                    gorulen_ids.add(m["id"])
+            tum.extend(_flashscore_gun_maclari(off))
         except Exception:
             continue
     if not tum:
         return None
 
-    bitmisler = [m for m in tum if m.get("durum") == "3"]
-    if not bitmisler:
-        return None
-
-    for m in bitmisler:
-        ev_fs = _takim_normalize(m["ev"])
-        dep_fs = _takim_normalize(m["dep"])
-        if ev_fs == ev_n and dep_fs == dep_n:
+    for m in tum:
+        if m.get("durum") != "3":
+            continue
+        if _takim_normalize(m["ev"]) == ev_n and _takim_normalize(m["dep"]) == dep_n:
             return (m["skor_ev"], m["skor_dep"])
 
     en_iyi_puan, en_iyi_skor = 0.0, None
-    for m in bitmisler:
-        ev_fs = _takim_normalize(m["ev"])
-        dep_fs = _takim_normalize(m["dep"])
-        puan = _benzerlik(ev_n, ev_fs) + _benzerlik(dep_n, dep_fs)
-        if ev_fs == ev_n or dep_fs == dep_n:
-            puan += 0.5
+    for m in tum:
+        if m.get("durum") != "3":
+            continue
+        puan = (_benzerlik(ev_n, _takim_normalize(m["ev"]))
+              + _benzerlik(dep_n, _takim_normalize(m["dep"])))
         if puan > en_iyi_puan:
             en_iyi_puan, en_iyi_skor = puan, (m["skor_ev"], m["skor_dep"])
 
-    if en_iyi_puan >= 0.9:
+    if en_iyi_puan >= 1.4:
         return en_iyi_skor
-
-    for m in bitmisler:
-        ev_fs = _takim_normalize(m["ev"])
-        dep_fs = _takim_normalize(m["dep"])
-        if _benzerlik(ev_n, ev_fs) >= 0.6 and _benzerlik(dep_n, dep_fs) >= 0.4:
-            return (m["skor_ev"], m["skor_dep"])
-
     return None
 
 
 def _skor_parse(html):
-    if not html:
-        return None
     metin = _html_metne_cevir(html)
     m = re.search(r'\bFT\b[\s\r\n:]*(\d{1,2})\s*[-:]\s*(\d{1,2})\b', metin)
     if m:
@@ -2980,6 +2966,8 @@ elif st.session_state.sayfa == "giris":
             pass
 
         st.divider()
+
+        st.divider()
         st.markdown("### 🤖 Otomatik Veri Çekme")
         vs1, vs2, vs3 = st.tabs(["🔄 Gelecek Maçlar", "📜 Lig Geçmişi", "🏁 Sonuçları İşle"])
         with vs1:
@@ -3027,126 +3015,66 @@ elif st.session_state.sayfa == "giris":
                         st.success(f"✅ {len(bas)} maç eklendi!"); time.sleep(2); st.rerun()
                     else: st.error("Hiçbir maç eklenemedi.")
         with vs3:
-            gel = st.session_state.gelecek_analizler
-
-            if not gel:
-                st.info("ℹ️ Gelecek'te maç yok.")
-            else:
-                st.markdown(f"### 🔍 {len(gel)} Maç — Tek Tek Ara ve Onayla")
-                st.caption("Her maç için 🔍 Ara butonuna bas. Bulunan skoru onayla, geçmişe taşınır.")
-
-                if "_arama_sonuclari" not in st.session_state:
-                    st.session_state._arama_sonuclari = {}
-
-                sirali = sorted(enumerate(gel), key=lambda x: saat_sirala_anahtari(x[1]))
-
-                for idx, g in sirali:
-                    v = g["veri"]
-                    te = v.get("takim_ev", "?") or "?"
-                    td = v.get("takim_dep", "?") or "?"
-                    tarih = v.get("tarih", "")
-                    saat = v.get("saat", "")
-                    ulke = v.get("ulke", "")
-
-                    bayrak = ulke_bayrak_bul(ulke)
-                    ust_p = []
-                    if ulke: ust_p.append(f"{bayrak} {ulke.title()}")
-                    if tarih: ust_p.append(f"📅 {tarih}")
-                    if saat: ust_p.append(f"🕐 {saat}")
-                    ust_str = " • ".join(ust_p) if ust_p else ""
-
-                    st.markdown(f'<div style="background:linear-gradient(145deg,#131c2e,#0f1829);border:1px solid #1f2c44;border-radius:12px;padding:12px;margin:8px 0 6px 0;"><div style="font-size:0.7rem;color:#8fa0bd;margin-bottom:6px;">{ust_str}</div><div style="font-size:1rem;font-weight:800;color:#eaf1fb;">{_e(te)} <span style="color:#7f92b3;font-weight:500;">vs</span> {_e(td)}</div></div>', unsafe_allow_html=True)
-
-                    if st.button("🔍 Otomatik Ara (FlashScore + mutating)", key=f"ara_{idx}", use_container_width=True, type="primary"):
-                        sonuc = {"ev": te, "dep": td, "tarih": tarih, "bulundu": False}
-
-                        try:
-                            fs = _flashscore_skor_bul(te, td, tarih)
-                        except Exception:
-                            fs = None
-                        sonuc["flashscore"] = fs
-
-                        mut = None
-                        kaynak_url = v.get("kaynak_url", "")
-                        if kaynak_url:
-                            try:
-                                r = requests.get(kaynak_url, headers={"User-Agent": UA, "Accept-Language": "en-US,en;q=0.9"}, timeout=15)
-                                if r.status_code == 200 and r.text:
-                                    mut = _skor_parse(r.text)
-                            except Exception:
-                                pass
-                        sonuc["mutating"] = mut
-
-                        st.session_state._arama_sonuclari[idx] = sonuc
+            if st.session_state.skor_ozet:
+                oz = st.session_state.skor_ozet
+                hata_say = len(oz.get("hatalar", []))
+                st.success(f"✅ {oz['tasinan']} maç Geçmişe taşındı • {oz['bitmemis']} maç henüz bitmemiş • {hata_say} hata")
+                if oz.get("hatalar"):
+                    with st.expander(f"⚠️ {hata_say} hata detayı"):
+                        for _h in oz["hatalar"][:50]:
+                            st.caption(_h)
+            st.markdown(f"Bekleyen: **{len(st.session_state.gelecek_analizler)}**")
+            sy = st.checkbox("Skor bulunamazsa tarayıcıyla da dene (yavaş)", value=False, key="skor_yedek")
+            c1, c2 = st.columns(2)
+            with c1: sw = st.number_input("Paralel", 1, 8, 4, 1, key="skor_w")
+            with c2:
+                st.markdown("")
+                if st.button("🏁 Biten Maçları Geçmişe Aktar", use_container_width=True, type="primary", key="skor_btn"):
+                    if not st.session_state.gelecek_analizler:
+                        st.warning("Gelecek'te maç yok")
+                    else:
+                        ph = st.empty()
+                        def _p3(i, t, n):
+                            try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
+                            except Exception: pass
+                        with st.spinner("Skorlar kontrol ediliyor..."):
+                            st.session_state.skor_ozet = sonuclari_isle(bool(sy), int(sw), _p3)
+                        ph.empty()
                         st.rerun()
 
-                    if idx in st.session_state._arama_sonuclari:
-                        sonuc = st.session_state._arama_sonuclari[idx]
-                        fs = sonuc.get("flashscore")
-                        mut = sonuc.get("mutating")
-
-                        if fs:
-                            st.success(f"✅ **FlashScore:** {fs[0]} - {fs[1]}")
-                            if st.button(f"📥 Onayla → Geçmişe Taşı (FS: {fs[0]}-{fs[1]})", key=f"onay_fs_{idx}", use_container_width=True, type="primary"):
-                                _mac_gecmise_tasi(idx, fs[0], fs[1], kaynak="FlashScore")
-                                st.success("✅ Geçmişe taşındı!")
-                                time.sleep(1)
-                                st.rerun()
-
-                        if mut:
-                            st.info(f"🔵 **mutating.com:** {mut[0]} - {mut[1]}")
-                            if st.button(f"📥 Onayla → Geçmişe Taşı (Mut: {mut[0]}-{mut[1]})", key=f"onay_mut_{idx}", use_container_width=True):
-                                _mac_gecmise_tasi(idx, mut[0], mut[1], kaynak="mutating")
-                                st.success("✅ Geçmişe taşındı!")
-                                time.sleep(1)
-                                st.rerun()
-
-                        if not fs and not mut:
-                            st.error("❌ Hiçbir kaynakta bulunamadı")
-                            with st.expander("✏️ Manuel Skor Gir", expanded=True):
-                                mc1, mc2, mc3 = st.columns([1, 1, 2])
-                                with mc1:
-                                    man_ev = st.number_input("Ev", 0, 20, 0, 1, key=f"man_ev_{idx}")
-                                with mc2:
-                                    man_dep = st.number_input("Dep", 0, 20, 0, 1, key=f"man_dep_{idx}")
-                                with mc3:
-                                    st.markdown(""); st.markdown("")
-                                    if st.button("✅ Kaydet ve Taşı", key=f"man_kaydet_{idx}", use_container_width=True, type="primary"):
-                                        _mac_gecmise_tasi(idx, man_ev, man_dep, kaynak="manuel")
-                                        st.success("✅ Geçmişe taşındı!")
-                                        time.sleep(1)
-                                        st.rerun()
-
-                        if st.button("❌ Aramayı İptal Et", key=f"ara_iptal_{idx}", use_container_width=True):
-                            if idx in st.session_state._arama_sonuclari:
-                                del st.session_state._arama_sonuclari[idx]
-                            st.rerun()
-
-                    st.divider()
-
-                with st.expander("⚡ Otomatik Toplu İşlem (Tüm Maçları Dene)"):
-                    st.caption("Bu buton tüm maçları otomatik dener, bulunanları geçmişe taşır.")
-                    c1, c2 = st.columns(2)
-                    with c1: sw = st.number_input("Paralel", 1, 8, 4, 1, key="skor_w")
-                    with c2:
-                        st.markdown("")
-                        if st.button("🏁 Tümünü Otomatik İşle", use_container_width=True, key="skor_btn"):
-                            ph = st.empty()
-                            def _p3(i, t, n):
-                                try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
-                                except Exception: pass
-                            with st.spinner("Skorlar kontrol ediliyor..."):
-                                st.session_state.skor_ozet = sonuclari_isle(False, int(sw), _p3)
-                            ph.empty()
-                            if st.session_state.skor_ozet:
-                                oz = st.session_state.skor_ozet
-                                st.success(f"✅ {oz['tasinan']} maç Geçmişe taşındı • {oz['bitmemis']} maç henüz bitmemiş • {len(oz.get('hatalar', []))} hata")
-                                if oz.get("hatalar"):
-                                    with st.expander(f"⚠️ {len(oz['hatalar'])} hata detayı"):
-                                        for _h in oz["hatalar"][:50]:
-                                            st.caption(_h)
-                            time.sleep(2)
-                            st.rerun()
+            st.divider()
+            if st.button("🧪 FlashScore Debug", key="fs_debug"):
+                from datetime import date, timedelta
+                st.write(f"**Bugün:** {date.today()}")
+                st.markdown("### 📅 Günlük Feed Test")
+                for off in [-7, -5, -3, -1, 0, 1]:
+                    try:
+                        maclar = _flashscore_gun_maclari(off)
+                        tarih = date.today() + timedelta(days=off)
+                        st.write(f"**{tarih} (offset {off}):** `{len(maclar)} maç`")
+                    except Exception as e:
+                        st.error(f"Offset {off}: {e}")
+                st.markdown("### 🔍 Arama Testi")
+                test_ev = st.text_input("Ev takımı", value="Airdrie United", key="dbg_ev")
+                test_dep = st.text_input("Dep takımı", value="Hearts U21", key="dbg_dep")
+                test_tarih = st.text_input("Tarih (boş bırak = bugün)", value="", key="dbg_tar")
+                if st.button("Ara", key="dbg_ara"):
+                    sonuc = _flashscore_skor_bul(test_ev, test_dep, test_tarih)
+                    if sonuc:
+                        st.success(f"✅ Bulundu: {sonuc[0]}-{sonuc[1]}")
+                    else:
+                        st.warning("❌ Bulunamadı")
+                        st.markdown("**Feed'de benzer isimler:**")
+                        tum = []
+                        for off in range(-7, 2):
+                            tum.extend(_flashscore_gun_maclari(off))
+                        ev_n = _takim_normalize(test_ev)
+                        dep_n = _takim_normalize(test_dep)
+                        for m in tum:
+                            ev_fs = _takim_normalize(m["ev"])
+                            dep_fs = _takim_normalize(m["dep"])
+                            if _benzerlik(ev_n, ev_fs) > 0.3 or _benzerlik(dep_n, dep_fs) > 0.3:
+                                st.text(f"→ {m['ev']} - {m['dep']} | {m['skor_ev']}-{m['skor_dep']} | durum: {m['durum']}")
 
     else:
         gelecek = st.session_state.gelecek_analizler
