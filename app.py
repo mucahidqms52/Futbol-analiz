@@ -1902,6 +1902,124 @@ def _playwright_skor_cek(url, timeout=25):
                 except Exception: pass
 
 
+def _mac_detay_cek_5games_playwright(url, timeout=35):
+    """Playwright ile sayfayı açıp 'Last games: 5' radio butonuna tıklar ve içeriği döner."""
+    try:
+        import subprocess as _sp, sys as _sys
+        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
+                check=False, timeout=600,
+                stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    except Exception:
+        pass
+    from playwright.sync_api import sync_playwright
+    with _TARAYICI_SEM:
+        with sync_playwright() as p:
+            b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
+            try:
+                ctx = b.new_context(user_agent=UA, locale="en-US")
+                pg = ctx.new_page()
+                # Resim/css/font gibi kaynakları engelle (hız için)
+                pg.route("**/*", lambda route: route.abort()
+                         if route.request.resource_type in ("image", "media", "font", "stylesheet")
+                         else route.continue_())
+                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+                pg.wait_for_timeout(2500)
+
+                # Önce JavaScript ile "5" radio butonunu bul ve tıkla
+                tiklandi = False
+                try:
+                    tiklandi = pg.evaluate("""() => {
+                        // 1) label.containerbutton içindeki .numbergames metni '5' olanı bul
+                        const labels = document.querySelectorAll('label.containerbutton, label');
+                        for (const lb of labels) {
+                            const num = lb.querySelector('.numbergames, .num, span');
+                            if (!num) continue;
+                            const t = (num.textContent || '').trim();
+                            if (t === '5' || t === '5 ') {
+                                // Radio input'u bul
+                                const inp = lb.querySelector('input[type="radio"]');
+                                if (inp) {
+                                    inp.checked = true;
+                                    inp.dispatchEvent(new Event('change', { bubbles: true }));
+                                    inp.dispatchEvent(new Event('input', { bubbles: true }));
+                                    inp.click();
+                                    // Label'a da tıkla
+                                    lb.click();
+                                    return true;
+                                }
+                            }
+                        }
+                        // 2) Direkt input[value='5'] ara
+                        const inp2 = document.querySelector('input[type="radio"][value="5"]');
+                        if (inp2) {
+                            inp2.checked = true;
+                            inp2.dispatchEvent(new Event('change', { bubbles: true }));
+                            inp2.click();
+                            return true;
+                        }
+                        // 3) id'sinde game_count_5 geçen
+                        const inp3 = document.querySelector('input[id*="game_count_5"], input[id*="5"]');
+                        if (inp3 && inp3.type === 'radio') {
+                            inp3.checked = true;
+                            inp3.dispatchEvent(new Event('change', { bubbles: true }));
+                            inp3.click();
+                            return true;
+                        }
+                        return false;
+                    }""")
+                except Exception:
+                    tiklandi = False
+
+                # JavaScript başarısızsa Playwright selector ile dene
+                if not tiklandi:
+                    for sel in [
+                        "input[type='radio'][value='5']",
+                        "input#game_count_5",
+                        "label.containerbutton:has-text('5')",
+                        "label:has-text('5') input",
+                    ]:
+                        try:
+                            pg.click(sel, timeout=2000)
+                            tiklandi = True
+                            break
+                        except Exception:
+                            continue
+
+                # Verinin güncellenmesi için bekle
+                pg.wait_for_timeout(3500)
+
+                # Sayfada "Last 5 Games" yazısının görünmesini bekle (max 8sn)
+                try:
+                    pg.wait_for_function(
+                        """() => {
+                            const t = document.body.innerText || '';
+                            return t.includes('Last 5 Games') || t.includes('last 5 games');
+                        }""",
+                        timeout=8000
+                    )
+                except Exception:
+                    pass
+                pg.wait_for_timeout(1000)
+                return pg.content()
+            finally:
+                try: b.close()
+                except Exception: pass
+
+
+def _mac_detay_cek_5games(url):
+    """5 maçlık veri çek - önce Playwright, hata olursa requests."""
+    html = None
+    hata = None
+    try:
+        html = _mac_detay_cek_5games_playwright(url)
+    except Exception as e:
+        hata = f"Playwright: {str(e)[:150]}"
+    if html and len(html) > 500:
+        return _mac_html_parse(html, url)
+    # Fallback: requests ile normal çek
+    return mutating_mac_detay_cek(url)
+
+
 def _scrapingbee_get(url, render_js=True, timeout=30, mac_sec="5", max_retry=3, dogrula=False):
     hata = None
     for d in range(max_retry):
@@ -1957,18 +2075,6 @@ def mutating_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI):
         saat = saat_el.get_text(strip=True) if saat_el else ""
         maclar.append({"url": href, "takim_ev": takim_ev, "takim_dep": takim_dep, "saat": saat})
     return maclar, []
-
-
-def _mac_url_5_games(url):
-    """Maç URL'sini 'son 5 maç' filtresiyle günceller."""
-    if not url:
-        return url
-    # Mevcut last_games parametresini 5 yap
-    if re.search(r'([?&])last_games=\d+', url):
-        return re.sub(r'([?&])last_games=\d+', r'\g<1>last_games=5', url)
-    # Parametre yoksa ekle
-    ayrac = '&' if '?' in url else '?'
-    return f"{url}{ayrac}last_games=5"
 
 
 def mutating_mac_detay_cek(url):
@@ -2043,6 +2149,18 @@ def _mac_html_parse(html, url=""):
     if veri.get("kg_siklik_ev", 0) > 0 and veri.get("kg_siklik_dep", 0) > 0:
         veri["lig_kg"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
 
+    # Formları çıkar (5'li veya 10'lu olabilir)
+    try:
+        m_form = re.search(
+            r'(?:^|\n)\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*Form\b[\s\S]{0,20}?\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])',
+            metin, re.MULTILINE
+        )
+        if m_form:
+            veri["form_str_ev"] = "".join(m_form.group(i) for i in range(1, 6))
+            veri["form_str_dep"] = "".join(m_form.group(i) for i in range(6, 11))
+    except Exception:
+        pass
+
     veri["format"] = "mutating"
     if url: veri["kaynak_url"] = url
     if not veri.get("takim_ev"): okunamayanlar.append("Takım isimleri (Ev)")
@@ -2101,16 +2219,14 @@ def _inline_skor_tasi_callback(idx):
 
 def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
     try:
-        # ⚡ 5 MAÇLIK VERİYİ ÇEKMEK İÇİN URL'Yİ GÜNCELLE
-        url_5 = _mac_url_5_games(mac["url"])
-        veri, _ = mutating_mac_detay_cek(url_5)
+        # ⚡ 5 MAÇLIK VERİ ÇEKME (Playwright ile radio tıklama)
+        veri, _ = _mac_detay_cek_5games(mac["url"])
         if not veri:
             return ("hata", mac, "Veri çekilemedi", None)
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
         if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
         if veri.get("saat"): veri["saat"] = saat_2_saat_ileri(veri["saat"])
-        # Orijinal URL'yi kaynak olarak sakla (tekrar çekme kontrolü için)
         veri["kaynak_url"] = mac["url"]
         if mac["url"] in mevcut_urls:
             return ("atlandi", veri, "Zaten var", None)
