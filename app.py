@@ -434,23 +434,18 @@ st.markdown("""
     .mh2-result-val.miss { color: #64748b !important; }
     .mh2-result-val.neutral { color: #94a3b8 !important; }
 
-    /* ============ 🎨 YENİ ZENGİN MAÇ KARTI STİLLERİ ============ */
+    /* ============ 🎨 MODERN MAÇ KARTI V2 (YENİ) ============ */
     .mh2-match-v2 { position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(19,28,46,0.95), rgba(11,18,32,1)); border: 1px solid #1d2940; border-radius: 20px; padding: 0; margin: 10px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.35); transition: all .3s ease; animation: anFadeUp .4s ease-out both; }
     .mh2-match-v2:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(34,197,94,0.15); }
     .mh2-match-v2::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #22c55e, #f59e0b, #22c55e); background-size: 300% 100%; animation: anShimmer 4s linear infinite; }
-    .mh2-v2-top { display: flex; align-items: stretch; gap: 12px; padding: 14px 14px 10px 14px; border-bottom: 1px dashed rgba(59,130,246,0.18); }
-    .mh2-v2-saat-kutu { flex-shrink: 0; min-width: 78px; background: linear-gradient(145deg, rgba(34,197,94,0.14), rgba(59,130,246,0.10)); border: 1.5px solid rgba(34,197,94,0.35); border-radius: 14px; padding: 8px 6px; text-align: center; position: relative; overflow: hidden; }
-    .mh2-v2-saat-kutu::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #22c55e, #3b82f6); }
-    .mh2-v2-saat { font-size: 1.25rem; font-weight: 900; color: #22c55e !important; font-family: 'Rajdhani', sans-serif; letter-spacing: 0.5px; line-height: 1.1; text-shadow: 0 0 16px rgba(34,197,94,0.5); }
-    .mh2-v2-saat-etiket { font-size: 0.55rem; font-weight: 900; color: #8fa0bd !important; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
-    .mh2-v2-takimlar { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 7px; min-width: 0; }
-    .mh2-v2-takim-satir { display: flex; align-items: center; gap: 8px; min-width: 0; }
-    .mh2-v2-rozet { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 900; color: #fff !important; letter-spacing: 0.2px; font-family: 'Rajdhani', sans-serif; box-shadow: 0 3px 10px rgba(0,0,0,0.4); border: 1.5px solid rgba(255,255,255,0.15); }
-    .mh2-v2-rozet.ev { background: linear-gradient(135deg, #3b82f6, #1e40af); text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
-    .mh2-v2-rozet.dep { background: linear-gradient(135deg, #f59e0b, #b45309); text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
-    .mh2-v2-takim-adi { font-size: 0.92rem; font-weight: 900; font-family: 'Rajdhani', sans-serif; letter-spacing: 0.3px; line-height: 1.15; word-break: break-word; min-width: 0; flex: 1; }
-    .mh2-v2-takim-adi.ev { color: #93c5fd !important; text-shadow: 0 0 12px rgba(147,197,253,0.3); }
-    .mh2-v2-takim-adi.dep { color: #fbbf24 !important; text-shadow: 0 0 12px rgba(251,191,36,0.3); }
+    .mh2-v2-ust { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 12px 14px 4px 14px; }
+    .mh2-v2-saat-kucuk { display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; font-weight: 900; color: #22c55e !important; letter-spacing: 0.5px; font-family: 'Rajdhani', sans-serif; text-shadow: 0 0 10px rgba(34,197,94,0.5); }
+    .mh2-v2-etiket { display: inline-flex; align-items: center; font-size: 0.55rem; font-weight: 900; color: #8fa0bd !important; letter-spacing: 1px; text-transform: uppercase; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.35); padding: 2px 8px; border-radius: 99px; }
+    .mh2-v2-takim-yanyana { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 14px 12px 14px; }
+    .mh2-v2-tk { flex: 1; text-align: center; font-size: 1rem; font-weight: 900; font-family: 'Rajdhani', sans-serif; letter-spacing: 0.3px; line-height: 1.2; word-break: break-word; }
+    .mh2-v2-tk-ev { color: #93c5fd !important; text-shadow: 0 0 14px rgba(147,197,253,0.4); }
+    .mh2-v2-tk-dep { color: #fbbf24 !important; text-shadow: 0 0 14px rgba(251,191,36,0.4); }
+    .mh2-v2-vs-kucuk { flex-shrink: 0; font-size: 0.72rem; font-weight: 900; color: #64748b !important; letter-spacing: 2px; font-family: 'Rajdhani', sans-serif; padding: 0 4px; }
     .mh2-v2-lig { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 14px 10px 14px; padding: 8px 12px; background: linear-gradient(90deg, rgba(34,197,94,0.08), rgba(59,130,246,0.08)); border: 1px solid rgba(34,197,94,0.25); border-radius: 99px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.4px; }
     .mh2-v2-lig-bayrak { font-size: 1rem; line-height: 1; }
     .mh2-v2-lig-adi { color: #eaf1fb !important; text-shadow: 0 0 10px rgba(34,197,94,0.3); }
@@ -459,11 +454,6 @@ st.markdown("""
     .mh2-v2-alt-item { display: flex; align-items: center; gap: 5px; font-size: 0.6rem; font-weight: 800; color: #94a3b8 !important; letter-spacing: 0.3px; padding: 2px 4px; }
     .mh2-v2-alt-item-ikon { font-size: 0.78rem; filter: drop-shadow(0 0 4px rgba(34,197,94,0.4)); }
     .mh2-v2-alt-item b { color: #22c55e !important; font-weight: 900; }
-    .mh2-v2-btn-wrap { padding: 0 14px 14px 14px; }
-    .mh2-v2-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 13px 18px; background: linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #16a34a 100%); background-size: 200% 100%; border: none; border-radius: 14px; color: #04130a !important; font-weight: 900; font-size: 0.88rem; letter-spacing: 1.2px; text-transform: uppercase; font-family: 'Rajdhani', sans-serif; box-shadow: 0 8px 24px rgba(34,197,94,0.35), 0 0 0 1px rgba(255,255,255,0.1) inset; animation: anShimmer 5s linear infinite; transition: all .25s ease; }
-    .mh2-v2-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(34,197,94,0.55), 0 0 0 1px rgba(255,255,255,0.2) inset; }
-    .mh2-v2-btn-ikon { font-size: 1.05rem; filter: drop-shadow(0 0 6px rgba(4,19,10,0.4)); }
-    .mh2-v2-btn-ok { font-size: 1.15rem; font-weight: 900; margin-left: 2px; animation: anSlideLeft 1.5s ease-in-out infinite alternate; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -2743,17 +2733,6 @@ elif st.session_state.sayfa == "giris":
                 ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
                 bayrak = ulke_bayrak_bul(ulke)
 
-                # Takım baş harf rozetleri (logo yerine)
-                def _harf_al(isim):
-                    isim = str(isim or "").strip()
-                    if not isim: return "??"
-                    parcalar = [p for p in isim.split() if p]
-                    if len(parcalar) >= 2:
-                        return (parcalar[0][:1] + parcalar[1][:1]).upper()
-                    return isim[:2].upper()
-                harf_ev = _harf_al(te)
-                harf_dep = _harf_al(td)
-
                 # Saat etiketi (BUGÜN / YARIN / tarih)
                 etiket_saat = "—"
                 try:
@@ -2780,21 +2759,14 @@ elif st.session_state.sayfa == "giris":
 
                 if premium or acik < kota:
                     st.markdown(f'''<div class="mh2-match-v2">
-                        <div class="mh2-v2-top">
-                            <div class="mh2-v2-saat-kutu">
-                                <div class="mh2-v2-saat">{_e(saat or "--:--")}</div>
-                                <div class="mh2-v2-saat-etiket">{_e(etiket_saat)}</div>
-                            </div>
-                            <div class="mh2-v2-takimlar">
-                                <div class="mh2-v2-takim-satir">
-                                    <div class="mh2-v2-rozet ev">{_e(harf_ev)}</div>
-                                    <div class="mh2-v2-takim-adi ev">{_e(te)}</div>
-                                </div>
-                                <div class="mh2-v2-takim-satir">
-                                    <div class="mh2-v2-rozet dep">{_e(harf_dep)}</div>
-                                    <div class="mh2-v2-takim-adi dep">{_e(td)}</div>
-                                </div>
-                            </div>
+                        <div class="mh2-v2-ust">
+                            <span class="mh2-v2-saat-kucuk">🕐 {_e(saat or "--:--")}</span>
+                            <span class="mh2-v2-etiket">{_e(etiket_saat)}</span>
+                        </div>
+                        <div class="mh2-v2-takim-yanyana">
+                            <span class="mh2-v2-tk mh2-v2-tk-ev">{_e(te)}</span>
+                            <span class="mh2-v2-vs-kucuk">VS</span>
+                            <span class="mh2-v2-tk mh2-v2-tk-dep">{_e(td)}</span>
                         </div>
                         <div class="mh2-v2-lig">
                             <span class="mh2-v2-lig-bayrak">{bayrak}</span>
