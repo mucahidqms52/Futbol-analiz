@@ -1,3 +1,4 @@
+
 import streamlit as st
 import math
 import copy
@@ -434,6 +435,7 @@ st.markdown("""
     .mh2-result-val.miss { color: #64748b !important; }
     .mh2-result-val.neutral { color: #94a3b8 !important; }
 
+    /* ============ 🎨 MODERN MAÇ KARTI V2 (YENİ) ============ */
     .mh2-match-v2 { position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(19,28,46,0.95), rgba(11,18,32,1)); border: 1px solid #1d2940; border-radius: 20px; padding: 0; margin: 10px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.35); transition: all .3s ease; animation: anFadeUp .4s ease-out both; }
     .mh2-match-v2:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(34,197,94,0.15); }
     .mh2-match-v2::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #22c55e, #f59e0b, #22c55e); background-size: 300% 100%; animation: anShimmer 4s linear infinite; }
@@ -720,6 +722,7 @@ def gecmis_yukle():
 
 
 def gecmis_kaydet(v):
+    # Sabit 200 maç sınırı — yeni maç eklenince en eski silinir
     v = list(v)
     if len(v) > 200:
         v = v[-200:]
@@ -1511,193 +1514,55 @@ def _playwright_skor_cek(url, timeout=25):
                 except Exception: pass
 
 
-def _mac_detay_cek_5games_playwright(url, timeout=40):
-    """Playwright ile '5' radyo butonuna GERÇEK tıklama (anti-bot bypass dahil)."""
+def _mac_detay_cek_5games_playwright(url, timeout=35):
     try:
         import subprocess as _sp, sys as _sys
-        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
-                check=False, timeout=600,
-                stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
-    except Exception:
-        pass
+        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"], check=False, timeout=600, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    except Exception: pass
     from playwright.sync_api import sync_playwright
     with _TARAYICI_SEM:
         with sync_playwright() as p:
-            b = p.chromium.launch(
-                headless=True,
-                args=[
-                    "--no-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-gpu",
-                    "--disable-blink-features=AutomationControlled",
-                    "--disable-features=IsolateOrigins,site-per-process",
-                    "--window-size=1366,768",
-                ]
-            )
+            b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
             try:
-                ctx = b.new_context(
-                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                    locale="en-US",
-                    viewport={"width": 1366, "height": 768},
-                    timezone_id="Europe/Istanbul",
-                    extra_http_headers={
-                        "Accept-Language": "en-US,en;q=0.9,tr;q=0.8",
-                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                    },
-                )
-                ctx.add_init_script("""
-                    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-                    Object.defineProperty(navigator, 'plugins', { get: () => [1,2,3,4,5] });
-                    Object.defineProperty(navigator, 'languages', { get: () => ['en-US','en','tr'] });
-                    window.chrome = { runtime: {} };
-                    const origQuery = window.navigator.permissions.query;
-                    window.navigator.permissions.query = (p) => (
-                        p.name === 'notifications' ? Promise.resolve({ state: Notification.permission }) : origQuery(p)
-                    );
-                """)
-
+                ctx = b.new_context(user_agent=UA, locale="en-US")
                 pg = ctx.new_page()
-                pg.route("**/*", lambda route: route.abort()
-                         if route.request.resource_type in ("image", "media", "font")
-                         else route.continue_())
-
+                pg.route("**/*", lambda route: route.abort() if route.request.resource_type in ("image", "media", "font", "stylesheet") else route.continue_())
                 pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-                try:
-                    pg.wait_for_load_state("networkidle", timeout=15000)
-                except Exception:
-                    pass
-                pg.wait_for_timeout(3000)
-
-                def _kontrol_5_secili_mi():
-                    try:
-                        return pg.evaluate("""() => {
-                            const r5 = document.querySelector('input#game_count_5, input[name="game_count_5"], input[value="5"]');
-                            return r5 ? r5.checked === true : false;
-                        }""")
-                    except Exception:
-                        return False
-
-                def _icerik_degisti_mi():
-                    try:
-                        return pg.evaluate("""() => {
-                            const t = document.body.innerText || '';
-                            return /Last\\s+5\\s+Games/i.test(t);
-                        }""")
-                    except Exception:
-                        return False
-
-                def _tikla_mouse_ile():
-                    try:
-                        el = pg.locator("input#game_count_5").first
-                        if el.count() > 0:
-                            el.scroll_into_view_if_needed(timeout=2000)
-                            el.check(force=True, timeout=4000)
-                            return True
-                    except Exception:
-                        pass
-                    try:
-                        el = pg.locator("input[type='radio'][value='5']").first
-                        if el.count() > 0:
-                            el.check(force=True, timeout=4000)
-                            return True
-                    except Exception:
-                        pass
-                    try:
-                        lbl = pg.locator("label.containerbutton").filter(
-                            has=pg.locator("span.numbergames", has_text="5")
-                        ).first
-                        if lbl.count() > 0:
-                            lbl.click(force=True, timeout=4000)
-                            return True
-                    except Exception:
-                        pass
-                    return False
-
-                def _tikla_js_ile():
-                    try:
-                        return pg.evaluate("""() => {
-                            const inp = document.querySelector('input#game_count_5')
-                                     || document.querySelector('input[name="game_count_5"]')
-                                     || document.querySelector('input[type="radio"][value="5"]');
-                            if (!inp) return false;
-                            document.querySelectorAll('input[type="radio"]').forEach(r => {
-                                r.checked = false;
-                                r.removeAttribute('checked');
-                            });
-                            inp.checked = true;
-                            inp.setAttribute('checked', 'checked');
-                            ['mousedown','mouseup','click','input','change'].forEach(evName => {
-                                try {
-                                    inp.dispatchEvent(new MouseEvent(evName, {
-                                        bubbles: true, cancelable: true, view: window, button: 0
-                                    }));
-                                } catch(e) {
-                                    try {
-                                        inp.dispatchEvent(new Event(evName, { bubbles: true, cancelable: true }));
-                                    } catch(e2) {}
-                                }
-                            });
-                            try {
-                                if (window.jQuery) { window.jQuery(inp).trigger('click').trigger('change'); }
-                            } catch(e) {}
-                            const lb = inp.closest('label');
-                            if (lb) {
-                                try { lb.click(); } catch(e) {}
-                                try { lb.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window })); } catch(e) {}
-                            }
-                            return true;
-                        }""")
-                    except Exception:
-                        return False
-
-                _tikla_mouse_ile()
                 pg.wait_for_timeout(2500)
-
-                if not (_kontrol_5_secili_mi() or _icerik_degisti_mi()):
-                    _tikla_js_ile()
-                    pg.wait_for_timeout(2500)
-
-                if not (_kontrol_5_secili_mi() or _icerik_degisti_mi()):
-                    _tikla_mouse_ile()
-                    pg.wait_for_timeout(500)
-                    _tikla_js_ile()
-                    pg.wait_for_timeout(3000)
-
+                tiklandi = False
                 try:
-                    pg.wait_for_function(
-                        """() => {
-                            const t = document.body.innerText || '';
-                            return /Last\\s+5\\s+Games/i.test(t);
-                        }""",
-                        timeout=12000
-                    )
-                except Exception:
-                    pass
-
-                pg.wait_for_timeout(2000)
-
-                try:
-                    son_metin = pg.evaluate("""() => document.body.innerText || ''""")
-                    if ("Last 10 Games" in son_metin or "Last 10" in son_metin) and "Last 5 Games" not in son_metin:
-                        _tikla_js_ile()
-                        pg.wait_for_timeout(4000)
+                    tiklandi = pg.evaluate("""() => {
+                        const labels = document.querySelectorAll('label.containerbutton, label');
+                        for (const lb of labels) {
+                            const num = lb.querySelector('.numbergames, .num, span');
+                            if (!num) continue;
+                            const t = (num.textContent || '').trim();
+                            if (t === '5' || t === '5 ') {
+                                const inp = lb.querySelector('input[type="radio"]');
+                                if (inp) { inp.checked = true; inp.dispatchEvent(new Event('change', { bubbles: true })); inp.dispatchEvent(new Event('input', { bubbles: true })); inp.click(); lb.click(); return true; }
+                            }
+                        }
+                        const inp2 = document.querySelector('input[type="radio"][value="5"]');
+                        if (inp2) { inp2.checked = true; inp2.dispatchEvent(new Event('change', { bubbles: true })); inp2.click(); return true; }
+                        const inp3 = document.querySelector('input[id*="game_count_5"], input[id*="5"]');
+                        if (inp3 && inp3.type === 'radio') { inp3.checked = true; inp3.dispatchEvent(new Event('change', { bubbles: true })); inp3.click(); return true; }
+                        return false;
+                    }""")
+                except Exception: tiklandi = False
+                if not tiklandi:
+                    for sel in ["input[type='radio'][value='5']", "input#game_count_5", "label.containerbutton:has-text('5')", "label:has-text('5') input"]:
                         try:
-                            pg.wait_for_function(
-                                """() => /Last\\s+5\\s+Games/i.test(document.body.innerText || '')""",
-                                timeout=8000
-                            )
-                        except Exception:
-                            pass
-                        pg.wait_for_timeout(1500)
-                except Exception:
-                    pass
-
+                            pg.click(sel, timeout=2000); tiklandi = True; break
+                        except Exception: continue
+                pg.wait_for_timeout(3500)
+                try:
+                    pg.wait_for_function("""() => { const t = document.body.innerText || ''; return t.includes('Last 5 Games') || t.includes('last 5 games'); }""", timeout=8000)
+                except Exception: pass
+                pg.wait_for_timeout(1000)
                 return pg.content()
             finally:
-                try:
-                    b.close()
-                except Exception:
-                    pass
+                try: b.close()
+                except Exception: pass
 
 
 def _mac_detay_cek_5games(url):
@@ -2738,6 +2603,7 @@ if st.session_state.sayfa == "giris_yap":
 
 elif st.session_state.sayfa == "giris":
     if admin_mi():
+        # ===== ADMIN ANA SAYFA =====
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:gray;'>Admin Paneli</p>", unsafe_allow_html=True)
         try:
@@ -2821,6 +2687,7 @@ elif st.session_state.sayfa == "giris":
                             st.session_state.skor_ozet = sonuclari_isle(bool(sy), int(sw), _p3)
                         ph.empty(); st.rerun()
     else:
+        # ===== MİSAFİR / ÜYE ANA SAYFA =====
         gelecek = st.session_state.gelecek_analizler
         toplam = len(gelecek)
         premium = uye_premium_mu()
@@ -2867,6 +2734,7 @@ elif st.session_state.sayfa == "giris":
                 ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
                 bayrak = ulke_bayrak_bul(ulke)
 
+                # Saat etiketi (BUGÜN / YARIN / tarih)
                 etiket_saat = "—"
                 try:
                     if tarih and saat:
@@ -2887,6 +2755,7 @@ elif st.session_state.sayfa == "giris":
                 except Exception:
                     etiket_saat = "MAÇ"
 
+                # Lig adı (max 22 karakter)
                 lig_goster = (ulke or "").title()[:22] or "Uluslararası"
 
                 if premium or acik < kota:
@@ -2912,6 +2781,7 @@ elif st.session_state.sayfa == "giris":
                         </div>
                     </div>''', unsafe_allow_html=True)
 
+                    # Zengin Detaylı Analiz butonu
                     if st.button(
                         "🔍  DETAYLI ANALİZ  →",
                         use_container_width=True,
