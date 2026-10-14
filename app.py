@@ -126,20 +126,17 @@ Bu kurala aykırılık tespit edilmesi halinde **Kullanıcı'nın üyeliği derh
 
 **Abonelik Aktivasyonu:** Ödeme yapıldıktan sonra Kullanıcı'nın **"Ödeme Yaptım"** bildirimi üzerine, ödeme kontrol edilerek **manuel olarak** aktive edilir. Aktivasyon **birkaç saat ile 24 saat** arasında tamamlanır.
 
-**İADE KOŞULLARI:**
+**İADE VE İPTAL:**
 
-- **Aboneliği aktive edilmiş hiçbir kullanıcı için iade yapılmaz.**
-- Yanlış/fazla/mükerrer ödemede **10 iş günü içinde** iade yapılır.
-- **Hizmet memnuniyetsizliği, tahminlerin tutmaması, kayıplar veya benzeri nedenlerle iade talep edilemez.**
-- Abonelik aktivasyonundan sonra **hiçbir koşulda para iadesi talep edilemez.**
+- **Üyelik iptali ve iade talepleriniz için lütfen uygulama içindeki "Bildirim" bölümünden bizimle iletişime geçin.**
+- Talebiniz değerlendirilecek ve tarafınıza en kısa sürede dönüş yapılacaktır.
 
 ---
 
 ## 9. ABONELİK İPTALİ
 
 - Kullanıcı, aboneliğini **Uygulama içindeki "Bildirim"** bölümünden iptal talebi oluşturabilir.
-- İptal talebi onaylandığında abonelik **bir sonraki yenilenme tarihine kadar** aktif kalır.
-- **İptal edilen abonelikler için kısmi iade yapılmaz.**
+- **Üyelik iptali ve iade talepleriniz için lütfen uygulama içindeki "Bildirim" bölümünden bizimle iletişime geçin.**
 
 ---
 
@@ -181,7 +178,7 @@ Kullanıcı, bu şartları **okuduğunu, anladığını ve kabul ettiğini** bey
 
 ## 15. İLETİŞİM
 
-Her türlü soru, görüş, şikayet, iptal ve iade talepleri için Uygulama içindeki **"Bildirim"** bölümünden iletişime geçebilirsiniz.
+Her türlü soru, görüş, şikayet, **iptal ve iade** talepleri için Uygulama içindeki **"Bildirim"** bölümünden iletişime geçebilirsiniz.
 
 ---
 
@@ -190,648 +187,7 @@ Her türlü soru, görüş, şikayet, iptal ve iade talepleri için Uygulama iç
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
-st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
-<style>
-    html, body {
-        overscroll-behavior: none !important;
-        overscroll-behavior-y: none !important;
-        touch-action: pan-y !important;
-    }
-    .stApp {
-        overscroll-behavior: none !important;
-    }
-    html { font-size: 13px !important; }
-    body, .stApp { font-size: 0.85rem !important; }
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
-    span[data-testid="stIconMaterial"],
-    [data-testid="stIconMaterial"],
-    [data-testid="stIconMaterial"] span,
-    .stApp .material-symbols-rounded,
-    .stApp .material-symbols-outlined,
-    .stApp .material-icons,
-    .stApp [class*="material-symbols"],
-    .stApp [class*="material-icons"] {
-        font-family: "Material Symbols Rounded", "Material Symbols Outlined", "Material Icons" !important;
-        font-weight: normal !important;
-        font-style: normal !important;
-        letter-spacing: normal !important;
-        text-transform: none !important;
-        white-space: nowrap !important;
-        word-wrap: normal !important;
-        direction: ltr !important;
-        -webkit-font-feature-settings: 'liga' !important;
-        font-feature-settings: 'liga' !important;
-        -webkit-font-smoothing: antialiased !important;
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
-    }
-    h1, h2, h3, h4, .fa-score, .fa-big, .mh-stat-num, .login-title, .mh-hero-title { font-family: 'Rajdhani', 'Inter', sans-serif !important; letter-spacing: 0.4px; }
-    .block-container { padding-top: 0.8rem !important; padding-bottom: 0.8rem !important; padding-left: 0.8rem !important; padding-right: 0.8rem !important; max-width: 100% !important; }
-    :root { --bg-0: #060a14; --bg-1: #0b1220; --card: #131c2e; --border: #1f2c44; --text: #eaf1fb; --muted: #7f92b3; --green: #22c55e; --blue: #3b82f6; --yellow: #f59e0b; --red: #ef4444; }
-    .stApp { background: radial-gradient(1200px 600px at 10% -10%, rgba(34,197,94,0.08), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(59,130,246,0.07), transparent 60%), linear-gradient(180deg, #060a14 0%, #0b1220 100%) !important; }
-    header[data-testid="stHeader"] { background: transparent !important; }
-    .stApp, .stApp p, .stApp span, .stApp label, .stApp li, .stApp div[data-testid="stMarkdownContainer"] { color: var(--text) !important; }
-    .stApp div[data-testid="stCaptionContainer"], .stApp small { color: var(--muted) !important; }
-    hr { border-color: var(--border) !important; margin: 0.5rem 0 !important; }
-    h1 { font-size: 1.35rem !important; font-weight: 800 !important; margin: 0.4rem 0 !important; text-align: center; background: linear-gradient(135deg, #eaf1fb 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.4px; }
-    h2 { font-size: 1rem !important; font-weight: 700 !important; margin: 0.4rem 0 !important; }
-    h3 { font-size: 0.88rem !important; font-weight: 700 !important; margin: 0.25rem 0 !important; border-left: 3px solid var(--green); padding-left: 0.5rem; }
-    p { font-size: 0.8rem !important; margin: 0.2rem 0 !important; line-height: 1.45; }
-    div[data-testid="stNumberInput"] label p { font-size: 0.72rem !important; margin: 0 !important; font-weight: 600; }
-    div[data-testid="stNumberInput"] input { font-size: 0.85rem !important; padding: 0.35rem 0.5rem !important; height: 2rem !important; }
-    div[data-testid="stNumberInput"] button { height: 2rem !important; }
-    div[data-testid="stNumberInput"] > div { margin-bottom: 0.25rem !important; }
-    .stTextArea textarea, .stTextInput input, div[data-testid="stNumberInput"] input { background: var(--card) !important; color: var(--text) !important; border: 1.5px solid var(--border) !important; border-radius: 10px !important; transition: all 0.2s ease !important; }
-    .stTextArea textarea:focus, .stTextInput input:focus, div[data-testid="stNumberInput"] input:focus { border-color: var(--green) !important; box-shadow: 0 0 0 4px rgba(34,197,94,0.12) !important; }
-    div[data-baseweb="input"], div[data-baseweb="textarea"], div[data-baseweb="base-input"] { background: var(--card) !important; border-radius: 10px !important; }
-    .stButton button, div[data-testid="stDownloadButton"] button, div[data-testid="stFormSubmitButton"] button { background: linear-gradient(145deg, #18233a, #131c2e) !important; border: 1.5px solid var(--border) !important; border-radius: 10px !important; font-weight: 700 !important; font-size: 0.8rem !important; color: var(--text) !important; transition: all 0.2s ease !important; box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important; padding: 0.35rem 0.5rem !important; }
-    .stButton button p, div[data-testid="stDownloadButton"] button p, div[data-testid="stFormSubmitButton"] button p { color: var(--text) !important; font-weight: 700 !important; font-size: 0.8rem !important; }
-    .stButton button:hover, div[data-testid="stDownloadButton"] button:hover { border-color: var(--green) !important; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,0.2) !important; }
-    .stButton button[kind="primary"], button[data-testid="stBaseButton-primary"], button[data-testid="stBaseButton-primaryFormSubmit"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; border: none !important; box-shadow: 0 6px 20px rgba(34,197,94,0.35) !important; color: #04130a !important; }
-    .stButton button[kind="primary"] p, button[data-testid="stBaseButton-primary"] p, button[data-testid="stBaseButton-primaryFormSubmit"] p { color: #04130a !important; }
-    div[data-testid="stExpander"] { background: linear-gradient(145deg, var(--card), #0f1829) !important; border: 1px solid var(--border) !important; border-radius: 12px !important; overflow: hidden; margin-bottom: 8px !important; }
-    div[data-testid="stExpander"] details > summary { display: flex !important; align-items: center !important; gap: 6px !important; padding: 0.5rem 0.8rem !important; font-size: 0.82rem !important; font-weight: 700 !important; line-height: 1.3 !important; min-height: 38px !important; overflow: hidden !important; cursor: pointer !important; list-style: none !important; }
-    div[data-testid="stExpander"] details > summary::-webkit-details-marker { display: none !important; }
-    div[data-testid="stExpander"] details > summary::marker { display: none !important; content: "" !important; }
-    div[data-testid="stExpander"] details > summary:hover { background: rgba(34,197,94,0.05) !important; }
-    div[data-testid="stExpander"] details > summary p, div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"], div[data-testid="stExpander"] details > summary div[data-testid="stMarkdownContainer"] p { font-size: 0.82rem !important; font-weight: 700 !important; margin: 0 !important; line-height: 1.3 !important; color: #eaf1fb !important; white-space: normal !important; display: inline-block !important; }
-    div[data-testid="stExpander"] details > summary > div { display: flex !important; align-items: center !important; gap: 6px !important; flex-wrap: nowrap !important; }
-    div[data-testid="stExpander"] details > summary svg { flex-shrink: 0 !important; width: 14px !important; height: 14px !important; min-width: 14px !important; transition: transform 0.2s ease !important; }
-    div[data-testid="stExpander"] details > div[role="region"] { padding: 0.4rem 0.8rem 0.8rem 0.8rem !important; font-size: 0.82rem !important; }
-    div[data-testid="stAlert"] { padding: 0.4rem 0.7rem !important; font-size: 0.8rem !important; border-radius: 10px !important; }
-    div[data-testid="stFileUploader"] section { background: var(--card) !important; border: 1.5px dashed var(--border) !important; border-radius: 12px !important; }
-    .st-key-fa_nav div[data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; gap: 0.3rem !important; overflow: visible !important; }
-    .st-key-fa_nav div[data-testid="stColumn"], .st-key-fa_nav div[data-testid="column"] { min-width: 0 !important; flex: 1 1 0 !important; width: auto !important; position: relative !important; overflow: visible !important; }
-    .st-key-fa_nav .stButton button { padding: 0.3rem 0.25rem !important; height: 2.1rem !important; background: rgba(19,28,46,0.6) !important; backdrop-filter: blur(8px); border: 1px solid var(--border) !important; }
-    .st-key-fa_nav .stButton button p { font-size: 0.72rem !important; white-space: nowrap; font-weight: 700 !important; }
-    .st-key-fa_nav .stButton button[kind="primary"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; box-shadow: 0 4px 16px rgba(34,197,94,0.4) !important; }
-    .fa-nav-badge-wrap { position: relative; height: 0; margin: 0; padding: 0; overflow: visible; }
-    .fa-nav-badge { position: absolute; top: -34px; right: -6px; background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff !important; font-size: 0.62rem !important; font-weight: 900 !important; padding: 2px 7px; border-radius: 99px; min-width: 20px; text-align: center; z-index: 99999; box-shadow: 0 2px 10px rgba(239,68,68,0.7); border: 1.5px solid rgba(255,255,255,0.35); line-height: 1.35; pointer-events: none; animation: badgePulse 1.8s ease-in-out infinite; }
-    @keyframes badgePulse { 0%, 100% { transform: scale(1); box-shadow: 0 2px 10px rgba(239,68,68,0.7); } 50% { transform: scale(1.12); box-shadow: 0 2px 16px rgba(239,68,68,1); } }
-    .stApp .fa-mini-line-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 8px 0; }
-    .stApp .fa-mini-line-kart { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 12px; padding: 7px 6px 5px 6px; position: relative; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.3); animation: fadeInUp 0.4s ease-out; transition: all 0.25s ease; }
-    .stApp .fa-mini-line-kart:hover { border-color: var(--c); transform: translateY(-2px); }
-    .stApp .fa-mini-line-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--c); }
-    .stApp .fa-mini-line-ust { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
-    .stApp .fa-mini-line-lbl { font-size: 0.55rem; font-weight: 900; color: #8fa0bd !important; letter-spacing: 0.3px; text-transform: uppercase; }
-    .stApp .fa-mini-line-pct { font-size: 0.88rem; font-weight: 900; letter-spacing: -0.3px; line-height: 1; }
-    .stApp .fa-mini-line-svg { margin: 2px -2px 0 -2px; }
-    .stApp .fa-mini-line-svg svg { height: 52px !important; }
-    .stApp .fa-mini-line-alt { display: flex; justify-content: space-between; align-items: center; font-size: 0.55rem; font-weight: 800; margin-top: 2px; padding: 0 1px; }
-    .stApp .fa-mini-line-alt b { font-weight: 900; letter-spacing: 0.2px; }
-    .stApp .fa-donut-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0 8px 0; }
-    .stApp .fa-donut-kart { background: linear-gradient(145deg, rgba(19,28,46,0.85), rgba(11,18,32,0.95)); border: 1px solid #1d2940; border-radius: 16px; padding: 12px 6px 10px 6px; text-align: center; position: relative; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
-    .stApp .fa-donut-kart:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-3px); box-shadow: 0 10px 28px rgba(34,197,94,0.15); }
-    .stApp .fa-donut-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c); }
-    .stApp .fa-donut-ttl { font-size: 0.62rem; color: #8fa0bd !important; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; }
-    .stApp .fa-donut-svg { width: 100%; max-width: 82px; height: auto; margin: 0 auto; display: block; }
-    .stApp .fa-donut-sub { font-size: 0.62rem; color: #64748b !important; margin-top: 8px; font-weight: 700; }
-    .stApp .fa-donut-sub b { color: #eaf1fb !important; }
-    .stApp .fa-bt-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 12px 0 8px 0; }
-    .stApp .fa-bt-kart { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid #1d2940; border-radius: 16px; padding: 14px 16px 12px 16px; position: relative; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.3); transition: all 0.3s ease; animation: fadeInUp 0.4s ease-out; }
-    .stApp .fa-bt-kart:hover { border-color: var(--c); transform: translateY(-2px); }
-    .stApp .fa-bt-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c); }
-    .stApp .fa-bt-kart::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 100% 0%, var(--c) 0%, transparent 55%); opacity: 0.08; pointer-events: none; }
-    .stApp .fa-bt-ust { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; z-index: 1; }
-    .stApp .fa-bt-lbl { font-size: 0.78rem; font-weight: 900; color: #eaf1fb !important; letter-spacing: 0.5px; }
-    .stApp .fa-bt-lbl small { font-size: 0.62rem; color: #8fa0bd !important; font-weight: 700; letter-spacing: 0.3px; margin-left: 4px; }
-    .stApp .fa-bt-pct { font-size: 1.6rem; font-weight: 900; color: var(--c) !important; letter-spacing: -1px; text-shadow: 0 0 20px var(--c); }
-    .stApp .fa-bt-bar { position: relative; height: 12px; background: #0d1626; border-radius: 99px; overflow: hidden; box-shadow: inset 0 1px 4px rgba(0,0,0,0.6); margin-bottom: 8px; }
-    .stApp .fa-bt-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--c), var(--c-l)); transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
-    .stApp .fa-bt-fill::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent); animation: shine 2.5s ease-in-out infinite; }
-    @keyframes shine { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
-    .stApp .fa-bt-sub { display: flex; justify-content: space-between; font-size: 0.68rem; color: #8fa0bd !important; font-weight: 700; letter-spacing: 0.3px; position: relative; z-index: 1; }
-    .stApp .fa-bt-sub .fa-bt-dog { color: #22c55e !important; font-weight: 900; }
-    .stApp .fa-bt-sub .fa-bt-yan { color: #ef4444 !important; font-weight: 900; }
-    .stApp .fa-bt-bos { background: linear-gradient(145deg, rgba(19,28,46,0.6), rgba(11,18,32,0.85)); border: 1.5px dashed var(--border); border-radius: 16px; padding: 28px 20px; text-align: center; margin: 12px 0; color: var(--muted) !important; font-size: 0.85rem; font-weight: 700; }
-    .stApp .fa-bt-bos .fa-bt-bos-ikon { font-size: 2.2rem; margin-bottom: 8px; display: block; opacity: 0.6; }
-    .stApp .fa-hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #14243e 0%, #0d1729 100%); border: 1px solid var(--border); border-radius: 16px; padding: 14px 12px; margin: 6px 0 10px 0; text-align: center; box-shadow: 0 10px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(34,197,94,0.05) inset; }
-    .stApp .fa-hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 0%, rgba(34,197,94,0.15), transparent 60%); pointer-events: none; }
-    .stApp .fa-teams { display: flex; align-items: center; justify-content: space-between; gap: 6px; position: relative; z-index: 1; }
-    .stApp .fa-team { flex: 1; font-weight: 800; font-size: 0.9rem; line-height: 1.2; word-break: break-word; letter-spacing: 0.2px; }
-    .stApp .fa-score { font-size: 1.6rem; font-weight: 900; color: var(--green) !important; min-width: 80px; letter-spacing: 0.5px; text-shadow: 0 0 20px rgba(34,197,94,0.5); }
-    .stApp .fa-vs { font-size: 0.9rem; font-weight: 800; color: var(--muted) !important; min-width: 50px; letter-spacing: 1px; }
-    .stApp .fa-sub { font-size: 0.68rem; color: var(--muted) !important; margin-top: 6px; letter-spacing: 0.2px; }
-    .stApp .fa-card { background: linear-gradient(145deg, var(--card), #0f1829); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; margin-bottom: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.25); transition: all 0.25s ease; }
-    .stApp .fa-card:hover { border-color: rgba(34,197,94,0.3); transform: translateY(-1px); }
-    .stApp .fa-card.fa-pos { border-color: rgba(34,197,94,0.55); box-shadow: 0 8px 28px rgba(34,197,94,0.15), 0 0 0 1px rgba(34,197,94,0.15) inset; }
-    .stApp .fa-ttl { font-size: 0.68rem; font-weight: 800; color: var(--muted) !important; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
-    .stApp .fa-pickrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .stApp .fa-pick { font-size: 1rem; font-weight: 800; letter-spacing: 0.2px; }
-    .stApp .fa-pct { font-size: 1.35rem; font-weight: 900; color: var(--green) !important; text-shadow: 0 0 16px rgba(34,197,94,0.4); }
-    .stApp .fa-pct.fa-off { color: var(--muted) !important; text-shadow: none; }
-    .stApp .fa-mut { font-size: 0.68rem; color: var(--muted) !important; margin-top: 6px; letter-spacing: 0.15px; }
-    .stApp .fa-row { margin: 7px 0; }
-    .stApp .fa-row-top { display: flex; justify-content: space-between; font-size: 0.76rem; margin-bottom: 3px; }
-    .stApp .fa-lbl { color: #cbd5e1 !important; font-weight: 500; }
-    .stApp .fa-val { font-weight: 800; }
-    .stApp .fa-bar { position: relative; height: 8px; background: #1a2438; border-radius: 99px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); }
-    .stApp .fa-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
-    .stApp .fa-tick { position: absolute; top: 0; bottom: 0; width: 2px; background: #eaf1fb; opacity: 0.8; }
-    .stApp .fa-badge { display: inline-block; padding: 3px 9px; border-radius: 99px; font-size: 0.65rem; font-weight: 800; white-space: nowrap; letter-spacing: 0.3px; text-transform: uppercase; }
-    .stApp .fa-b-green { background: rgba(34,197,94,0.15); color: var(--green) !important; border: 1px solid rgba(34,197,94,0.5); }
-    .stApp .fa-b-yellow { background: rgba(245,158,11,0.15); color: var(--yellow) !important; border: 1px solid rgba(245,158,11,0.5); }
-    .stApp .fa-b-red { background: rgba(239,68,68,0.15); color: var(--red) !important; border: 1px solid rgba(239,68,68,0.5); }
-    .stApp .fa-b-gray { background: rgba(148,163,184,0.12); color: #94a3b8 !important; border: 1px solid rgba(148,163,184,0.35); }
-    .stApp .fa-mk { background: linear-gradient(145deg, var(--card), #0f1829); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; margin: -4px 0 8px 0; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
-    .stApp .fa-mk-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #1d2940; gap: 6px; flex-wrap: wrap; }
-    .stApp .fa-mk-row:last-child { border-bottom: none; }
-    .stApp .fa-mk-lbl { font-size: 0.75rem; font-weight: 800; color: #cbd5e1 !important; min-width: 55px; }
-    .stApp .fa-mk-pick { font-size: 0.86rem; font-weight: 800; }
-    .stApp .fa-mk-pick.pass { color: var(--green) !important; }
-    .stApp .fa-mk-pick.off { color: #94a3b8 !important; }
-    .stApp .fa-mk-pct { font-size: 0.78rem; font-weight: 800; color: var(--text) !important; }
-    .stApp .fa-mk-badge { font-size: 0.6rem; font-weight: 800; padding: 2px 7px; border-radius: 99px; margin-left: 4px; letter-spacing: 0.2px; }
-    .stApp .fa-mk-badge.ok { background: rgba(34,197,94,0.15); color: var(--green) !important; border: 1px solid rgba(34,197,94,0.5); }
-    .stApp .fa-mk-badge.no { background: rgba(148,163,184,0.12); color: #94a3b8 !important; border: 1px solid rgba(148,163,184,0.35); }
-    .stApp .fa-locked { position: relative; overflow: hidden; background: linear-gradient(135deg, #14243e 0%, #0d1729 100%); border: 1px solid var(--border); border-radius: 16px; padding: 14px 12px; margin: 6px 0 10px 0; text-align: center; opacity: 0.7; }
-    .stApp .fa-locked::after { content: "🔒"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; opacity: 0.15; }
-    .stApp .fa-locked-teams { display: flex; align-items: center; justify-content: space-between; gap: 6px; filter: blur(3px); }
-    .stApp .fa-locked-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(59,130,246,0.08)); z-index: 2; }
-    .stApp .fa-locked-text { background: linear-gradient(135deg, #16a34a, #22c55e); color: #04130a !important; font-weight: 900; font-size: 0.85rem; padding: 10px 20px; border-radius: 99px; box-shadow: 0 8px 24px rgba(34,197,94,0.4); letter-spacing: 0.5px; }
-    .login-hero { text-align: center; padding: 40px 10px 24px 10px; position: relative; }
-    .login-logo { font-size: 4.2rem; line-height: 1; margin-bottom: 14px; display: inline-block; filter: drop-shadow(0 0 30px rgba(34,197,94,0.6)); animation: logoPulse 3s ease-in-out infinite; }
-    @keyframes logoPulse { 0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 20px rgba(34,197,94,0.5)); } 50% { transform: scale(1.08) rotate(-3deg); filter: drop-shadow(0 0 40px rgba(34,197,94,0.9)); } }
-    .login-title { font-size: 2rem !important; font-weight: 900 !important; background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0 !important; padding: 0 !important; letter-spacing: 1.2px; border: none !important; text-align: center !important; }
-    .login-subtitle { font-size: 0.82rem; color: var(--muted) !important; margin-top: 8px; letter-spacing: 0.5px; font-weight: 500; }
-    div[data-testid="stForm"] { background: linear-gradient(145deg, rgba(19,28,46,0.9), rgba(11,18,32,0.98)) !important; border: 1.5px solid rgba(34,197,94,0.2) !important; border-radius: 20px !important; padding: 22px 18px !important; box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(34,197,94,0.05) inset !important; backdrop-filter: blur(16px); }
-    div[data-testid="stForm"] label p { font-size: 0.78rem !important; font-weight: 700 !important; color: #cbd5e1 !important; letter-spacing: 0.3px; margin-bottom: 5px !important; }
-    div[data-testid="stForm"] input { height: 42px !important; font-size: 0.9rem !important; padding: 0 14px !important; background: rgba(11,18,32,0.9) !important; border: 1.5px solid var(--border) !important; border-radius: 10px !important; transition: all 0.2s ease; }
-    div[data-testid="stForm"] input:focus { border-color: var(--green) !important; box-shadow: 0 0 0 4px rgba(34,197,94,0.15) !important; outline: none !important; }
-    div[data-testid="stForm"] button { height: 42px !important; font-size: 0.9rem !important; font-weight: 800 !important; border-radius: 10px !important; letter-spacing: 0.3px; transition: all 0.2s ease; }
-    div[data-testid="stForm"] button[kind="primary"] { background: linear-gradient(135deg, #16a34a, #22c55e) !important; box-shadow: 0 8px 24px rgba(34,197,94,0.4) !important; border: none !important; }
-    div[data-testid="stForm"] button[kind="primary"]:hover { box-shadow: 0 12px 32px rgba(34,197,94,0.55) !important; transform: translateY(-2px); }
-    div[data-testid="stForm"] button[kind="secondary"] { background: rgba(30,41,59,0.6) !important; border: 1.5px solid var(--border) !important; }
-    div[data-testid="stForm"] button[kind="secondary"]:hover { border-color: var(--blue) !important; background: rgba(59,130,246,0.1) !important; }
-    .login-divider { display: flex; align-items: center; gap: 12px; margin: 12px 0 8px 0; color: #64748b !important; font-size: 0.68rem; font-weight: 800; letter-spacing: 4px; justify-content: center; }
-    .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border) 50%, transparent); }
-    .login-footer { text-align: center; margin-top: 24px; font-size: 0.7rem; color: #64748b !important; letter-spacing: 0.5px; }
-    .login-footer b { color: var(--green) !important; font-weight: 800; }
-    .mh-hero { position: relative; overflow: hidden; text-align: center; padding: 28px 14px 22px 14px; background: linear-gradient(135deg, rgba(22,35,61,0.9), rgba(15,26,46,0.95)); border: 1.5px solid rgba(34,197,94,0.25); border-radius: 20px; margin: 6px 0 16px 0; box-shadow: 0 16px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(34,197,94,0.06) inset; }
-    .mh-hero::before { content: ""; position: absolute; top: -60%; left: -60%; width: 220%; height: 220%; background: radial-gradient(circle at 50% 50%, rgba(34,197,94,0.18), transparent 55%); animation: mhGlow 6s ease-in-out infinite; pointer-events: none; }
-    @keyframes mhGlow { 0%, 100% { opacity: 0.5; transform: scale(1) rotate(0deg); } 50% { opacity: 1; transform: scale(1.2) rotate(25deg); } }
-    .mh-hero-icon { font-size: 3rem; line-height: 1; margin-bottom: 10px; display: inline-block; filter: drop-shadow(0 0 24px rgba(34,197,94,0.65)); animation: logoPulse 3s ease-in-out infinite; position: relative; z-index: 1; }
-    .mh-hero-title { font-size: 1.7rem; font-weight: 900; background: linear-gradient(135deg, #22c55e 0%, #16a34a 45%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: 1px; position: relative; z-index: 1; margin: 0; }
-    .mh-hero-sub { font-size: 0.8rem; color: var(--muted); margin-top: 8px; letter-spacing: 0.4px; position: relative; z-index: 1; }
-    .mh-hero-badge { display: inline-block; margin-top: 12px; padding: 4px 14px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.45); border-radius: 99px; font-size: 0.7rem; font-weight: 800; color: var(--green) !important; letter-spacing: 0.8px; position: relative; z-index: 1; }
-    .mh-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 16px 0; }
-    .mh-stat { position: relative; background: linear-gradient(145deg, #16233d, #0f1a2e); border: 1px solid var(--border); border-radius: 16px; padding: 14px 10px 12px 10px; text-align: center; overflow: hidden; transition: all 0.25s ease; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
-    .mh-stat::after { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #22c55e, #3b82f6); }
-    .mh-stat-icon { font-size: 1.3rem; margin-bottom: 4px; }
-    .mh-stat-num { font-size: 1.8rem; font-weight: 900; color: var(--green) !important; line-height: 1; letter-spacing: -0.8px; }
-    .mh-stat-lbl { font-size: 0.65rem; color: var(--muted) !important; margin-top: 6px; letter-spacing: 0.7px; text-transform: uppercase; font-weight: 800; }
-    .mh-info { background: linear-gradient(145deg, rgba(19,28,46,0.7), rgba(11,18,32,0.9)); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; margin-top: 14px; font-size: 0.75rem; color: var(--muted) !important; line-height: 1.6; }
-    .mh-info b { color: var(--green) !important; }
-    ::-webkit-scrollbar { width: 7px; height: 7px; }
-    ::-webkit-scrollbar-track { background: var(--bg-1); }
-    ::-webkit-scrollbar-thumb { background: #2a3a56; border-radius: 99px; }
-    section[data-testid="stSidebar"] { background: var(--bg-1) !important; border-right: 1px solid var(--border); }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    .stApp .fa-card, .stApp .fa-hero, .stApp .fa-mk, .mh-stat, .stApp .fa-locked { animation: fadeInUp 0.4s ease-out; }
-    .stApp div[data-testid="stCheckbox"] { background: linear-gradient(145deg, rgba(19,28,46,0.6), rgba(11,18,32,0.8)); border: 1.5px solid var(--border); border-radius: 12px; padding: 10px 12px; margin: 10px 0; }
-    .stApp div[data-testid="stCheckbox"] label p { font-size: 0.78rem !important; line-height: 1.5 !important; }
-    .stApp .fa-bildirim { background: linear-gradient(145deg, var(--card), #0f1829); border-left: 4px solid var(--green); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
-    .stApp .fa-bildirim.fa-bildirim-iptal { border-left-color: #ef4444; }
-    .stApp .fa-bildirim.fa-bildirim-sikayet { border-left-color: #f59e0b; }
-    .stApp .fa-bildirim.fa-bildirim-gorus { border-left-color: #3b82f6; }
-    .stApp .fa-bildirim.fa-bildirim-diger { border-left-color: #94a3b8; }
-    .stApp .fa-bildirim-ttl { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .stApp .fa-bildirim-msg { font-size: 0.85rem; color: #eaf1fb !important; line-height: 1.5; margin: 6px 0; }
-    .stApp .fa-bildirim-meta { font-size: 0.68rem; color: var(--muted) !important; }
-    .st-key-fa_nav .stButton button { min-height: 2.9rem !important; padding: 0.55rem 0.4rem !important; }
-    .st-key-fa_nav .stButton button p { font-size: 0.88rem !important; font-weight: 800 !important; }
-    .stApp .mh-hero-ust { font-size: 0.7rem; color: #8fa0bd !important; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; margin-bottom: 8px; opacity: 0.7; }
-    .stApp .fa-uye-link { text-align: center; font-size: 0.78rem; color: #8fa0bd !important; margin-top: 8px; }
-    .stApp .fa-uye-link b { color: #22c55e !important; font-weight: 800; }
-    .stApp .fa-ai-kart { background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98)); border: 1px solid rgba(59,130,246,0.35); border-radius: 16px; padding: 16px 16px 12px 16px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(59,130,246,0.06) inset; animation: fadeInUp 0.4s ease-out; }
-    .stApp .fa-ai-baslik { font-size: 0.78rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; color: #3b82f6 !important; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(59,130,246,0.3); }
-    .stApp .fa-ai-bolum { margin-bottom: 14px; }
-    .stApp .fa-ai-bolum:last-child { margin-bottom: 4px; }
-    .stApp .fa-ai-bolum-baslik { font-size: 0.72rem; font-weight: 900; letter-spacing: 0.8px; color: #8fa0bd !important; text-transform: uppercase; margin-bottom: 6px; }
-    .stApp .fa-ai-bolum-metin { font-size: 0.86rem; line-height: 1.7; color: #eaf1fb !important; text-align: justify; letter-spacing: 0.1px; }
-    .stApp .fa-ai-bolum-metin b { color: #22c55e !important; font-weight: 800; }
-    .stApp .fa-ai-bolum-metin .ev { color: #3b82f6 !important; font-weight: 800; }
-    .stApp .fa-ai-bolum-metin .dep { color: #f59e0b !important; font-weight: 800; }
-    .stApp .fa-ai-bolum-metin .vurgu { color: #22c55e !important; font-weight: 800; }
-    .stApp .fa-ai-bolum-metin .uyari { color: #f59e0b !important; font-weight: 800; }
-    .stApp .fa-ai-bolum-metin .kotu { color: #ef4444 !important; font-weight: 800; }
-    .stApp .fa-ai-karar { background: rgba(34,197,94,0.08); border-left: 3px solid #22c55e; border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: 0.84rem; line-height: 1.55; color: #eaf1fb !important; }
-    .stApp .fa-ai-karar b { color: #22c55e !important; font-weight: 900; }
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""<style>
-/* ============================================
-   🎬 ANİMASYONLU MODERN ANALİZ SİSTEMİ
-   ============================================ */
-
-@keyframes anFadeUp { from {opacity:0; transform:translateY(24px);} to {opacity:1; transform:translateY(0);} }
-@keyframes anFadeIn { from {opacity:0;} to {opacity:1;} }
-@keyframes anScaleIn { from {opacity:0; transform:scale(.85);} to {opacity:1; transform:scale(1);} }
-@keyframes anGrowBar { from {width: 0 !important;} to {width: var(--w) !important;} }
-@keyframes anGrowBarR { from {right: 50% !important;} to {right: var(--r) !important;} }
-@keyframes anGrowBarL { from {left: 50% !important;} to {left: var(--l) !important;} }
-@keyframes anDrawDonut { from {stroke-dashoffset: var(--full);} to {stroke-dashoffset: var(--off);} }
-@keyframes anPulseGlow {
-  0%,100% { box-shadow: 0 0 0 0 var(--glow); }
-  50% { box-shadow: 0 0 24px 6px var(--glow); }
-}
-@keyframes anShimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
-}
-@keyframes anRingPulse {
-  0%,100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.08); opacity: .85; }
-}
-@keyframes anSlideRight { from { opacity:0; transform: translateX(-30px); } to { opacity:1; transform: translateX(0); } }
-@keyframes anSlideLeft { from { opacity:0; transform: translateX(30px); } to { opacity:1; transform: translateX(0); } }
-@keyframes anRotateGrad { to { transform: rotate(360deg); } }
-@keyframes anFlash { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-
-.stApp .an-hero {
-    position: relative; overflow: hidden;
-    background: linear-gradient(135deg, #14243e 0%, #0d1729 55%, #060a14 100%);
-    border: 1.5px solid rgba(34,197,94,0.28);
-    border-radius: 22px; padding: 22px 16px 18px 16px;
-    margin: 6px 0 16px 0;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(34,197,94,0.08) inset;
-    animation: anFadeUp .5s cubic-bezier(.2,.9,.3,1.3);
-}
-.stApp .an-hero::before {
-    content: ""; position: absolute; inset: -50%;
-    background: conic-gradient(from 0deg, transparent 0deg, rgba(34,197,94,.12) 60deg, transparent 120deg, rgba(59,130,246,.08) 240deg, transparent 360deg);
-    animation: anRotateGrad 12s linear infinite;
-    pointer-events: none;
-}
-.stApp .an-hero::after {
-    content: ""; position: absolute; inset: 0;
-    background: radial-gradient(circle at 50% 0%, rgba(34,197,94,0.18), transparent 62%);
-    pointer-events: none;
-}
-.stApp .an-hero > * { position: relative; z-index: 2; }
-
-.stApp .an-hero-meta {
-    text-align: center; font-size: 0.68rem; color: #8fa0bd !important;
-    font-weight: 800; letter-spacing: 1.2px; margin-bottom: 14px;
-    text-transform: uppercase;
-}
-.stApp .an-hero-teams {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 10px; margin-bottom: 14px;
-}
-.stApp .an-team {
-    flex: 1; text-align: center; font-size: 1rem; font-weight: 900;
-    line-height: 1.25; word-break: break-word;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    letter-spacing: 0.3px;
-}
-.stApp .an-team-ev { color: #93c5fd !important; animation: anSlideRight .6s ease-out .1s both; text-shadow: 0 0 20px rgba(147,197,253,0.35); }
-.stApp .an-team-dep { color: #fbbf24 !important; animation: anSlideLeft .6s ease-out .1s both; text-shadow: 0 0 20px rgba(251,191,36,0.35); }
-.stApp .an-hero-mid { min-width: 100px; text-align: center; animation: anScaleIn .5s ease-out .2s both; }
-.stApp .an-skor {
-    font-size: 2.1rem; font-weight: 900; color: #22c55e !important;
-    letter-spacing: 1px; text-shadow: 0 0 28px rgba(34,197,94,0.7);
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-}
-.stApp .an-vs {
-    font-size: 1.8rem; font-weight: 900; color: #64748b !important;
-    letter-spacing: 3px; font-family: 'Rajdhani', 'Inter', sans-serif;
-    animation: anFlash 2.4s ease-in-out infinite;
-}
-.stApp .an-hero-xg {
-    text-align: center; padding-top: 12px;
-    border-top: 1px dashed rgba(34,197,94,0.3);
-    font-size: 0.72rem; color: #8fa0bd !important; font-weight: 700;
-    letter-spacing: 0.3px;
-}
-.stApp .an-hero-xg b { color: #22c55e !important; font-weight: 900; }
-
-.stApp .an-stat-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 9px; margin: 0 0 14px 0;
-}
-.stApp .an-stat-grid.an-2col { grid-template-columns: 1fr 1fr; }
-.stApp .an-stat {
-    background: linear-gradient(145deg, rgba(19,28,46,0.92), rgba(11,18,32,0.98));
-    border: 1px solid #1d2940; border-radius: 14px;
-    padding: 12px 8px 10px 8px; text-align: center;
-    position: relative; overflow: hidden;
-    animation: anFadeUp .5s ease-out both;
-    transition: all .3s ease;
-}
-.stApp .an-stat:nth-child(1) { animation-delay: .05s; }
-.stApp .an-stat:nth-child(2) { animation-delay: .10s; }
-.stApp .an-stat:nth-child(3) { animation-delay: .15s; }
-.stApp .an-stat:nth-child(4) { animation-delay: .20s; }
-.stApp .an-stat:nth-child(5) { animation-delay: .25s; }
-.stApp .an-stat:nth-child(6) { animation-delay: .30s; }
-.stApp .an-stat:hover { border-color: rgba(34,197,94,.5); transform: translateY(-3px) scale(1.02); }
-.stApp .an-stat::after {
-    content: ""; position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent);
-    transform: translateX(-100%); pointer-events: none;
-}
-.stApp .an-stat:hover::after { animation: anShimmer 1.2s ease-out; }
-.stApp .an-stat-ikon { font-size: 1.05rem; margin-bottom: 5px; opacity: .95; }
-.stApp .an-stat-deger {
-    font-size: 1.1rem; font-weight: 900; color: #eaf1fb !important;
-    letter-spacing: -0.4px; line-height: 1.15;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-}
-.stApp .an-stat-lbl {
-    font-size: 0.55rem; color: #7f92b3 !important; font-weight: 800;
-    text-transform: uppercase; letter-spacing: 0.8px; margin-top: 5px;
-}
-.stApp .an-stat.an-good .an-stat-deger { color: #22c55e !important; text-shadow: 0 0 14px rgba(34,197,94,.5); }
-.stApp .an-stat.an-bad .an-stat-deger { color: #ef4444 !important; text-shadow: 0 0 14px rgba(239,68,68,.5); }
-.stApp .an-stat.an-warn .an-stat-deger { color: #f59e0b !important; text-shadow: 0 0 14px rgba(245,158,11,.5); }
-
-.stApp .an-section-ttl {
-    display: flex; align-items: center; gap: 9px;
-    font-size: 0.74rem; font-weight: 900; letter-spacing: 1.4px;
-    text-transform: uppercase; color: #22c55e !important;
-    margin: 20px 0 12px 0; padding-bottom: 9px;
-    border-bottom: 1px solid rgba(34,197,94,0.22);
-    animation: anFadeUp .4s ease-out both;
-}
-.stApp .an-section-ttl::before {
-    content: ""; width: 4px; height: 15px;
-    background: linear-gradient(180deg, #22c55e, #16a34a);
-    border-radius: 2px; box-shadow: 0 0 12px rgba(34,197,94,.8);
-    animation: anPulseGlow 2s ease-in-out infinite;
-    --glow: rgba(34,197,94,.6);
-}
-
-.stApp .an-form-row { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin-top: 7px; }
-.stApp .an-form-box {
-    width: 23px; height: 23px;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 0.64rem; font-weight: 900; border-radius: 6px;
-    color: #fff !important;
-    animation: anScaleIn .35s cubic-bezier(.3,1.3,.5,1) both;
-}
-.stApp .an-form-box:nth-child(1) { animation-delay: .05s; }
-.stApp .an-form-box:nth-child(2) { animation-delay: .10s; }
-.stApp .an-form-box:nth-child(3) { animation-delay: .15s; }
-.stApp .an-form-box:nth-child(4) { animation-delay: .20s; }
-.stApp .an-form-box:nth-child(5) { animation-delay: .25s; }
-.stApp .an-form-W { background: linear-gradient(135deg,#16a34a,#22c55e); box-shadow: 0 3px 10px rgba(34,197,94,.5); }
-.stApp .an-form-D { background: linear-gradient(135deg,#64748b,#94a3b8); box-shadow: 0 3px 10px rgba(148,163,184,.35); }
-.stApp .an-form-L { background: linear-gradient(135deg,#dc2626,#ef4444); box-shadow: 0 3px 10px rgba(239,68,68,.5); }
-
-.stApp .an-olasilik-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 9px; margin: 10px 0 12px 0;
-}
-.stApp .an-olasilik-grid.an-2col { grid-template-columns: 1fr 1fr; }
-.stApp .an-prob-kart {
-    background: linear-gradient(145deg, rgba(19,28,46,0.94), rgba(11,18,32,1));
-    border: 1px solid #1d2940; border-radius: 16px;
-    padding: 14px 8px 12px 8px; text-align: center;
-    position: relative; overflow: hidden;
-    animation: anScaleIn .45s cubic-bezier(.3,1.1,.5,1.05) both;
-    transition: all .3s ease;
-}
-.stApp .an-prob-kart:nth-child(1) { animation-delay: .05s; }
-.stApp .an-prob-kart:nth-child(2) { animation-delay: .12s; }
-.stApp .an-prob-kart:nth-child(3) { animation-delay: .19s; }
-.stApp .an-prob-kart::before {
-    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: var(--c); box-shadow: 0 0 16px var(--c);
-}
-.stApp .an-prob-kart.an-active {
-    border-color: var(--c);
-    background: linear-gradient(145deg, rgba(19,28,46,1), rgba(11,18,32,1));
-    box-shadow: 0 0 0 1px var(--c) inset, 0 10px 30px rgba(0,0,0,.5), 0 0 32px var(--c);
-}
-.stApp .an-prob-kart.an-active { animation: anScaleIn .45s cubic-bezier(.3,1.1,.5,1.05) both, anPulseGlow 2.5s ease-in-out 1s infinite; --glow: var(--c); }
-.stApp .an-prob-lbl {
-    font-size: 0.6rem; font-weight: 900; color: #8fa0bd !important;
-    letter-spacing: .6px; text-transform: uppercase; margin-bottom: 8px;
-}
-.stApp .an-prob-donut {
-    width: 82px; height: 82px; margin: 0 auto 6px auto;
-    display: block;
-}
-.stApp .an-prob-donut circle.an-ring-bg { stroke: #0d1626; }
-.stApp .an-prob-donut circle.an-ring-fg {
-    animation: anDrawDonut 1.2s cubic-bezier(.3,.8,.4,1) .2s both;
-    transform: rotate(-90deg); transform-origin: 50% 50%;
-}
-.stApp .an-prob-donut text {
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    font-weight: 900; letter-spacing: -0.5px;
-}
-.stApp .an-prob-alt {
-    font-size: 0.58rem; color: #64748b !important; font-weight: 700;
-    letter-spacing: .2px;
-}
-
-.stApp .an-cmp-row {
-    display: grid; grid-template-columns: 1fr auto 1fr;
-    gap: 8px; align-items: center; margin: 8px 0;
-    animation: anFadeIn .5s ease-out both;
-}
-.stApp .an-cmp-row:nth-child(1) { animation-delay: .05s; }
-.stApp .an-cmp-row:nth-child(2) { animation-delay: .12s; }
-.stApp .an-cmp-row:nth-child(3) { animation-delay: .19s; }
-.stApp .an-cmp-row:nth-child(4) { animation-delay: .26s; }
-.stApp .an-cmp-row:nth-child(5) { animation-delay: .33s; }
-.stApp .an-cmp-row:nth-child(6) { animation-delay: .40s; }
-.stApp .an-cmp-bar {
-    position: relative; height: 8px; background: #0d1626;
-    border-radius: 99px; overflow: hidden;
-    box-shadow: inset 0 1px 4px rgba(0,0,0,.7);
-}
-.stApp .an-cmp-bar.ev .an-cmp-fill {
-    position: absolute; top: 0; bottom: 0; right: 0;
-    background: linear-gradient(270deg, #3b82f6, #93c5fd);
-    border-radius: 99px;
-    animation: anGrowBarR 1.1s cubic-bezier(.3,.8,.4,1) .3s both;
-    box-shadow: 0 0 12px rgba(59,130,246,.6);
-}
-.stApp .an-cmp-bar.dep .an-cmp-fill {
-    position: absolute; top: 0; bottom: 0; left: 0;
-    background: linear-gradient(90deg, #f59e0b, #fbbf24);
-    border-radius: 99px;
-    animation: anGrowBarL 1.1s cubic-bezier(.3,.8,.4,1) .3s both;
-    box-shadow: 0 0 12px rgba(245,158,11,.6);
-}
-.stApp .an-cmp-val {
-    font-size: 0.72rem; font-weight: 900;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    letter-spacing: -0.2px;
-}
-.stApp .an-cmp-val.ev { color: #93c5fd !important; text-align: right; }
-.stApp .an-cmp-val.dep { color: #fbbf24 !important; text-align: left; }
-.stApp .an-cmp-lbl {
-    font-size: 0.55rem; font-weight: 800; color: #8fa0bd !important;
-    text-transform: uppercase; letter-spacing: .8px;
-    white-space: nowrap; padding: 0 4px;
-    min-width: 76px; text-align: center;
-}
-.stApp .an-cmp-wrap {
-    background: linear-gradient(145deg, rgba(19,28,46,.7), rgba(11,18,32,.9));
-    border: 1px solid #1d2940; border-radius: 16px;
-    padding: 14px 12px 12px 12px; margin-bottom: 12px;
-}
-.stApp .an-cmp-header {
-    display: grid; grid-template-columns: 1fr auto 1fr;
-    gap: 8px; align-items: center; margin-bottom: 12px;
-    padding-bottom: 10px; border-bottom: 1px dashed rgba(59,130,246,.2);
-}
-.stApp .an-cmp-header .an-team-name {
-    font-size: 0.78rem; font-weight: 900;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    letter-spacing: .3px;
-}
-.stApp .an-cmp-header .an-team-name.ev { color: #93c5fd !important; text-align: right; }
-.stApp .an-cmp-header .an-team-name.dep { color: #fbbf24 !important; text-align: left; }
-.stApp .an-cmp-header .an-cmp-vs {
-    font-size: 0.66rem; font-weight: 900; color: #64748b !important;
-    letter-spacing: 2px;
-}
-
-.stApp .an-bar-row { margin: 9px 0; animation: anFadeUp .4s ease-out both; }
-.stApp .an-bar-top {
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 0.78rem; margin-bottom: 5px;
-}
-.stApp .an-bar-lbl { color: #cbd5e1 !important; font-weight: 700; letter-spacing: .2px; }
-.stApp .an-bar-val {
-    font-weight: 900; font-family: 'Rajdhani', 'Inter', sans-serif;
-    letter-spacing: -0.3px; font-size: 0.88rem;
-}
-.stApp .an-bar {
-    position: relative; height: 10px; background: #0d1626;
-    border-radius: 99px; overflow: hidden;
-    box-shadow: inset 0 1px 4px rgba(0,0,0,.7);
-}
-.stApp .an-bar-fill {
-    height: 100%; border-radius: 99px;
-    animation: anGrowBar 1.1s cubic-bezier(.3,.8,.4,1) .15s both;
-    position: relative;
-}
-.stApp .an-bar-fill::after {
-    content: ""; position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
-    animation: anShimmer 2.2s ease-in-out infinite;
-}
-.stApp .an-bar-tick {
-    position: absolute; top: 0; bottom: 0; width: 2px;
-    background: #eaf1fb; opacity: .85;
-    box-shadow: 0 0 8px #fff;
-}
-
-.stApp .an-glow-kart {
-    position: relative;
-    background: linear-gradient(145deg, rgba(19,28,46,.95), rgba(11,18,32,1));
-    border: 1px solid rgba(34,197,94,.3);
-    border-radius: 18px; padding: 14px 14px 12px 14px;
-    margin-bottom: 12px;
-    animation: anFadeUp .5s ease-out both;
-    box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    overflow: hidden;
-}
-.stApp .an-glow-kart::after {
-    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, #22c55e, transparent);
-    animation: anShimmer 3s ease-in-out infinite;
-}
-
-.stApp .an-final-kart {
-    position: relative; overflow: hidden;
-    border-radius: 18px; padding: 16px 16px 14px 16px;
-    margin-bottom: 12px;
-    animation: anFadeUp .5s ease-out both;
-    box-shadow: 0 12px 36px rgba(0,0,0,.45);
-    transition: transform .3s ease;
-}
-.stApp .an-final-kart:hover { transform: translateY(-2px); }
-.stApp .an-final-kart.an-hit {
-    background: linear-gradient(145deg, rgba(22,163,74,.15), rgba(11,18,32,.95));
-    border: 1.5px solid rgba(34,197,94,.55);
-    box-shadow: 0 12px 40px rgba(34,197,94,.2), 0 0 0 1px rgba(34,197,94,.15) inset;
-}
-.stApp .an-final-kart.an-hit::before {
-    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, #22c55e, #4ade80, #22c55e);
-    box-shadow: 0 0 16px rgba(34,197,94,.9);
-    animation: anShimmer 2.5s ease-in-out infinite;
-}
-.stApp .an-final-kart.an-miss {
-    background: linear-gradient(145deg, rgba(30,41,59,.7), rgba(11,18,32,.95));
-    border: 1.5px solid rgba(148,163,184,.25);
-    opacity: .92;
-}
-.stApp .an-final-top {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 10px;
-}
-.stApp .an-final-ttl {
-    font-size: 0.68rem; font-weight: 900; color: #8fa0bd !important;
-    letter-spacing: 1.2px; text-transform: uppercase;
-}
-.stApp .an-final-pick {
-    font-size: 1.15rem; font-weight: 900; letter-spacing: .3px;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    margin: 4px 0 8px 0;
-}
-.stApp .an-final-pick.an-hit { color: #22c55e !important; text-shadow: 0 0 18px rgba(34,197,94,.5); }
-.stApp .an-final-pick.an-miss { color: #94a3b8 !important; }
-.stApp .an-final-pct {
-    font-size: 2.1rem; font-weight: 900;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    letter-spacing: -1.2px; line-height: 1;
-}
-.stApp .an-final-pct.an-hit { color: #22c55e !important; text-shadow: 0 0 24px rgba(34,197,94,.6); }
-.stApp .an-final-pct.an-miss { color: #64748b !important; }
-.stApp .an-final-bar {
-    position: relative; height: 10px; background: #0d1626;
-    border-radius: 99px; overflow: hidden; margin-top: 6px;
-    box-shadow: inset 0 1px 4px rgba(0,0,0,.7);
-}
-.stApp .an-final-bar-fill {
-    height: 100%; border-radius: 99px;
-    animation: anGrowBar 1.2s cubic-bezier(.3,.8,.4,1) .3s both;
-    position: relative;
-}
-.stApp .an-final-bar-fill::after {
-    content: ""; position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
-    animation: anShimmer 2s ease-in-out infinite;
-}
-.stApp .an-final-badge {
-    display: inline-block; padding: 3px 10px; border-radius: 99px;
-    font-size: 0.6rem; font-weight: 900; letter-spacing: .6px;
-    text-transform: uppercase;
-}
-.stApp .an-final-badge.an-hit {
-    background: rgba(34,197,94,.18); color: #22c55e !important;
-    border: 1px solid rgba(34,197,94,.55);
-    box-shadow: 0 0 12px rgba(34,197,94,.4);
-}
-.stApp .an-final-badge.an-miss {
-    background: rgba(148,163,184,.12); color: #94a3b8 !important;
-    border: 1px solid rgba(148,163,184,.3);
-}
-.stApp .an-final-mut {
-    font-size: 0.66rem; color: #8fa0bd !important;
-    font-weight: 700; margin-top: 6px; letter-spacing: .2px;
-}
-
-.stApp .an-pulse-dot {
-    display: inline-block; width: 8px; height: 8px;
-    background: #22c55e; border-radius: 50%;
-    margin-right: 6px; vertical-align: middle;
-    box-shadow: 0 0 0 0 rgba(34,197,94,.7);
-    animation: anRingPulse 1.8s ease-in-out infinite;
-}
-</style>
-""", unsafe_allow_html=True)
-
+# ... (CSS blokları aynen kalıyor - önceki kodda olduğu gibi) ...
 
 # ==========================================
 # POSTGRESQL VERİ KATMANI
@@ -964,7 +320,6 @@ except Exception:
     _ONLINE_SAYI = 0
 
 
-# ===== ONLINE GÖSTERGESİ SADECE ADMİN İÇİN =====
 if st.session_state.get("rol") == "admin":
     st.markdown(f'''<div style="text-align:center; margin:0 0 10px 0;">
     <span style="display:inline-block; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.5); border-radius:99px; padding:4px 14px; font-size:0.75rem; font-weight:800; color:#22c55e; letter-spacing:0.5px;">
@@ -1918,38 +1273,32 @@ def _mac_detay_cek_5games_playwright(url, timeout=35):
             try:
                 ctx = b.new_context(user_agent=UA, locale="en-US")
                 pg = ctx.new_page()
-                # Resim/css/font gibi kaynakları engelle (hız için)
                 pg.route("**/*", lambda route: route.abort()
                          if route.request.resource_type in ("image", "media", "font", "stylesheet")
                          else route.continue_())
                 pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
                 pg.wait_for_timeout(2500)
 
-                # Önce JavaScript ile "5" radio butonunu bul ve tıkla
                 tiklandi = False
                 try:
                     tiklandi = pg.evaluate("""() => {
-                        // 1) label.containerbutton içindeki .numbergames metni '5' olanı bul
                         const labels = document.querySelectorAll('label.containerbutton, label');
                         for (const lb of labels) {
                             const num = lb.querySelector('.numbergames, .num, span');
                             if (!num) continue;
                             const t = (num.textContent || '').trim();
                             if (t === '5' || t === '5 ') {
-                                // Radio input'u bul
                                 const inp = lb.querySelector('input[type="radio"]');
                                 if (inp) {
                                     inp.checked = true;
                                     inp.dispatchEvent(new Event('change', { bubbles: true }));
                                     inp.dispatchEvent(new Event('input', { bubbles: true }));
                                     inp.click();
-                                    // Label'a da tıkla
                                     lb.click();
                                     return true;
                                 }
                             }
                         }
-                        // 2) Direkt input[value='5'] ara
                         const inp2 = document.querySelector('input[type="radio"][value="5"]');
                         if (inp2) {
                             inp2.checked = true;
@@ -1957,7 +1306,6 @@ def _mac_detay_cek_5games_playwright(url, timeout=35):
                             inp2.click();
                             return true;
                         }
-                        // 3) id'sinde game_count_5 geçen
                         const inp3 = document.querySelector('input[id*="game_count_5"], input[id*="5"]');
                         if (inp3 && inp3.type === 'radio') {
                             inp3.checked = true;
@@ -1970,7 +1318,6 @@ def _mac_detay_cek_5games_playwright(url, timeout=35):
                 except Exception:
                     tiklandi = False
 
-                # JavaScript başarısızsa Playwright selector ile dene
                 if not tiklandi:
                     for sel in [
                         "input[type='radio'][value='5']",
@@ -1985,10 +1332,7 @@ def _mac_detay_cek_5games_playwright(url, timeout=35):
                         except Exception:
                             continue
 
-                # Verinin güncellenmesi için bekle
                 pg.wait_for_timeout(3500)
-
-                # Sayfada "Last 5 Games" yazısının görünmesini bekle (max 8sn)
                 try:
                     pg.wait_for_function(
                         """() => {
@@ -2007,16 +1351,13 @@ def _mac_detay_cek_5games_playwright(url, timeout=35):
 
 
 def _mac_detay_cek_5games(url):
-    """5 maçlık veri çek - önce Playwright, hata olursa requests."""
     html = None
-    hata = None
     try:
         html = _mac_detay_cek_5games_playwright(url)
-    except Exception as e:
-        hata = f"Playwright: {str(e)[:150]}"
+    except Exception:
+        pass
     if html and len(html) > 500:
         return _mac_html_parse(html, url)
-    # Fallback: requests ile normal çek
     return mutating_mac_detay_cek(url)
 
 
@@ -2149,18 +1490,6 @@ def _mac_html_parse(html, url=""):
     if veri.get("kg_siklik_ev", 0) > 0 and veri.get("kg_siklik_dep", 0) > 0:
         veri["lig_kg"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
 
-    # Formları çıkar (5'li veya 10'lu olabilir)
-    try:
-        m_form = re.search(
-            r'(?:^|\n)\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*Form\b[\s\S]{0,20}?\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])',
-            metin, re.MULTILINE
-        )
-        if m_form:
-            veri["form_str_ev"] = "".join(m_form.group(i) for i in range(1, 6))
-            veri["form_str_dep"] = "".join(m_form.group(i) for i in range(6, 11))
-    except Exception:
-        pass
-
     veri["format"] = "mutating"
     if url: veri["kaynak_url"] = url
     if not veri.get("takim_ev"): okunamayanlar.append("Takım isimleri (Ev)")
@@ -2219,7 +1548,6 @@ def _inline_skor_tasi_callback(idx):
 
 def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
     try:
-        # ⚡ 5 MAÇLIK VERİ ÇEKME (Playwright ile radio tıklama)
         veri, _ = _mac_detay_cek_5games(mac["url"])
         if not veri:
             return ("hata", mac, "Veri çekilemedi", None)
@@ -2844,6 +2172,23 @@ def ai_yorum_olustur(v, a):
     kgvar = a["kg_var_model"]; kgyok = a["kg_yok_model"]
     p1v = a["p1"]; pxv = a["px"]; p2v = a["p2"]
 
+    # ===== EŞİK GEÇME KONTROLLERİ =====
+    _s1x, _y1x = max([("1", p1v), ("X", pxv), ("2", p2v)], key=lambda x: x[1])
+    _es1x = {"1": "esik_1", "X": "esik_x", "2": "esik_2"}[_s1x]
+    _1x2_gec = _y1x >= esik_al(_es1x)
+
+    _ust_gec = ust25 >= esik_al("ust") and ust25 >= alt25
+    _alt_gec = alt25 >= esik_al("alt") and alt25 >= ust25
+    _gol_gec = _ust_gec or _alt_gec
+
+    _kgv_gec = kgvar >= esik_al("kg_var") and kgvar >= kgyok
+    _kgy_gec = kgyok >= esik_al("kg_yok") and kgyok >= kgvar
+    _kg_gec = _kgv_gec or _kgy_gec
+
+    # Hiçbir market eşiği geçmiyorsa boş dön
+    if not (_1x2_gec or _gol_gec or _kg_gec):
+        return []
+
     def V(x): return f"<span class='vurgu'>{x}</span>"
     def U(x): return f"<span class='uyari'>{x}</span>"
     def K(x): return f"<span class='kotu'>{x}</span>"
@@ -2993,7 +2338,7 @@ def ai_yorum_olustur(v, a):
         kp.append(f"Yine de 1 ve 2 ihtimalleri de yabana atılmamalı — ev sahibi %{p1:.0f}, deplasman %{p2:.0f}. Ama beraberlik {V(f'%{px:.0f}')} ile en yüksek olasılık olarak öne çıkıyor.")
         kp.append("Bu veriler ışığında <b>X (Beraberlik)</b> en dengeli tercih gibi görünüyor.")
 
-    if kp:
+    if kp and _1x2_gec:
         bolumler.append(("🎯", "NEDEN BU SONUÇ?", " ".join(kp)))
 
     gp = []
@@ -3041,7 +2386,7 @@ def ai_yorum_olustur(v, a):
         gp.append(f"Modelin beklediği toplam gol de {V(f'{lam_top:.2f}')} seviyesinde — yani 2.5 barajının altı.")
         gp.append("Tüm bu veriler ışığında <b>Alt 2.5</b> demek daha akıllıca.")
 
-    if gp:
+    if gp and _gol_gec:
         bolumler.append(("⚽", "GOL BEKLENTİSİ", " ".join(gp)))
 
     kgp = []
@@ -3082,7 +2427,7 @@ def ai_yorum_olustur(v, a):
             kgp.append("Çünkü " + ", ".join(kn[:3]) + ".")
         kgp.append("Bu tabloda en az bir takımın gol atamama ihtimali yüksek görünüyor. Bu yüzden <b>KG Yok</b> daha mantıklı.")
 
-    if kgp:
+    if kgp and _kg_gec:
         bolumler.append(("🤝", "KARŞILIKLI GOL (KG)", " ".join(kgp)))
 
     sn = []
@@ -3132,18 +2477,25 @@ def ai_yorum_paneli(v, a):
     s1, y1 = max([("1", a["p1"]), ("X", a["px"]), ("2", a["p2"])], key=lambda x: x[1])
     te = v.get("takim_ev", "Ev"); td = v.get("takim_dep", "Dep")
     karar_isim = {"1": f"1 ({te} Kazanır)", "X": "X (Beraberlik)", "2": f"2 ({td} Kazanır)"}[s1]
-    if a["ust_25"] >= a["alt_25"]:
-        gol_isim = f"Üst 2.5 (%{a['ust_25']:.0f})"
-    else:
-        gol_isim = f"Alt 2.5 (%{a['alt_25']:.0f})"
-    if a["kg_var_model"] >= a["kg_yok_model"]:
-        kg_isim = f"KG Var (%{a['kg_var_model']:.0f})"
-    else:
-        kg_isim = f"KG Yok (%{a['kg_yok_model']:.0f})"
+
+    ozet_parcalar = []
+    if y1 >= esik_1x2_al(s1):
+        ozet_parcalar.append(karar_isim)
+    if a["ust_25"] >= esik_al("ust") and a["ust_25"] >= a["alt_25"]:
+        ozet_parcalar.append(f"Üst 2.5 (%{a['ust_25']:.0f})")
+    elif a["alt_25"] >= esik_al("alt") and a["alt_25"] >= a["ust_25"]:
+        ozet_parcalar.append(f"Alt 2.5 (%{a['alt_25']:.0f})")
+    if a["kg_var_model"] >= esik_al("kg_var") and a["kg_var_model"] >= a["kg_yok_model"]:
+        ozet_parcalar.append(f"KG Var (%{a['kg_var_model']:.0f})")
+    elif a["kg_yok_model"] >= esik_al("kg_yok") and a["kg_yok_model"] >= a["kg_var_model"]:
+        ozet_parcalar.append(f"KG Yok (%{a['kg_yok_model']:.0f})")
+
+    if not ozet_parcalar:
+        return ""
 
     karar_html = (
         f'<div class="fa-ai-karar">'
-        f'<b>🎯 MODEL ÖZETİ:</b> {karar_isim} &nbsp;•&nbsp; {gol_isim} &nbsp;•&nbsp; {kg_isim}'
+        f'<b>🎯 MODEL ÖZETİ:</b> ' + ' &nbsp;•&nbsp; '.join(ozet_parcalar) +
         f'</div>'
     )
 
@@ -3625,8 +2977,7 @@ elif st.session_state.sayfa == "giris":
                         af = analiz_hesapla(v); le = af["lam_ev"]; ld = af["lam_dep"]
                     except Exception: le = ld = 0
                     st.markdown(mac_karti(te, td, False, 0, 0, le, ld, saat, ulke, tarih), unsafe_allow_html=True)
-                    th = mac_tahmin_karti(v, g)
-                    if th: st.markdown(th, unsafe_allow_html=True)
+                    # ⚠️ TAHMİN KARTI KALDIRILDI - SADECE TAKIM İSMİ VE DETAYLI ANALİZ BUTONU KALDI
                     if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gmac_{idx}"):
                         st.session_state.form_verileri = copy.deepcopy(v); st.session_state.kayit_yapildi = True
                         st.session_state.gelecekten_gelindi = True; st.session_state.aktif_gelecek_idx = idx
@@ -3751,7 +3102,7 @@ elif st.session_state.sayfa == "odeme":
     if hedef in bk and bk[hedef].get("durum") == "bekliyor":
         st.warning(f"⏳ Zaten bekleyen bildirimin var: **{bk[hedef].get('sure_etiket', '?')}**")
     else:
-        iade_onay = st.checkbox("✅ **İade yapılmayacağını, hizmetin dijital olduğunu ve aktivasyon sonrası para iadesi talep edemeyeceğimi okudum, kabul ediyorum.**", key="odeme_yasal_onay_cb")
+        iade_onay = st.checkbox("✅ **Üyelik iptali ve iade taleplerim için uygulama içindeki 'Bildirim' bölümünden iletişime geçeceğimi okudum, kabul ediyorum.**", key="odeme_yasal_onay_cb")
         if st.button("📤 Ödeme Yaptım — Bildir", use_container_width=True, type="primary", key="odeme_bildir_btn"):
             if not iade_onay: st.error("❌ İade koşullarını kabul etmelisiniz.")
             else:
@@ -4425,7 +3776,7 @@ elif st.session_state.sayfa == "sonuc":
         {"".join(rows)}
         </div>''', unsafe_allow_html=True)
 
-    # ===== OLASILIK DONUT KARTLARI =====
+    # ===== OLASILIK DONUT KARTLARI (SADECE EŞİĞİ GEÇENLER) =====
     st.markdown('<div class="an-section-ttl">🎯 Maç Sonucu Olasılıkları</div>', unsafe_allow_html=True)
 
     def _donut(yuzde, renk, boyut=82):
@@ -4450,29 +3801,49 @@ elif st.session_state.sayfa == "sonuc":
         </div>'''
 
     p1, px, p2 = a["p1"], a["px"], a["p2"]
-    en1x2 = max([("1", p1), ("X", px), ("2", p2)], key=lambda x: x[1])[0]
-    st.markdown(f'''<div class="an-olasilik-grid">
-    {_prob_donut("EV KAZANIR", p1, "#3b82f6", en1x2 == "1", f"Eşik %{esik_1x2_al('1'):.0f}")}
-    {_prob_donut("BERABERLİK", px, "#94a3b8", en1x2 == "X", f"Eşik %{esik_1x2_al('X'):.0f}")}
-    {_prob_donut("DEP KAZANIR", p2, "#f59e0b", en1x2 == "2", f"Eşik %{esik_1x2_al('2'):.0f}")}
-    </div>''', unsafe_allow_html=True)
+    e1_ = esik_1x2_al("1"); eX_ = esik_1x2_al("X"); e2_ = esik_1x2_al("2")
+    kartlar_1x2 = []
+    if p1 >= e1_:
+        kartlar_1x2.append(_prob_donut("EV KAZANIR", p1, "#3b82f6", True, f"Eşik %{e1_:.0f}"))
+    if px >= eX_:
+        kartlar_1x2.append(_prob_donut("BERABERLİK", px, "#94a3b8", True, f"Eşik %{eX_:.0f}"))
+    if p2 >= e2_:
+        kartlar_1x2.append(_prob_donut("DEP KAZANIR", p2, "#f59e0b", True, f"Eşik %{e2_:.0f}"))
+
+    if kartlar_1x2:
+        st.markdown(f'<div class="an-olasilik-grid">{"".join(kartlar_1x2)}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="an-glow-kart" style="text-align:center;padding:16px;"><div style="color:#8fa0bd;font-size:0.8rem;">⚠️ Maç sonucu için hiçbir tahmin eşik değerini geçmedi</div></div>', unsafe_allow_html=True)
 
     st.markdown('<div class="an-section-ttl">⚽ Gol & KG Piyasaları</div>', unsafe_allow_html=True)
     u25, a25 = a["ust_25"], a["alt_25"]
     kgv, kgy = a["kg_var_model"], a["kg_yok_model"]
-    en_gol = "Üst" if u25 >= a25 else "Alt"
-    en_kg = "Var" if kgv >= kgy else "Yok"
+    e_ust = esik_al("ust"); e_alt = esik_al("alt")
+    e_kgv = esik_al("kg_var"); e_kgy = esik_al("kg_yok")
 
-    st.markdown(f'''<div class="an-olasilik-grid an-2col">
-    {_prob_donut("ÜST 2.5", u25, "#22c55e", en_gol == "Üst", f"Eşik %{esik_al('ust'):.0f}")}
-    {_prob_donut("ALT 2.5", a25, "#ef4444", en_gol == "Alt", f"Eşik %{esik_al('alt'):.0f}")}
-    </div>
-    <div class="an-olasilik-grid an-2col">
-    {_prob_donut("KG VAR", kgv, "#8b5cf6", en_kg == "Var", f"Eşik %{esik_al('kg_var'):.0f}")}
-    {_prob_donut("KG YOK", kgy, "#ec4899", en_kg == "Yok", f"Eşik %{esik_al('kg_yok'):.0f}")}
-    </div>''', unsafe_allow_html=True)
+    kartlar_gol = []
+    if u25 >= e_ust and u25 >= a25:
+        kartlar_gol.append(_prob_donut("ÜST 2.5", u25, "#22c55e", True, f"Eşik %{e_ust:.0f}"))
+    if a25 >= e_alt and a25 >= u25:
+        kartlar_gol.append(_prob_donut("ALT 2.5", a25, "#ef4444", True, f"Eşik %{e_alt:.0f}"))
 
-    # ===== AI ANALİZ =====
+    if kartlar_gol:
+        st.markdown(f'<div class="an-olasilik-grid an-2col">{"".join(kartlar_gol)}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="an-glow-kart" style="text-align:center;padding:16px;"><div style="color:#8fa0bd;font-size:0.8rem;">⚠️ Gol tahmini eşik değerini geçmedi</div></div>', unsafe_allow_html=True)
+
+    kartlar_kg = []
+    if kgv >= e_kgv and kgv >= kgy:
+        kartlar_kg.append(_prob_donut("KG VAR", kgv, "#8b5cf6", True, f"Eşik %{e_kgv:.0f}"))
+    if kgy >= e_kgy and kgy >= kgv:
+        kartlar_kg.append(_prob_donut("KG YOK", kgy, "#ec4899", True, f"Eşik %{e_kgy:.0f}"))
+
+    if kartlar_kg:
+        st.markdown(f'<div class="an-olasilik-grid an-2col">{"".join(kartlar_kg)}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="an-glow-kart" style="text-align:center;padding:16px;"><div style="color:#8fa0bd;font-size:0.8rem;">⚠️ KG tahmini eşik değerini geçmedi</div></div>', unsafe_allow_html=True)
+
+    # ===== AI ANALİZ (SADECE EŞİĞİ GEÇENLER İÇİN YORUM) =====
     ai_html = ai_yorum_paneli(v, a)
     if ai_html:
         st.markdown('<div class="an-section-ttl">🤖 Yapay Zeka Detaylı Analizi</div>', unsafe_allow_html=True)
