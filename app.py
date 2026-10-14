@@ -23,7 +23,6 @@ import extra_streamlit_components as stx
 logging.getLogger('streamlit').setLevel(logging.ERROR)
 logging.getLogger('streamlit.runtime.scriptrunner.script_run_context').setLevel(logging.ERROR)
 logging.getLogger('streamlit.runtime.scriptrunner').setLevel(logging.ERROR)
-
 warnings.filterwarnings("ignore", message=".*CachedWidgetWarning.*")
 warnings.filterwarnings("ignore", category=UserWarning, module="streamlit")
 
@@ -187,9 +186,6 @@ Her türlü soru, görüş, şikayet, **iptal ve iade** talepleri için Uygulama
 
 st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="centered")
 
-# ============================================================================
-# 🎨 ANA CSS (mevcut tüm stiller + modern ana sayfa stilleri eklendi)
-# ============================================================================
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
@@ -402,9 +398,6 @@ st.markdown("""
     .stApp .fa-ai-karar { background: rgba(34,197,94,0.08); border-left: 3px solid #22c55e; border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: 0.84rem; line-height: 1.55; color: #eaf1fb !important; }
     .stApp .fa-ai-karar b { color: #22c55e !important; font-weight: 900; }
 
-    /* ============================================
-       🎨 MODERN ANA SAYFA & GEÇMİŞ MAÇ STİLLERİ
-       ============================================ */
     .mh2-hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #14243e 0%, #0d1729 55%, #060a14 100%); border: 1.5px solid rgba(34,197,94,0.28); border-radius: 22px; padding: 24px 18px 20px 18px; margin: 6px 0 18px 0; box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(34,197,94,0.08) inset; animation: anFadeUp .5s cubic-bezier(.2,.9,.3,1.3); text-align: center; }
     .mh2-hero::before { content: ""; position: absolute; inset: -50%; background: conic-gradient(from 0deg, transparent 0deg, rgba(34,197,94,.15) 60deg, transparent 120deg, rgba(59,130,246,.1) 240deg, transparent 360deg); animation: anRotateGrad 14s linear infinite; pointer-events: none; }
     .mh2-hero::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 0%, rgba(34,197,94,0.2), transparent 62%); pointer-events: none; }
@@ -431,10 +424,6 @@ st.markdown("""
     .mh2-skor { font-size: 1.6rem; font-weight: 900; color: #22c55e !important; letter-spacing: 1px; text-shadow: 0 0 22px rgba(34,197,94,0.6); font-family: 'Rajdhani', sans-serif; padding: 0 6px; }
     .mh2-match-meta { display: flex; justify-content: center; gap: 8px; font-size: 0.6rem; color: #64748b !important; font-weight: 700; letter-spacing: 0.3px; margin-bottom: 8px; flex-wrap: wrap; }
     .mh2-match-meta span { display: inline-flex; align-items: center; gap: 3px; background: rgba(30,41,59,0.5); padding: 3px 8px; border-radius: 99px; border: 1px solid rgba(71,85,105,0.3); }
-    .mh2-mini-bars { display: flex; justify-content: space-between; gap: 4px; margin: 8px 0; font-size: 0.55rem; }
-    .mh2-mini-bar { flex: 1; background: rgba(15,23,42,0.7); border-radius: 6px; padding: 5px 4px; text-align: center; border: 1px solid rgba(30,41,59,0.8); }
-    .mh2-mini-bar-lbl { color: #64748b !important; font-weight: 800; letter-spacing: 0.3px; }
-    .mh2-mini-bar-val { color: #eaf1fb !important; font-weight: 900; font-size: 0.68rem; margin-top: 2px; font-family: 'Rajdhani', sans-serif; }
     .mh2-bos { text-align: center; padding: 36px 20px; background: linear-gradient(145deg, rgba(19,28,46,0.6), rgba(11,18,32,0.85)); border: 1.5px dashed var(--border); border-radius: 18px; color: #64748b !important; font-weight: 700; font-size: 0.85rem; margin: 12px 0; }
     .mh2-bos-ikon { font-size: 3rem; display: block; margin-bottom: 10px; opacity: 0.5; }
     .mh2-live { display: inline-flex; align-items: center; gap: 6px; font-size: 0.62rem; font-weight: 900; color: #22c55e !important; letter-spacing: 0.6px; text-transform: uppercase; }
@@ -451,10 +440,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
-# ============================================================================
-# 🎬 ANİMASYONLU MODERN ANALİZ SİSTEMİ (aynı)
-# ============================================================================
 st.markdown("""<style>
 @keyframes anFadeUp { from {opacity:0; transform:translateY(24px);} to {opacity:1; transform:translateY(0);} }
 @keyframes anFadeIn { from {opacity:0;} to {opacity:1;} }
@@ -719,6 +704,15 @@ def gecmis_yukle():
 
 
 def gecmis_kaydet(v):
+    # ✅ DEĞİŞİKLİK 1: Sabit 200 maç sınırı — yeni maç eklenince en eski silinir
+    v = list(v)
+    if len(v) > 200:
+        v = v[-200:]
+    try:
+        if "gecmis_analizler" in st.session_state:
+            st.session_state.gecmis_analizler = v
+    except Exception:
+        pass
     conn = _db_baglanti()
     try:
         with conn.cursor() as cur:
@@ -1557,8 +1551,7 @@ def _mac_detay_cek_5games(url):
     html = None
     try: html = _mac_detay_cek_5games_playwright(url)
     except Exception: pass
-    if html and len(html) > 500:
-        return _mac_html_parse(html, url)
+    if html and len(html) > 500: return _mac_html_parse(html, url)
     return mutating_mac_detay_cek(url)
 
 
@@ -2525,7 +2518,7 @@ Geçmiş istatistiklere dayalı analiz ve tahminler. Sadece **bilgilendirme ama�
 
 ### 🌟 PREMIUM
 - Tüm maçlar açık
-- Haftalık / Aylık / Yıllık
+- Haftalık / Aylık
 
 ### 🚫 SORUMLULUK REDDİ
 - **18 yaşından küçükler** kullanamaz.
@@ -2592,7 +2585,7 @@ if st.session_state.sayfa == "giris_yap":
 
 elif st.session_state.sayfa == "giris":
     if admin_mi():
-        # ===== ADMIN ANA SAYFA (mevcut, hiç değişmedi) =====
+        # ===== ADMIN ANA SAYFA =====
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:gray;'>Admin Paneli</p>", unsafe_allow_html=True)
         try:
@@ -2676,7 +2669,7 @@ elif st.session_state.sayfa == "giris":
                             st.session_state.skor_ozet = sonuclari_isle(bool(sy), int(sw), _p3)
                         ph.empty(); st.rerun()
     else:
-        # ===== MİSAFİR / ÜYE ANA SAYFA (MODERN) =====
+        # ===== MİSAFİR / ÜYE ANA SAYFA =====
         gelecek = st.session_state.gelecek_analizler
         toplam = len(gelecek)
         premium = uye_premium_mu()
@@ -2825,20 +2818,16 @@ elif st.session_state.sayfa == "odeme":
         st.stop()
     iban = ayar_al("iban", "TR00 0000 0000 0000 0000 0000 00")
     hs = ayar_al("hesap_sahibi", "ADINIZ SOYADINIZ")
-    fh = float(ayar_al("fiyat_haftalik", 49.0)); fa = float(ayar_al("fiyat_aylik", 149.0)); fy = float(ayar_al("fiyat_yillik", 999.0))
+    fh = float(ayar_al("fiyat_haftalik", 49.0)); fa = float(ayar_al("fiyat_aylik", 149.0))
     st.markdown(f'''<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-icon">💳</div><div class="mh-hero-title">Premium'a Geç</div><div class="mh-hero-sub">Havale / EFT ile ödeme</div><div class="mh-hero-badge">● GÜVENLİ ÖDEME</div></div>''', unsafe_allow_html=True)
     st.markdown(f'''<div class="mh-info"><b>👤 Kullanıcı:</b> {_e(hedef)}<br>Açıklama kısmına <b>MUTLAKA</b> kullanıcı adını yaz.</div>''', unsafe_allow_html=True)
     st.markdown("### 📆 Paket Seç")
-    sec = st.radio("Süre?", ["haftalik", "aylik", "yillik"], format_func=lambda x: {"haftalik": f"📅 Haftalık — {fh:.0f} ₺", "aylik": f"📆 Aylık — {fa:.0f} ₺", "yillik": f"🎯 Yıllık — {fy:.0f} ₺"}[x], index=1, key="odeme_sure_sec")
-    sg = {"haftalik": 7, "aylik": 30, "yillik": 365}[sec]
-    fy_ = {"haftalik": fh, "aylik": fa, "yillik": fy}[sec]
-    et = {"haftalik": "Haftalık", "aylik": "Aylık", "yillik": "Yıllık"}[sec]
-    if sec == "yillik":
-        ai = fa * 12
-        ind = int((1 - (fy / ai)) * 100) if ai > 0 else 0
-        if ind > 0: st.markdown(f'<div class="fa-card fa-pos"><div class="fa-ttl">Seçilen</div><div class="fa-pickrow"><div class="fa-pick">🎯 Yıllık</div><div class="fa-pct">{fy_:.0f} ₺</div></div><div class="fa-mut">💸 %{ind} indirim!</div></div>', unsafe_allow_html=True)
-        else: st.markdown(f'<div class="fa-card fa-pos"><div class="fa-ttl">Seçilen</div><div class="fa-pickrow"><div class="fa-pick">🎯 Yıllık</div><div class="fa-pct">{fy_:.0f} ₺</div></div></div>', unsafe_allow_html=True)
-    else: st.markdown(f'<div class="fa-card fa-pos"><div class="fa-ttl">Seçilen</div><div class="fa-pickrow"><div class="fa-pick">{et}</div><div class="fa-pct">{fy_:.0f} ₺</div></div></div>', unsafe_allow_html=True)
+    # ✅ DEĞİŞİKLİK 2: Yıllık seçeneği kaldırıldı - sadece Haftalık ve Aylık
+    sec = st.radio("Süre?", ["haftalik", "aylik"], format_func=lambda x: {"haftalik": f"📅 Haftalık — {fh:.0f} ₺", "aylik": f"📆 Aylık — {fa:.0f} ₺"}[x], index=1, key="odeme_sure_sec")
+    sg = {"haftalik": 7, "aylik": 30}[sec]
+    fy_ = {"haftalik": fh, "aylik": fa}[sec]
+    et = {"haftalik": "Haftalık", "aylik": "Aylık"}[sec]
+    st.markdown(f'<div class="fa-card fa-pos"><div class="fa-ttl">Seçilen</div><div class="fa-pickrow"><div class="fa-pick">{et}</div><div class="fa-pct">{fy_:.0f} ₺</div></div></div>', unsafe_allow_html=True)
     st.markdown("### 🏦 Havale Bilgileri")
     st.markdown(f'<div class="fa-card"><div class="fa-ttl">Alıcı</div><div class="fa-pick" style="margin-bottom:10px;">{_e(hs)}</div><div class="fa-ttl">IBAN</div><div class="fa-pick" style="margin-bottom:10px;font-family:monospace;">{_e(iban)}</div><div class="fa-ttl">Tutar</div><div class="fa-pick" style="margin-bottom:10px;color:#22c55e;">{fy_:.0f} ₺</div><div class="fa-ttl">Açıklama</div><div class="fa-pick" style="color:#22c55e;font-weight:900;">{_e(hedef)}</div></div>', unsafe_allow_html=True)
     st.divider()
@@ -3113,7 +3102,6 @@ elif st.session_state.sayfa == "gecmis":
         st.divider()
         st.markdown(f"### 📋 Toplam: {top} maç")
 
-        # ===== MODERN GEÇMİŞ MAÇ KARTLARI =====
         for i, g in enumerate(reversed(gc)):
             idx = len(gc) - 1 - i; v = g["veri"]
             te = v.get("takim_ev", "Ev"); td = v.get("takim_dep", "Dep")
@@ -3126,26 +3114,9 @@ elif st.session_state.sayfa == "gecmis":
             if tarih: meta_parcalar.append(f"📅 {tarih}")
             meta_html = "".join(f"<span>{m}</span>" for m in meta_parcalar)
 
-            # Analiz sonuçlarını hesapla
-            try:
-                a_ = analiz_hesapla(v)
-                # En yüksek olasılıklı seçimleri al
-                s1_, y1_ = max([("1", a_["p1"]), ("X", a_["px"]), ("2", a_["p2"])], key=lambda x: x[1])
-                isim1_ = {"1": "1", "X": "X", "2": "2"}[s1_]
-                u25_ = a_["ust_25"]; a25_ = a_["alt_25"]
-                gol_ = "Üst" if u25_ >= a25_ else "Alt"
-                gol_pct_ = u25_ if gol_ == "Üst" else a25_
-                kgv_ = a_["kg_var_model"]; kgy_ = a_["kg_yok_model"]
-                kg_ = "Var" if kgv_ >= kgy_ else "Yok"
-                kg_pct_ = kgv_ if kg_ == "Var" else kgy_
-            except Exception:
-                isim1_ = "-"; y1_ = 0; gol_ = "-"; gol_pct_ = 0; kg_ = "-"; kg_pct_ = 0
-
-            # Doğruluk
-            dogruluk = g.get("dogruluk") or sonuc_hesapla(g)
-
             st.markdown(f'''<div class="mh2-match"><div class="mh2-match-ust"><span>🕐 <span class="saat">{_e(saat or "—")}</span></span><span class="mh2-live gecti">BİTMİŞ</span></div><div class="mh2-match-takimlar"><div class="mh2-takim mh2-takim-ev">{_e(te)}</div><div class="mh2-skor">{se} - {sd}</div><div class="mh2-takim mh2-takim-dep">{_e(td)}</div></div><div class="mh2-match-meta">{meta_html}</div></div>''', unsafe_allow_html=True)
 
+            dogruluk = g.get("dogruluk") or sonuc_hesapla(g)
             if dogruluk:
                 o1 = dogruluk.get("oneri_1x2", {}); og = dogruluk.get("oneri_gol", {}); okg = dogruluk.get("oneri_kg", {})
                 def _cls(tuttu): return "hit" if tuttu is True else ("miss" if tuttu is False else "neutral")
@@ -3155,9 +3126,9 @@ elif st.session_state.sayfa == "gecmis":
                     return f"{tahmin} {ikon}"
                 st.markdown(f'''<div class="mh2-result-row"><div class="mh2-result-item"><div class="mh2-result-lbl">1X2</div><div class="mh2-result-val {_cls(o1.get("tuttu"))}">{_lbl(o1.get("tahmin"), o1.get("tuttu"))}</div></div><div class="mh2-result-item"><div class="mh2-result-lbl">GOL</div><div class="mh2-result-val {_cls(og.get("tuttu"))}">{_lbl(og.get("tahmin"), og.get("tuttu"))}</div></div><div class="mh2-result-item"><div class="mh2-result-lbl">KG</div><div class="mh2-result-val {_cls(okg.get("tuttu"))}">{_lbl(okg.get("tahmin"), okg.get("tuttu"))}</div></div></div>''', unsafe_allow_html=True)
 
-            # Butonlar
-            c1, c2 = st.columns([5, 1]) if admin_mi() else st.columns([1])
+            # ✅ DEĞİŞİKLİK 3: Hata düzeltildi - misafir/üye de butonu görebilir
             if admin_mi():
+                c1, c2 = st.columns([5, 1])
                 with c1:
                     if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"mac_{idx}", type="primary"):
                         st.session_state.form_verileri = copy.deepcopy(v)
@@ -3183,11 +3154,10 @@ elif st.session_state.sayfa == "gecmis":
                         if st.button("❌ Vazgeç", key=f"hh_{idx}", use_container_width=True):
                             st.session_state.tek_silme_onay = None; st.rerun()
             else:
-                with c1:
-                    if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"mac_{idx}", type="primary"):
-                        st.session_state.form_verileri = copy.deepcopy(v)
-                        st.session_state.kayit_yapildi = True; st.session_state.gecmisten_gelindi = True
-                        st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
+                if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"mac_{idx}", type="primary"):
+                    st.session_state.form_verileri = copy.deepcopy(v)
+                    st.session_state.kayit_yapildi = True; st.session_state.gecmisten_gelindi = True
+                    st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
             st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
 
     if admin_mi() and top > 0:
@@ -3279,11 +3249,9 @@ elif st.session_state.sayfa == "ayarlar":
     with c1: yiban = st.text_input("IBAN", value=mv.get("iban", "TR00 0000 0000 0000 0000 0000 00"))
     with c2: yhs = st.text_input("Hesap Sahibi", value=mv.get("hesap_sahibi", ""))
     st.markdown("### 💰 Fiyatlar")
-    c1, c2, c3 = st.columns(3)
+    c1, c2 = st.columns(2)
     with c1: yfh = st.number_input("Haftalık", min_value=1.0, value=float(mv.get("fiyat_haftalik", 49.0)), step=10.0, key="ay_fh")
     with c2: yfa = st.number_input("Aylık", min_value=1.0, value=float(mv.get("fiyat_aylik", 149.0)), step=10.0, key="ay_fa")
-    with c3: yfy = st.number_input("Yıllık", min_value=1.0, value=float(mv.get("fiyat_yillik", 999.0)), step=10.0, key="ay_fy")
-    if yfa > 0 and yfy < yfa * 12: st.caption(f"💡 Yıllıkta %{int((1 - yfy / (yfa * 12)) * 100)} indirim")
     st.markdown("### 🔓 Ücretsiz Kota")
     yk = st.number_input("Kaç maç ücretsiz?", 0, 50, int(mv.get("ucretsiz_kotasi", 3)), 1, key="ay_kota")
     st.markdown("### 🎯 Eşikler")
@@ -3301,7 +3269,7 @@ elif st.session_state.sayfa == "ayarlar":
     c1, c2, c3 = st.columns(3)
     with c1:
         if st.button("💾 Kaydet", use_container_width=True, type="primary"):
-            y = dict(mv); y.update({"iban": yiban, "hesap_sahibi": yhs, "fiyat_haftalik": float(yfh), "fiyat_aylik": float(yfa), "fiyat_yillik": float(yfy), "ucretsiz_kotasi": int(yk), "esik_1": float(ye1), "esik_x": float(yex), "esik_2": float(ye2), "ust": float(yu), "alt": float(ya), "kg_var": float(ykv), "kg_yok": float(yky)})
+            y = dict(mv); y.update({"iban": yiban, "hesap_sahibi": yhs, "fiyat_haftalik": float(yfh), "fiyat_aylik": float(yfa), "ucretsiz_kotasi": int(yk), "esik_1": float(ye1), "esik_x": float(yex), "esik_2": float(ye2), "ust": float(yu), "alt": float(ya), "kg_var": float(ykv), "kg_yok": float(yky)})
             st.session_state.esikler = y; ayarlar_kaydet(y); st.success("✅ Kaydedildi!")
     with c2:
         if st.button("🔄 Sıfırla", use_container_width=True):
