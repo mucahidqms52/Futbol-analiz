@@ -434,7 +434,6 @@ st.markdown("""
     .mh2-result-val.miss { color: #64748b !important; }
     .mh2-result-val.neutral { color: #94a3b8 !important; }
 
-    /* ============ 🎨 MODERN MAÇ KARTI V2 ============ */
     .mh2-match-v2 { position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(19,28,46,0.95), rgba(11,18,32,1)); border: 1px solid #1d2940; border-radius: 20px; padding: 0; margin: 10px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.35); transition: all .3s ease; animation: anFadeUp .4s ease-out both; }
     .mh2-match-v2:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(34,197,94,0.15); }
     .mh2-match-v2::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #22c55e, #f59e0b, #22c55e); background-size: 300% 100%; animation: anShimmer 4s linear infinite; }
@@ -1512,8 +1511,8 @@ def _playwright_skor_cek(url, timeout=25):
                 except Exception: pass
 
 
-def _mac_detay_cek_5games_playwright(url, timeout=35):
-    """Playwright ile sayfayı aç, '5' radio butonuna GERÇEKTEN tıkla ve içeriği döndür."""
+def _mac_detay_cek_5games_playwright(url, timeout=40):
+    """Playwright ile '5' radyo butonuna GERÇEK tıklama (anti-bot bypass dahil)."""
     try:
         import subprocess as _sp, sys as _sys
         _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
@@ -1522,145 +1521,177 @@ def _mac_detay_cek_5games_playwright(url, timeout=35):
     except Exception:
         pass
     from playwright.sync_api import sync_playwright
-    import re as _re_pw
     with _TARAYICI_SEM:
         with sync_playwright() as p:
-            b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
+            b = p.chromium.launch(
+                headless=True,
+                args=[
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                    "--disable-blink-features=AutomationControlled",
+                    "--disable-features=IsolateOrigins,site-per-process",
+                    "--window-size=1366,768",
+                ]
+            )
             try:
-                ctx = b.new_context(user_agent=UA, locale="en-US")
+                ctx = b.new_context(
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                    locale="en-US",
+                    viewport={"width": 1366, "height": 768},
+                    timezone_id="Europe/Istanbul",
+                    extra_http_headers={
+                        "Accept-Language": "en-US,en;q=0.9,tr;q=0.8",
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                    },
+                )
+                ctx.add_init_script("""
+                    Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+                    Object.defineProperty(navigator, 'plugins', { get: () => [1,2,3,4,5] });
+                    Object.defineProperty(navigator, 'languages', { get: () => ['en-US','en','tr'] });
+                    window.chrome = { runtime: {} };
+                    const origQuery = window.navigator.permissions.query;
+                    window.navigator.permissions.query = (p) => (
+                        p.name === 'notifications' ? Promise.resolve({ state: Notification.permission }) : origQuery(p)
+                    );
+                """)
+
                 pg = ctx.new_page()
-                # Sadece görsel ağırlıklı kaynakları engelle (JS çalışsın!)
                 pg.route("**/*", lambda route: route.abort()
                          if route.request.resource_type in ("image", "media", "font")
                          else route.continue_())
+
                 pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-                # JS'in tamamen yüklenmesini bekle
                 try:
-                    pg.wait_for_load_state("networkidle", timeout=12000)
+                    pg.wait_for_load_state("networkidle", timeout=15000)
                 except Exception:
                     pass
-                pg.wait_for_timeout(2500)
+                pg.wait_for_timeout(3000)
 
-                def _tikla_5():
-                    """Tek bir tıklama denemesi yapar. True = başarılı."""
-                    # ==== STRATEJİ 1: Playwright locator - span.numbergames tam "5" ====
+                def _kontrol_5_secili_mi():
                     try:
-                        span5 = pg.locator("span.numbergames").filter(
-                            has_text=_re_pw.compile(r"^\s*5\s*$")
-                        ).first
-                        if span5.count() > 0:
-                            try:
-                                span5.click(timeout=2500, force=True)
-                            except Exception:
-                                pass
-                            try:
-                                label5 = pg.locator("label.containerbutton").filter(
-                                    has_text=_re_pw.compile(r"^\s*5\s*$")
-                                ).first
-                                if label5.count() > 0:
-                                    label5.click(timeout=2500, force=True)
-                            except Exception:
-                                pass
-                            return True
-                    except Exception:
-                        pass
-
-                    # ==== STRATEJİ 2: id="game_count_5" radio ====
-                    try:
-                        rad = pg.locator("input#game_count_5").first
-                        if rad.count() > 0:
-                            rad.click(timeout=2500, force=True)
-                            return True
-                    except Exception:
-                        pass
-
-                    # ==== STRATEJİ 3: value="5" radio ====
-                    try:
-                        rad = pg.locator("input[type='radio'][value='5']").first
-                        if rad.count() > 0:
-                            rad.click(timeout=2500, force=True)
-                            return True
-                    except Exception:
-                        pass
-
-                    # ==== STRATEJİ 4: JS ile agresif tıklama ====
-                    try:
-                        sonuc = pg.evaluate("""() => {
-                            let inp = document.querySelector('input#game_count_5')
-                                   || document.querySelector('input[name="game_count_5"]')
-                                   || document.querySelector('input[type="radio"][value="5"]');
-                            if (inp) {
-                                inp.checked = true;
-                                try { inp.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window })); } catch(e) {}
-                                try { inp.dispatchEvent(new Event('change', { bubbles: true })); } catch(e) {}
-                                try { inp.dispatchEvent(new Event('input', { bubbles: true })); } catch(e) {}
-                                try { inp.click(); } catch(e) {}
-                                const lb = inp.closest('label');
-                                if (lb) { try { lb.click(); } catch(e) {} }
-                                return true;
-                            }
-                            const spans = document.querySelectorAll('span.numbergames');
-                            for (const sp of spans) {
-                                if ((sp.textContent || '').trim() === '5') {
-                                    const lb = sp.closest('label');
-                                    if (lb) {
-                                        try { sp.click(); } catch(e) {}
-                                        try { lb.click(); } catch(e) {}
-                                        const rad = lb.querySelector('input[type="radio"]');
-                                        if (rad) {
-                                            rad.checked = true;
-                                            try { rad.dispatchEvent(new Event('change', { bubbles: true })); } catch(e) {}
-                                            try { rad.click(); } catch(e) {}
-                                        }
-                                        const cm = lb.querySelector('.checkmark');
-                                        if (cm) { try { cm.click(); } catch(e) {} }
-                                        return true;
-                                    }
-                                }
-                            }
-                            return false;
+                        return pg.evaluate("""() => {
+                            const r5 = document.querySelector('input#game_count_5, input[name="game_count_5"], input[value="5"]');
+                            return r5 ? r5.checked === true : false;
                         }""")
-                        if sonuc:
-                            return True
                     except Exception:
-                        pass
+                        return False
 
-                    return False
-
-                # 1. DENEME
-                _tikla_5()
-                pg.wait_for_timeout(2000)
-
-                degisti = False
-                try:
-                    degisti = pg.evaluate(
-                        """() => {
+                def _icerik_degisti_mi():
+                    try:
+                        return pg.evaluate("""() => {
                             const t = document.body.innerText || '';
                             return /Last\\s+5\\s+Games/i.test(t);
-                        }"""
-                    )
-                except Exception:
-                    degisti = False
+                        }""")
+                    except Exception:
+                        return False
 
-                # 2. DENEME
-                if not degisti:
-                    pg.wait_for_timeout(1000)
-                    _tikla_5()
+                def _tikla_mouse_ile():
+                    try:
+                        el = pg.locator("input#game_count_5").first
+                        if el.count() > 0:
+                            el.scroll_into_view_if_needed(timeout=2000)
+                            el.check(force=True, timeout=4000)
+                            return True
+                    except Exception:
+                        pass
+                    try:
+                        el = pg.locator("input[type='radio'][value='5']").first
+                        if el.count() > 0:
+                            el.check(force=True, timeout=4000)
+                            return True
+                    except Exception:
+                        pass
+                    try:
+                        lbl = pg.locator("label.containerbutton").filter(
+                            has=pg.locator("span.numbergames", has_text="5")
+                        ).first
+                        if lbl.count() > 0:
+                            lbl.click(force=True, timeout=4000)
+                            return True
+                    except Exception:
+                        pass
+                    return False
+
+                def _tikla_js_ile():
+                    try:
+                        return pg.evaluate("""() => {
+                            const inp = document.querySelector('input#game_count_5')
+                                     || document.querySelector('input[name="game_count_5"]')
+                                     || document.querySelector('input[type="radio"][value="5"]');
+                            if (!inp) return false;
+                            document.querySelectorAll('input[type="radio"]').forEach(r => {
+                                r.checked = false;
+                                r.removeAttribute('checked');
+                            });
+                            inp.checked = true;
+                            inp.setAttribute('checked', 'checked');
+                            ['mousedown','mouseup','click','input','change'].forEach(evName => {
+                                try {
+                                    inp.dispatchEvent(new MouseEvent(evName, {
+                                        bubbles: true, cancelable: true, view: window, button: 0
+                                    }));
+                                } catch(e) {
+                                    try {
+                                        inp.dispatchEvent(new Event(evName, { bubbles: true, cancelable: true }));
+                                    } catch(e2) {}
+                                }
+                            });
+                            try {
+                                if (window.jQuery) { window.jQuery(inp).trigger('click').trigger('change'); }
+                            } catch(e) {}
+                            const lb = inp.closest('label');
+                            if (lb) {
+                                try { lb.click(); } catch(e) {}
+                                try { lb.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window })); } catch(e) {}
+                            }
+                            return true;
+                        }""")
+                    except Exception:
+                        return False
+
+                _tikla_mouse_ile()
+                pg.wait_for_timeout(2500)
+
+                if not (_kontrol_5_secili_mi() or _icerik_degisti_mi()):
+                    _tikla_js_ile()
                     pg.wait_for_timeout(2500)
 
-                # AJAX'ın tamamlanmasını bekle - "Last 5 Games" ibaresi çıkana kadar
+                if not (_kontrol_5_secili_mi() or _icerik_degisti_mi()):
+                    _tikla_mouse_ile()
+                    pg.wait_for_timeout(500)
+                    _tikla_js_ile()
+                    pg.wait_for_timeout(3000)
+
                 try:
                     pg.wait_for_function(
                         """() => {
                             const t = document.body.innerText || '';
                             return /Last\\s+5\\s+Games/i.test(t);
                         }""",
-                        timeout=10000
+                        timeout=12000
                     )
                 except Exception:
                     pass
 
-                pg.wait_for_timeout(1500)
+                pg.wait_for_timeout(2000)
+
+                try:
+                    son_metin = pg.evaluate("""() => document.body.innerText || ''""")
+                    if ("Last 10 Games" in son_metin or "Last 10" in son_metin) and "Last 5 Games" not in son_metin:
+                        _tikla_js_ile()
+                        pg.wait_for_timeout(4000)
+                        try:
+                            pg.wait_for_function(
+                                """() => /Last\\s+5\\s+Games/i.test(document.body.innerText || '')""",
+                                timeout=8000
+                            )
+                        except Exception:
+                            pass
+                        pg.wait_for_timeout(1500)
+                except Exception:
+                    pass
+
                 return pg.content()
             finally:
                 try:
