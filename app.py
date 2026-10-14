@@ -434,7 +434,7 @@ st.markdown("""
     .mh2-result-val.miss { color: #64748b !important; }
     .mh2-result-val.neutral { color: #94a3b8 !important; }
 
-    /* ============ 🎨 MODERN MAÇ KARTI V2 (YENİ) ============ */
+    /* ============ 🎨 MODERN MAÇ KARTI V2 ============ */
     .mh2-match-v2 { position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(19,28,46,0.95), rgba(11,18,32,1)); border: 1px solid #1d2940; border-radius: 20px; padding: 0; margin: 10px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.35); transition: all .3s ease; animation: anFadeUp .4s ease-out both; }
     .mh2-match-v2:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(34,197,94,0.15); }
     .mh2-match-v2::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #22c55e, #f59e0b, #22c55e); background-size: 300% 100%; animation: anShimmer 4s linear infinite; }
@@ -721,7 +721,6 @@ def gecmis_yukle():
 
 
 def gecmis_kaydet(v):
-    # Sabit 200 maç sınırı — yeni maç eklenince en eski silinir
     v = list(v)
     if len(v) > 200:
         v = v[-200:]
@@ -1514,54 +1513,160 @@ def _playwright_skor_cek(url, timeout=25):
 
 
 def _mac_detay_cek_5games_playwright(url, timeout=35):
+    """Playwright ile sayfayı aç, '5' radio butonuna GERÇEKTEN tıkla ve içeriği döndür."""
     try:
         import subprocess as _sp, sys as _sys
-        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"], check=False, timeout=600, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
-    except Exception: pass
+        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"],
+                check=False, timeout=600,
+                stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    except Exception:
+        pass
     from playwright.sync_api import sync_playwright
+    import re as _re_pw
     with _TARAYICI_SEM:
         with sync_playwright() as p:
             b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
             try:
                 ctx = b.new_context(user_agent=UA, locale="en-US")
                 pg = ctx.new_page()
-                pg.route("**/*", lambda route: route.abort() if route.request.resource_type in ("image", "media", "font", "stylesheet") else route.continue_())
+                # Sadece görsel ağırlıklı kaynakları engelle (JS çalışsın!)
+                pg.route("**/*", lambda route: route.abort()
+                         if route.request.resource_type in ("image", "media", "font")
+                         else route.continue_())
                 pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+                # JS'in tamamen yüklenmesini bekle
+                try:
+                    pg.wait_for_load_state("networkidle", timeout=12000)
+                except Exception:
+                    pass
                 pg.wait_for_timeout(2500)
-                tiklandi = False
-                try:
-                    tiklandi = pg.evaluate("""() => {
-                        const labels = document.querySelectorAll('label.containerbutton, label');
-                        for (const lb of labels) {
-                            const num = lb.querySelector('.numbergames, .num, span');
-                            if (!num) continue;
-                            const t = (num.textContent || '').trim();
-                            if (t === '5' || t === '5 ') {
-                                const inp = lb.querySelector('input[type="radio"]');
-                                if (inp) { inp.checked = true; inp.dispatchEvent(new Event('change', { bubbles: true })); inp.dispatchEvent(new Event('input', { bubbles: true })); inp.click(); lb.click(); return true; }
+
+                def _tikla_5():
+                    """Tek bir tıklama denemesi yapar. True = başarılı."""
+                    # ==== STRATEJİ 1: Playwright locator - span.numbergames tam "5" ====
+                    try:
+                        span5 = pg.locator("span.numbergames").filter(
+                            has_text=_re_pw.compile(r"^\s*5\s*$")
+                        ).first
+                        if span5.count() > 0:
+                            try:
+                                span5.click(timeout=2500, force=True)
+                            except Exception:
+                                pass
+                            try:
+                                label5 = pg.locator("label.containerbutton").filter(
+                                    has_text=_re_pw.compile(r"^\s*5\s*$")
+                                ).first
+                                if label5.count() > 0:
+                                    label5.click(timeout=2500, force=True)
+                            except Exception:
+                                pass
+                            return True
+                    except Exception:
+                        pass
+
+                    # ==== STRATEJİ 2: id="game_count_5" radio ====
+                    try:
+                        rad = pg.locator("input#game_count_5").first
+                        if rad.count() > 0:
+                            rad.click(timeout=2500, force=True)
+                            return True
+                    except Exception:
+                        pass
+
+                    # ==== STRATEJİ 3: value="5" radio ====
+                    try:
+                        rad = pg.locator("input[type='radio'][value='5']").first
+                        if rad.count() > 0:
+                            rad.click(timeout=2500, force=True)
+                            return True
+                    except Exception:
+                        pass
+
+                    # ==== STRATEJİ 4: JS ile agresif tıklama ====
+                    try:
+                        sonuc = pg.evaluate("""() => {
+                            let inp = document.querySelector('input#game_count_5')
+                                   || document.querySelector('input[name="game_count_5"]')
+                                   || document.querySelector('input[type="radio"][value="5"]');
+                            if (inp) {
+                                inp.checked = true;
+                                try { inp.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window })); } catch(e) {}
+                                try { inp.dispatchEvent(new Event('change', { bubbles: true })); } catch(e) {}
+                                try { inp.dispatchEvent(new Event('input', { bubbles: true })); } catch(e) {}
+                                try { inp.click(); } catch(e) {}
+                                const lb = inp.closest('label');
+                                if (lb) { try { lb.click(); } catch(e) {} }
+                                return true;
                             }
-                        }
-                        const inp2 = document.querySelector('input[type="radio"][value="5"]');
-                        if (inp2) { inp2.checked = true; inp2.dispatchEvent(new Event('change', { bubbles: true })); inp2.click(); return true; }
-                        const inp3 = document.querySelector('input[id*="game_count_5"], input[id*="5"]');
-                        if (inp3 && inp3.type === 'radio') { inp3.checked = true; inp3.dispatchEvent(new Event('change', { bubbles: true })); inp3.click(); return true; }
-                        return false;
-                    }""")
-                except Exception: tiklandi = False
-                if not tiklandi:
-                    for sel in ["input[type='radio'][value='5']", "input#game_count_5", "label.containerbutton:has-text('5')", "label:has-text('5') input"]:
-                        try:
-                            pg.click(sel, timeout=2000); tiklandi = True; break
-                        except Exception: continue
-                pg.wait_for_timeout(3500)
+                            const spans = document.querySelectorAll('span.numbergames');
+                            for (const sp of spans) {
+                                if ((sp.textContent || '').trim() === '5') {
+                                    const lb = sp.closest('label');
+                                    if (lb) {
+                                        try { sp.click(); } catch(e) {}
+                                        try { lb.click(); } catch(e) {}
+                                        const rad = lb.querySelector('input[type="radio"]');
+                                        if (rad) {
+                                            rad.checked = true;
+                                            try { rad.dispatchEvent(new Event('change', { bubbles: true })); } catch(e) {}
+                                            try { rad.click(); } catch(e) {}
+                                        }
+                                        const cm = lb.querySelector('.checkmark');
+                                        if (cm) { try { cm.click(); } catch(e) {} }
+                                        return true;
+                                    }
+                                }
+                            }
+                            return false;
+                        }""")
+                        if sonuc:
+                            return True
+                    except Exception:
+                        pass
+
+                    return False
+
+                # 1. DENEME
+                _tikla_5()
+                pg.wait_for_timeout(2000)
+
+                degisti = False
                 try:
-                    pg.wait_for_function("""() => { const t = document.body.innerText || ''; return t.includes('Last 5 Games') || t.includes('last 5 games'); }""", timeout=8000)
-                except Exception: pass
-                pg.wait_for_timeout(1000)
+                    degisti = pg.evaluate(
+                        """() => {
+                            const t = document.body.innerText || '';
+                            return /Last\\s+5\\s+Games/i.test(t);
+                        }"""
+                    )
+                except Exception:
+                    degisti = False
+
+                # 2. DENEME
+                if not degisti:
+                    pg.wait_for_timeout(1000)
+                    _tikla_5()
+                    pg.wait_for_timeout(2500)
+
+                # AJAX'ın tamamlanmasını bekle - "Last 5 Games" ibaresi çıkana kadar
+                try:
+                    pg.wait_for_function(
+                        """() => {
+                            const t = document.body.innerText || '';
+                            return /Last\\s+5\\s+Games/i.test(t);
+                        }""",
+                        timeout=10000
+                    )
+                except Exception:
+                    pass
+
+                pg.wait_for_timeout(1500)
                 return pg.content()
             finally:
-                try: b.close()
-                except Exception: pass
+                try:
+                    b.close()
+                except Exception:
+                    pass
 
 
 def _mac_detay_cek_5games(url):
@@ -2602,7 +2707,6 @@ if st.session_state.sayfa == "giris_yap":
 
 elif st.session_state.sayfa == "giris":
     if admin_mi():
-        # ===== ADMIN ANA SAYFA =====
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:gray;'>Admin Paneli</p>", unsafe_allow_html=True)
         try:
@@ -2686,7 +2790,6 @@ elif st.session_state.sayfa == "giris":
                             st.session_state.skor_ozet = sonuclari_isle(bool(sy), int(sw), _p3)
                         ph.empty(); st.rerun()
     else:
-        # ===== MİSAFİR / ÜYE ANA SAYFA =====
         gelecek = st.session_state.gelecek_analizler
         toplam = len(gelecek)
         premium = uye_premium_mu()
@@ -2733,7 +2836,6 @@ elif st.session_state.sayfa == "giris":
                 ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
                 bayrak = ulke_bayrak_bul(ulke)
 
-                # Saat etiketi (BUGÜN / YARIN / tarih)
                 etiket_saat = "—"
                 try:
                     if tarih and saat:
@@ -2754,7 +2856,6 @@ elif st.session_state.sayfa == "giris":
                 except Exception:
                     etiket_saat = "MAÇ"
 
-                # Lig adı (max 22 karakter)
                 lig_goster = (ulke or "").title()[:22] or "Uluslararası"
 
                 if premium or acik < kota:
@@ -2780,7 +2881,6 @@ elif st.session_state.sayfa == "giris":
                         </div>
                     </div>''', unsafe_allow_html=True)
 
-                    # Zengin Detaylı Analiz butonu
                     if st.button(
                         "🔍  DETAYLI ANALİZ  →",
                         use_container_width=True,
