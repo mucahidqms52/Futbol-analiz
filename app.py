@@ -1,4 +1,3 @@
-
 import streamlit as st
 import math
 import copy
@@ -1726,6 +1725,9 @@ def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
         if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
         if veri.get("saat"): veri["saat"] = saat_2_saat_ileri(veri["saat"])
         veri["kaynak_url"] = mac["url"]
+        # 🔽 DEĞİŞİKLİK: Ülke/lig bilgisi yoksa maç TAMAMEN elenir (ne geleceğe eklenir, ne "atlanan"a sayılır, ne de listelenir)
+        if not str(veri.get("ulke", "") or "").strip():
+            return ("ulke_yok", veri, "Ülke/lig bilgisi yok", None)
         if mac["url"] in mevcut_urls: return ("atlandi", veri, "Zaten var", None)
         if _mac_tahmin_var_mi(veri, esikler):
             kayit = kayit_olustur(veri, analiz_hesapla(veri))
@@ -1755,7 +1757,10 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
                 r = fut.result()
                 sonuc, veri, mesaj = r[0], r[1], r[2]
                 kayit = r[3] if len(r) == 4 else None
-                if sonuc == "eklendi":
+                # 🔽 "ulke_yok" TAMAMEN atlanır — ne başarılıya ne atlanana sayılır, hiçbir listeye girmez
+                if sonuc == "ulke_yok":
+                    pass
+                elif sonuc == "eklendi":
                     eklenen += 1; basarili.append(veri)
                     if kayit is not None: eklenecekler.append(kayit)
                 elif sonuc == "atlandi":
