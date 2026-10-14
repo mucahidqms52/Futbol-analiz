@@ -121,7 +121,7 @@ Bu kurala aykırılık tespit edilmesi halinde **Kullanıcı'nın üyeliği derh
 
 **Ödeme Yöntemi:** Ödemeler yalnızca **havale / EFT** yoluyla yapılır.
 
-**Abonelik Süreleri:** Haftalık, Aylık ve Yıllık olmak üzere üç paket sunulmaktadır.
+**Abonelik Süreleri:** Haftalık ve Aylık olmak üzere iki paket sunulmaktadır.
 
 **Abonelik Aktivasyonu:** Ödeme yapıldıktan sonra Kullanıcı'nın **"Ödeme Yaptım"** bildirimi üzerine, ödeme kontrol edilerek **manuel olarak** aktive edilir. Aktivasyon **birkaç saat ile 24 saat** arasında tamamlanır.
 
@@ -426,10 +426,6 @@ st.markdown("""
     .mh2-match-meta span { display: inline-flex; align-items: center; gap: 3px; background: rgba(30,41,59,0.5); padding: 3px 8px; border-radius: 99px; border: 1px solid rgba(71,85,105,0.3); }
     .mh2-bos { text-align: center; padding: 36px 20px; background: linear-gradient(145deg, rgba(19,28,46,0.6), rgba(11,18,32,0.85)); border: 1.5px dashed var(--border); border-radius: 18px; color: #64748b !important; font-weight: 700; font-size: 0.85rem; margin: 12px 0; }
     .mh2-bos-ikon { font-size: 3rem; display: block; margin-bottom: 10px; opacity: 0.5; }
-    .mh2-live { display: inline-flex; align-items: center; gap: 6px; font-size: 0.62rem; font-weight: 900; color: #22c55e !important; letter-spacing: 0.6px; text-transform: uppercase; }
-    .mh2-live::before { content: ""; width: 7px; height: 7px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 0 0 rgba(34,197,94,0.7); animation: anRingPulse 1.8s ease-in-out infinite; }
-    .mh2-live.gecti { color: #94a3b8 !important; }
-    .mh2-live.gecti::before { background: #94a3b8; box-shadow: none; animation: none; }
     .mh2-result-row { display: flex; justify-content: space-around; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(71,85,105,0.25); gap: 6px; }
     .mh2-result-item { flex: 1; text-align: center; background: rgba(15,23,42,0.6); border-radius: 10px; padding: 8px 6px; border: 1px solid rgba(30,41,59,0.7); }
     .mh2-result-lbl { font-size: 0.52rem; color: #64748b !important; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 3px; }
@@ -437,6 +433,37 @@ st.markdown("""
     .mh2-result-val.hit { color: #22c55e !important; text-shadow: 0 0 10px rgba(34,197,94,.4); }
     .mh2-result-val.miss { color: #64748b !important; }
     .mh2-result-val.neutral { color: #94a3b8 !important; }
+
+    /* ============ 🎨 YENİ ZENGİN MAÇ KARTI STİLLERİ ============ */
+    .mh2-match-v2 { position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(19,28,46,0.95), rgba(11,18,32,1)); border: 1px solid #1d2940; border-radius: 20px; padding: 0; margin: 10px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.35); transition: all .3s ease; animation: anFadeUp .4s ease-out both; }
+    .mh2-match-v2:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(34,197,94,0.15); }
+    .mh2-match-v2::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #22c55e, #f59e0b, #22c55e); background-size: 300% 100%; animation: anShimmer 4s linear infinite; }
+    .mh2-v2-top { display: flex; align-items: stretch; gap: 12px; padding: 14px 14px 10px 14px; border-bottom: 1px dashed rgba(59,130,246,0.18); }
+    .mh2-v2-saat-kutu { flex-shrink: 0; min-width: 78px; background: linear-gradient(145deg, rgba(34,197,94,0.14), rgba(59,130,246,0.10)); border: 1.5px solid rgba(34,197,94,0.35); border-radius: 14px; padding: 8px 6px; text-align: center; position: relative; overflow: hidden; }
+    .mh2-v2-saat-kutu::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #22c55e, #3b82f6); }
+    .mh2-v2-saat { font-size: 1.25rem; font-weight: 900; color: #22c55e !important; font-family: 'Rajdhani', sans-serif; letter-spacing: 0.5px; line-height: 1.1; text-shadow: 0 0 16px rgba(34,197,94,0.5); }
+    .mh2-v2-saat-etiket { font-size: 0.55rem; font-weight: 900; color: #8fa0bd !important; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+    .mh2-v2-takimlar { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 7px; min-width: 0; }
+    .mh2-v2-takim-satir { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .mh2-v2-rozet { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 900; color: #fff !important; letter-spacing: 0.2px; font-family: 'Rajdhani', sans-serif; box-shadow: 0 3px 10px rgba(0,0,0,0.4); border: 1.5px solid rgba(255,255,255,0.15); }
+    .mh2-v2-rozet.ev { background: linear-gradient(135deg, #3b82f6, #1e40af); text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+    .mh2-v2-rozet.dep { background: linear-gradient(135deg, #f59e0b, #b45309); text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+    .mh2-v2-takim-adi { font-size: 0.92rem; font-weight: 900; font-family: 'Rajdhani', sans-serif; letter-spacing: 0.3px; line-height: 1.15; word-break: break-word; min-width: 0; flex: 1; }
+    .mh2-v2-takim-adi.ev { color: #93c5fd !important; text-shadow: 0 0 12px rgba(147,197,253,0.3); }
+    .mh2-v2-takim-adi.dep { color: #fbbf24 !important; text-shadow: 0 0 12px rgba(251,191,36,0.3); }
+    .mh2-v2-lig { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 14px 10px 14px; padding: 8px 12px; background: linear-gradient(90deg, rgba(34,197,94,0.08), rgba(59,130,246,0.08)); border: 1px solid rgba(34,197,94,0.25); border-radius: 99px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.4px; }
+    .mh2-v2-lig-bayrak { font-size: 1rem; line-height: 1; }
+    .mh2-v2-lig-adi { color: #eaf1fb !important; text-shadow: 0 0 10px rgba(34,197,94,0.3); }
+    .mh2-v2-lig-tarih { font-size: 0.62rem; color: #8fa0bd !important; font-weight: 700; letter-spacing: 0.3px; padding-left: 8px; border-left: 1px solid rgba(148,163,184,0.3); }
+    .mh2-v2-alt { display: flex; justify-content: space-around; margin: 0 14px 12px 14px; padding: 8px 6px; background: rgba(15,23,42,0.55); border: 1px solid rgba(30,41,59,0.8); border-radius: 12px; gap: 4px; }
+    .mh2-v2-alt-item { display: flex; align-items: center; gap: 5px; font-size: 0.6rem; font-weight: 800; color: #94a3b8 !important; letter-spacing: 0.3px; padding: 2px 4px; }
+    .mh2-v2-alt-item-ikon { font-size: 0.78rem; filter: drop-shadow(0 0 4px rgba(34,197,94,0.4)); }
+    .mh2-v2-alt-item b { color: #22c55e !important; font-weight: 900; }
+    .mh2-v2-btn-wrap { padding: 0 14px 14px 14px; }
+    .mh2-v2-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 13px 18px; background: linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #16a34a 100%); background-size: 200% 100%; border: none; border-radius: 14px; color: #04130a !important; font-weight: 900; font-size: 0.88rem; letter-spacing: 1.2px; text-transform: uppercase; font-family: 'Rajdhani', sans-serif; box-shadow: 0 8px 24px rgba(34,197,94,0.35), 0 0 0 1px rgba(255,255,255,0.1) inset; animation: anShimmer 5s linear infinite; transition: all .25s ease; }
+    .mh2-v2-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(34,197,94,0.55), 0 0 0 1px rgba(255,255,255,0.2) inset; }
+    .mh2-v2-btn-ikon { font-size: 1.05rem; filter: drop-shadow(0 0 6px rgba(4,19,10,0.4)); }
+    .mh2-v2-btn-ok { font-size: 1.15rem; font-weight: 900; margin-left: 2px; animation: anSlideLeft 1.5s ease-in-out infinite alternate; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -704,7 +731,7 @@ def gecmis_yukle():
 
 
 def gecmis_kaydet(v):
-    # ✅ DEĞİŞİKLİK 1: Sabit 200 maç sınırı — yeni maç eklenince en eski silinir
+    # Sabit 200 maç sınırı — yeni maç eklenince en eski silinir
     v = list(v)
     if len(v) > 200:
         v = v[-200:]
@@ -2683,11 +2710,11 @@ elif st.session_state.sayfa == "giris":
                     kk = (datetime.strptime(bs, "%Y-%m-%d") - datetime.now()).days
                     if kk >= 0: kl_badge = f'<span class="mh2-badge amber">🌟 {kk} GÜN KALDI</span>'
             except Exception: pass
-            st.markdown(f'''<div class="mh2-hero"><div class="mh2-hero-ust"><span class="mh2-live">CANLI</span></div><div class="mh2-hero-title">⚽ Futbol Analiz Pro</div><div class="mh2-hero-sub">Hoş geldin, {_e(uye_adi())} — premium aktif</div><div class="mh2-hero-badges"><span class="mh2-badge green">⚡ {toplam} MAÇ AKTİF</span><span class="mh2-badge purple">👑 PREMIUM</span>{kl_badge}</div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div class="mh2-hero"><div class="mh2-hero-ust">⚽ CANLI</div><div class="mh2-hero-title">Futbol Analiz Pro</div><div class="mh2-hero-sub">Hoş geldin, {_e(uye_adi())} — premium aktif</div><div class="mh2-hero-badges"><span class="mh2-badge green">⚡ {toplam} MAÇ AKTİF</span><span class="mh2-badge purple">👑 PREMIUM</span>{kl_badge}</div></div>''', unsafe_allow_html=True)
         elif uye_mi():
-            st.markdown(f'''<div class="mh2-hero"><div class="mh2-hero-ust"><span class="mh2-live">CANLI</span></div><div class="mh2-hero-title">⚽ Futbol Analiz Pro</div><div class="mh2-hero-sub">Hoş geldin, {_e(uye_adi())}</div><div class="mh2-hero-badges"><span class="mh2-badge green">⚡ {toplam} MAÇ AKTİF</span><span class="mh2-badge blue">🎁 İLK {kota} ÜCRETSİZ</span><span class="mh2-badge amber">⚠️ ABONELİK YOK</span></div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div class="mh2-hero"><div class="mh2-hero-ust">⚽ CANLI</div><div class="mh2-hero-title">Futbol Analiz Pro</div><div class="mh2-hero-sub">Hoş geldin, {_e(uye_adi())}</div><div class="mh2-hero-badges"><span class="mh2-badge green">⚡ {toplam} MAÇ AKTİF</span><span class="mh2-badge blue">🎁 İLK {kota} ÜCRETSİZ</span><span class="mh2-badge amber">⚠️ ABONELİK YOK</span></div></div>''', unsafe_allow_html=True)
         else:
-            st.markdown(f'''<div class="mh2-hero"><div class="mh2-hero-ust"><span class="mh2-live">CANLI</span></div><div class="mh2-hero-title">⚽ Futbol Analiz Pro</div><div class="mh2-hero-sub">Bugün {toplam} maç analize hazır</div><div class="mh2-hero-badges"><span class="mh2-badge green">⚡ {toplam} MAÇ</span><span class="mh2-badge blue">🎁 İLK {kota} ÜCRETSİZ</span></div></div>''', unsafe_allow_html=True)
+            st.markdown(f'''<div class="mh2-hero"><div class="mh2-hero-ust">⚽ CANLI</div><div class="mh2-hero-title">Futbol Analiz Pro</div><div class="mh2-hero-sub">Bugün {toplam} maç analize hazır</div><div class="mh2-hero-badges"><span class="mh2-badge green">⚡ {toplam} MAÇ</span><span class="mh2-badge blue">🎁 İLK {kota} ÜCRETSİZ</span></div></div>''', unsafe_allow_html=True)
 
         modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ", stil="line")
 
@@ -2715,18 +2742,84 @@ elif st.session_state.sayfa == "giris":
                 v = g["veri"]; te = v.get("takim_ev", "Ev") or "Ev"; td = v.get("takim_dep", "Dep") or "Dep"
                 ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
                 bayrak = ulke_bayrak_bul(ulke)
+
+                # Takım baş harf rozetleri (logo yerine)
+                def _harf_al(isim):
+                    isim = str(isim or "").strip()
+                    if not isim: return "??"
+                    parcalar = [p for p in isim.split() if p]
+                    if len(parcalar) >= 2:
+                        return (parcalar[0][:1] + parcalar[1][:1]).upper()
+                    return isim[:2].upper()
+                harf_ev = _harf_al(te)
+                harf_dep = _harf_al(td)
+
+                # Saat etiketi (BUGÜN / YARIN / tarih)
+                etiket_saat = "—"
+                try:
+                    if tarih and saat:
+                        m = re.match(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', tarih)
+                        if m:
+                            g_, a_, y_ = int(m.group(1)), int(m.group(2)), m.group(3)
+                            y_ = int(y_) if len(y_) == 4 else 2000 + int(y_)
+                            from datetime import date as _dt_date
+                            mac_t = _dt_date(y_, a_, g_)
+                            bugun = _dt_date.today()
+                            fark = (mac_t - bugun).days
+                            if fark == 0: etiket_saat = "BUGÜN"
+                            elif fark == 1: etiket_saat = "YARIN"
+                            elif fark == -1: etiket_saat = "DÜN"
+                            else: etiket_saat = f"{g_:02d}.{a_:02d}"
+                    elif saat:
+                        etiket_saat = "BUGÜN"
+                except Exception:
+                    etiket_saat = "MAÇ"
+
+                # Lig adı (max 22 karakter)
+                lig_goster = (ulke or "").title()[:22] or "Uluslararası"
+
                 if premium or acik < kota:
-                    meta_parcalar = []
-                    if ulke: meta_parcalar.append(f"{bayrak} {ulke.title()[:14]}")
-                    if tarih: meta_parcalar.append(f"📅 {tarih}")
-                    meta_html = "".join(f"<span>{m}</span>" for m in meta_parcalar)
-                    st.markdown(f'''<div class="mh2-match"><div class="mh2-match-ust"><span>🕐 <span class="saat">{_e(saat or "—")}</span></span><span class="mh2-live">CANLI</span></div><div class="mh2-match-takimlar"><div class="mh2-takim mh2-takim-ev">{_e(te)}</div><div class="mh2-vs">VS</div><div class="mh2-takim mh2-takim-dep">{_e(td)}</div></div><div class="mh2-match-meta">{meta_html}</div></div>''', unsafe_allow_html=True)
-                    if st.button("🔍 Detaylı Analiz", use_container_width=True, key=f"gmac_{idx}", type="primary"):
+                    st.markdown(f'''<div class="mh2-match-v2">
+                        <div class="mh2-v2-top">
+                            <div class="mh2-v2-saat-kutu">
+                                <div class="mh2-v2-saat">{_e(saat or "--:--")}</div>
+                                <div class="mh2-v2-saat-etiket">{_e(etiket_saat)}</div>
+                            </div>
+                            <div class="mh2-v2-takimlar">
+                                <div class="mh2-v2-takim-satir">
+                                    <div class="mh2-v2-rozet ev">{_e(harf_ev)}</div>
+                                    <div class="mh2-v2-takim-adi ev">{_e(te)}</div>
+                                </div>
+                                <div class="mh2-v2-takim-satir">
+                                    <div class="mh2-v2-rozet dep">{_e(harf_dep)}</div>
+                                    <div class="mh2-v2-takim-adi dep">{_e(td)}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mh2-v2-lig">
+                            <span class="mh2-v2-lig-bayrak">{bayrak}</span>
+                            <span class="mh2-v2-lig-adi">{_e(lig_goster)}</span>
+                            {f'<span class="mh2-v2-lig-tarih">📅 {_e(tarih)}</span>' if tarih else ''}
+                        </div>
+                        <div class="mh2-v2-alt">
+                            <div class="mh2-v2-alt-item"><span class="mh2-v2-alt-item-ikon">⚡</span><b>Analiz</b> hazır</div>
+                            <div class="mh2-v2-alt-item"><span class="mh2-v2-alt-item-ikon">🎯</span><b>AI</b> yorumu</div>
+                            <div class="mh2-v2-alt-item"><span class="mh2-v2-alt-item-ikon">📊</span><b>Detaylı</b> rapor</div>
+                        </div>
+                    </div>''', unsafe_allow_html=True)
+
+                    # Zengin Detaylı Analiz butonu
+                    if st.button(
+                        "🔍  DETAYLI ANALİZ  →",
+                        use_container_width=True,
+                        key=f"gmac_{idx}",
+                        type="primary"
+                    ):
                         st.session_state.form_verileri = copy.deepcopy(v); st.session_state.kayit_yapildi = True
                         st.session_state.gelecekten_gelindi = True; st.session_state.aktif_gelecek_idx = idx
                         st.session_state.sayfa = "sonuc"; st.rerun()
                     acik += 1
-                    st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
+                    st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
                 else:
                     st.markdown(kilitli_mac_karti(te, td, saat, ulke, tarih), unsafe_allow_html=True)
                     c1, c2 = st.columns(2)
@@ -2822,7 +2915,6 @@ elif st.session_state.sayfa == "odeme":
     st.markdown(f'''<div class="mh-hero"><div class="mh-hero-ust">⚽ FUTBOL ANALİZ PRO</div><div class="mh-hero-icon">💳</div><div class="mh-hero-title">Premium'a Geç</div><div class="mh-hero-sub">Havale / EFT ile ödeme</div><div class="mh-hero-badge">● GÜVENLİ ÖDEME</div></div>''', unsafe_allow_html=True)
     st.markdown(f'''<div class="mh-info"><b>👤 Kullanıcı:</b> {_e(hedef)}<br>Açıklama kısmına <b>MUTLAKA</b> kullanıcı adını yaz.</div>''', unsafe_allow_html=True)
     st.markdown("### 📆 Paket Seç")
-    # ✅ DEĞİŞİKLİK 2: Yıllık seçeneği kaldırıldı - sadece Haftalık ve Aylık
     sec = st.radio("Süre?", ["haftalik", "aylik"], format_func=lambda x: {"haftalik": f"📅 Haftalık — {fh:.0f} ₺", "aylik": f"📆 Aylık — {fa:.0f} ₺"}[x], index=1, key="odeme_sure_sec")
     sg = {"haftalik": 7, "aylik": 30}[sec]
     fy_ = {"haftalik": fh, "aylik": fa}[sec]
@@ -3126,7 +3218,6 @@ elif st.session_state.sayfa == "gecmis":
                     return f"{tahmin} {ikon}"
                 st.markdown(f'''<div class="mh2-result-row"><div class="mh2-result-item"><div class="mh2-result-lbl">1X2</div><div class="mh2-result-val {_cls(o1.get("tuttu"))}">{_lbl(o1.get("tahmin"), o1.get("tuttu"))}</div></div><div class="mh2-result-item"><div class="mh2-result-lbl">GOL</div><div class="mh2-result-val {_cls(og.get("tuttu"))}">{_lbl(og.get("tahmin"), og.get("tuttu"))}</div></div><div class="mh2-result-item"><div class="mh2-result-lbl">KG</div><div class="mh2-result-val {_cls(okg.get("tuttu"))}">{_lbl(okg.get("tahmin"), okg.get("tuttu"))}</div></div></div>''', unsafe_allow_html=True)
 
-            # ✅ DEĞİŞİKLİK 3: Hata düzeltildi - misafir/üye de butonu görebilir
             if admin_mi():
                 c1, c2 = st.columns([5, 1])
                 with c1:
