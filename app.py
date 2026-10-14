@@ -20,6 +20,12 @@ import logging
 import warnings
 import extra_streamlit_components as stx
 
+try:
+    import bcrypt
+    BCRYPT_VAR = True
+except ImportError:
+    BCRYPT_VAR = False
+
 logging.getLogger('streamlit').setLevel(logging.ERROR)
 logging.getLogger('streamlit.runtime.scriptrunner.script_run_context').setLevel(logging.ERROR)
 logging.getLogger('streamlit.runtime.scriptrunner').setLevel(logging.ERROR)
@@ -545,15 +551,63 @@ ADMIN_KULLANICI_ADI = "admin52"
 
 
 def _admin_sifre_al():
+    """Admin şifresi ZORUNLU olarak st.secrets veya ortam değişkeninden alınır.
+    Kodda varsayılan YOKTUR — bu güvenlik gereğidir."""
     try:
         if "ADMIN_SIFRE" in st.secrets:
-            return st.secrets["ADMIN_SIFRE"]
+            s = st.secrets["ADMIN_SIFRE"]
+            if s and len(s) >= 8:
+                return s
     except Exception:
         pass
-    return os.environ.get("ADMIN_SIFRE", "Mg153759")
+    s = os.environ.get("ADMIN_SIFRE", "")
+    if not s:
+        st.error("🚨 **GÜVENLİK HATASI:** ADMIN_SIFRE tanımlı değil!\n\n"
+                 "Lütfen Streamlit secrets (`st.secrets['ADMIN_SIFRE']`) "
+                 "veya ortam değişkeni (`ADMIN_SIFRE`) olarak en az 8 karakterli "
+                 "bir şifre tanımlayın. Kodda varsayılan şifre güvenlik gereği kaldırılmıştır.")
+        st.stop()
+    if len(s) < 8:
+        st.error("🚨 **GÜVENLİK HATASI:** ADMIN_SIFRE en az 8 karakter olmalı!")
+        st.stop()
+    return s
 
 ADMIN_SIFRE = _admin_sifre_al()
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "adm_" + hashlib.sha256(ADMIN_SIFRE.encode()).hexdigest()[:40])
+
+
+# ===== GİRİŞ RATE LIMITING =====
+_GIRIS_DENEMELERI = {}   # {kadi_lower: [timestamp, timestamp, ...]}
+_GIRIS_LIMIT_SAYI = 5    # 5 hatalı denemeden sonra
+_GIRIS_LIMIT_PENCERE = 300  # 5 dakika pencere
+_GIRIS_LIMIT_KILIT = 900    # 15 dakika kilit
+
+
+def _giris_limiti_kontrol(kadi):
+    """Dönüş: (izin_var_mi, kalan_saniye)"""
+    simdi = time.time()
+    k = (kadi or "").strip().lower()
+    if not k: return True, 0
+    kayitlar = _GIRIS_DENEMELERI.get(k, [])
+    kayitlar = [t for t in kayitlar if simdi - t < _GIRIS_LIMIT_PENCERE]
+    _GIRIS_DENEMELERI[k] = kayitlar
+    if len(kayitlar) >= _GIRIS_LIMIT_SAYI:
+        kalan = int(_GIRIS_LIMIT_KILIT - (simdi - kayitlar[-1]))
+        if kalan > 0:
+            return False, kalan
+        _GIRIS_DENEMELERI[k] = []
+    return True, 0
+
+
+def _giris_denemesi_ekle(kadi):
+    k = (kadi or "").strip().lower()
+    if not k: return
+    _GIRIS_DENEMELERI.setdefault(k, []).append(time.time())
+
+
+def _giris_basarili_sil(kadi):
+    k = (kadi or "").strip().lower()
+    _GIRIS_DENEMELERI.pop(k, None)
 
 
 def _db_baglanti():
@@ -603,6 +657,17 @@ _cookie_mgr = _cookie_manager_al()
 def _token_uret(): return _secrets.token_hex(32)
 
 
+def _token_hash(token):
+    """Oturum token'ını DB'de saklamak için hash'ler."""
+    return hashlib.sha256(("fa_tok_" + token).encode("utf-8")).hexdigest()
+
+
+def _token_dogrula(token, kayitli_hash):
+    """Token'ı sabit zamanlı karşılaştırır."""
+    if not token or not kayitli_hash: return False
+    return _secrets.compare_digest(_token_hash(token), kayitli_hash)
+
+
 def _cerez_oku():
     if _cookie_mgr is None: return {}
     try: return _cookie_mgr.get_all() or {}
@@ -627,13 +692,17 @@ def _otomatik_giris_dene():
     if not cerezler: return
     token = cerezler.get("fa_token"); kadi = cerezler.get("fa_kadi")
     if not token or not kadi: return
-    if kadi == ADMIN_KULLANICI_ADI and token == ADMIN_TOKEN:
-        st.session_state.rol = "admin"; st.session_state._otomatik_giris_yapildi = True; return
+    if kadi == ADMIN_KULLANICI_ADI:
+        if _secrets.compare_digest(token, ADMIN_TOKEN):
+            st.session_state.rol = "admin"
+            st.session_state._otomatik_giris_yapildi = True
+        return
     try:
         kullanicilar = kullanicilar_yukle()
         k = kullanicilar.get(kadi)
-        if k and k.get("oturum_token") == token:
-            st.session_state.aktif_kullanici = kadi; st.session_state._otomatik_giris_yapildi = True
+        if k and _token_dogrula(token, k.get("oturum_token") or ""):
+            st.session_state.aktif_kullanici = kadi
+            st.session_state._otomatik_giris_yapildi = True
     except Exception: pass
 
 
@@ -823,13 +892,29 @@ def online_say():
 
 
 def sifre_hashle(sifre, salt=None):
+    """Yeni şifreleri bcrypt ile hash'ler. bcrypt yoksa SHA256 fallback."""
+    if BCRYPT_VAR:
+        h = bcrypt.hashpw(sifre.encode("utf-8"), bcrypt.gensalt(rounds=12))
+        return "", h.decode("utf-8")
+    # Fallback (bcrypt kurulu değilse) — eski uyumluluk
     if salt is None: salt = _secrets.token_hex(16)
     h = hashlib.sha256((salt + sifre).encode("utf-8")).hexdigest()
     return salt, h
 
 
 def sifre_dogrula(sifre, salt, kayitli_hash):
-    _, h = sifre_hashle(sifre, salt); return h == kayitli_hash
+    """bcrypt hash'leri bcrypt ile, eski SHA256 hash'leri SHA256 ile doğrular."""
+    if not kayitli_hash: return False
+    # bcrypt hash'leri "$2a$", "$2b$", "$2y$" ile başlar
+    if kayitli_hash.startswith("$2"):
+        if not BCRYPT_VAR: return False
+        try:
+            return bcrypt.checkpw(sifre.encode("utf-8"), kayitli_hash.encode("utf-8"))
+        except Exception:
+            return False
+    # Eski SHA256 (geriye uyumluluk)
+    _, h = sifre_hashle(sifre, salt)
+    return _secrets.compare_digest(h, kayitli_hash)
 
 
 def kullanici_ekle(kullanici_adi, sifre):
@@ -842,10 +927,22 @@ def kullanici_ekle(kullanici_adi, sifre):
 
 
 def kullanici_dogrula(kullanici_adi, sifre):
+    """Kullanıcıyı doğrular. Eski SHA256 hash'i başarılı girişte bcrypt'e yükseltir."""
     kullanicilar = kullanicilar_yukle()
     k = kullanicilar.get(kullanici_adi)
     if not k: return False
-    return sifre_dogrula(sifre, k["salt"], k["sifre_hash"])
+    if not sifre_dogrula(sifre, k.get("salt", ""), k["sifre_hash"]):
+        return False
+    # Şifre doğru → eski SHA256 ise bcrypt'e rehash et (şeffaf yükseltme)
+    if BCRYPT_VAR and not k["sifre_hash"].startswith("$2"):
+        try:
+            yeni_salt, yeni_hash = sifre_hashle(sifre)
+            k["salt"] = yeni_salt
+            k["sifre_hash"] = yeni_hash
+            kullanicilar[kullanici_adi] = k
+            kullanicilar_kaydet(kullanicilar)
+        except Exception: pass
+    return True
 
 
 def abonelik_aktif_mi(kullanici_adi):
@@ -2470,22 +2567,35 @@ def admin_giris_ekrani():
         with c1: giris_btn = st.form_submit_button("✅ Giriş Yap", use_container_width=True, type="primary")
         with c2: iptal_btn = st.form_submit_button("⬅️ Ana Sayfa", use_container_width=True)
         if giris_btn:
-            if not kadi.strip() or not sifre: st.error("❌ Kullanıcı adı ve şifre gerekli.")
-            elif kadi.strip() == ADMIN_KULLANICI_ADI and sifre == ADMIN_SIFRE:
-                _cerez_yaz("fa_token", ADMIN_TOKEN); _cerez_yaz("fa_kadi", ADMIN_KULLANICI_ADI)
-                st.session_state.rol = "admin"; st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"; st.rerun()
-            elif kullanici_dogrula(kadi.strip(), sifre):
-                try:
-                    _u_token = _token_uret()
-                    _kk = kullanicilar_yukle()
-                    if kadi.strip() in _kk:
-                        _kk[kadi.strip()]["oturum_token"] = _u_token
-                        kullanicilar_kaydet(_kk)
-                    _cerez_yaz("fa_token", _u_token); _cerez_yaz("fa_kadi", kadi.strip())
-                except Exception: pass
-                st.session_state.aktif_kullanici = kadi.strip(); st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"
-                st.success(f"✅ Hoş geldin, {kadi.strip()}!"); time.sleep(1); st.rerun()
-            else: st.error("❌ Kullanıcı adı veya şifre hatalı.")
+            if not kadi.strip() or not sifre:
+                st.error("❌ Kullanıcı adı ve şifre gerekli.")
+            else:
+                izin, kalan = _giris_limiti_kontrol(kadi.strip())
+                if not izin:
+                    st.error(f"🚫 Çok fazla hatalı deneme. {kalan} saniye sonra tekrar dene.")
+                elif kadi.strip() == ADMIN_KULLANICI_ADI and _secrets.compare_digest(sifre, ADMIN_SIFRE):
+                    _giris_basarili_sil(kadi.strip())
+                    _cerez_yaz("fa_token", ADMIN_TOKEN); _cerez_yaz("fa_kadi", ADMIN_KULLANICI_ADI)
+                    st.session_state.rol = "admin"; st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"; st.rerun()
+                elif kullanici_dogrula(kadi.strip(), sifre):
+                    _giris_basarili_sil(kadi.strip())
+                    try:
+                        _u_token = _token_uret()
+                        _kk = kullanicilar_yukle()
+                        if kadi.strip() in _kk:
+                            _kk[kadi.strip()]["oturum_token"] = _token_hash(_u_token)
+                            kullanicilar_kaydet(_kk)
+                        _cerez_yaz("fa_token", _u_token); _cerez_yaz("fa_kadi", kadi.strip())
+                    except Exception: pass
+                    st.session_state.aktif_kullanici = kadi.strip(); st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"
+                    st.success(f"✅ Hoş geldin, {kadi.strip()}!"); time.sleep(1); st.rerun()
+                else:
+                    _giris_denemesi_ekle(kadi.strip())
+                    izin2, kalan2 = _giris_limiti_kontrol(kadi.strip())
+                    if not izin2:
+                        st.error(f"🚫 5 hatalı deneme. {kalan2} saniye kilitli.")
+                    else:
+                        st.error("❌ Kullanıcı adı veya şifre hatalı.")
         if iptal_btn:
             st.session_state.admin_login_acik = False; st.session_state.sayfa = "giris"; st.rerun()
     st.markdown('<div class="login-divider">HESABIN YOK MU?</div>', unsafe_allow_html=True)
@@ -2841,7 +2951,7 @@ elif st.session_state.sayfa == "kayit":
                         _u_token = _token_uret()
                         _kk = kullanicilar_yukle()
                         if yk.strip() in _kk:
-                            _kk[yk.strip()]["oturum_token"] = _u_token
+                            _kk[yk.strip()]["oturum_token"] = _token_hash(_u_token)
                             kullanicilar_kaydet(_kk)
                         _cerez_yaz("fa_token", _u_token); _cerez_yaz("fa_kadi", yk.strip())
                     except Exception: pass
@@ -2864,19 +2974,30 @@ elif st.session_state.sayfa == "uyegirisi":
         with c2: gg = st.form_submit_button("⬅️ Geri", use_container_width=True)
         if g:
             if not k.strip() or not s: st.error("❌ Bilgiler gerekli.")
-            elif kullanici_dogrula(k.strip(), s):
-                try:
-                    _u_token = _token_uret()
-                    _kk = kullanicilar_yukle()
-                    if k.strip() in _kk:
-                        _kk[k.strip()]["oturum_token"] = _u_token
-                        kullanicilar_kaydet(_kk)
-                    _cerez_yaz("fa_token", _u_token); _cerez_yaz("fa_kadi", k.strip())
-                except Exception: pass
-                st.session_state["aktif_kullanici"] = k.strip()
-                st.success(f"✅ Hoş geldin, {k.strip()}!")
-                time.sleep(1); st.session_state.sayfa = "giris"; st.rerun()
-            else: st.error("❌ Hatalı giriş.")
+            else:
+                izin, kalan = _giris_limiti_kontrol(k.strip())
+                if not izin:
+                    st.error(f"🚫 Çok fazla hatalı deneme. {kalan} saniye sonra tekrar dene.")
+                elif kullanici_dogrula(k.strip(), s):
+                    _giris_basarili_sil(k.strip())
+                    try:
+                        _u_token = _token_uret()
+                        _kk = kullanicilar_yukle()
+                        if k.strip() in _kk:
+                            _kk[k.strip()]["oturum_token"] = _token_hash(_u_token)
+                            kullanicilar_kaydet(_kk)
+                        _cerez_yaz("fa_token", _u_token); _cerez_yaz("fa_kadi", k.strip())
+                    except Exception: pass
+                    st.session_state["aktif_kullanici"] = k.strip()
+                    st.success(f"✅ Hoş geldin, {k.strip()}!")
+                    time.sleep(1); st.session_state.sayfa = "giris"; st.rerun()
+                else:
+                    _giris_denemesi_ekle(k.strip())
+                    izin2, kalan2 = _giris_limiti_kontrol(k.strip())
+                    if not izin2:
+                        st.error(f"🚫 5 hatalı deneme. {kalan2} saniye kilitli.")
+                    else:
+                        st.error("❌ Hatalı giriş.")
         if gg: st.session_state.sayfa = "giris"; st.rerun()
 
 
