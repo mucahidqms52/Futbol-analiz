@@ -540,6 +540,20 @@ st.markdown("""<style>
 .stApp .an-cmp-header .an-team-name.dep { color: #fbbf24 !important; text-align: left; }
 .stApp .an-cmp-header .an-cmp-vs { font-size: 0.66rem; font-weight: 900; color: #64748b !important; letter-spacing: 2px; }
 .stApp .an-pulse-dot { display: inline-block; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; margin-right: 6px; vertical-align: middle; box-shadow: 0 0 0 0 rgba(34,197,94,.7); animation: anRingPulse 1.8s ease-in-out infinite; }
+/* ============ 🎯 BÜYÜK FORM KARTLARI (YENİ) ============ */
+.stApp .an-form-kart { background: linear-gradient(145deg, rgba(19,28,46,0.95), rgba(11,18,32,1)); border: 1.5px solid #1d2940; border-radius: 18px; padding: 14px 12px 12px 12px; margin-bottom: 4px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.35); transition: all .3s ease; animation: anFadeUp .4s ease-out both; }
+.stApp .an-form-kart:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.5); border-color: var(--c); }
+.stApp .an-form-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c); box-shadow: 0 0 16px var(--c); }
+.stApp .an-form-takim { font-size: 0.88rem; font-weight: 900; font-family: 'Rajdhani', 'Inter', sans-serif; text-align: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed rgba(59,130,246,.25); letter-spacing: 0.4px; line-height: 1.2; word-break: break-word; }
+.stApp .an-form-takim.ev { color: #93c5fd !important; text-shadow: 0 0 14px rgba(147,197,253,0.35); }
+.stApp .an-form-takim.dep { color: #fbbf24 !important; text-shadow: 0 0 14px rgba(251,191,36,0.35); }
+.stApp .an-form-row-buyuk { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; }
+.stApp .an-form-box-buyuk { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 900; border-radius: 10px; color: #fff !important; font-family: 'Rajdhani', 'Inter', sans-serif; letter-spacing: 0.3px; transition: all .25s ease; animation: anScaleIn .4s cubic-bezier(.3,1.3,.5,1) both; }
+.stApp .an-form-box-buyuk:hover { transform: scale(1.1) rotate(-3deg); }
+.stApp .an-form-box-buyuk.an-form-W { background: linear-gradient(135deg,#16a34a,#22c55e); box-shadow: 0 4px 14px rgba(34,197,94,.55), inset 0 1px 0 rgba(255,255,255,.2); }
+.stApp .an-form-box-buyuk.an-form-D { background: linear-gradient(135deg,#475569,#94a3b8); box-shadow: 0 4px 14px rgba(148,163,184,.45), inset 0 1px 0 rgba(255,255,255,.2); }
+.stApp .an-form-box-buyuk.an-form-L { background: linear-gradient(135deg,#dc2626,#ef4444); box-shadow: 0 4px 14px rgba(239,68,68,.55), inset 0 1px 0 rgba(255,255,255,.2); }
+.stApp .an-form-bos { font-size: 0.72rem; color: #64748b !important; font-weight: 700; text-align: center; padding: 12px 6px; font-style: italic; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -577,14 +591,13 @@ ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "adm_" + hashlib.sha256(ADMIN_SIFRE.
 
 
 # ===== GİRİŞ RATE LIMITING =====
-_GIRIS_DENEMELERI = {}   # {kadi_lower: [timestamp, timestamp, ...]}
-_GIRIS_LIMIT_SAYI = 5    # 5 hatalı denemeden sonra
-_GIRIS_LIMIT_PENCERE = 300  # 5 dakika pencere
-_GIRIS_LIMIT_KILIT = 900    # 15 dakika kilit
+_GIRIS_DENEMELERI = {}
+_GIRIS_LIMIT_SAYI = 5
+_GIRIS_LIMIT_PENCERE = 300
+_GIRIS_LIMIT_KILIT = 900
 
 
 def _giris_limiti_kontrol(kadi):
-    """Dönüş: (izin_var_mi, kalan_saniye)"""
     simdi = time.time()
     k = (kadi or "").strip().lower()
     if not k: return True, 0
@@ -658,12 +671,10 @@ def _token_uret(): return _secrets.token_hex(32)
 
 
 def _token_hash(token):
-    """Oturum token'ını DB'de saklamak için hash'ler."""
     return hashlib.sha256(("fa_tok_" + token).encode("utf-8")).hexdigest()
 
 
 def _token_dogrula(token, kayitli_hash):
-    """Token'ı sabit zamanlı karşılaştırır."""
     if not token or not kayitli_hash: return False
     return _secrets.compare_digest(_token_hash(token), kayitli_hash)
 
@@ -790,7 +801,6 @@ def gecmis_yukle():
 
 
 def gecmis_kaydet(v):
-    # Sabit 200 maç sınırı — yeni maç eklenince en eski silinir
     v = list(v)
     if len(v) > 200:
         v = v[-200:]
@@ -853,12 +863,33 @@ def ayarlar_kaydet(v):
 
 
 def online_heartbeat(session_id):
+    """🔽 DÜZELTİLDİ: Artık günlük ziyaretçi sayacı doğru çalışıyor."""
     conn = _db_baglanti()
     try:
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO online_kullanicilar (session_id, son_gorulme) VALUES (%s, NOW()) ON CONFLICT (session_id) DO UPDATE SET son_gorulme = NOW()", (session_id,))
+            # 1. ÖNCE kontrol: Bu session son 5 dakikada görülmüş müydü?
+            cur.execute(
+                "SELECT 1 FROM online_kullanicilar WHERE session_id = %s AND son_gorulme > NOW() - INTERVAL '5 minutes'",
+                (session_id,)
+            )
+            yeni_ziyaret = cur.fetchone() is None
+
+            # 2. Şimdi heartbeat'i güncelle
+            cur.execute(
+                "INSERT INTO online_kullanicilar (session_id, son_gorulme) VALUES (%s, NOW()) "
+                "ON CONFLICT (session_id) DO UPDATE SET son_gorulme = NOW()",
+                (session_id,)
+            )
+
+            # 3. Eski online kayıtları temizle (2 dk'dan eski)
             cur.execute("DELETE FROM online_kullanicilar WHERE son_gorulme < NOW() - INTERVAL '2 minutes'")
-            cur.execute("INSERT INTO gunluk_ziyaretler (tarih, ziyaret_sayisi) VALUES (CURRENT_DATE, 1) ON CONFLICT (tarih) DO UPDATE SET ziyaret_sayisi = gunluk_ziyaretler.ziyaret_sayisi + 1 WHERE NOT EXISTS (SELECT 1 FROM online_kullanicilar WHERE session_id = %s AND son_gorulme > NOW() - INTERVAL '5 minutes')", (session_id,))
+
+            # 4. Yeni ziyaretse günlük sayacı artır
+            if yeni_ziyaret:
+                cur.execute(
+                    "INSERT INTO gunluk_ziyaretler (tarih, ziyaret_sayisi) VALUES (CURRENT_DATE, 1) "
+                    "ON CONFLICT (tarih) DO UPDATE SET ziyaret_sayisi = gunluk_ziyaretler.ziyaret_sayisi + 1"
+                )
         conn.commit()
     finally: conn.close()
 
@@ -892,27 +923,22 @@ def online_say():
 
 
 def sifre_hashle(sifre, salt=None):
-    """Yeni şifreleri bcrypt ile hash'ler. bcrypt yoksa SHA256 fallback."""
     if BCRYPT_VAR:
         h = bcrypt.hashpw(sifre.encode("utf-8"), bcrypt.gensalt(rounds=12))
         return "", h.decode("utf-8")
-    # Fallback (bcrypt kurulu değilse) — eski uyumluluk
     if salt is None: salt = _secrets.token_hex(16)
     h = hashlib.sha256((salt + sifre).encode("utf-8")).hexdigest()
     return salt, h
 
 
 def sifre_dogrula(sifre, salt, kayitli_hash):
-    """bcrypt hash'leri bcrypt ile, eski SHA256 hash'leri SHA256 ile doğrular."""
     if not kayitli_hash: return False
-    # bcrypt hash'leri "$2a$", "$2b$", "$2y$" ile başlar
     if kayitli_hash.startswith("$2"):
         if not BCRYPT_VAR: return False
         try:
             return bcrypt.checkpw(sifre.encode("utf-8"), kayitli_hash.encode("utf-8"))
         except Exception:
             return False
-    # Eski SHA256 (geriye uyumluluk)
     _, h = sifre_hashle(sifre, salt)
     return _secrets.compare_digest(h, kayitli_hash)
 
@@ -927,13 +953,11 @@ def kullanici_ekle(kullanici_adi, sifre):
 
 
 def kullanici_dogrula(kullanici_adi, sifre):
-    """Kullanıcıyı doğrular. Eski SHA256 hash'i başarılı girişte bcrypt'e yükseltir."""
     kullanicilar = kullanicilar_yukle()
     k = kullanicilar.get(kullanici_adi)
     if not k: return False
     if not sifre_dogrula(sifre, k.get("salt", ""), k["sifre_hash"]):
         return False
-    # Şifre doğru → eski SHA256 ise bcrypt'e rehash et (şeffaf yükseltme)
     if BCRYPT_VAR and not k["sifre_hash"].startswith("$2"):
         try:
             yeni_salt, yeni_hash = sifre_hashle(sifre)
@@ -1822,7 +1846,6 @@ def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
         if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
         if veri.get("saat"): veri["saat"] = saat_2_saat_ileri(veri["saat"])
         veri["kaynak_url"] = mac["url"]
-        # 🔽 DEĞİŞİKLİK: Ülke/lig bilgisi yoksa maç TAMAMEN elenir (ne geleceğe eklenir, ne "atlanan"a sayılır, ne de listelenir)
         if not str(veri.get("ulke", "") or "").strip():
             return ("ulke_yok", veri, "Ülke/lig bilgisi yok", None)
         if mac["url"] in mevcut_urls: return ("atlandi", veri, "Zaten var", None)
@@ -1854,7 +1877,6 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
                 r = fut.result()
                 sonuc, veri, mesaj = r[0], r[1], r[2]
                 kayit = r[3] if len(r) == 4 else None
-                # 🔽 "ulke_yok" TAMAMEN atlanır — ne başarılıya ne atlanana sayılır, hiçbir listeye girmez
                 if sonuc == "ulke_yok":
                     pass
                 elif sonuc == "eklendi":
@@ -2849,7 +2871,6 @@ elif st.session_state.sayfa == "giris":
                 ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
                 bayrak = ulke_bayrak_bul(ulke)
 
-                # Saat etiketi (BUGÜN / YARIN / tarih)
                 etiket_saat = "—"
                 try:
                     if tarih and saat:
@@ -2870,7 +2891,6 @@ elif st.session_state.sayfa == "giris":
                 except Exception:
                     etiket_saat = "MAÇ"
 
-                # Lig adı (max 22 karakter)
                 lig_goster = (ulke or "").title()[:22] or "Uluslararası"
 
                 if premium or acik < kota:
@@ -2896,7 +2916,6 @@ elif st.session_state.sayfa == "giris":
                         </div>
                     </div>''', unsafe_allow_html=True)
 
-                    # Zengin Detaylı Analiz butonu
                     if st.button(
                         "🔍  DETAYLI ANALİZ  →",
                         use_container_width=True,
@@ -3516,14 +3535,23 @@ elif st.session_state.sayfa == "sonuc":
     meta = " &nbsp;•&nbsp; ".join(meta_parcalar) if meta_parcalar else "MAÇ ANALİZİ"
     skor_html = f'<div class="an-skor">{se} - {sd}</div>' if sb else '<div class="an-vs">VS</div>'
     st.markdown(f'''<div class="an-hero"><div class="an-hero-meta"><span class="an-pulse-dot"></span> {meta}</div><div class="an-hero-teams"><div class="an-team an-team-ev">{_e(te)}</div><div class="an-hero-mid">{skor_html}</div><div class="an-team an-team-dep">{_e(td)}</div></div><div class="an-hero-xg">⚡ Beklenen Gol: <b>{a["lam_ev"]:.2f}</b> – <b>{a["lam_dep"]:.2f}</b>&nbsp;•&nbsp; Toplam: <b>{a["lam_ev"]+a["lam_dep"]:.2f}</b></div></div>''', unsafe_allow_html=True)
-    def _form_html(form_str, takim):
-        if not form_str: return ""
-        s = "".join(c for c in str(form_str).upper() if c in "WDL")
-        if not s: return ""
-        boxes = "".join(f'<span class="an-form-box an-form-{c}">{c}</span>' for c in s)
-        return f'<div class="an-stat"><div class="an-stat-lbl" style="margin-top:0;margin-bottom:4px;">{_e(takim)} FORMU</div><div class="an-form-row">{boxes}</div></div>'
-    f_ev = _form_html(v.get("form_str_ev", ""), te); f_dep = _form_html(v.get("form_str_dep", ""), td)
-    if f_ev or f_dep: st.markdown(f'<div class="an-stat-grid an-2col">{f_ev}{f_dep}</div>', unsafe_allow_html=True)
+
+    # ============ 🎯 BÜYÜK TAKIM FORMLARI (W/D/L) ============
+    st.markdown('<div class="an-section-ttl">📋 TAKIM FORMLARI (SON 5 MAÇ)</div>', unsafe_allow_html=True)
+    def _form_buyuk_html(form_str, takim, ev_mi=True):
+        cls_takim = "ev" if ev_mi else "dep"
+        renk_kart = "#3b82f6" if ev_mi else "#f59e0b"
+        s = "".join(c for c in str(form_str or "").upper() if c in "WDL")
+        if not s:
+            icerik = '<div class="an-form-bos">Veri yok</div>'
+        else:
+            boxes = "".join(f'<span class="an-form-box-buyuk an-form-{c}">{c}</span>' for c in s)
+            icerik = f'<div class="an-form-row-buyuk">{boxes}</div>'
+        return f'<div class="an-form-kart" style="--c:{renk_kart};"><div class="an-form-takim {cls_takim}">{_e(takim)}</div>{icerik}</div>'
+    f_ev = _form_buyuk_html(v.get("form_str_ev", ""), te, ev_mi=True)
+    f_dep = _form_buyuk_html(v.get("form_str_dep", ""), td, ev_mi=False)
+    st.markdown(f'<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 16px 0;">{f_ev}{f_dep}</div>', unsafe_allow_html=True)
+
     st.markdown('<div class="an-section-ttl">⚔️ Takım Karşılaştırması</div>', unsafe_allow_html=True)
     ae = float(v.get("atilan_ev", 0) or 0); ad = float(v.get("atilan_dep", 0) or 0)
     ye = float(v.get("yenen_ev", 0) or 0); yd = float(v.get("yenen_dep", 0) or 0)
