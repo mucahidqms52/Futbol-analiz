@@ -540,20 +540,20 @@ st.markdown("""<style>
 .stApp .an-cmp-header .an-team-name.dep { color: #fbbf24 !important; text-align: left; }
 .stApp .an-cmp-header .an-cmp-vs { font-size: 0.66rem; font-weight: 900; color: #64748b !important; letter-spacing: 2px; }
 .stApp .an-pulse-dot { display: inline-block; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; margin-right: 6px; vertical-align: middle; box-shadow: 0 0 0 0 rgba(34,197,94,.7); animation: anRingPulse 1.8s ease-in-out infinite; }
-/* ============ 🎯 BÜYÜK FORM KARTLARI (YENİ) ============ */
-.stApp .an-form-kart { background: linear-gradient(145deg, rgba(19,28,46,0.95), rgba(11,18,32,1)); border: 1.5px solid #1d2940; border-radius: 18px; padding: 14px 12px 12px 12px; margin-bottom: 4px; position: relative; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.35); transition: all .3s ease; animation: anFadeUp .4s ease-out both; }
-.stApp .an-form-kart:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.5); border-color: var(--c); }
-.stApp .an-form-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--c); box-shadow: 0 0 16px var(--c); }
-.stApp .an-form-takim { font-size: 0.88rem; font-weight: 900; font-family: 'Rajdhani', 'Inter', sans-serif; text-align: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed rgba(59,130,246,.25); letter-spacing: 0.4px; line-height: 1.2; word-break: break-word; }
-.stApp .an-form-takim.ev { color: #93c5fd !important; text-shadow: 0 0 14px rgba(147,197,253,0.35); }
-.stApp .an-form-takim.dep { color: #fbbf24 !important; text-shadow: 0 0 14px rgba(251,191,36,0.35); }
-.stApp .an-form-row-buyuk { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; }
-.stApp .an-form-box-buyuk { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 900; border-radius: 10px; color: #fff !important; font-family: 'Rajdhani', 'Inter', sans-serif; letter-spacing: 0.3px; transition: all .25s ease; animation: anScaleIn .4s cubic-bezier(.3,1.3,.5,1) both; }
-.stApp .an-form-box-buyuk:hover { transform: scale(1.1) rotate(-3deg); }
-.stApp .an-form-box-buyuk.an-form-W { background: linear-gradient(135deg,#16a34a,#22c55e); box-shadow: 0 4px 14px rgba(34,197,94,.55), inset 0 1px 0 rgba(255,255,255,.2); }
-.stApp .an-form-box-buyuk.an-form-D { background: linear-gradient(135deg,#475569,#94a3b8); box-shadow: 0 4px 14px rgba(148,163,184,.45), inset 0 1px 0 rgba(255,255,255,.2); }
-.stApp .an-form-box-buyuk.an-form-L { background: linear-gradient(135deg,#dc2626,#ef4444); box-shadow: 0 4px 14px rgba(239,68,68,.55), inset 0 1px 0 rgba(255,255,255,.2); }
-.stApp .an-form-bos { font-size: 0.72rem; color: #64748b !important; font-weight: 700; text-align: center; padding: 12px 6px; font-style: italic; }
+/* ============ 🎯 KÜÇÜK FORM KARTLARI (5 YAN YANA) ============ */
+.stApp .an-form-kart { background: linear-gradient(145deg, rgba(19,28,46,0.95), rgba(11,18,32,1)); border: 1.5px solid #1d2940; border-radius: 14px; padding: 10px 8px 10px 8px; margin-bottom: 4px; position: relative; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,0.3); transition: all .3s ease; animation: anFadeUp .4s ease-out both; }
+.stApp .an-form-kart:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: var(--c); }
+.stApp .an-form-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2.5px; background: var(--c); box-shadow: 0 0 12px var(--c); }
+.stApp .an-form-takim { font-size: 0.74rem; font-weight: 900; font-family: 'Rajdhani', 'Inter', sans-serif; text-align: center; margin-bottom: 8px; padding-bottom: 7px; border-bottom: 1px dashed rgba(59,130,246,.22); letter-spacing: 0.3px; line-height: 1.15; word-break: break-word; }
+.stApp .an-form-takim.ev { color: #93c5fd !important; text-shadow: 0 0 10px rgba(147,197,253,0.3); }
+.stApp .an-form-takim.dep { color: #fbbf24 !important; text-shadow: 0 0 10px rgba(251,191,36,0.3); }
+.stApp .an-form-row-buyuk { display: flex; gap: 4px; justify-content: space-between; flex-wrap: nowrap; width: 100%; }
+.stApp .an-form-box-buyuk { flex: 1 1 0; min-width: 0; max-width: 34px; aspect-ratio: 1 / 1; height: auto; display: inline-flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 900; border-radius: 7px; color: #fff !important; font-family: 'Rajdhani', 'Inter', sans-serif; letter-spacing: 0.2px; transition: all .25s ease; animation: anScaleIn .4s cubic-bezier(.3,1.3,.5,1) both; }
+.stApp .an-form-box-buyuk:hover { transform: scale(1.08); }
+.stApp .an-form-box-buyuk.an-form-W { background: linear-gradient(135deg,#16a34a,#22c55e); box-shadow: 0 3px 10px rgba(34,197,94,.5), inset 0 1px 0 rgba(255,255,255,.15); }
+.stApp .an-form-box-buyuk.an-form-D { background: linear-gradient(135deg,#475569,#94a3b8); box-shadow: 0 3px 10px rgba(148,163,184,.4), inset 0 1px 0 rgba(255,255,255,.15); }
+.stApp .an-form-box-buyuk.an-form-L { background: linear-gradient(135deg,#dc2626,#ef4444); box-shadow: 0 3px 10px rgba(239,68,68,.5), inset 0 1px 0 rgba(255,255,255,.15); }
+.stApp .an-form-bos { font-size: 0.65rem; color: #64748b !important; font-weight: 700; text-align: center; padding: 10px 4px; font-style: italic; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -863,28 +863,21 @@ def ayarlar_kaydet(v):
 
 
 def online_heartbeat(session_id):
-    """🔽 DÜZELTİLDİ: Önce kontrol, sonra kayıt — günlük ziyaretçi sayacı doğru çalışıyor."""
+    """Önce kontrol, sonra kayıt — günlük ziyaretçi sayacı doğru çalışıyor."""
     conn = _db_baglanti()
     try:
         with conn.cursor() as cur:
-            # 1. ÖNCE kontrol: Bu session son 5 dakikada görülmüş müydü?
             cur.execute(
                 "SELECT 1 FROM online_kullanicilar WHERE session_id = %s AND son_gorulme > NOW() - INTERVAL '5 minutes'",
                 (session_id,)
             )
             yeni_ziyaret = cur.fetchone() is None
-
-            # 2. Şimdi heartbeat'i güncelle
             cur.execute(
                 "INSERT INTO online_kullanicilar (session_id, son_gorulme) VALUES (%s, NOW()) "
                 "ON CONFLICT (session_id) DO UPDATE SET son_gorulme = NOW()",
                 (session_id,)
             )
-
-            # 3. Eski online kayıtları temizle (2 dk'dan eski)
             cur.execute("DELETE FROM online_kullanicilar WHERE son_gorulme < NOW() - INTERVAL '2 minutes'")
-
-            # 4. Yeni ziyaretse günlük sayacı artır
             if yeni_ziyaret:
                 cur.execute(
                     "INSERT INTO gunluk_ziyaretler (tarih, ziyaret_sayisi) VALUES (CURRENT_DATE, 1) "
@@ -1128,7 +1121,6 @@ _kilit = threading.Lock(); _ESIK_CACHE = {}
 # 🎯 LİG FİLTRESİ — Sadece büyük ligler
 # ==========================================
 IZINLI_ULKELER = {
-    # ===== AVRUPA (1. ve 2. ligler) =====
     "england", "ingiltere", "i̇ngiltere",
     "spain", "ispanya",
     "italy", "italya",
@@ -1156,13 +1148,11 @@ IZINLI_ULKELER = {
     "ukraine", "ukrayna",
     "russia", "rusya",
     "estonia", "estonya",
-    # ===== AVRUPA DIŞI BÜYÜK LİGLER =====
     "turkey", "türkiye", "turkiye",
     "brazil", "brezilya",
     "argentina", "arjantin",
     "saudi arabia", "suudi arabistan", "saudi", "arabistan",
     "usa", "abd", "united states",
-    # ===== ULUSLARARASI =====
     "europe", "avrupa",
     "world", "dünya", "dunya",
     "international", "uluslararası", "uluslararasi",
@@ -1183,19 +1173,14 @@ YASAKLI_KELIMELER = {
 
 
 def _ulke_izinli_mi(ulke, takim_ev="", takim_dep=""):
-    """Ülke izin verilen büyük liglerden mi? Yasaklı kelime var mı?"""
-    if not ulke:
-        return False
+    if not ulke: return False
     u = str(ulke).strip().lower()
-    if not u:
-        return False
+    if not u: return False
     tum_metin = f"{u} {takim_ev} {takim_dep}".lower()
     for yasak in YASAKLI_KELIMELER:
-        if yasak in tum_metin:
-            return False
+        if yasak in tum_metin: return False
     for izinli in IZINLI_ULKELER:
-        if izinli in u:
-            return True
+        if izinli in u: return True
     return False
 
 
@@ -1874,7 +1859,7 @@ def _mac_html_parse(html, url=""):
     if veri.get("atilan_ev", 0) == 0: okunamayanlar.append("Atılan Gol (Ev)")
     if veri.get("yenen_ev", 0) == 0: okunamayanlar.append("Yenen Gol (Ev)")
 
-    # ============ 🎯 SON 5 MAÇ FORMU (W/D/L) — MUTATING HTML PARSING ============
+    # ============ 🎯 SON 5 MAÇ FORMU (W/D/L) ============
     try:
         form_bloklari = re.findall(
             r'(?:^|\n)\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*(?=\r?\n)',
@@ -1954,10 +1939,8 @@ def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
         if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
         if veri.get("saat"): veri["saat"] = saat_2_saat_ileri(veri["saat"])
         veri["kaynak_url"] = mac["url"]
-        # Ülke bilgisi yoksa elenir
         if not str(veri.get("ulke", "") or "").strip():
             return ("ulke_yok", veri, "Ülke/lig bilgisi yok", None)
-        # 🎯 ÜLKE FİLTRESİ: Sadece büyük ligler (Kenya, Ekvador, Bolivya vb. elenir)
         if not _ulke_izinli_mi(veri.get("ulke", ""), veri.get("takim_ev", ""), veri.get("takim_dep", "")):
             return ("ulke_yok", veri, "İzin verilmeyen lig/ülke", None)
         if mac["url"] in mevcut_urls: return ("atlandi", veri, "Zaten var", None)
@@ -2938,7 +2921,9 @@ elif st.session_state.sayfa == "giris":
     else:
         # ===== MİSAFİR / ÜYE ANA SAYFA =====
         gelecek = st.session_state.gelecek_analizler
-        toplam = len(gelecek)
+        # 🎯 Sadece eşiği geçen maçları göster
+        gelecek_goster = [(idx, g) for idx, g in enumerate(gelecek) if _mac_tahmin_var_mi(g.get("veri", {}))]
+        toplam = len(gelecek_goster)
         premium = uye_premium_mu()
         kota = int(ayar_al("ucretsiz_kotasi", 3))
 
@@ -2973,10 +2958,10 @@ elif st.session_state.sayfa == "giris":
 
         st.divider()
 
-        if not gelecek:
+        if not gelecek_goster:
             st.markdown('''<div class="mh2-bos"><span class="mh2-bos-ikon">⚽</span>Henüz maç yok — çok yakında yeni analizler gelecek!</div>''', unsafe_allow_html=True)
         else:
-            sirali = sorted(enumerate(gelecek), key=lambda x: saat_sirala_anahtari(x[1]))
+            sirali = sorted(gelecek_goster, key=lambda x: saat_sirala_anahtari(x[1]))
             acik = 0
             for idx, g in sirali:
                 v = g["veri"]; te = v.get("takim_ev", "Ev") or "Ev"; td = v.get("takim_dep", "Dep") or "Dep"
@@ -3310,7 +3295,9 @@ elif st.session_state.sayfa == "gelecek_admin":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>🔮 Gelecek Maçlar</h1>", unsafe_allow_html=True)
     gel = st.session_state.gelecek_analizler
-    toplam_g = len(gel)
+    # 🎯 Sadece eşiği geçen maçları göster
+    gel_goster = [(idx, g) for idx, g in enumerate(gel) if _mac_tahmin_var_mi(g.get("veri", {}))]
+    toplam_g = len(gel_goster)
     st.markdown("### 💾 Yedekleme")
     c1, c2 = st.columns(2)
     with c1:
@@ -3327,9 +3314,9 @@ elif st.session_state.sayfa == "gelecek_admin":
                 else: st.error("❌ Dosya formatı hatalı.")
             except Exception as e: st.error(f"❌ Hata: {e}")
     st.divider()
-    if not gel: st.info("ℹ️ Gelecek maç yok. Admin ana sayfadan maç çekebilirsin.")
+    if not gel_goster: st.info("ℹ️ Gelecek maç yok. Admin ana sayfadan maç çekebilirsin.")
     else:
-        sirali = sorted(enumerate(gel), key=lambda x: saat_sirala_anahtari(x[1]))
+        sirali = sorted(gel_goster, key=lambda x: saat_sirala_anahtari(x[1]))
         for idx, g in sirali:
             v = g["veri"]; te = v.get("takim_ev", "Ev"); td = v.get("takim_dep", "Dep")
             ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
@@ -3648,7 +3635,7 @@ elif st.session_state.sayfa == "sonuc":
     skor_html = f'<div class="an-skor">{se} - {sd}</div>' if sb else '<div class="an-vs">VS</div>'
     st.markdown(f'''<div class="an-hero"><div class="an-hero-meta"><span class="an-pulse-dot"></span> {meta}</div><div class="an-hero-teams"><div class="an-team an-team-ev">{_e(te)}</div><div class="an-hero-mid">{skor_html}</div><div class="an-team an-team-dep">{_e(td)}</div></div><div class="an-hero-xg">⚡ Beklenen Gol: <b>{a["lam_ev"]:.2f}</b> – <b>{a["lam_dep"]:.2f}</b>&nbsp;•&nbsp; Toplam: <b>{a["lam_ev"]+a["lam_dep"]:.2f}</b></div></div>''', unsafe_allow_html=True)
 
-    # ============ 🎯 BÜYÜK TAKIM FORMLARI (W/D/L) ============
+    # ============ 🎯 KÜÇÜK TAKIM FORMLARI (5 YAN YANA) ============
     st.markdown('<div class="an-section-ttl">📋 TAKIM FORMLARI (SON 5 MAÇ)</div>', unsafe_allow_html=True)
     def _form_buyuk_html(form_str, takim, ev_mi=True):
         cls_takim = "ev" if ev_mi else "dep"
@@ -3662,7 +3649,7 @@ elif st.session_state.sayfa == "sonuc":
         return f'<div class="an-form-kart" style="--c:{renk_kart};"><div class="an-form-takim {cls_takim}">{_e(takim)}</div>{icerik}</div>'
     f_ev = _form_buyuk_html(v.get("form_str_ev", ""), te, ev_mi=True)
     f_dep = _form_buyuk_html(v.get("form_str_dep", ""), td, ev_mi=False)
-    st.markdown(f'<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 16px 0;">{f_ev}{f_dep}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 16px 0;">{f_ev}{f_dep}</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="an-section-ttl">⚔️ Takım Karşılaştırması</div>', unsafe_allow_html=True)
     ae = float(v.get("atilan_ev", 0) or 0); ad = float(v.get("atilan_dep", 0) or 0)
