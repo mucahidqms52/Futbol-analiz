@@ -440,6 +440,7 @@ st.markdown("""
     .mh2-result-val.miss { color: #64748b !important; }
     .mh2-result-val.neutral { color: #94a3b8 !important; }
 
+    /* ============ 🎨 MODERN MAÇ KARTI V2 (YENİ) ============ */
     .mh2-match-v2 { position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(19,28,46,0.95), rgba(11,18,32,1)); border: 1px solid #1d2940; border-radius: 20px; padding: 0; margin: 10px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.35); transition: all .3s ease; animation: anFadeUp .4s ease-out both; }
     .mh2-match-v2:hover { border-color: rgba(34,197,94,0.45); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(34,197,94,0.15); }
     .mh2-match-v2::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #22c55e, #f59e0b, #22c55e); background-size: 300% 100%; animation: anShimmer 4s linear infinite; }
@@ -539,6 +540,7 @@ st.markdown("""<style>
 .stApp .an-cmp-header .an-team-name.dep { color: #fbbf24 !important; text-align: left; }
 .stApp .an-cmp-header .an-cmp-vs { font-size: 0.66rem; font-weight: 900; color: #64748b !important; letter-spacing: 2px; }
 .stApp .an-pulse-dot { display: inline-block; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; margin-right: 6px; vertical-align: middle; box-shadow: 0 0 0 0 rgba(34,197,94,.7); animation: anRingPulse 1.8s ease-in-out infinite; }
+/* ============ 🎯 KÜÇÜK FORM KARTLARI (5 YAN YANA) ============ */
 .stApp .an-form-kart { background: linear-gradient(145deg, rgba(19,28,46,0.95), rgba(11,18,32,1)); border: 1.5px solid #1d2940; border-radius: 14px; padding: 10px 8px 10px 8px; margin-bottom: 4px; position: relative; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,0.3); transition: all .3s ease; animation: anFadeUp .4s ease-out both; }
 .stApp .an-form-kart:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.45); border-color: var(--c); }
 .stApp .an-form-kart::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2.5px; background: var(--c); box-shadow: 0 0 12px var(--c); }
@@ -563,6 +565,8 @@ ADMIN_KULLANICI_ADI = "admin52"
 
 
 def _admin_sifre_al():
+    """Admin şifresi ZORUNLU olarak st.secrets veya ortam değişkeninden alınır.
+    Kodda varsayılan YOKTUR — bu güvenlik gereğidir."""
     try:
         if "ADMIN_SIFRE" in st.secrets:
             s = st.secrets["ADMIN_SIFRE"]
@@ -586,6 +590,7 @@ ADMIN_SIFRE = _admin_sifre_al()
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "adm_" + hashlib.sha256(ADMIN_SIFRE.encode()).hexdigest()[:40])
 
 
+# ===== GİRİŞ RATE LIMITING =====
 _GIRIS_DENEMELERI = {}
 _GIRIS_LIMIT_SAYI = 5
 _GIRIS_LIMIT_PENCERE = 300
@@ -858,6 +863,7 @@ def ayarlar_kaydet(v):
 
 
 def online_heartbeat(session_id):
+    """Önce kontrol, sonra kayıt — günlük ziyaretçi sayacı doğru çalışıyor."""
     conn = _db_baglanti()
     try:
         with conn.cursor() as cur:
@@ -1661,14 +1667,94 @@ def metinden_veri_cikar(metin):
 
 
 # ==========================================
-# ANNABET VERİ ÇEKME MOTORU
+# VERİ ÇEKME MOTORU
 # ==========================================
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
-ANNABET_BASE = "https://annabet.com"
-ANNABET_ANA = f"{ANNABET_BASE}/en/soccerstats/"
+TARAYICI_ESZAMANLI = int(os.environ.get("TARAYICI_ESZAMANLI", "3"))
+_TARAYICI_SEM = threading.Semaphore(TARAYICI_ESZAMANLI)
 
 
-def _scrapingbee_get(url, render_js=False, timeout=30, max_retry=3):
+def _playwright_skor_cek(url, timeout=25):
+    try:
+        import subprocess as _sp, sys as _sys
+        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"], check=False, timeout=600, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    except Exception: pass
+    from playwright.sync_api import sync_playwright
+    with _TARAYICI_SEM:
+        with sync_playwright() as p:
+            b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
+            try:
+                ctx = b.new_context(user_agent=UA, locale="en-US")
+                pg = ctx.new_page()
+                pg.route("**/*", lambda route: route.abort() if route.request.resource_type in ("image", "media", "font", "stylesheet") else route.continue_())
+                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+                pg.wait_for_timeout(2000)
+                return pg.content()
+            finally:
+                try: b.close()
+                except Exception: pass
+
+
+def _mac_detay_cek_5games_playwright(url, timeout=35):
+    try:
+        import subprocess as _sp, sys as _sys
+        _sp.run([_sys.executable, "-m", "playwright", "install", "chromium"], check=False, timeout=600, stdout=_sp.DEVNULL, stderr=_sp.DEVNULL)
+    except Exception: pass
+    from playwright.sync_api import sync_playwright
+    with _TARAYICI_SEM:
+        with sync_playwright() as p:
+            b = p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"])
+            try:
+                ctx = b.new_context(user_agent=UA, locale="en-US")
+                pg = ctx.new_page()
+                pg.route("**/*", lambda route: route.abort() if route.request.resource_type in ("image", "media", "font", "stylesheet") else route.continue_())
+                pg.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
+                pg.wait_for_timeout(2500)
+                tiklandi = False
+                try:
+                    tiklandi = pg.evaluate("""() => {
+                        const labels = document.querySelectorAll('label.containerbutton, label');
+                        for (const lb of labels) {
+                            const num = lb.querySelector('.numbergames, .num, span');
+                            if (!num) continue;
+                            const t = (num.textContent || '').trim();
+                            if (t === '5' || t === '5 ') {
+                                const inp = lb.querySelector('input[type="radio"]');
+                                if (inp) { inp.checked = true; inp.dispatchEvent(new Event('change', { bubbles: true })); inp.dispatchEvent(new Event('input', { bubbles: true })); inp.click(); lb.click(); return true; }
+                            }
+                        }
+                        const inp2 = document.querySelector('input[type="radio"][value="5"]');
+                        if (inp2) { inp2.checked = true; inp2.dispatchEvent(new Event('change', { bubbles: true })); inp2.click(); return true; }
+                        const inp3 = document.querySelector('input[id*="game_count_5"], input[id*="5"]');
+                        if (inp3 && inp3.type === 'radio') { inp3.checked = true; inp3.dispatchEvent(new Event('change', { bubbles: true })); inp3.click(); return true; }
+                        return false;
+                    }""")
+                except Exception: tiklandi = False
+                if not tiklandi:
+                    for sel in ["input[type='radio'][value='5']", "input#game_count_5", "label.containerbutton:has-text('5')", "label:has-text('5') input"]:
+                        try:
+                            pg.click(sel, timeout=2000); tiklandi = True; break
+                        except Exception: continue
+                pg.wait_for_timeout(3500)
+                try:
+                    pg.wait_for_function("""() => { const t = document.body.innerText || ''; return t.includes('Last 5 Games') || t.includes('last 5 games'); }""", timeout=8000)
+                except Exception: pass
+                pg.wait_for_timeout(1000)
+                return pg.content()
+            finally:
+                try: b.close()
+                except Exception: pass
+
+
+def _mac_detay_cek_5games(url):
+    html = None
+    try: html = _mac_detay_cek_5games_playwright(url)
+    except Exception: pass
+    if html and len(html) > 500: return _mac_html_parse(html, url)
+    return mutating_mac_detay_cek(url)
+
+
+def _scrapingbee_get(url, render_js=True, timeout=30, mac_sec="5", max_retry=3, dogrula=False):
     hata = None
     for d in range(max_retry):
         try:
@@ -1693,162 +1779,116 @@ def _html_metne_cevir(html):
     return metin
 
 
-def annabet_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI):
-    html, hata = _scrapingbee_get(ANNABET_ANA, render_js=False)
+def mutating_ana_sayfa_linklerini_al(max_mac=MAX_MAC_SINIRI):
+    html, hata = _scrapingbee_get("https://www.mutating.com/football-stats/", render_js=True)
     if hata: return [], [hata]
-    if not html: return [], ["AnnaBet ana sayfa indirilemedi."]
+    if not html: return [], ["Ana sayfa indirilemedi."]
     soup = BeautifulSoup(html, "html.parser")
     maclar = []; gorulen = set()
     for link in soup.find_all("a", href=True):
         if len(maclar) >= max_mac: break
         href = link.get("href", "")
-        if "h2h.php" not in href: continue
-        if href.startswith("/"): href = ANNABET_BASE + href
+        if not any(x in href for x in ["match-preview", "match/", "/stats/"]): continue
+        if href.startswith("/"): href = "https://www.mutating.com" + href
         elif not href.startswith("http"): continue
         if href in gorulen: continue
         gorulen.add(href)
-        # Takım isimlerini link metninden al (genellikle "Team A - Team B" formatında)
-        metin = link.get_text(" ", strip=True)
-        takim_ev = ""; takim_dep = ""
-        if " - " in metin:
-            p = metin.split(" - "); takim_ev = p[0].strip(); takim_dep = p[1].strip() if len(p) > 1 else ""
-        # Alternatif: URL'den takım isimlerini çıkar (team1=X&team2=Y)
-        m = re.search(r'team1=([^&]+).*?team2=([^&]+)', href)
-        if m:
-            try:
-                from urllib.parse import unquote
-                takim_ev = unquote(m.group(1)).replace("+", " ").strip()
-                takim_dep = unquote(m.group(2)).replace("+", " ").strip()
-            except Exception: pass
-        maclar.append({"url": href, "takim_ev": takim_ev, "takim_dep": takim_dep, "saat": ""})
+        h2_list = link.find_all("h2")
+        takim_ev = h2_list[0].get_text(strip=True) if len(h2_list) > 0 else ""
+        takim_dep = h2_list[1].get_text(strip=True) if len(h2_list) > 1 else ""
+        saat_el = link.find(class_=re.compile(r"nostart|time|match-time"))
+        saat = saat_el.get_text(strip=True) if saat_el else ""
+        maclar.append({"url": href, "takim_ev": takim_ev, "takim_dep": takim_dep, "saat": saat})
     return maclar, []
 
 
-def annabet_mac_detay_cek(url):
-    html, hata = _scrapingbee_get(url, render_js=False)
+def mutating_mac_detay_cek(url):
+    html, hata = _scrapingbee_get(url, render_js=True, mac_sec="5", dogrula=True)
     if hata: return None, [hata]
-    if not html: return None, ["AnnaBet maç sayfası indirilemedi."]
+    if not html: return None, ["Sayfa indirilemedi."]
+    return _mac_html_parse(html, url)
+
+
+def _mac_html_parse(html, url=""):
     soup = BeautifulSoup(html, "html.parser")
-    metin = _html_metne_cevir(html)
     veri = {}; okunamayanlar = []
-
-    # Takım isimleri (title veya h1'den)
-    title = soup.find("title")
-    if title:
-        t = title.get_text(strip=True)
-        # "Erzurumspor - Eyüpspor, Süper Lig ..." formatından
-        m = re.match(r'^(.+?)\s*-\s*(.+?)[,\s]', t)
-        if m:
-            veri["takim_ev"] = m.group(1).strip()
-            veri["takim_dep"] = m.group(2).strip()
-
-    # Tarih
+    h1 = soup.find("h1")
+    if h1:
+        baslik = h1.get_text(strip=True)
+        if " - " in baslik:
+            p = baslik.replace(" Stats", "").replace(" stats", "").split(" - ")
+            veri["takim_ev"] = p[0].strip()
+            if len(p) > 1: veri["takim_dep"] = p[1].strip()
+    metin = _html_metne_cevir(html)
     m = re.search(r'(\d{1,2}\.\d{1,2}\.\d{4})', metin)
     if m: veri["tarih"] = m.group(1)
-
-    # Ülke / Lig
-    m = re.search(r'\d{1,2}\.\d{1,2}\.\d{4}\s+([^\n]+?)\s+(?:Official Site|Wikipedia)', metin)
-    if m: veri["ulke"] = m.group(1).strip()
-
-    # Skor (eğer maç bitmişse)
-    m = re.search(r'(\d+)\s*-\s*(\d+)', metin)
-    if m: veri["skor_ev"] = int(m.group(1)); veri["skor_dep"] = int(m.group(2)); veri["skor_belli"] = True
+    m = re.search(r'(\d{1,2}:\d{2})', metin)
+    if m: veri["saat"] = m.group(1)
+    veri["ulke"] = _ulke_bul(metin)
+    skor = _skor_parse(html)
+    if skor:
+        veri["skor_ev"] = skor[0]; veri["skor_dep"] = skor[1]; veri["skor_belli"] = True
     else: veri["skor_belli"] = False
-
-    # Goal Average: "Goal Average 0.60 - 1.20 (1.80)" formatından
-    m = re.search(r'Goal Average\s+([\d.]+)\s*-\s*([\d.]+)\s*\(([\d.]+)\)', metin)
-    if m:
-        veri["atilan_ev"] = float(m.group(1))
-        veri["yenen_ev"] = float(m.group(2))
-        veri["atilan_dep"] = float(m.group(3)) if False else veri["atilan_ev"] # Geçici
-
-    # Previous Games bölümünden son maçları çek (form için)
-    # Format: "10.10.2026 Süper Lig Alanyaspor 0 - 0 Erzurumspor"
-    ev_form = []; dep_form = []
-    for line in metin.split("\n"):
-        line = line.strip()
-        # Skor içeren satırları bul
-        m_skor = re.search(r'(\d+)\s*-\s*(\d+)', line)
-        if not m_skor: continue
-        # Takım isimlerini bul (basit yaklaşım: ev sahibi skordan önce, dep skordan sonra)
-        parts = re.split(r'\s+\d+\s*-\s*\d+\s+', line)
-        if len(parts) == 2:
-            ev_takim = parts[0].split()[-1] if parts[0].split() else ""
-            dep_takim = parts[1].split()[0] if parts[1].split() else ""
-            if veri.get("takim_ev", "").lower() in ev_takim.lower() or veri.get("takim_ev", "").lower() in line.lower():
-                # Ev takımı bu maçta oynamış
-                skor = (int(m_skor.group(1)), int(m_skor.group(2)))
-                if veri.get("takim_ev", "").lower() in parts[0].lower():
-                    # Ev sahibi olarak oynamış
-                    if skor[0] > skor[1]: ev_form.append("W")
-                    elif skor[0] == skor[1]: ev_form.append("D")
-                    else: ev_form.append("L")
-                else:
-                    # Deplasman olarak oynamış
-                    if skor[1] > skor[0]: ev_form.append("W")
-                    elif skor[1] == skor[0]: ev_form.append("D")
-                    else: ev_form.append("L")
-            if veri.get("takim_dep", "").lower() in dep_takim.lower() or veri.get("takim_dep", "").lower() in line.lower():
-                skor = (int(m_skor.group(1)), int(m_skor.group(2)))
-                if veri.get("takim_dep", "").lower() in parts[0].lower():
-                    if skor[0] > skor[1]: dep_form.append("W")
-                    elif skor[0] == skor[1]: dep_form.append("D")
-                    else: dep_form.append("L")
-                else:
-                    if skor[1] > skor[0]: dep_form.append("W")
-                    elif skor[1] == skor[0]: dep_form.append("D")
-                    else: dep_form.append("L")
-
-    if ev_form: veri["form_str_ev"] = "".join(ev_form[:5])
-    if dep_form: veri["form_str_dep"] = "".join(dep_form[:5])
-
-    # 1X2 Yüzdeleri
-    m = re.search(r'1x2\s+\d+\s+\d+\s+\d+\s+\d+\s*-\s*\d+\s*\n%\s+([\d.]+)%\s*-\s*([\d.]+)%\s*-\s*([\d.]+)%', metin)
-    if m:
-        veri["galibiyet_ev"] = float(m.group(1))
-        veri["beraberlik_ev"] = float(m.group(2))
-        veri["maglubiyet_ev"] = float(m.group(3))
-
-    # Üst 2.5 Yüzdesi
-    m = re.search(r'Total Goals Under - Over 2.5\s*:\s*([\d.]+)%\s*-\s*([\d.]+)%', metin)
-    if m:
-        veri["ust25_ev"] = float(m.group(2))
-        veri["ust25_dep"] = float(m.group(2))
-
-    # KG Yüzdesi
-    m = re.search(r'Both Teams To Score:\s*([\d.]+)%', metin)
-    if m:
-        veri["kg_siklik_ev"] = float(m.group(1))
-        veri["kg_siklik_dep"] = float(m.group(1))
-
-    # Oranlar (1X2)
-    m = re.search(r'Pinnacle\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)', metin)
-    if m:
-        veri["oran_1"] = float(m.group(1))
-        veri["oran_x"] = float(m.group(2))
-        veri["oran_2"] = float(m.group(3))
-
-    # Oranlar (Üst/Alt 2.5)
-    m = re.search(r'Total Goals 2.5\s*\nOver\s+Under\s*\nPinnacle\s+([\d.]+)\s+([\d.]+)', metin)
-    if m:
-        veri["oran_ust25"] = float(m.group(1))
-        veri["oran_alt25"] = float(m.group(2))
-
-    # Sıralama (puan durumundan)
-    # "14. Erzurumspor 7 2 2 3 8" formatından
-    if veri.get("takim_ev"):
-        m = re.search(r'(\d+)\.\s+' + re.escape(veri["takim_ev"][:15]) + r'\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+', metin)
-        if m: veri["siralama_ev"] = int(m.group(1))
-    if veri.get("takim_dep"):
-        m = re.search(r'(\d+)\.\s+' + re.escape(veri["takim_dep"][:15]) + r'\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+', metin)
-        if m: veri["siralama_dep"] = int(m.group(1))
-
-    veri["format"] = "annabet"
+    def _cift(label):
+        for pat in [r'([\d.,]+)\s*%?\s*\t\s*' + re.escape(label) + r'\s*\t\s*([\d.,]+)', r'([\d.,]+)\s*%?\s*\|\s*' + re.escape(label) + r'\s*\|\s*([\d.,]+)', r'([\d.,]+)\s*%?\s+' + re.escape(label) + r'\s+([\d.,]+)\s*%?', r'([\d.,]+)\s*%?\s*\n\s*' + re.escape(label) + r'\s*\n\s*([\d.,]+)']:
+            mm = re.search(pat, metin, re.IGNORECASE)
+            if mm:
+                try: return float(mm.group(1).replace(",", ".")), float(mm.group(2).replace(",", "."))
+                except ValueError: continue
+        return None, None
+    for label, k_ev, k_dep in [("Goals scored per game", "atilan_ev", "atilan_dep"), ("Goals conceded per game", "yenen_ev", "yenen_dep"), ("Clean sheets", "clean_sheets_ev", "clean_sheets_dep"), ("Team scored", "team_scored_ev", "team_scored_dep"), ("Both Teams to Score", "kg_siklik_ev", "kg_siklik_dep"), ("Over 2.5 goals", "ust25_ev", "ust25_dep"), ("Over 1.5 goals", "ust15_ev", "ust15_dep"), ("Over 3.5 goals", "ust35_ev", "ust35_dep")]:
+        a, b = _cift(label)
+        if a is not None and veri.get(k_ev, 0) == 0: veri[k_ev] = a; veri[k_dep] = b
+    for label, k_ev, k_dep in [("Win", "galibiyet_ev", "galibiyet_dep"), ("Draw", "beraberlik_ev", "beraberlik_dep"), ("Lose", "maglubiyet_ev", "maglubiyet_dep")]:
+        mm = re.search(r'([\d.,]+)\s*%\s*\t\s*' + label + r'\s*\t\s*([\d.,]+)\s*%', metin, re.MULTILINE)
+        if mm:
+            try:
+                veri[k_ev] = float(mm.group(1).replace(",", "."))
+                veri[k_dep] = float(mm.group(2).replace(",", "."))
+            except ValueError: pass
+    if veri.get("atilan_ev", 0) > 0 and veri.get("yenen_ev", 0) > 0:
+        veri["lig_ort_toplam"] = (veri.get("atilan_ev", 0) + veri.get("atilan_dep", 0) + veri.get("yenen_ev", 0) + veri.get("yenen_dep", 0)) / 2
+    if veri.get("ust25_ev", 0) > 0 and veri.get("ust25_dep", 0) > 0:
+        veri["lig_ust25"] = (veri["ust25_ev"] + veri["ust25_dep"]) / 2
+    if veri.get("kg_siklik_ev", 0) > 0 and veri.get("kg_siklik_dep", 0) > 0:
+        veri["lig_kg"] = (veri["kg_siklik_ev"] + veri["kg_siklik_dep"]) / 2
+    veri["format"] = "mutating"
     if url: veri["kaynak_url"] = url
     if not veri.get("takim_ev"): okunamayanlar.append("Takım isimleri (Ev)")
     if not veri.get("takim_dep"): okunamayanlar.append("Takım isimleri (Dep)")
     if veri.get("atilan_ev", 0) == 0: okunamayanlar.append("Atılan Gol (Ev)")
     if veri.get("yenen_ev", 0) == 0: okunamayanlar.append("Yenen Gol (Ev)")
+
+    # ============ 🎯 SON 5 MAÇ FORMU (W/D/L) ============
+    try:
+        form_bloklari = re.findall(
+            r'(?:^|\n)\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*\r?\n\s*([WDL])\s*(?=\r?\n)',
+            metin, re.MULTILINE
+        )
+        if form_bloklari and len(form_bloklari) >= 2:
+            veri["form_str_ev"] = "".join(form_bloklari[0])
+            veri["form_str_dep"] = "".join(form_bloklari[1])
+        else:
+            try:
+                soup2 = BeautifulSoup(html, "html.parser")
+                form_kaplari = soup2.select(".form, .match-form, .last5, .form-string, [class*='form']")
+                form_harfleri = []
+                for kap in form_kaplari:
+                    for c in kap.get_text(" ", strip=True):
+                        if c.upper() in "WDL":
+                            form_harfleri.append(c.upper())
+                if len(form_harfleri) >= 10:
+                    veri["form_str_ev"] = "".join(form_harfleri[:5])
+                    veri["form_str_dep"] = "".join(form_harfleri[5:10])
+            except Exception:
+                pass
+            if not veri.get("form_str_ev"):
+                form_harfleri = re.findall(r'(?:^|\s)([WDL])(?=\s|$)', metin)
+                if len(form_harfleri) >= 10:
+                    veri["form_str_ev"] = "".join(form_harfleri[:5])
+                    veri["form_str_dep"] = "".join(form_harfleri[5:10])
+    except Exception:
+        pass
 
     return veri, okunamayanlar
 
@@ -1892,10 +1932,12 @@ def _inline_skor_tasi_callback(idx):
 
 def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
     try:
-        veri, _ = annabet_mac_detay_cek(mac["url"])
+        veri, _ = _mac_detay_cek_5games(mac["url"])
         if not veri: return ("hata", mac, "Veri çekilemedi", None)
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
+        if not veri.get("saat"): veri["saat"] = mac.get("saat", "")
+        if veri.get("saat"): veri["saat"] = saat_2_saat_ileri(veri["saat"])
         veri["kaynak_url"] = mac["url"]
         if not str(veri.get("ulke", "") or "").strip():
             return ("ulke_yok", veri, "Ülke/lig bilgisi yok", None)
@@ -1910,9 +1952,9 @@ def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
 
 
 def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_workers=2):
-    maclar, hatalar = annabet_ana_sayfa_linklerini_al(max_mac=max_mac)
+    maclar, hatalar = mutating_ana_sayfa_linklerini_al(max_mac=max_mac)
     if hatalar: return [], hatalar
-    if not maclar: return [], ["AnnaBet ana sayfada maç linki bulunamadı."]
+    if not maclar: return [], ["Ana sayfada maç linki bulunamadı."]
     mevcut_urls = set()
     for g in st.session_state.gelecek_analizler:
         u = g.get("veri", {}).get("kaynak_url", "")
@@ -1950,26 +1992,26 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
 
 
 def _lig_son_mac_linklerini_al(lig_url, adet=10):
-    html, hata = _scrapingbee_get(lig_url, render_js=False)
+    html, hata = _scrapingbee_get(lig_url, render_js=True, mac_sec="10")
     if hata: return [], [hata]
     if not html: return [], ["Lig sayfası indirilemedi."]
     soup = BeautifulSoup(html, "html.parser")
     maclar = []; gorulen = set()
     for link in soup.find_all("a", href=True):
         href = link.get("href", "")
-        if "h2h.php" not in href: continue
-        if href.startswith("/"): href = ANNABET_BASE + href
+        if "match-preview" not in href: continue
+        if href.startswith("/"): href = "https://www.mutating.com" + href
         elif not href.startswith("http"): continue
         if href in gorulen: continue
         gorulen.add(href)
         takim_ev = ""; takim_dep = ""
-        m = re.search(r'team1=([^&]+).*?team2=([^&]+)', href)
-        if m:
-            try:
-                from urllib.parse import unquote
-                takim_ev = unquote(m.group(1)).replace("+", " ").strip()
-                takim_dep = unquote(m.group(2)).replace("+", " ").strip()
-            except Exception: pass
+        img = link.find_all("img", alt=True)
+        if len(img) >= 2:
+            takim_ev = img[0].get("alt", "").strip(); takim_dep = img[1].get("alt", "").strip()
+        if not takim_ev:
+            txt = link.get_text(" ", strip=True)
+            if " - " in txt:
+                p = txt.split(" - "); takim_ev = p[0].strip(); takim_dep = p[1].strip() if len(p) > 1 else ""
         maclar.append({"url": href, "takim_ev": takim_ev, "takim_dep": takim_dep})
         if len(maclar) >= adet: break
     return maclar, []
@@ -1978,8 +2020,9 @@ def _lig_son_mac_linklerini_al(lig_url, adet=10):
 def _gecmis_mac_isle(mac, mevcut_urls):
     try:
         if mac["url"] in mevcut_urls: return ("atlandi", None, "Zaten var", None)
-        veri, _ = annabet_mac_detay_cek(mac["url"])
-        if not veri: return ("hata", mac, "Veri çekilemedi", None)
+        html, hata = _scrapingbee_get(mac["url"], render_js=True, mac_sec="5", dogrula=True)
+        if hata or not html: return ("hata", mac, hata or "HTML yok", None)
+        veri, _ = _mac_html_parse(html, mac["url"])
         if not veri.get("skor_belli", False): return ("atlandi", None, "Skor yok (bitmemiş maç)", None)
         if veri.get("atilan_ev", 0) == 0 or veri.get("yenen_ev", 0) == 0: return ("atlandi", None, "İstatistik eksik", None)
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
@@ -2027,7 +2070,7 @@ def lig_gecmis_cek(lig_url, adet=10, max_workers=2, progress_callback=None):
 
 
 # ==========================================
-# FLASHSCORE SKOR ENTEGRASYONU (Skor işleme için korundu)
+# FLASHSCORE SKOR ENTEGRASYONU
 # ==========================================
 def _takim_normalize(isim):
     if not isim: return ""
@@ -2246,13 +2289,7 @@ def mac_tahmin_karti(v_g, g=None):
         def r(p): return "pass" if p else "off"
         def b(p): return "ok" if p else "no"
         def bt(p): return "✅" if p else "⚪"
-        oran_html = ""
-        if v_g.get("oran_1", 0) > 0:
-            oran_html = f' <span style="color:#f59e0b;font-weight:800;font-size:0.72rem;">💰 {v_g.get("oran_1",0):.2f}</span>'
-        oran_gol_html = ""
-        if v_g.get("oran_ust25", 0) > 0 and gs == "Üst 2.5": oran_gol_html = f' <span style="color:#f59e0b;font-weight:800;font-size:0.72rem;">💰 {v_g.get("oran_ust25",0):.2f}</span>'
-        elif v_g.get("oran_alt25", 0) > 0 and gs == "Alt 2.5": oran_gol_html = f' <span style="color:#f59e0b;font-weight:800;font-size:0.72rem;">💰 {v_g.get("oran_alt25",0):.2f}</span>'
-        return f'''<div class="fa-mk"><div class="fa-mk-row"><span class="fa-mk-lbl">🎯 1X2</span><span class="fa-mk-pick {r(poz1)}">{_e(isim1)}{oran_html}</span><span class="fa-mk-pct">%{y1:.0f} <span class="fa-mk-badge {b(poz1)}">{bt(poz1)} eşik %{es1:.0f}</span></span></div><div class="fa-mk-row"><span class="fa-mk-lbl">⚽ Gol</span><span class="fa-mk-pick {r(gp)}">{_e(gs)}{oran_gol_html}</span><span class="fa-mk-pct">%{gy:.0f} <span class="fa-mk-badge {b(gp)}">{bt(gp)} eşik %{ge_:.0f}</span></span></div><div class="fa-mk-row"><span class="fa-mk-lbl">🤝 KG</span><span class="fa-mk-pick {r(kp)}">{_e(ks)}</span><span class="fa-mk-pct">%{ky:.0f} <span class="fa-mk-badge {b(kp)}">{bt(kp)} eşik %{ke:.0f}</span></span></div></div>'''
+        return f'''<div class="fa-mk"><div class="fa-mk-row"><span class="fa-mk-lbl">🎯 1X2</span><span class="fa-mk-pick {r(poz1)}">{_e(isim1)}</span><span class="fa-mk-pct">%{y1:.0f} <span class="fa-mk-badge {b(poz1)}">{bt(poz1)} eşik %{es1:.0f}</span></span></div><div class="fa-mk-row"><span class="fa-mk-lbl">⚽ Gol</span><span class="fa-mk-pick {r(gp)}">{_e(gs)}</span><span class="fa-mk-pct">%{gy:.0f} <span class="fa-mk-badge {b(gp)}">{bt(gp)} eşik %{ge_:.0f}</span></span></div><div class="fa-mk-row"><span class="fa-mk-lbl">🤝 KG</span><span class="fa-mk-pick {r(kp)}">{_e(ks)}</span><span class="fa-mk-pct">%{ky:.0f} <span class="fa-mk-badge {b(kp)}">{bt(kp)} eşik %{ke:.0f}</span></span></div></div>'''
     except Exception: return ""
 
 
@@ -2798,6 +2835,7 @@ if st.session_state.sayfa == "giris_yap":
 
 elif st.session_state.sayfa == "giris":
     if admin_mi():
+        # ===== ADMIN ANA SAYFA =====
         st.markdown("<h1>⚽ Futbol Analiz Pro</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align:center;color:gray;'>Admin Paneli</p>", unsafe_allow_html=True)
         try:
@@ -2813,7 +2851,7 @@ elif st.session_state.sayfa == "giris":
                     for tarih, sayi in sorted(son7.items(), reverse=True): st.markdown(f"**{tarih}:** {sayi} kişi")
         except Exception: pass
         st.divider()
-        st.markdown("### 🤖 Otomatik Veri Çekme (AnnaBet)")
+        st.markdown("### 🤖 Otomatik Veri Çekme")
         vs1, vs2, vs3 = st.tabs(["🔄 Gelecek Maçlar", "📜 Lig Geçmişi", "🏁 Sonuçları İşle"])
         with vs1:
             if st.session_state.toplu_cek_ozet:
@@ -2828,7 +2866,7 @@ elif st.session_state.sayfa == "giris":
                     def _p(i, t, n):
                         try: ph.progress(min((i + 1) / t, 1.0), text=f"{i+1}/{t}: {n}")
                         except Exception: pass
-                    with st.spinner("AnnaBet'ten çekiliyor..."):
+                    with st.spinner("Çekiliyor..."):
                         bas, hat = mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=_p, max_workers=int(w))
                     ph.empty()
                     if hat:
@@ -2837,7 +2875,7 @@ elif st.session_state.sayfa == "giris":
                     if not bas: st.error("❌ Hiçbir maç çekilemedi.")
                     else: st.success(f"✅ {len(bas)} maç işlendi."); time.sleep(2); st.rerun()
         with vs2:
-            lurl = st.text_input("Lig URL (AnnaBet)", key="lig_url_input", placeholder="https://annabet.com/en/soccerstats/...")
+            lurl = st.text_input("Lig URL", key="lig_url_input", placeholder="https://www.mutating.com/football-stats/league-...")
             c1, c2 = st.columns(2)
             with c1: la = st.number_input("Kaç maç?", 5, 30, 10, 1, key="lig_adet")
             with c2: lw = st.number_input("Paralel", 1, 6, 2, 1, key="lig_workers")
@@ -2881,7 +2919,9 @@ elif st.session_state.sayfa == "giris":
                             st.session_state.skor_ozet = sonuclari_isle(bool(sy), int(sw), _p3)
                         ph.empty(); st.rerun()
     else:
+        # ===== MİSAFİR / ÜYE ANA SAYFA =====
         gelecek = st.session_state.gelecek_analizler
+        # 🎯 Sadece eşiği geçen maçları göster
         gelecek_goster = [(idx, g) for idx, g in enumerate(gelecek) if _mac_tahmin_var_mi(g.get("veri", {}))]
         toplam = len(gelecek_goster)
         premium = uye_premium_mu()
@@ -2925,11 +2965,12 @@ elif st.session_state.sayfa == "giris":
             acik = 0
             for idx, g in sirali:
                 v = g["veri"]; te = v.get("takim_ev", "Ev") or "Ev"; td = v.get("takim_dep", "Dep") or "Dep"
-                ulke = v.get("ulke", ""); tarih = v.get("tarih", "")
+                ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
                 bayrak = ulke_bayrak_bul(ulke)
+
                 etiket_saat = "—"
                 try:
-                    if tarih:
+                    if tarih and saat:
                         m = re.match(r'^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$', tarih)
                         if m:
                             g_, a_, y_ = int(m.group(1)), int(m.group(2)), m.group(3)
@@ -2942,11 +2983,17 @@ elif st.session_state.sayfa == "giris":
                             elif fark == 1: etiket_saat = "YARIN"
                             elif fark == -1: etiket_saat = "DÜN"
                             else: etiket_saat = f"{g_:02d}.{a_:02d}"
-                except Exception: etiket_saat = "MAÇ"
+                    elif saat:
+                        etiket_saat = "BUGÜN"
+                except Exception:
+                    etiket_saat = "MAÇ"
+
                 lig_goster = (ulke or "").title()[:22] or "Uluslararası"
+
                 if premium or acik < kota:
                     st.markdown(f'''<div class="mh2-match-v2">
                         <div class="mh2-v2-ust">
+                            <span class="mh2-v2-saat-kucuk">🕐 {_e(saat or "--:--")}</span>
                             <span class="mh2-v2-etiket">{_e(etiket_saat)}</span>
                         </div>
                         <div class="mh2-v2-takim-yanyana">
@@ -2965,14 +3012,20 @@ elif st.session_state.sayfa == "giris":
                             <div class="mh2-v2-alt-item"><span class="mh2-v2-alt-item-ikon">📊</span><b>Detaylı</b> rapor</div>
                         </div>
                     </div>''', unsafe_allow_html=True)
-                    if st.button("🔍  DETAYLI ANALİZ  →", use_container_width=True, key=f"gmac_{idx}", type="primary"):
+
+                    if st.button(
+                        "🔍  DETAYLI ANALİZ  →",
+                        use_container_width=True,
+                        key=f"gmac_{idx}",
+                        type="primary"
+                    ):
                         st.session_state.form_verileri = copy.deepcopy(v); st.session_state.kayit_yapildi = True
                         st.session_state.gelecekten_gelindi = True; st.session_state.aktif_gelecek_idx = idx
                         st.session_state.sayfa = "sonuc"; st.rerun()
                     acik += 1
                     st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
                 else:
-                    st.markdown(kilitli_mac_karti(te, td, "", ulke, tarih), unsafe_allow_html=True)
+                    st.markdown(kilitli_mac_karti(te, td, saat, ulke, tarih), unsafe_allow_html=True)
                     c1, c2 = st.columns(2)
                     with c1:
                         if st.button("💳 Premium", use_container_width=True, key=f"kp_{idx}", type="primary"):
@@ -3039,7 +3092,8 @@ elif st.session_state.sayfa == "uyegirisi":
             if not k.strip() or not s: st.error("❌ Bilgiler gerekli.")
             else:
                 izin, kalan = _giris_limiti_kontrol(k.strip())
-                if not izin: st.error(f"🚫 Çok fazla hatalı deneme. {kalan} saniye sonra tekrar dene.")
+                if not izin:
+                    st.error(f"🚫 Çok fazla hatalı deneme. {kalan} saniye sonra tekrar dene.")
                 elif kullanici_dogrula(k.strip(), s):
                     _giris_basarili_sil(k.strip())
                     try:
@@ -3056,8 +3110,10 @@ elif st.session_state.sayfa == "uyegirisi":
                 else:
                     _giris_denemesi_ekle(k.strip())
                     izin2, kalan2 = _giris_limiti_kontrol(k.strip())
-                    if not izin2: st.error(f"🚫 5 hatalı deneme. {kalan2} saniye kilitli.")
-                    else: st.error("❌ Hatalı giriş.")
+                    if not izin2:
+                        st.error(f"🚫 5 hatalı deneme. {kalan2} saniye kilitli.")
+                    else:
+                        st.error("❌ Hatalı giriş.")
         if gg: st.session_state.sayfa = "giris"; st.rerun()
 
 
@@ -3239,6 +3295,7 @@ elif st.session_state.sayfa == "gelecek_admin":
     if not admin_mi(): st.error("❌ Sadece admin."); st.stop()
     st.markdown("<h1>🔮 Gelecek Maçlar</h1>", unsafe_allow_html=True)
     gel = st.session_state.gelecek_analizler
+    # 🎯 Sadece eşiği geçen maçları göster
     gel_goster = [(idx, g) for idx, g in enumerate(gel) if _mac_tahmin_var_mi(g.get("veri", {}))]
     toplam_g = len(gel_goster)
     st.markdown("### 💾 Yedekleme")
@@ -3262,10 +3319,10 @@ elif st.session_state.sayfa == "gelecek_admin":
         sirali = sorted(gel_goster, key=lambda x: saat_sirala_anahtari(x[1]))
         for idx, g in sirali:
             v = g["veri"]; te = v.get("takim_ev", "Ev"); td = v.get("takim_dep", "Dep")
-            ulke = v.get("ulke", ""); tarih = v.get("tarih", "")
+            ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
             try: a = analiz_hesapla(v); le = a["lam_ev"]; ld = a["lam_dep"]
             except Exception: le = ld = 0
-            st.markdown(mac_karti(te, td, False, 0, 0, le, ld, "", ulke, tarih), unsafe_allow_html=True)
+            st.markdown(mac_karti(te, td, False, 0, 0, le, ld, saat, ulke, tarih), unsafe_allow_html=True)
             th = mac_tahmin_karti(v, g)
             if th: st.markdown(th, unsafe_allow_html=True)
             c1, c2, c3 = st.columns([1, 1, 2])
@@ -3353,17 +3410,21 @@ elif st.session_state.sayfa == "gecmis":
         modern_istatistik_grafik("📊 GEÇMİŞ MAÇ İSTATİSTİKLERİ")
         st.divider()
         st.markdown(f"### 📋 Toplam: {top} maç")
+
         for i, g in enumerate(reversed(gc)):
             idx = len(gc) - 1 - i; v = g["veri"]
             te = v.get("takim_ev", "Ev"); td = v.get("takim_dep", "Dep")
             se = v.get("skor_ev", 0); sd = v.get("skor_dep", 0)
-            ulke = v.get("ulke", ""); tarih = v.get("tarih", "")
+            ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
             bayrak = ulke_bayrak_bul(ulke)
+
             meta_parcalar = []
             if ulke: meta_parcalar.append(f"{bayrak} {ulke.title()[:14]}")
             if tarih: meta_parcalar.append(f"📅 {tarih}")
             meta_html = "".join(f"<span>{m}</span>" for m in meta_parcalar)
-            st.markdown(f'''<div class="mh2-match"><div class="mh2-match-ust"><span>📅 <span class="saat">{_e(tarih or "—")}</span></span><span class="mh2-live gecti">BİTMİŞ</span></div><div class="mh2-match-takimlar"><div class="mh2-takim mh2-takim-ev">{_e(te)}</div><div class="mh2-skor">{se} - {sd}</div><div class="mh2-takim mh2-takim-dep">{_e(td)}</div></div><div class="mh2-match-meta">{meta_html}</div></div>''', unsafe_allow_html=True)
+
+            st.markdown(f'''<div class="mh2-match"><div class="mh2-match-ust"><span>🕐 <span class="saat">{_e(saat or "—")}</span></span><span class="mh2-live gecti">BİTMİŞ</span></div><div class="mh2-match-takimlar"><div class="mh2-takim mh2-takim-ev">{_e(te)}</div><div class="mh2-skor">{se} - {sd}</div><div class="mh2-takim mh2-takim-dep">{_e(td)}</div></div><div class="mh2-match-meta">{meta_html}</div></div>''', unsafe_allow_html=True)
+
             dogruluk = g.get("dogruluk") or sonuc_hesapla(g)
             if dogruluk:
                 o1 = dogruluk.get("oneri_1x2", {}); og = dogruluk.get("oneri_gol", {}); okg = dogruluk.get("oneri_kg", {})
@@ -3373,6 +3434,7 @@ elif st.session_state.sayfa == "gecmis":
                     ikon = "✅" if tuttu else "❌"
                     return f"{tahmin} {ikon}"
                 st.markdown(f'''<div class="mh2-result-row"><div class="mh2-result-item"><div class="mh2-result-lbl">1X2</div><div class="mh2-result-val {_cls(o1.get("tuttu"))}">{_lbl(o1.get("tahmin"), o1.get("tuttu"))}</div></div><div class="mh2-result-item"><div class="mh2-result-lbl">GOL</div><div class="mh2-result-val {_cls(og.get("tuttu"))}">{_lbl(og.get("tahmin"), og.get("tuttu"))}</div></div><div class="mh2-result-item"><div class="mh2-result-lbl">KG</div><div class="mh2-result-val {_cls(okg.get("tuttu"))}">{_lbl(okg.get("tahmin"), okg.get("tuttu"))}</div></div></div>''', unsafe_allow_html=True)
+
             if admin_mi():
                 c1, c2 = st.columns([5, 1])
                 with c1:
@@ -3405,6 +3467,7 @@ elif st.session_state.sayfa == "gecmis":
                     st.session_state.kayit_yapildi = True; st.session_state.gecmisten_gelindi = True
                     st.session_state.aktif_kayit_idx = idx; st.session_state.sayfa = "sonuc"; st.rerun()
             st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
+
     if admin_mi() and top > 0:
         st.markdown(f'<div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));border:1.5px solid rgba(239,68,68,0.5);border-radius:14px;padding:14px;margin-bottom:16px;"><div style="font-size:0.95rem;font-weight:900;color:#ef4444;letter-spacing:0.5px;margin-bottom:4px;">🚨 TEHLİKELİ BÖLGE — TOPLU SİLME</div><div style="font-size:0.78rem;color:#fca5a5;font-weight:600;">Bu butona bastığınızda <b>TÜM GEÇMİŞ MAÇLAR ({top} maç)</b> kalıcı olarak silinir. Bu işlem geri alınamaz!</div></div>', unsafe_allow_html=True)
         if st.session_state.get("silme_onay"):
@@ -3561,16 +3624,18 @@ elif st.session_state.sayfa == "sonuc":
     a = analiz_hesapla(v)
     te = v.get("takim_ev", "Ev") or "Ev"; td = v.get("takim_dep", "Dep") or "Dep"
     sb = v.get("skor_belli", False); se = v.get("skor_ev", 0); sd = v.get("skor_dep", 0)
-    ulke = v.get("ulke", ""); tarih = v.get("tarih", "")
+    ulke = v.get("ulke", ""); saat = v.get("saat", ""); tarih = v.get("tarih", "")
     bayrak = ulke_bayrak_bul(ulke)
     meta_parcalar = []
     if ulke: meta_parcalar.append(f"{bayrak} {ulke.title()}")
     elif bayrak != "🌍": meta_parcalar.append(bayrak)
     if tarih: meta_parcalar.append(f"📅 {tarih}")
+    if saat: meta_parcalar.append(f"🕐 {saat}")
     meta = " &nbsp;•&nbsp; ".join(meta_parcalar) if meta_parcalar else "MAÇ ANALİZİ"
     skor_html = f'<div class="an-skor">{se} - {sd}</div>' if sb else '<div class="an-vs">VS</div>'
     st.markdown(f'''<div class="an-hero"><div class="an-hero-meta"><span class="an-pulse-dot"></span> {meta}</div><div class="an-hero-teams"><div class="an-team an-team-ev">{_e(te)}</div><div class="an-hero-mid">{skor_html}</div><div class="an-team an-team-dep">{_e(td)}</div></div><div class="an-hero-xg">⚡ Beklenen Gol: <b>{a["lam_ev"]:.2f}</b> – <b>{a["lam_dep"]:.2f}</b>&nbsp;•&nbsp; Toplam: <b>{a["lam_ev"]+a["lam_dep"]:.2f}</b></div></div>''', unsafe_allow_html=True)
 
+    # ============ 🎯 KÜÇÜK TAKIM FORMLARI (5 YAN YANA) ============
     st.markdown('<div class="an-section-ttl">📋 TAKIM FORMLARI (SON 5 MAÇ)</div>', unsafe_allow_html=True)
     def _form_buyuk_html(form_str, takim, ev_mi=True):
         cls_takim = "ev" if ev_mi else "dep"
@@ -3604,20 +3669,6 @@ elif st.session_state.sayfa == "sonuc":
     if kge or kgd: rows.append(_cmp_row("KG Sıklık", kge, kgd, 100, 100, ".0f", "%"))
     if cs_e or cs_d: rows.append(_cmp_row("Clean Sheet", cs_e, cs_d, 100, 100, ".0f", "%"))
     if rows: st.markdown(f'''<div class="an-cmp-wrap"><div class="an-cmp-header"><div class="an-team-name ev">{_e(te)}</div><div class="an-cmp-vs">VS</div><div class="an-team-name dep">{_e(td)}</div></div>{"".join(rows)}</div>''', unsafe_allow_html=True)
-
-    # 🎯 ORANLAR BÖLÜMÜ (YENİ)
-    if v.get("oran_1", 0) > 0 or v.get("oran_ust25", 0) > 0:
-        st.markdown('<div class="an-section-ttl">💰 BAHİS ORANLARI (Pinnacle)</div>', unsafe_allow_html=True)
-        oran_rows = []
-        if v.get("oran_1", 0) > 0:
-            oran_rows.append(f'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #1d2940;"><span style="color:#cbd5e1;">1 (Ev)</span><span style="color:#f59e0b;font-weight:900;">{v.get("oran_1"):.2f}</span></div>')
-            oran_rows.append(f'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #1d2940;"><span style="color:#cbd5e1;">X (Beraberlik)</span><span style="color:#f59e0b;font-weight:900;">{v.get("oran_x"):.2f}</span></div>')
-            oran_rows.append(f'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #1d2940;"><span style="color:#cbd5e1;">2 (Dep)</span><span style="color:#f59e0b;font-weight:900;">{v.get("oran_2"):.2f}</span></div>')
-        if v.get("oran_ust25", 0) > 0:
-            oran_rows.append(f'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #1d2940;"><span style="color:#cbd5e1;">Üst 2.5</span><span style="color:#22c55e;font-weight:900;">{v.get("oran_ust25"):.2f}</span></div>')
-            oran_rows.append(f'<div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="color:#cbd5e1;">Alt 2.5</span><span style="color:#ef4444;font-weight:900;">{v.get("oran_alt25"):.2f}</span></div>')
-        st.markdown(f'<div class="fa-card">{"".join(oran_rows)}</div>', unsafe_allow_html=True)
-
     st.markdown('<div class="an-section-ttl">🎯 Maç Sonucu Olasılıkları</div>', unsafe_allow_html=True)
     def _donut(yuzde, renk, boyut=82):
         y = max(0.0, min(100.0, yuzde)); r = 34; cevre = 2 * 3.14159 * r; offset = cevre * (1 - y / 100)
