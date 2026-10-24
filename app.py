@@ -1111,6 +1111,10 @@ VARSAYILAN_VERI = {k: v for k, v in {
     "lig_ort_toplam": 0.0, "lig_ust25": 0.0, "lig_kg": 0.0,
     "saat": "", "tarih": "", "ulke": "", "format": "bilinmiyor", "kaynak_url": "",
     "trends_ev": [], "trends_dep": [],
+    # YENİ EKLENEN SON 5 MAÇ VERİLERİ
+    "son5_xg_atak": 0.0, "son5_xg_savunma": 0.0, "son5_ppg": 0.0,
+    "son5_mpg_atak": 0.0, "son5_mpg_savunma": 0.0,
+    "son5_btts_yuzde": 0.0, "son5_ust25_yuzde": 0.0, "son5_cs_yuzde": 0.0,
 }.items()}
 
 MAX_GOL = 8; BELIRSIZLIK = 0.20; MAX_MAC_SINIRI = 500
@@ -1548,6 +1552,81 @@ def _sira_bul(metin, takim_adi):
     return None, None
 
 
+# ===== YENİ EKLENEN FONKSİYON =====
+def son_5_mac_analizi_yap(metin):
+    """
+    Metin içindeki maç skorlarını bulur, ilk 5'ini (en güncel 5 maç) alır
+    ve xG, PPG, MPG, BTTS, 2.5 Üst/Alt ve Clean Sheet yüzdelerini hesaplar.
+    """
+    sonuc = {
+        "son5_xg_atak": 0.0, "son5_xg_savunma": 0.0, "son5_ppg": 0.0, 
+        "son5_mpg_atak": 0.0, "son5_mpg_savunma": 0.0,
+        "son5_btts_yuzde": 0.0, "son5_ust25_yuzde": 0.0, "son5_cs_yuzde": 0.0
+    }
+    
+    # Sayfadaki skor kalıplarını (örnek: "2 - 1" veya "2 : 1") ara
+    skorlar = re.findall(r'(\d{1,2})\s*-\s*(\d{1,2})', metin)
+    
+    gecerli_skorlar = []
+    for skor in skorlar:
+        try:
+            ev_gol = int(skor[0])
+            dep_gol = int(skor[1])
+            # Mantıklı bir skor mu? (Örn: 15-0 gibi absürt skorları filtrele)
+            if ev_gol <= 10 and dep_gol <= 10:
+                gecerli_skorlar.append((ev_gol, dep_gol))
+        except:
+            continue
+            
+    # En güncel ilk 5 maçı al
+    son_5 = gecerli_skorlar[:5]
+    
+    if len(son_5) < 5:
+        return sonuc # Yeterli veri yoksa boş döner
+        
+    toplam_atilan = 0
+    toplam_yenilen = 0
+    toplam_puan = 0
+    btts_sayisi = 0
+    ust25_sayisi = 0
+    clean_sheet_sayisi = 0
+    
+    for ev_gol, dep_gol in son_5:
+        toplam_atilan += ev_gol
+        toplam_yenilen += dep_gol
+        
+        # Puan Hesapla (Galibiyet 3, Beraberlik 1)
+        if ev_gol > dep_gol:
+            toplam_puan += 3
+        elif ev_gol == dep_gol:
+            toplam_puan += 1
+            
+        # BTTS (Karşılıklı Gol)
+        if ev_gol > 0 and dep_gol > 0:
+            btts_sayisi += 1
+            
+        # 2.5 Üst
+        if (ev_gol + dep_gol) > 2.5:
+            ust25_sayisi += 1
+            
+        # Clean Sheet (Gol Yememe)
+        if dep_gol == 0:
+            clean_sheet_sayisi += 1
+            
+    # Ortalamaları ve yüzdeleri hesapla
+    sonuc["son5_xg_atak"] = toplam_atilan / 5
+    sonuc["son5_xg_savunma"] = toplam_yenilen / 5
+    sonuc["son5_ppg"] = toplam_puan / 5
+    sonuc["son5_mpg_atak"] = toplam_atilan / 5 
+    sonuc["son5_mpg_savunma"] = toplam_yenilen / 5
+    sonuc["son5_btts_yuzde"] = (btts_sayisi / 5) * 100
+    sonuc["son5_ust25_yuzde"] = (ust25_sayisi / 5) * 100
+    sonuc["son5_cs_yuzde"] = (clean_sheet_sayisi / 5) * 100
+    
+    return sonuc
+# ===== YENİ EKLENEN FONKSİYON SONU =====
+
+
 def sportytrader_veri_cikar(metin):
     veri = {}; okunamayanlar = []
     m = re.search(r'^([A-ZÇĞİÖŞÜ][\w\s\.\-]+?)\s*-\s*([A-ZÇĞİÖŞÜ][\w\s\.\-]+?)\s+Stats', metin, re.MULTILINE)
@@ -1649,6 +1728,12 @@ def sportytrader_veri_cikar(metin):
                     temiz.append(c)
                 if temiz: veri[taraf_k] = temiz[:5]
     except Exception: pass
+    
+    # ===== YENİ EKLENEN KISIM (SON 5 MAÇ ANALİZİ) =====
+    son5_veri = son_5_mac_analizi_yap(metin)
+    veri.update(son5_veri) 
+    # ===== YENİ EKLENEN KISIM SONU =====
+    
     veri["format"] = "sportytrader"
     return veri, okunamayanlar
 
@@ -1664,8 +1749,7 @@ def metinden_veri_cikar(metin):
     veri = {}; okunamayanlar = []
     veri["format"] = "genel"
     return veri, okunamayanlar
-
-
+    
 # ==========================================
 # VERİ ÇEKME MOTORU
 # ==========================================
@@ -2832,7 +2916,7 @@ nav_bar()
 
 if st.session_state.sayfa == "giris_yap":
     admin_giris_ekrani()
-
+    
 elif st.session_state.sayfa == "giris":
     if admin_mi():
         # ===== ADMIN ANA SAYFA =====
