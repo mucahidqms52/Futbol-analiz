@@ -3337,8 +3337,8 @@ elif st.session_state.sayfa == "gelecek_admin":
                     except Exception as e: st.error(f"❌ Silme hatası: {e}")
             with oc2:
                 if st.button("❌ Vazgeç", key="sil_gel_iptal", use_container_width=True):
-                    st.session_state.silme_onay_gelecek = False; st.rerun()
-                else:
+                                st.session_state.silme_onay_gelecek = False; st.rerun()
+        else:
             def _toplu_sil_gelecek_toggle(): st.session_state.silme_onay_gelecek = True
             st.button(f"🗑️ TÜM GELECEĞİ SİL ({len(gel)} MAÇ)", use_container_width=True, key="temizle_gel", type="primary", on_click=_toplu_sil_gelecek_toggle)
         st.divider()
