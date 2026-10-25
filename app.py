@@ -3345,7 +3345,10 @@ elif st.session_state.sayfa == "gelecek_admin":
     if st.button("⬅️ Ana Sayfa", use_container_width=True, type="primary", key="gg_geri"):
         st.session_state.sayfa = "giris"; st.rerun()
 elif st.session_state.sayfa == "gecmis":
-elif st.session_state.sayfa == "gecmis":
+st.markdown("<h1>📊 Geçmiş Maçlar</h1>", unsafe_allow_html=True)
+gc = st.session_state.gecmis_analizler; top = len(gc)
+if admin_mi():
+    st.markdown("### 💾 Yedekleme")
         elif st.session_state.sayfa == "gecmis":
     st.markdown("<h1>📊 Geçmiş Maçlar</h1>", unsafe_allow_html=True)
     gc = st.session_state.gecmis_analizler; top = len(gc)
