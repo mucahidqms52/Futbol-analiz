@@ -199,7 +199,7 @@ st.set_page_config(page_title="Futbol Analiz Pro", page_icon="⚽", layout="cent
 # Her ülke için izin verilen liglerin "Standings" metniyle eşleşen
 # anahtar kelimeleri. Sadece bu liglerden gelen maçlar kabul edilir.
 IZINLI_LIG_ANAHTARLARI = [
-    # 🏴󠁧󠁢󠁥󠁮󠁧󠁿 İngiltere
+    # 🏴 İngiltere
     "england - premier league",
     "england - championship",
     # 🇹🇷 Türkiye
