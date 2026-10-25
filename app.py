@@ -1111,7 +1111,6 @@ VARSAYILAN_VERI = {k: v for k, v in {
     "lig_ort_toplam": 0.0, "lig_ust25": 0.0, "lig_kg": 0.0,
     "saat": "", "tarih": "", "ulke": "", "format": "bilinmiyor", "kaynak_url": "",
     "trends_ev": [], "trends_dep": [],
-    # YENİ EKLENEN SON 5 MAÇ VERİLERİ
     "son5_xg_atak": 0.0, "son5_xg_savunma": 0.0, "son5_ppg": 0.0,
     "son5_mpg_atak": 0.0, "son5_mpg_savunma": 0.0,
     "son5_btts_yuzde": 0.0, "son5_ust25_yuzde": 0.0, "son5_cs_yuzde": 0.0,
@@ -1301,26 +1300,37 @@ def poisson_matris(lam_ev, lam_dep, mg=MAX_GOL):
 
 
 def hesapla_lambda(v):
-    ae = v.get("atilan_ev", 0.0); ye = v.get("yenen_ev", 0.0)
-    ad = v.get("atilan_dep", 0.0); yd = v.get("yenen_dep", 0.0)
+    # YENİ EKLENEN: Son 5 maç verisi varsa onu kullan, yoksa eski 10 maçlık veriyi kullan
+    if v.get("son5_xg_atak", 0) > 0:
+        ae = v.get("son5_xg_atak", 0.0)
+        ye = v.get("son5_xg_savunma", 0.0)
+        ad = v.get("son5_xg_atak", 0.0)
+        yd = v.get("son5_xg_savunma", 0.0)
+    else:
+        ae = v.get("atilan_ev", 0.0); ye = v.get("yenen_ev", 0.0)
+        ad = v.get("atilan_dep", 0.0); yd = v.get("yenen_dep", 0.0)
+        
     xge = v.get("xg_ev", 0.0); xgd = v.get("xg_dep", 0.0)
-    he = (xge * 0.60 + ae * 0.40) if xge > 0 else (ae if ae > 0 else 1.2)
-    hd = (xgd * 0.60 + ad * 0.40) if xgd > 0 else (ad if ad > 0 else 1.0)
+    he = ae if ae > 0 else 1.2
+    hd = ad if ad > 0 else 1.0
     tse = v.get("team_scored_ev", 0); tsd = v.get("team_scored_dep", 0)
     if tse > 0: he *= clamp(tse / 60, 0.7, 1.3)
     if tsd > 0: hd *= clamp(tsd / 60, 0.7, 1.3)
     sd = yd if yd > 0 else 1.2; se = ye if ye > 0 else 1.0
-    cse = v.get("clean_sheets_ev", 0.0); csd = v.get("clean_sheets_dep", 0.0)
+    cse = v.get("son5_cs_yuzde", v.get("clean_sheets_ev", 0.0))
+    csd = v.get("son5_cs_yuzde", v.get("clean_sheets_dep", 0.0))
     def cf(cs):
         if cs <= 0: return 1.0
         if cs < 40.0: return 1.0 - (cs / 250.0)
         return max(0.40, 0.84 - (cs - 40.0) * (0.44 / 60.0))
     df = cf(cse); ef = cf(csd)
     le = he * 0.60 + sd * 0.40; ld = hd * 0.60 + se * 0.40
-    u25e = v.get("ust25_ev", 0); u25d = v.get("ust25_dep", 0)
+    u25e = v.get("son5_ust25_yuzde", v.get("ust25_ev", 0))
+    u25d = v.get("son5_ust25_yuzde", v.get("ust25_dep", 0))
     if u25e > 0: le *= clamp(u25e / 50, 0.85, 1.15)
     if u25d > 0: ld *= clamp(u25d / 50, 0.85, 1.15)
-    kge = v.get("kg_siklik_ev", 0); kgd = v.get("kg_siklik_dep", 0)
+    kge = v.get("son5_btts_yuzde", v.get("kg_siklik_ev", 0))
+    kgd = v.get("son5_btts_yuzde", v.get("kg_siklik_dep", 0))
     if kge > 0 and kgd > 0:
         ko = (kge + kgd) / 2
         if ko >= 60: le *= 1.05; ld *= 1.05
@@ -1337,8 +1347,7 @@ def hesapla_lambda(v):
     if le > 2.50: le = 2.50 + (le - 2.50) * 0.5
     if ld > 2.50: ld = 2.50 + (ld - 2.50) * 0.5
     return clamp(le, 0.05, 4.5), clamp(ld, 0.05, 4.5), 0.80
-
-
+    
 def matristen_olasilik(matris, mg=MAX_GOL):
     p1 = px = p2 = u05 = u15 = u25 = u35 = kg = 0.0; sk = {}; tot = 0.0
     for i in range(mg):
@@ -1564,7 +1573,6 @@ def son_5_mac_analizi_yap(metin):
         "son5_btts_yuzde": 0.0, "son5_ust25_yuzde": 0.0, "son5_cs_yuzde": 0.0
     }
     
-    # Sayfadaki skor kalıplarını (örnek: "2 - 1" veya "2 : 1") ara
     skorlar = re.findall(r'(\d{1,2})\s*-\s*(\d{1,2})', metin)
     
     gecerli_skorlar = []
@@ -1572,17 +1580,15 @@ def son_5_mac_analizi_yap(metin):
         try:
             ev_gol = int(skor[0])
             dep_gol = int(skor[1])
-            # Mantıklı bir skor mu? (Örn: 15-0 gibi absürt skorları filtrele)
             if ev_gol <= 10 and dep_gol <= 10:
                 gecerli_skorlar.append((ev_gol, dep_gol))
         except:
             continue
             
-    # En güncel ilk 5 maçı al
     son_5 = gecerli_skorlar[:5]
     
     if len(son_5) < 5:
-        return sonuc # Yeterli veri yoksa boş döner
+        return sonuc
         
     toplam_atilan = 0
     toplam_yenilen = 0
@@ -1595,25 +1601,20 @@ def son_5_mac_analizi_yap(metin):
         toplam_atilan += ev_gol
         toplam_yenilen += dep_gol
         
-        # Puan Hesapla (Galibiyet 3, Beraberlik 1)
         if ev_gol > dep_gol:
             toplam_puan += 3
         elif ev_gol == dep_gol:
             toplam_puan += 1
             
-        # BTTS (Karşılıklı Gol)
         if ev_gol > 0 and dep_gol > 0:
             btts_sayisi += 1
             
-        # 2.5 Üst
         if (ev_gol + dep_gol) > 2.5:
             ust25_sayisi += 1
             
-        # Clean Sheet (Gol Yememe)
         if dep_gol == 0:
             clean_sheet_sayisi += 1
             
-    # Ortalamaları ve yüzdeleri hesapla
     sonuc["son5_xg_atak"] = toplam_atilan / 5
     sonuc["son5_xg_savunma"] = toplam_yenilen / 5
     sonuc["son5_ppg"] = toplam_puan / 5
@@ -1749,7 +1750,8 @@ def metinden_veri_cikar(metin):
     veri = {}; okunamayanlar = []
     veri["format"] = "genel"
     return veri, okunamayanlar
-    
+
+
 # ==========================================
 # VERİ ÇEKME MOTORU
 # ==========================================
@@ -3734,6 +3736,46 @@ elif st.session_state.sayfa == "sonuc":
     f_ev = _form_buyuk_html(v.get("form_str_ev", ""), te, ev_mi=True)
     f_dep = _form_buyuk_html(v.get("form_str_dep", ""), td, ev_mi=False)
     st.markdown(f'<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 16px 0;">{f_ev}{f_dep}</div>', unsafe_allow_html=True)
+
+    # ===== YENİ EKLENEN: SON 5 MAÇ ANALİZİ EKRANI =====
+    st.markdown('<div class="an-section-ttl">🔥 SON 5 MAÇ ANALİZİ (xG & İSTATİSTİK)</div>', unsafe_allow_html=True)
+    
+    son5_xg_ev = v.get("son5_xg_atak", 0)
+    son5_xg_dep = v.get("son5_xg_savunma", 0)
+    son5_ppg = v.get("son5_ppg", 0)
+    son5_btts = v.get("son5_btts_yuzde", 0)
+    son5_ust = v.get("son5_ust25_yuzde", 0)
+    son5_cs = v.get("son5_cs_yuzde", 0)
+    
+    st.markdown(f'''
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px;">
+        <div style="background: #131c2e; border: 1px solid #1d2940; border-radius: 12px; padding: 10px; text-align: center;">
+            <div style="font-size: 0.6rem; color: #8fa0bd; text-transform: uppercase; font-weight: 800; margin-bottom: 4px;">⚽ xG (Atak)</div>
+            <div style="font-size: 1.1rem; font-weight: 900; color: #22c55e;">{son5_xg_ev:.2f}</div>
+        </div>
+        <div style="background: #131c2e; border: 1px solid #1d2940; border-radius: 12px; padding: 10px; text-align: center;">
+            <div style="font-size: 0.6rem; color: #8fa0bd; text-transform: uppercase; font-weight: 800; margin-bottom: 4px;">🛡️ xG (Savunma)</div>
+            <div style="font-size: 1.1rem; font-weight: 900; color: #ef4444;">{son5_xg_dep:.2f}</div>
+        </div>
+        <div style="background: #131c2e; border: 1px solid #1d2940; border-radius: 12px; padding: 10px; text-align: center;">
+            <div style="font-size: 0.6rem; color: #8fa0bd; text-transform: uppercase; font-weight: 800; margin-bottom: 4px;">📈 PPG</div>
+            <div style="font-size: 1.1rem; font-weight: 900; color: #3b82f6;">{son5_ppg:.2f}</div>
+        </div>
+        <div style="background: #131c2e; border: 1px solid #1d2940; border-radius: 12px; padding: 10px; text-align: center;">
+            <div style="font-size: 0.6rem; color: #8fa0bd; text-transform: uppercase; font-weight: 800; margin-bottom: 4px;">🤝 BTTS</div>
+            <div style="font-size: 1.1rem; font-weight: 900; color: #f59e0b;">%{son5_btts:.0f}</div>
+        </div>
+        <div style="background: #131c2e; border: 1px solid #1d2940; border-radius: 12px; padding: 10px; text-align: center;">
+            <div style="font-size: 0.6rem; color: #8fa0bd; text-transform: uppercase; font-weight: 800; margin-bottom: 4px;">⬆️ 2.5 Üst</div>
+            <div style="font-size: 1.1rem; font-weight: 900; color: #8b5cf6;">%{son5_ust:.0f}</div>
+        </div>
+        <div style="background: #131c2e; border: 1px solid #1d2940; border-radius: 12px; padding: 10px; text-align: center;">
+            <div style="font-size: 0.6rem; color: #8fa0bd; text-transform: uppercase; font-weight: 800; margin-bottom: 4px;">🧤 Clean Sheet</div>
+            <div style="font-size: 1.1rem; font-weight: 900; color: #ec4899;">%{son5_cs:.0f}</div>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
+    # ===== YENİ EKLENEN KISIM SONU =====
 
     st.markdown('<div class="an-section-ttl">⚔️ Takım Karşılaştırması</div>', unsafe_allow_html=True)
     ae = float(v.get("atilan_ev", 0) or 0); ad = float(v.get("atilan_dep", 0) or 0)
