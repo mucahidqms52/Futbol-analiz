@@ -1,3 +1,4 @@
+
 import streamlit as st
 import math
 import copy
@@ -1118,86 +1119,51 @@ _kilit = threading.Lock(); _ESIK_CACHE = {}
 
 
 # ==========================================
-# 🎯 LİG FİLTRESİ — Sadece 1. ve 2. Ligler
+# 🎯 LİG FİLTRESİ — Sadece büyük ligler
 # ==========================================
-# Ülke -> izin verilen ligler (sadece 1. ve 2. ligler)
-LIG_FILTRESI = {
-    "turkey": ["süper lig", "super lig", "1. lig", "1. lig", "tff 1. lig", "tff first league", "turkish super lig", "turkish first league"],
-    "italy": ["serie a", "serie b"],
-    "spain": ["la liga", "laliga", "segunda division", "la liga 2", "segunda"],
-    "england": ["premier league", "championship", "efl championship"],
-    "germany": ["bundesliga", "2. bundesliga", "zweite bundesliga"],
-    "france": ["ligue 1", "ligue 2"],
-    "netherlands": ["eredivisie", "eerste divisie"],
-    "portugal": ["primeira liga", "liga portugal", "liga 2", "segunda liga"],
-    "belgium": ["jupiler pro league", "first division a", "challenger pro league", "first division b"],
-    "scotland": ["premiership", "championship"],
-    "austria": ["bundesliga", "2. liga", "erste liga"],
-    "switzerland": ["super league", "challenge league"],
-    "croatia": ["hnl", "1. hnl", "2. hnl"],
-    "serbia": ["super liga", "prva liga"],
-    "denmark": ["superliga", "1. division"],
-    "sweden": ["allsvenskan", "superettan"],
-    "norway": ["eliteserien", "obos-ligaen", "1. divisjon"],
-    "finland": ["veikkausliiga", "ykkonen"],
-    "poland": ["ekstraklasa", "i liga"],
-    "greece": ["super league", "super league 2"],
-    "ukraine": ["premier league", "persha liga"],
-    "russia": ["premier league", "fnn", "1. division"],
-    "brazil": ["serie a", "serie b"],
-    "argentina": ["primera division", "primera nacional"],
-    "saudi arabia": ["pro league", "first division"],
-    "usa": ["mls", "usl championship"],
-    "mexico": ["liga mx", "liga de expansion mx"],
-    "japan": ["j1 league", "j2 league"],
-    "south korea": ["k league 1", "k league 2"],
-    "china": ["super league", "china league one"],
-    "australia": ["a-league", "a league"],
-    "europe": ["champions league", "europa league", "conference league"],
-    "world": ["world cup", "nations league"],
-    "international": ["nations league", "world cup", "euro"],
-}
-
-# Ülke adı -> Türkçe/İngilizce eşleşmeler
-ULKE_ESLESME = {
-    "turkey": ["turkey", "türkiye", "turkiye"],
-    "italy": ["italy", "italya"],
-    "spain": ["spain", "ispanya"],
-    "england": ["england", "ingiltere", "i̇ngiltere"],
-    "germany": ["germany", "almanya"],
-    "france": ["france", "fransa"],
-    "netherlands": ["netherlands", "hollanda"],
-    "portugal": ["portugal", "portekiz"],
-    "belgium": ["belgium", "belçika", "belcika"],
-    "scotland": ["scotland"],
-    "austria": ["austria", "avusturya"],
-    "switzerland": ["switzerland", "isviçre", "isvicre"],
-    "croatia": ["croatia", "hırvatistan", "hirvatistan"],
-    "serbia": ["serbia", "sırbistan", "sirbistan"],
-    "denmark": ["denmark", "danimarka"],
-    "sweden": ["sweden", "i̇sveç", "isveç", "isvec"],
-    "norway": ["norway", "norveç", "norvec"],
-    "finland": ["finland", "finlandiya"],
-    "poland": ["poland", "polonya"],
-    "greece": ["greece", "yunanistan"],
-    "ukraine": ["ukraine", "ukrayna"],
-    "russia": ["russia", "rusya"],
-    "brazil": ["brazil", "brezilya"],
-    "argentina": ["argentina", "arjantin"],
-    "saudi arabia": ["saudi arabia", "suudi arabistan", "saudi"],
-    "usa": ["usa", "abd", "united states"],
-    "mexico": ["mexico", "meksika"],
-    "japan": ["japan", "japonya"],
-    "south korea": ["south korea", "güney kore", "guney kore"],
-    "china": ["china", "çin", "cin"],
-    "australia": ["australia", "avustralya"],
-    "europe": ["europe", "avrupa", "uefa"],
-    "world": ["world", "dünya", "dunya", "fifa"],
-    "international": ["international", "uluslararası", "uluslararasi"],
+IZINLI_ULKELER = {
+    "england", "ingiltere", "i̇ngiltere",
+    "spain", "ispanya",
+    "italy", "italya",
+    "germany", "almanya",
+    "france", "fransa",
+    "netherlands", "hollanda",
+    "portugal", "portekiz",
+    "belgium", "belçika", "belcika",
+    "scotland", "wales",
+    "austria", "avusturya",
+    "switzerland", "isviçre", "i̇sviçre", "isvicre",
+    "croatia", "hırvatistan", "hirvatistan",
+    "serbia", "sırbistan", "sirbistan",
+    "denmark", "danimarka",
+    "sweden", "i̇sveç", "isveç", "isvec",
+    "norway", "norveç", "norvec",
+    "finland", "finlandiya",
+    "iceland", "i̇zlanda", "izlanda",
+    "hungary", "macaristan",
+    "czech", "çekya", "cekya", "czechia",
+    "slovakia", "slovakya",
+    "slovenia", "slovenya",
+    "poland", "polonya",
+    "greece", "yunanistan",
+    "ukraine", "ukrayna",
+    "russia", "rusya",
+    "estonia", "estonya",
+    "turkey", "türkiye", "turkiye",
+    "brazil", "brezilya",
+    "argentina", "arjantin",
+    "saudi arabia", "suudi arabistan", "saudi", "arabistan",
+    "usa", "abd", "united states",
+    "europe", "avrupa",
+    "world", "dünya", "dunya",
+    "international", "uluslararası", "uluslararasi",
+    "uefa", "fifa", "nations league", "champions league",
+    "europa", "conference",
 }
 
 YASAKLI_KELIMELER = {
-    "women", "womens", "women's", "kadın", "kadin", "female", "ladies", "kizlar", "kızlar", "kiz", "kız",
+    "women", "womens", "women's", "kadın", "kadin", "female", "females",
+    "ladies", "kizlar", "kızlar", "kiz", "kız",
     "u15", "u16", "u17", "u18", "u19", "u20", "u21", "u22", "u23",
     "youth", "genç", "genc", "gençlik", "genclik",
     "friendly", "friendlies", "hazırlık", "hazirlik",
@@ -1207,46 +1173,15 @@ YASAKLI_KELIMELER = {
 }
 
 
-def _lig_adi_bul(metin):
-    """Metinden lig adını çıkarır (Standings satırından)."""
-    m = re.search(r'Standings\s+([^\n]+)', metin)
-    if not m: return ""
-    return m.group(1).strip().lower()
-
-
-def _lig_izinli_mi(ulke, lig_adi, takim_ev="", takim_dep=""):
-    """
-    Ülke + lig adı kombinasyonunu kontrol eder.
-    Sadece 1. ve 2. ligleri kabul eder.
-    """
+def _ulke_izinli_mi(ulke, takim_ev="", takim_dep=""):
     if not ulke: return False
     u = str(ulke).strip().lower()
-    l = str(lig_adi).strip().lower() if lig_adi else ""
-
-    # Yasaklı kelimeler kontrolü
-    tum_metin = f"{u} {l} {takim_ev} {takim_dep}".lower()
+    if not u: return False
+    tum_metin = f"{u} {takim_ev} {takim_dep}".lower()
     for yasak in YASAKLI_KELIMELER:
         if yasak in tum_metin: return False
-
-    # Hangi ülkeye ait olduğunu bul
-    bulunan_ulke = None
-    for anahtar, eslesmeler in ULKE_ESLESME.items():
-        for es in eslesmeler:
-            if es in u:
-                bulunan_ulke = anahtar
-                break
-        if bulunan_ulke: break
-
-    if not bulunan_ulke: return False
-    if bulunan_ulke not in LIG_FILTRESI: return False
-
-    izinli_ligler = LIG_FILTRESI[bulunan_ulke]
-    if not l: return False
-
-    # Lig adı izinli liglerden birini içeriyor mu?
-    for izinli in izinli_ligler:
-        if izinli in l: return True
-
+    for izinli in IZINLI_ULKELER:
+        if izinli in u: return True
     return False
 
 
@@ -1335,7 +1270,8 @@ def _ulke_bul(metin):
 
 
 def clamp(x, lo, hi): return max(lo, min(hi, x))
-    
+
+
 def guven_seviyesi_bul(o):
     if o >= ESIK_YUKSEK: return ("yuksek", "🟢", "success", "Yüksek")
     if o >= ESIK_ORTA: return ("orta", "🟡", "warning", "Orta")
@@ -2005,10 +1941,8 @@ def _gelecek_mac_isle(mac, mevcut_urls, esikler=None):
         if veri.get("saat"): veri["saat"] = saat_2_saat_ileri(veri["saat"])
         veri["kaynak_url"] = mac["url"]
         if not str(veri.get("ulke", "") or "").strip():
-            return ("ulke_yok", veri, "Ülke bilgisi yok", None)
-        # YENİ: Lig filtresi
-        lig_adi = _lig_adi_bul(veri.get("ulke", ""))
-        if not _lig_izinli_mi(veri.get("ulke", ""), lig_adi, veri.get("takim_ev", ""), veri.get("takim_dep", "")):
+            return ("ulke_yok", veri, "Ülke/lig bilgisi yok", None)
+        if not _ulke_izinli_mi(veri.get("ulke", ""), veri.get("takim_ev", ""), veri.get("takim_dep", "")):
             return ("ulke_yok", veri, "İzin verilmeyen lig/ülke", None)
         if mac["url"] in mevcut_urls: return ("atlandi", veri, "Zaten var", None)
         if _mac_tahmin_var_mi(veri, esikler):
@@ -2039,7 +1973,8 @@ def mutating_toplu_cek(max_mac=MAX_MAC_SINIRI, progress_callback=None, max_worke
                 r = fut.result()
                 sonuc, veri, mesaj = r[0], r[1], r[2]
                 kayit = r[3] if len(r) == 4 else None
-                if sonuc == "ulke_yok": pass
+                if sonuc == "ulke_yok":
+                    pass
                 elif sonuc == "eklendi":
                     eklenen += 1; basarili.append(veri)
                     if kayit is not None: eklenecekler.append(kayit)
@@ -2093,10 +2028,6 @@ def _gecmis_mac_isle(mac, mevcut_urls):
         if veri.get("atilan_ev", 0) == 0 or veri.get("yenen_ev", 0) == 0: return ("atlandi", None, "İstatistik eksik", None)
         if not veri.get("takim_ev"): veri["takim_ev"] = mac.get("takim_ev", "")
         if not veri.get("takim_dep"): veri["takim_dep"] = mac.get("takim_dep", "")
-        # YENİ: Lig filtresi
-        lig_adi = _lig_adi_bul(veri.get("ulke", ""))
-        if not _lig_izinli_mi(veri.get("ulke", ""), lig_adi, veri.get("takim_ev", ""), veri.get("takim_dep", "")):
-            return ("ulke_yok", veri, "İzin verilmeyen lig/ülke", None)
         yv = copy.deepcopy(VARSAYILAN_VERI); yv.update(veri)
         kayit = kayit_olustur(yv, analiz_hesapla(yv))
         kayit["dogruluk"] = sonuc_hesapla(kayit)
@@ -2902,7 +2833,7 @@ nav_bar()
 
 if st.session_state.sayfa == "giris_yap":
     admin_giris_ekrani()
-    
+
 elif st.session_state.sayfa == "giris":
     if admin_mi():
         # ===== ADMIN ANA SAYFA =====
