@@ -1,10 +1,4 @@
-streamlit
-requests
-beautifulsoup4
-lxml
-bcrypt
-psycopg2-binary
-extra-streamlit-components
-playwright
-chromium
-bcrypt>=4.0.0
+Flask==3.0.0
+scipy==1.11.4
+numpy==1.26.2
+gunicorn==21.2.0
