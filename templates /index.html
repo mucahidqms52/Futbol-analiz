@@ -1,1 +1,128 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matematiksel Bahis Analizi</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h1, h2 { text-align: center; color: #4CAF50; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px;}
+        input { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #333; background: #2d2d2d; color: white; box-sizing: border-box;}
+        button { width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        button:hover { background: #45a049; }
+        .results { margin-top: 30px; padding: 20px; background: #252525; border-radius: 8px; border-left: 5px solid #4CAF50; }
+        .result-row { display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #333; }
+        .value-positive { color: #4CAF50; font-weight: bold; }
+        .value-negative { color: #F44336; font-weight: bold; }
+        .highlight { background: #333; padding: 10px; border-radius: 5px; margin-top: 15px; }
+        h3 { color: #2196F3; margin-top: 0;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Bahis Matematik Motoru</h1>
+        <p style="text-align:center; font-size: 14px; color: #aaa;">Verileri girin, Value (Değer) ve Olasılıkları görün.</p>
 
+        {% if error %}
+        <div style="background: #F44336; padding: 10px; border-radius: 5px; margin-bottom: 15px;">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST">
+            <h3>Lig Ortalamaları</h3>
+            <div class="grid">
+                <div class="form-group">
+                    <label>Lig Ev Sahibi Gol Ort.</label>
+                    <input type="number" step="0.01" name="league_home_avg" value="2.07" required>
+                </div>
+                <div class="form-group">
+                    <label>Lig Deplasman Gol Ort.</label>
+                    <input type="number" step="0.01" name="league_away_avg" value="1.32" required>
+                </div>
+            </div>
+
+            <h3>Takım İstatistikleri</h3>
+            <div class="grid">
+                <div class="form-group">
+                    <label>Ev Sahibi (Evde Attığı)</label>
+                    <input type="number" step="0.01" name="home_scored" value="2.80" required>
+                </div>
+                <div class="form-group">
+                    <label>Ev Sahibi (Evde Yediği)</label>
+                    <input type="number" step="0.01" name="home_conceded" value="1.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Deplasman (Dışarıda Attığı)</label>
+                    <input type="number" step="0.01" name="away_scored" value="1.00" required>
+                </div>
+                <div class="form-group">
+                    <label>Deplasman (Dışarıda Yediği)</label>
+                    <input type="number" step="0.01" name="away_conceded" value="3.00" required>
+                </div>
+            </div>
+
+            <h3>Piyasa Oranları (Value Hesabı İçin)</h3>
+            <div class="grid">
+                <div class="form-group">
+                    <label>MS 1 Oranı</label>
+                    <input type="number" step="0.01" name="market_1" value="1.71" required>
+                </div>
+                <div class="form-group">
+                    <label>2.5 Üst Oranı</label>
+                    <input type="number" step="0.01" name="market_2_5_ust" value="1.45" required>
+                </div>
+                <div class="form-group">
+                    <label>KG Var Oranı</label>
+                    <input type="number" step="0.01" name="market_kg_var" value="1.80" required>
+                </div>
+            </div>
+
+            <button type="submit">Hesapla ve Analiz Et 🚀</button>
+        </form>
+
+        {% if results %}
+        <div class="results">
+            <h2>Analiz Sonuçları</h2>
+            
+            <div class="highlight">
+                <strong>Beklenen Goller (xG):</strong> Ev Sahibi <b>{{ results.home_xg }}</b> - Deplasman <b>{{ results.away_xg }}</b>
+            </div>
+
+            <h3>Olasılıklar</h3>
+            <div class="result-row"><span>MS 1 İhtimali:</span> <span>%{{ results.prob_1 }} (Adil Oran: {{ results.fair_odd_1 }})</span></div>
+            <div class="result-row"><span>MS X İhtimali:</span> <span>%{{ results.prob_X }}</span></div>
+            <div class="result-row"><span>MS 2 İhtimali:</span> <span>%{{ results.prob_2 }}</span></div>
+            <div class="result-row"><span>2.5 Üst İhtimali:</span> <span>%{{ results.prob_over_2_5 }} (Adil Oran: {{ results.fair_odd_ust }})</span></div>
+            <div class="result-row"><span>KG Var İhtimali:</span> <span>%{{ results.prob_kg_var }} (Adil Oran: {{ results.fair_odd_kg }})</span></div>
+
+            <h3>Value (Değer) Analizi</h3>
+            <div class="result-row">
+                <span>MS 1 Durumu:</span> 
+                <span class="{% if results.value_1 > 0 %}value-positive{% else %}value-negative{% endif %}">
+                    {% if results.value_1 > 0 %}DEĞERLİ (+%{{ results.value_1 }}){% else %}DEĞERSİZ (%{{ results.value_1 }}){% endif %}
+                </span>
+            </div>
+            <div class="result-row">
+                <span>2.5 Üst Durumu:</span> 
+                <span class="{% if results.value_2_5 > 0 %}value-positive{% else %}value-negative{% endif %}">
+                    {% if results.value_2_5 > 0 %}DEĞERLİ (+%{{ results.value_2_5 }}){% else %}DEĞERSİZ (%{{ results.value_2_5 }}){% endif %}
+                </span>
+            </div>
+            <div class="result-row">
+                <span>KG Var Durumu:</span> 
+                <span class="{% if results.value_kg > 0 %}value-positive{% else %}value-negative{% endif %}">
+                    {% if results.value_kg > 0 %}DEĞERLİ (+%{{ results.value_kg }}){% else %}DEĞERSİZ (%{{ results.value_kg }}){% endif %}
+                </span>
+            </div>
+
+            <h3>En İyi Kombinasyonlar (Korelasyonlu)</h3>
+            <div class="result-row"><span>MS 1 + 2.5 Üst İhtimali:</span> <span>%{{ results.prob_1_ve_ust }}</span></div>
+            <div class="result-row"><span>MS 1 + KG Var İhtimali:</span> <span>%{{ results.prob_1_ve_kg }}</span></div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
