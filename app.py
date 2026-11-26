@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from scipy.stats import poisson
+import math
 import numpy as np
 
 app = Flask(__name__)
