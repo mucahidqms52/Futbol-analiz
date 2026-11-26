@@ -1,8 +1,11 @@
 from flask import Flask, render_template, request
 import math
-import numpy as np
 
 app = Flask(__name__)
+
+# Scipy olmadan Poisson hesaplama fonksiyonu
+def poisson_pmf(k, lam):
+    return (lam**k) * math.exp(-lam) / math.factorial(k)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -32,27 +35,48 @@ def index():
             home_xg = home_attack * away_defense * league_home_avg
             away_xg = away_attack * home_defense * league_away_avg
 
-            # 4. Poisson Dağılımı ile Skor Matrisi (0'dan 6 gole kadar)
+            # 4. Poisson Dağılımı ile Olasılıklar (0'dan 6 gole kadar)
             max_goals = 6
-            home_probs = [poisson.pmf(i, home_xg) for i in range(max_goals + 1)]
-            away_probs = [poisson.pmf(i, away_xg) for i in range(max_goals + 1)]
+            home_probs = [poisson_pmf(i, home_xg) for i in range(max_goals + 1)]
+            away_probs = [poisson_pmf(j, away_xg) for j in range(max_goals + 1)]
 
-            # Olasılık Matrisi
-            score_matrix = np.outer(home_probs, away_probs)
+            # Olasılıkları hesaplamak için başlangıç değerleri
+            prob_1 = 0.0
+            prob_X = 0.0
+            prob_2 = 0.0
+            prob_over_2_5 = 0.0
+            prob_kg_var = 0.0
+            prob_1_ve_ust = 0.0
+            prob_1_ve_kg = 0.0
 
-            # 5. Olasılıkları Toplama
-            prob_1 = sum(score_matrix[i, j] for i in range(max_goals + 1) for j in range(max_goals + 1) if i > j)
-            prob_X = sum(score_matrix[i, j] for i in range(max_goals + 1) for j in range(max_goals + 1) if i == j)
-            prob_2 = sum(score_matrix[i, j] for i in range(max_goals + 1) for j in range(max_goals + 1) if i < j)
-            
-            prob_over_2_5 = sum(score_matrix[i, j] for i in range(max_goals + 1) for j in range(max_goals + 1) if (i + j) > 2.5)
-            prob_kg_var = sum(score_matrix[i, j] for i in range(max_goals + 1) for j in range(max_goals + 1) if i > 0 and j > 0)
+            # Skor matrisini döngüyle hesaplama
+            for i in range(max_goals + 1):
+                for j in range(max_goals + 1):
+                    prob = home_probs[i] * away_probs[j]
+                    
+                    # Maç Sonucu
+                    if i > j: 
+                        prob_1 += prob
+                    elif i == j: 
+                        prob_X += prob
+                    else: 
+                        prob_2 += prob
+                    
+                    # 2.5 Üst (Toplam gol 3 veya daha fazla)
+                    if (i + j) >= 3: 
+                        prob_over_2_5 += prob
+                    
+                    # KG Var (İki takım da en az 1 gol atmış)
+                    if i > 0 and j > 0: 
+                        prob_kg_var += prob
+                    
+                    # Kombinasyonlar
+                    if i > j and (i + j) >= 3: 
+                        prob_1_ve_ust += prob
+                    if i > j and i > 0 and j > 0: 
+                        prob_1_ve_kg += prob
 
-            # Kombinasyonlar (Örn: 1 ve 2.5 Üst = Ev kazanır ve toplam gol 2.5 üstü)
-            prob_1_ve_ust = sum(score_matrix[i, j] for i in range(max_goals + 1) for j in range(max_goals + 1) if i > j and (i + j) > 2.5)
-            prob_1_ve_kg = sum(score_matrix[i, j] for i in range(max_goals + 1) for j in range(max_goals + 1) if i > j and i > 0 and j > 0)
-
-            # 6. Value (Değer) Hesaplamaları ( (Olasılık x Oran) - 1 )
+            # 5. Value (Değer) Hesaplamaları ( (Olasılık x Oran) - 1 )
             value_1 = (prob_1 * market_1) - 1
             value_2_5 = (prob_over_2_5 * market_2_5_ust) - 1
             value_kg = (prob_kg_var * market_kg_var) - 1
